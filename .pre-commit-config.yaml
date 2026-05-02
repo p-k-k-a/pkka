@@ -1,0 +1,82 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+        exclude: '(^|/)tsconfig.*\.json$|/\.vscode/.*\.json$'
+      - id: check-toml
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.6.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args:
+          - feat
+          - fix
+          - chore
+          - docs
+          - style
+          - refactor
+          - perf
+          - test
+          - build
+          - ci
+          - revert
+
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: bash -c 'cd frontend && pnpm exec prettier --write --ignore-unknown "${@#frontend/}"' --
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|jsx|json|md|yml|yaml|css)$
+        pass_filenames: true
+
+      - id: eslint-web
+        name: ESLint (web)
+        entry: bash -c 'cd frontend/apps/web && pnpm exec eslint --fix'
+        language: system
+        files: ^frontend/apps/web/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: eslint-mobile
+        name: ESLint (mobile)
+        entry: bash -c 'cd frontend/apps/mobile && pnpm exec expo lint --fix'
+        language: system
+        files: ^frontend/apps/mobile/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: spotless
+        name: Spotless (Java)
+        entry: bash -c 'cd backend && ./gradlew spotlessApply --daemon'
+        language: system
+        files: ^backend/.*\.java$
+        pass_filenames: false
+
+      - id: errorprone
+        name: Error Prone (Java)
+        entry: bash -c 'cd backend && ./gradlew compileJava -Pstrict --daemon'
+        language: system
+        files: ^backend/.*\.java$
+        pass_filenames: false
