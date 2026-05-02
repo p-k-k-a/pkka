@@ -55,7 +55,7 @@ repos:
 
       - id: eslint-web
         name: ESLint (web)
-        entry: bash -c 'cd frontend/apps/web && pnpm exec eslint --fix'
+        entry: bash -c 'cd frontend/apps/web && pnpm exec eslint --fix .'
         language: system
         files: ^frontend/apps/web/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
