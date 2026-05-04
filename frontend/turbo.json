@@ -12,6 +12,9 @@
     "lint": {},
     "typecheck": {
       "dependsOn": ["^build"]
+    },
+    "generate": {
+      "outputs": ["src/generated/**"]
     }
   }
 }
