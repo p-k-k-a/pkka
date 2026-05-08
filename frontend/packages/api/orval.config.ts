@@ -1,8 +1,17 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import dotenv from "dotenv";
 import { defineConfig } from "orval";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+
+const input = process.env.OPENAPI_INPUT;
 
 export default defineConfig({
   pkka: {
-    input: "../../../backend/openapi.json",
+    input,
     output: {
       mode: "split",
       target: "./src/generated/api.ts",
