@@ -14,7 +14,6 @@
     "react": ">=19"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.100.9",
     "orval": "^8.9.1"
   }
 }

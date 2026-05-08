@@ -9,7 +9,7 @@ export default defineConfig({
       schemas: "./src/generated/schemas",
       client: "react-query",
       override: {
-        mutator: { path: "./src/mutator.ts", name: "apiFetch" },
+        mutator: { path: "./mutator.ts", name: "apiFetch" },
         query: { useQuery: true, useMutation: true, signal: true, usePrefetch: true },
       },
       formatter: "prettier",

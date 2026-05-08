@@ -8,9 +8,7 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "generate": "turbo run generate",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "generate": "turbo run generate"
   },
   "devDependencies": {
     "prettier": "3.8.3",
@@ -21,6 +19,14 @@
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "react": "19.1.0",
+      "react-dom": "19.1.0"
+    }
+  },
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "19.1.0"
   }
 }
