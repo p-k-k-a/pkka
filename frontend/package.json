@@ -8,6 +8,8 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "generate": "turbo run generate"
   },
   "devDependencies": {
