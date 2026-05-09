@@ -47,6 +47,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      OPENAPI_INPUT: ../../../backend/openapi.json
     steps:
       - uses: actions/checkout@v4
         with:
