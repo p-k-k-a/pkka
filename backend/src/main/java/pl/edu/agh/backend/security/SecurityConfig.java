@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.config;
+package pl.edu.agh.backend.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +17,15 @@ public class SecurityConfig {
                                         "/v3/api-docs/**",
                                         "/v3/api-docs.yaml",
                                         "/swagger-ui/**",
-                                        "/swagger-ui.html")
+                                        "/swagger-ui.html",
+                                        "/oauth2/authorization/**",
+                                        "/login",
+                                        "/login/oauth2/**",
+                                        "/error")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated());
+        http.oauth2Login(oauth2 -> {});
         return http.build();
     }
 }

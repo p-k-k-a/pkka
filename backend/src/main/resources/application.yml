@@ -4,6 +4,9 @@ spring:
   profiles:
     default: dev
 
+  config:
+    import: optional:file:./backend/.env[.properties]
+
 # OpenAPI / Swagger
 springdoc:
   api-docs:
