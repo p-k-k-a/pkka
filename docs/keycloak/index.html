@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PKKA — Dokumentacja Techniczna</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2e3248;
+    --accent: #5865f2;
+    --accent2: #57f287;
+    --warn: #faa61a;
+    --danger: #ed4245;
+    --text: #e3e5e8;
+    --text-muted: #8e9297;
+    --code-bg: #11131c;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.7; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  nav { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  main { flex: 1; padding: 48px 56px; max-width: 960px; }
+
+  /* Nav */
+  .nav-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); padding: 0 20px 8px; }
+  .nav-section { margin-bottom: 24px; }
+  nav a { display: block; padding: 6px 20px; color: var(--text-muted); text-decoration: none; font-size: 13.5px; border-left: 3px solid transparent; transition: all .15s; }
+  nav a:hover { color: var(--text); background: var(--surface2); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,101,242,.08); }
+  .nav-logo { padding: 0 20px 24px; font-weight: 700; font-size: 16px; color: var(--text); }
+  .nav-logo span { color: var(--accent); }
+
+  /* Content */
+  h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+  h2 { font-size: 22px; font-weight: 700; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 700; margin: 28px 0 12px; color: var(--text); }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* Badges */
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 12px; color: var(--text-muted); }
+  .badge.blue { border-color: var(--accent); color: var(--accent); background: rgba(88,101,242,.1); }
+  .badge.green { border-color: var(--accent2); color: var(--accent2); background: rgba(87,242,135,.1); }
+
+  /* Callouts */
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+  .callout-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .callout.warn { background: rgba(250,166,26,.08); border: 1px solid rgba(250,166,26,.25); }
+  .callout.warn .callout-icon::before { content: '⚠️'; }
+  .callout.info { background: rgba(88,101,242,.08); border: 1px solid rgba(88,101,242,.25); }
+  .callout.info .callout-icon::before { content: 'ℹ️'; }
+  .callout.success { background: rgba(87,242,135,.08); border: 1px solid rgba(87,242,135,.25); }
+  .callout.success .callout-icon::before { content: '✅'; }
+  .callout.danger { background: rgba(237,66,69,.08); border: 1px solid rgba(237,66,69,.25); }
+  .callout.danger .callout-icon::before { content: '🚫'; }
+
+  /* Code */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; overflow-x: auto; margin: 12px 0 20px; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 13px; }
+  p code, li code, td code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12.5px; color: #a8b4d8; }
+  .kw { color: #c678dd; }
+  .str { color: #98c379; }
+  .cm { color: #5c6370; font-style: italic; }
+  .num { color: #e5c07b; }
+  .prop { color: #e06c75; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+  th { background: var(--surface2); color: var(--text-muted); font-weight: 600; padding: 10px 14px; text-align: left; border: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: 10px 14px; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  td strong { color: var(--accent2); }
+
+  /* Steps */
+  .steps { counter-reset: step; }
+  .step { display: flex; gap: 16px; margin-bottom: 20px; }
+  .step-num { counter-increment: step; width: 28px; height: 28px; min-width: 28px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-body p { margin-bottom: 8px; }
+
+  /* Screenshots */
+  .screenshot { margin: 16px 0 24px; }
+  .screenshot img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); display: block; }
+  .screenshot figcaption { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 8px; }
+  .screenshot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 24px; }
+  .screenshot-row .screenshot { margin: 0; }
+  .screenshot-sm img { max-width: 480px; }
+
+  /* Flow diagram */
+  .flow { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin: 16px 0 24px; font-family: monospace; font-size: 13px; line-height: 1.8; white-space: pre; overflow-x: auto; }
+  .flow .arrow { color: var(--accent); }
+  .flow .box { color: var(--accent2); }
+  .flow .label { color: var(--text-muted); }
+
+  /* Sections */
+  section { margin-bottom: 64px; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .section-num { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0; }
+
+  /* Inline tag */
+  .tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; font-size: 12px; color: var(--text-muted); vertical-align: middle; }
+  .tag.on { border-color: var(--accent2); color: var(--accent2); background: rgba(87,242,135,.1); }
+  .tag.off { border-color: var(--danger); color: var(--danger); background: rgba(237,66,69,.1); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-logo">PKKA <span>Docs</span></div>
+  <div class="nav-section">
+    <div class="nav-title">Wprowadzenie</div>
+    <a href="#architektura">Architektura</a>
+    <a href="#infrastruktura">Infrastruktura</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Keycloak</div>
+    <a href="#discord-portal">Discord Dev Portal</a>
+    <a href="#realm">Realm</a>
+    <a href="#client">Client</a>
+    <a href="#idp">Identity Provider</a>
+    <a href="#flow">First Broker Login</a>
+    <a href="#roles">Role i uprawnienia</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Testowanie</div>
+    <a href="#weryfikacja">Weryfikacja UI</a>
+    <a href="#postman">Postman — krok po kroku</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Dalsze kroki</div>
+    <a href="#spring">Spring Boot</a>
+    <a href="#bledy">Typowe błędy</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Konfiguracja backendu</div>
+    <a href="#roles-keycloak">Role i grupy Keycloak</a>
+    <a href="#gradle">build.gradle</a>
+    <a href="#appyml">application.yml</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- HEADER -->
+  <h1>PKKA — Dokumentacja Techniczna</h1>
+  <p class="subtitle">Keycloak 26 + Discord OIDC + Guild Verification + Spring Boot 4</p>
+  <div class="badges">
+    <span class="badge blue">Keycloak 26.0.8</span>
+    <span class="badge blue">Spring Boot 4.0.6</span>
+    <span class="badge blue">Java 25</span>
+    <span class="badge">PostgreSQL 16</span>
+    <span class="badge green">✓ Działające</span>
+  </div>
+
+  <!-- ARCHITEKTURA -->
+  <section id="architektura">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2 style="margin:0;border:none;">Architektura systemu</h2>
+    </div>
+
+    <h3>Decyzje architektoniczne</h3>
+    <p>System oparty jest na <strong>rozdzieleniu odpowiedzialności</strong> między dwa komponenty:</p>
+    <table>
+      <tr><th>Komponent</th><th>Odpowiedzialność</th></tr>
+      <tr><td><strong>Keycloak</strong></td><td>Wyłącznie tożsamość — autentykacja, zarządzanie kontami, federacja przez Discord OIDC, przechowywanie tokenów brokera</td></tr>
+      <tr><td><strong>Spring Boot</strong></td><td>Logika biznesowa — weryfikacja przynależności do serwera Discord, nadawanie ról przez Keycloak Admin API</td></tr>
+    </table>
+
+    <p>Zrezygnowano z customowych wtyczek Keycloaka (np. <code>keycloak-discord</code>) na rzecz natywnego OIDC:</p>
+    <table>
+      <tr><th>Problem z wtyczkami</th><th>Rozwiązanie w tej architekturze</th></tr>
+      <tr><td>Oparte na OAuth2, nie OIDC — brak weryfikacji pola <code>aud</code> w ID tokenie podczas broker handshake (ryzyko <em>Confused Deputy Attack</em>)</td><td>Keycloak weryfikuje <code>aud</code> ID tokenu podczas wymiany authorization code — blokuje podstawienie kodu wygenerowanego dla innego <code>client_id</code></td></tr>
+      <tr><td>Ręczne mapowanie profilu i ról w <code>.jar</code></td><td>Keycloak obsługuje to przez standardowe mappery</td></tr>
+      <tr><td>Konieczność utrzymania wersji <code>.jar</code> zgodnej z Keycloakiem</td><td>Brak zewnętrznych zależności, zero maintenance</td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Precyzyjny zakres ochrony OIDC:</strong> Discord AT i RT to opaque tokeny — Discord API przy callach do <code>/users/@me/guilds</code> nie weryfikuje <code>client_id</code>, bearer token wystarczy. Korzyść OIDC jest wyłącznie w warstwie brokera:
+      <table style="margin-top:10px">
+        <tr><th>Etap</th><th>Token</th><th>Weryfikacja aud</th><th>Korzyść OIDC nad OAuth2</th></tr>
+        <tr><td>Broker handshake (Keycloak ↔ Discord)</td><td>ID token (JWT)</td><td>✅ Keycloak weryfikuje</td><td>Tak — blokuje Confused Deputy</td></tr>
+        <tr><td>Runtime API calls (Spring ↔ Discord API)</td><td>Access token (opaque)</td><td>❌ Discord nie weryfikuje</td><td>Nie — identyczne jak OAuth2</td></tr>
+      </table>
+    </div></div>
+
+    <h3>Przepływ — Guild Verification</h3>
+    <div class="flow"><span class="box">Użytkownik</span> klika "Zaloguj przez Discord"
+    │
+    ▼
+<span class="box">Keycloak</span> (OIDC broker)
+├── zapisuje Access Token Discorda (Store Tokens = ON)
+└── wydaje własny token JWT użytkownikowi
+    │
+    ▼
+<span class="box">Spring Boot</span> odbiera token Keycloaka
+    │
+    ▼
+POST /verify-guild
+├── pobiera Discord AT z Keycloaka  <span class="label">GET /broker/discord/token</span>
+├── odpytuje Discord API            <span class="label">GET /users/@me/guilds</span>
+├── sprawdza presence na serwerze
+└── nadaje rolę `verified-alumn`    <span class="label">Keycloak Admin API</span>
+    │
+    ▼
+<span class="box">Frontend</span> odświeża token → nowy JWT zawiera rolę</div>
+  </section>
+
+  <!-- INFRASTRUKTURA -->
+  <section id="infrastruktura">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2 style="margin:0;border:none;">Infrastruktura — Docker</h2>
+    </div>
+
+    <pre><code><span class="cm"># docker-compose.yml</span>
+services:
+  postgres:
+    image: postgres:16
+    container_name: iam-postgres
+    ports:
+      - <span class="str">"5432:5432"</span>
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iam-network
+    healthcheck:
+      test: [<span class="str">"CMD-SHELL"</span>, <span class="str">"pg_isready -U keycloak -d keycloak"</span>]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.8
+    container_name: iam-keycloak
+    command: start-dev <span class="cm"># Tryb deweloperski, do zmiany na "start" w produkcji</span>
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: <span class="str">"true"</span>
+    ports:
+      - <span class="str">"8080:8080"</span>
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - iam-network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: iam-mailpit
+    ports:
+      - <span class="str">"8025:8025"</span>   <span class="cm"># UI web</span>
+      - <span class="str">"1025:1025"</span>   <span class="cm"># SMTP</span>
+    networks:
+      - iam-network
+
+volumes:
+  postgres_data:
+
+networks:
+  iam-network:
+    driver: bridge</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div><code>KC_BOOTSTRAP_ADMIN_*</code> działa tylko przy pierwszym starcie (tworzeniu bazy). Przy kolejnych uruchomieniach Keycloak używa konta zapisanego w PostgreSQL.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Mailpit przechwytuje wszystkie maile lokalnie (weryfikacja, reset hasła). UI pod <code>http://localhost:8025</code>. Nie wysyła nic na zewnątrz.</div></div>
+  </section>
+
+  <!-- DISCORD PORTAL -->
+  <section id="discord-portal">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2 style="margin:0;border:none;">Discord Developer Portal</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Wejdź na <code>https://discord.com/developers/applications</code> i wybierz swoją aplikację.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>OAuth2</strong> → sekcja <strong>Redirects</strong> → <strong>Add Redirect</strong>:</p><pre><code>http://localhost:8080/realms/pkka/broker/discord/endpoint</code></pre></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Kliknij <strong>Save Changes</strong>. Skopiuj <strong>Client ID</strong> i wygeneruj <strong>Client Secret</strong>.</p></div></div>
+    </div>
+    <div class="callout info"><div class="callout-icon"></div><div>Sekcja <strong>URL Generator</strong> i pole <strong>Select redirect URI</strong> to narzędzie pomocnicze — ignorujesz je całkowicie. Nie zaznaczasz tam żadnych scopów.</div></div>
+  </section>
+
+  <!-- REALM -->
+  <section id="realm">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2 style="margin:0;border:none;">Keycloak — Realm</h2>
+    </div>
+    <div class="callout warn"><div class="callout-icon"></div><div>Realm <code>master</code> służy wyłącznie do administracji Keycloakiem. Nigdy nie twórz tam użytkowników ani klientów swojej aplikacji.</div></div>
+
+    <h3>Tworzenie Realmu</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Lewy górny róg → kliknij nazwę aktualnego realmu → <strong>Create realm</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p><strong>Realm name:</strong> <code>pkka</code> — pole <strong>Resource file</strong> zostaw puste (służy do importu JSON z gotowej konfiguracji). Kliknij <strong>Create</strong>.</p></div></div>
+    </div>
+
+    <h3>Zakładka Login</h3>
+    <table>
+      <tr><th>Opcja</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>User registration</td><td><span class="tag on">ON</span></td><td>Samodzielna rejestracja emailem</td></tr>
+      <tr><td>Forgot password</td><td><span class="tag on">ON</span></td><td>Link "zapomniałem hasła"</td></tr>
+      <tr><td>Remember me</td><td><span class="tag on">ON</span></td><td>Checkbox na stronie logowania</td></tr>
+      <tr><td>Verify email</td><td><span class="tag on">ON</span></td><td>Wyłącz tymczasowo jeśli brak SMTP</td></tr>
+      <tr><td>Login with email</td><td><span class="tag on">ON</span></td><td>Logowanie emailem zamiast usernamem</td></tr>
+      <tr><td>Duplicate emails</td><td><span class="tag off">OFF</span></td><td>Jedno konto na jeden adres email</td></tr>
+      <tr><td>SSL Required</td><td><code>none</code></td><td>Tylko dev — na prod: <code>external requests</code></td></tr>
+    </table>
+
+    <h3>Zakładka Email (Mailpit)</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>From</td><td><code>noreply@pkka.local</code></td></tr>
+      <tr><td>From display name</td><td><code>PKKA</code></td></tr>
+      <tr><td>Host</td><td><code>mailpit</code></td></tr>
+      <tr><td>Port</td><td><code>1025</code></td></tr>
+    </table>
+
+    <h3>Efekt — działające emaile i rejestracja</h3>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/registration-form.png" alt="Formularz rejestracji">
+        <figcaption>Formularz rejestracji Keycloaka — Username, Email, First/Last name</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/email-verification-screen.png" alt="Email verification screen">
+        <figcaption>Ekran weryfikacji emaila po rejestracji</figcaption>
+      </figure>
+    </div>
+    <figure class="screenshot">
+      <img src="imgs/mailpit-verification-email.png" alt="Mailpit - email weryfikacyjny">
+      <figcaption>Mailpit (<code>http://localhost:8025</code>) — przechwycony email weryfikacyjny od PKKA</figcaption>
+    </figure>
+  </section>
+
+  <!-- CLIENT -->
+  <section id="client">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2 style="margin:0;border:none;">Keycloak — Client</h2>
+    </div>
+
+    <p>Sidebar → <strong>Clients</strong> → <strong>Create client</strong></p>
+
+    <h3>Ekran 1 — General Settings</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Client type</td><td><code>OpenID Connect</code></td></tr>
+      <tr><td>Client ID</td><td><code>pkka-app</code></td></tr>
+      <tr><td>Name</td><td><code>PKKA Web Application</code></td></tr>
+    </table>
+
+    <h3>Ekran 2 — Capability config</h3>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/capability-config-service-accounts.png" alt="Capability config">
+      <figcaption>Capability config — widoczny tooltip wyjaśniający Client authentication</figcaption>
+    </figure>
+    <table>
+      <tr><th>Opcja</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Client authentication</td><td><span class="tag on">ON</span></td><td>Confidential client — używa client secret</td></tr>
+      <tr><td>Authorization</td><td><span class="tag off">OFF</span></td><td>Nie potrzebujemy fine-grained authz</td></tr>
+      <tr><td>Standard flow</td><td>✓</td><td>Authorization Code Flow — poprawny dla aplikacji webowych</td></tr>
+      <tr><td>Direct access grants</td><td>✗</td><td>Wyłącz — włącz tylko tymczasowo do testów Postmanem</td></tr>
+      <tr><td>Service accounts enabled</td><td>✓</td><td>Wymagane do nadawania ról przez Admin API</td></tr>
+    </table>
+
+    <h3>Ekran 3 — Login settings</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Root URL</td><td><code>http://localhost:8081</code></td></tr>
+      <tr><td>Valid redirect URIs</td><td><code>http://localhost:8081/*</code></td></tr>
+      <tr><td>Valid post logout redirect URIs</td><td><code>http://localhost:8081/*</code></td></tr>
+      <tr><td>Web origins</td><td><code>http://localhost:8081</code></td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Port <strong>8081</strong> — żeby nie kolidować z Keycloakiem na 8080. Możesz użyć dowolnego wolnego portu.</div></div>
+
+    <h3>Skopiuj Client Secret</h3>
+    <p>Po zapisaniu → zakładka <strong>Credentials</strong> → skopiuj <strong>Client secret</strong>.</p>
+
+    <h3>Service Account Roles</h3>
+    <p>Zakładka <strong>Service account roles</strong> (pojawia się po zaznaczeniu <em>Service accounts enabled</em>) → <strong>Assign role</strong> → filtr: <strong>Filter by clients</strong>.</p>
+    <figure class="screenshot">
+      <img src="imgs/assign-roles-broker-read-token.png" alt="Assign roles - broker read-token widoczny">
+      <figcaption>Lista ról po przełączeniu na "Filter by clients" — widoczna rola <code>broker / read-token</code></figcaption>
+    </figure>
+    <p>Dodaj obie role:</p>
+    <table>
+      <tr><th>Klient</th><th>Rola</th><th>Po co</th></tr>
+      <tr><td><code>broker</code></td><td><code>read-token</code></td><td>Pobieranie tokenów brokera (Discord AT) w imieniu użytkowników</td></tr>
+      <tr><td><code>realm-management</code></td><td><code>view-users</code></td><td>Odczyt danych użytkowników do nadawania ról</td></tr>
+    </table>
+  </section>
+
+  <!-- IDP -->
+  <section id="idp">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2 style="margin:0;border:none;">Keycloak — Identity Provider Discord</h2>
+    </div>
+
+    <p>Sidebar → <strong>Identity providers</strong> → <strong>Add provider</strong> → <strong>OpenID Connect v1.0</strong></p>
+
+    <h3>Formularz podstawowy</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Alias</td><td><code>discord</code></td></tr>
+      <tr><td>Display name</td><td><code>Discord</code></td></tr>
+      <tr><td>Enabled</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Hide on login page</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Store tokens</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Stored tokens readable</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Discovery endpoint</td><td><code>https://discord.com/.well-known/openid-configuration</code> → kliknij <strong>Import</strong></td></tr>
+      <tr><td>Client ID</td><td>Discord Client ID</td></tr>
+      <tr><td>Client Secret</td><td>Discord Client Secret</td></tr>
+      <tr><td>Client authentication</td><td><code>client_secret_post</code></td></tr>
+      <tr><td>Default Scopes</td><td><code>openid email identify guilds</code></td></tr>
+    </table>
+
+    <div class="callout warn"><div class="callout-icon"></div><div><strong>Store tokens</strong> i <strong>Stored tokens readable</strong> muszą być ON — bez tego nie będzie można pobrać Access Tokena Discorda z Keycloaka.</div></div>
+
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/store-tokens-off-default.png" alt="Store tokens OFF - stan przed konfiguracją">
+      <figcaption>Stan domyślny przed konfiguracją — oba przełączniki wyłączone</figcaption>
+    </figure>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/stored-tokens-readable-tooltip.png" alt="Tooltip Stored tokens readable">
+      <figcaption>Tooltip wyjaśniający działanie Stored tokens readable — przypisuje rolę <code>broker.read-token</code></figcaption>
+    </figure>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Scope <code>identify</code> zwraca username i avatar Discorda. Scope <code>guilds</code> zwraca listę serwerów. Oba są wymagane dla weryfikacji alumni.</div></div>
+
+    <h4>Efekt — zgoda Discord po dodaniu scope guilds</h4>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/discord-consent-without-guilds-scope.png" alt="Discord consent - bez guilds">
+        <figcaption>Zgoda Discord bez scope <code>guilds</code> — brak "Know what servers you're in"</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/discord-consent-with-guilds-scope.png" alt="Discord consent - z guilds">
+        <figcaption>Po dodaniu scope <code>guilds</code> — pojawia się "Know what servers you're in"</figcaption>
+      </figure>
+    </div>
+
+    <h3>Advanced settings (po kliknięciu Save — wróć do edycji IDP)</h3>
+    <div class="callout warn"><div class="callout-icon"></div><div>Sekcja <strong>Advanced settings</strong> pojawia się dopiero po zapisaniu IDP. Zapisz → wróć do edycji → przewiń na dół.</div></div>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Trust email</td><td><span class="tag on">ON</span></td><td>Discord weryfikuje maile — nie pytamy użytkownika ponownie</td></tr>
+      <tr><td>Account linking policy</td><td><code>DEFAULT</code></td><td>Tworzy nowe konta LUB linkuje z istniejącym gdy email się zgadza</td></tr>
+    </table>
+    <div class="callout danger"><div class="callout-icon"></div><div>Nie ustawiaj <code>LINK_ONLY</code> — blokuje tworzenie nowych kont. Użytkownicy logujący się Discordem po raz pierwszy dostaną błąd.</div></div>
+
+    <h3>Mappery atrybutów (zakładka Mappers — pojawia się po Save)</h3>
+    <p>Zakładka <strong>Mappers</strong> jest dostępna dopiero po pierwszym zapisaniu IDP.</p>
+
+    <h4>Mapper 1 — Username</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Name</td><td><code>discord-username</code></td></tr>
+      <tr><td>Sync mode</td><td><code>Inherit</code></td></tr>
+      <tr><td>Mapper type</td><td><code>Attribute Importer</code></td></tr>
+      <tr><td>Claim</td><td><code>preferred_username</code></td></tr>
+      <tr><td>User Attribute Name</td><td><code>username</code></td></tr>
+    </table>
+
+    <h4>Mapper 2 — Avatar (opcjonalnie)</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Name</td><td><code>discord-avatar</code></td></tr>
+      <tr><td>Mapper type</td><td><code>Attribute Importer</code></td></tr>
+      <tr><td>Claim</td><td><code>picture</code></td></tr>
+      <tr><td>User Attribute Name</td><td><code>picture</code></td></tr>
+    </table>
+    <div class="callout info"><div class="callout-icon"></div><div><code>preferred_username</code> pochodzi z Userinfo Endpoint Discorda — Keycloak odpytuje go automatycznie po logowaniu. Weryfikacja: <strong>Users → [konto] → zakładka Details</strong>.</div></div>
+  </section>
+
+  <!-- FLOW -->
+  <section id="flow">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2 style="margin:0;border:none;">Keycloak — First Broker Login Flow</h2>
+    </div>
+    <p>Sidebar → <strong>Authentication</strong> → flow <strong>first broker login</strong></p>
+    <table>
+      <tr><th>Krok</th><th>Ustawienie</th><th>Znaczenie</th></tr>
+      <tr><td>Review Profile</td><td><code>DISABLED</code></td><td>Pomijamy formularz uzupełniania danych — Keycloak pobiera je z mapperów Discorda</td></tr>
+      <tr><td>Handle Existing Account</td><td><code>ALTERNATIVE</code></td><td>Wykonuje się gdy email z Discorda już istnieje w bazie</td></tr>
+      <tr><td>Verify Existing Account by Email</td><td><code>ALTERNATIVE</code></td><td>Wysyła mail weryfikacyjny przy linkowaniu kont — zabezpieczenie przed przejęciem konta</td></tr>
+    </table>
+    <div class="callout info"><div class="callout-icon"></div><div><code>ALTERNATIVE</code> = krok wykona się jeśli zajdzie potrzeba, nie blokuje flow gdy nie jest potrzebny.</div></div>
+  </section>
+
+  <!-- ROLES -->
+  <section id="roles">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <h2 style="margin:0;border:none;">Keycloak — Role i uprawnienia</h2>
+    </div>
+
+    <h3>Utwórz rolę verified-alumn</h3>
+    <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>verified-alumn</code> → Save.</p>
+
+    <h3>Rola broker.read-token dla użytkownika</h3>
+    <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord.</p>
+
+    <p>Jeśli chcesz nadać ją ręcznie do testów:</p>
+    <p><strong>Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token → Assign</strong></p>
+    <div class="callout warn"><div class="callout-icon"></div><div>Po ręcznym nadaniu roli zdobądź <strong>nowy AT</strong> — stary token nie będzie zawierał nowej roli w claims.</div></div>
+  </section>
+
+  <!-- WERYFIKACJA -->
+  <section id="weryfikacja">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <h2 style="margin:0;border:none;">Weryfikacja konfiguracji Keycloaka</h2>
+    </div>
+
+    <p>Otwórz w trybie incognito:</p>
+    <pre><code>http://localhost:8080/realms/pkka/protocol/openid-connect/auth?client_id=pkka-app&response_type=code&scope=openid&redirect_uri=http://localhost:8081/login/oauth2/code/keycloak</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/keycloak-login-page-discord-button.png" alt="Strona logowania Keycloaka">
+      <figcaption>✅ Gotowa strona logowania — formularz email/hasło, link Register, przycisk Discord</figcaption>
+    </figure>
+
+    <div class="callout success"><div class="callout-icon"></div><div>Strona <code>http://localhost:8080/realms/pkka/account</code> to Panel Zarządzania Kontem — przyciski zewnętrznych providerów się tam <strong>nie</strong> pojawiają. To normalne zachowanie.</div></div>
+
+    <h3>Efekt logowania przez Discord</h3>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/email-verification-after-discord-login.png" alt="Email verification po Discord login">
+        <figcaption>Po pierwszym logowaniu Discordem — Keycloak prosi o weryfikację emaila</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/linked-login-providers-discord.png" alt="Linked accounts - Discord powiązany">
+        <figcaption>Po zalogowaniu Discord widnieje w "Linked login providers" konta</figcaption>
+      </figure>
+    </div>
+    <figure class="screenshot">
+      <img src="imgs/account-management-device-activity.png" alt="Device activity w Account Management">
+      <figcaption>Keycloak Account Management — Device activity po zalogowaniu</figcaption>
+    </figure>
+  </section>
+
+  <!-- POSTMAN -->
+  <section id="postman">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <h2 style="margin:0;border:none;">Testowanie przez Postman</h2>
+    </div>
+
+    <p>Poniższy przepływ pozwala zweryfikować działanie całej integracji bez uruchamiania Spring Boota. Postman pełni rolę aplikacji frontendowej — wykonuje Authorization Code Flow żeby zdobyć Keycloak Access Token użytkownika.</p>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>Konta z <strong>2FA (YubiKey/WebAuthn)</strong> nie działają w webview Postmana — FIDO2 nie jest obsługiwany. Użyj testowego konta bez 2FA.</div></div>
+
+    <h3>Krok 1 — Dodaj Redirect URI Postmana do Keycloaka</h3>
+    <p><strong>Clients → pkka-app → Valid redirect URIs</strong> — dodaj tymczasowo:</p>
+    <pre><code>https://oauth.pstmn.io/v1/callback</code></pre>
+
+    <h3>Krok 2 — Zdobądź Keycloak Access Token przez OAuth2 flow</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Utwórz nowy request <code>GET /broker/discord/token</code>. Zakładka <strong>Authorization</strong> → Type: <strong>OAuth 2.0</strong> → kliknij <strong>Get New Access Token</strong>.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <p>Wypełnij formularz:</p>
+        <table>
+          <tr><th>Pole</th><th>Wartość</th></tr>
+          <tr><td>Grant Type</td><td><code>Authorization Code</code></td></tr>
+          <tr><td>Auth URL</td><td><code>http://localhost:8080/realms/pkka/protocol/openid-connect/auth</code></td></tr>
+          <tr><td>Access Token URL</td><td><code>http://localhost:8080/realms/pkka/protocol/openid-connect/token</code></td></tr>
+          <tr><td>Client ID</td><td><code>pkka-app</code></td></tr>
+          <tr><td>Client Secret</td><td><em>twój secret</em></td></tr>
+          <tr><td>Scope</td><td><code>openid</code></td></tr>
+          <tr><td>Redirect URI</td><td><code>https://oauth.pstmn.io/v1/callback</code></td></tr>
+        </table>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Kliknij <strong>Proceed</strong> — otworzy się webview z prawdziwą stroną logowania Keycloaka z przyciskiem Discord.</p></div></div>
+    </div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-keycloak-login-webview.png" alt="Postman webview - strona logowania Keycloaka">
+      <figcaption>Postman webview — strona logowania Keycloaka z przyciskiem Discord</figcaption>
+    </figure>
+
+    <div class="step"><div class="step-num" style="counter-increment:none;background:var(--accent)">4</div><div class="step-body" style="margin-left:16px"><p>Discord pyta o zgodę. Upewnij się że widnieje <strong>"Know what servers you're in"</strong> — to potwierdza poprawność scope <code>guilds</code>.</p></div></div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-discord-consent-guilds.png" alt="Discord consent w Postmanie - z guilds scope">
+      <figcaption>Okno zgody Discorda w Postmanie — widoczne "Know what servers you're in" (scope guilds aktywny)</figcaption>
+    </figure>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>Konto Discorda musi mieć zweryfikowany email lub numer telefonu. Nowe konta testowe bez weryfikacji zostaną odrzucone przez Discord.</div></div>
+
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/discord-verified-email-required-error.png" alt="Discord - You need a verified email">
+      <figcaption>Błąd Discord — konto testowe bez zweryfikowanego emaila. Użyj konta z weryfikacją.</figcaption>
+    </figure>
+
+    <div class="step"><div class="step-num" style="counter-increment:none;background:var(--accent)">5</div><div class="step-body" style="margin-left:16px"><p>Po zalogowaniu przez Discord Postman przechwyci kod i wymieni go na token. Kliknij <strong>Use Token</strong>.</p></div></div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-manage-access-tokens.png" alt="Postman Manage Access Tokens - AT, refresh, id_token">
+      <figcaption>Postman — okno Manage Access Tokens z Keycloak access_token, refresh_token i id_token</figcaption>
+    </figure>
+
+    <h3>Krok 3 — Pobierz Discord Access Token z Keycloaka</h3>
+    <pre><code>GET http://localhost:8080/realms/pkka/broker/discord/token
+Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-403-client-not-authorized.png" alt="403 - Client not authorized">
+      <figcaption>Błąd 403 przed nadaniem roli <code>broker/read-token</code> — Client not authorized</figcaption>
+    </figure>
+
+    <p>Po nadaniu roli <code>broker/read-token</code> na service account klienta <code>pkka-app</code> oraz roli użytkownikowi — odpowiedź 200 OK:</p>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-200-discord-access-token.png" alt="200 OK - Discord access_token pobrany">
+      <figcaption>✅ 200 OK — Discord access_token pobrany z Keycloaka</figcaption>
+    </figure>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/discord-token-scope-guilds-email-identify.png" alt="Scope guilds email identify w odpowiedzi">
+      <figcaption>Scope w odpowiedzi: <code>guilds email identify</code> — potwierdzenie poprawnej konfiguracji</figcaption>
+    </figure>
+
+    <h3>Krok 4 — Weryfikacja listy serwerów Discord</h3>
+    <pre><code>GET https://discord.com/api/users/@me/guilds
+Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/discord-guilds-api-200-response.png" alt="Discord guilds API - lista serwerów">
+      <figcaption>✅ 200 OK — lista serwerów użytkownika z Discord API. Pole <code>id</code> to wartość do sprawdzenia w logice autoryzacji.</figcaption>
+    </figure>
+
+    <div class="callout success"><div class="callout-icon"></div><div>Cały przepływ działa poprawnie. Keycloak przechowuje Discord AT, Spring Boot może go pobrać i użyć do weryfikacji przynależności do serwera.</div></div>
+  </section>
+
+  <!-- SPRING -->
+  <section id="spring">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <h2 style="margin:0;border:none;">Dalsze kroki — Spring Boot</h2>
+    </div>
+    <p>Pełna implementacja Spring Boot wymaga następujących komponentów. Szczegółowy kod zostanie opisany w osobnej sekcji dokumentacji po zakończeniu konfiguracji infrastruktury.</p>
+
+    <h3>Wymagane zależności (build.gradle)</h3>
+    <table>
+      <tr><th>Artefakt</th><th>Cel</th></tr>
+      <tr><td><code>spring-boot-starter-webmvc</code></td><td>HTTP, REST kontrolery</td></tr>
+      <tr><td><code>spring-boot-starter-security</code></td><td>Spring Security</td></tr>
+      <tr><td><code>spring-boot-starter-oauth2-client</code></td><td>OIDC klient — rozmowy z Keycloakiem</td></tr>
+      <tr><td><code>spring-boot-starter-thymeleaf</code></td><td>Templating HTML</td></tr>
+      <tr><td><code>keycloak-admin-client:26.0.8</code></td><td>Nadawanie ról przez Keycloak Admin API</td></tr>
+    </table>
+
+    <h3>application.yml — kluczowe sekcje</h3>
+    <pre><code>server:
+  port: <span class="num">8081</span>
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: pkka-app
+            client-secret: <span class="str">&lt;SECRET&gt;</span>
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/pkka
+            user-name-attribute: preferred_username
+
+keycloak:
+  server-url: http://localhost:8080
+  realm: pkka
+  client-id: pkka-app
+  client-secret: <span class="str">&lt;SECRET&gt;</span>
+
+discord:
+  guild-id: <span class="str">&lt;TWOJE_SERVER_ID&gt;</span></code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Scope <code>guilds</code> nie jest potrzebny w konfiguracji Spring Boota — jest ustawiany po stronie Keycloak→Discord (Default Scopes w IDP). Spring Boot rozmawia tylko z Keycloakiem.</div></div>
+
+    <h3>Komponenty do implementacji</h3>
+    <table>
+      <tr><th>Klasa</th><th>Odpowiedzialność</th></tr>
+      <tr><td><code>SecurityConfig</code></td><td>Konfiguracja Spring Security, OAuth2 login flow, logout do Keycloaka</td></tr>
+      <tr><td><code>KeycloakAdminConfig</code></td><td>Bean Keycloak Admin Client (client credentials)</td></tr>
+      <tr><td><code>DiscordGuildService</code></td><td>Pobieranie Discord AT z Keycloaka, weryfikacja serwera, nadawanie roli</td></tr>
+      <tr><td><code>GuildVerificationController</code></td><td>Endpoint <code>POST /verify-guild</code></td></tr>
+      <tr><td><code>ProfileController</code></td><td>Wyświetlanie danych zalogowanego użytkownika (debug)</td></tr>
+    </table>
+  </section>
+
+  <!-- BŁĘDY -->
+  <section id="bledy">
+    <div class="section-header">
+      <div class="section-num">12</div>
+      <h2 style="margin:0;border:none;">Typowe błędy</h2>
+    </div>
+    <table>
+      <tr><th>Błąd</th><th>Przyczyna</th><th>Rozwiązanie</th></tr>
+      <tr><td><code>redirect_uri mismatch</code> na Discordzie</td><td>Zły URI w Discord Dev Portal</td><td>Sprawdź: <code>http://localhost:8080/realms/pkka/broker/discord/endpoint</code></td></tr>
+      <tr><td>Brak przycisku Discord</td><td><code>Hide on login page = ON</code></td><td>Zmień na OFF w ustawieniach IDP</td></tr>
+      <tr><td>Błąd przy pierwszym logowaniu Discordem</td><td><code>Account linking policy = LINK_ONLY</code></td><td>Zmień na <code>DEFAULT</code></td></tr>
+      <tr><td>Email weryfikacyjny nie dochodzi</td><td>Brak SMTP</td><td>Uruchom Mailpit lub wyłącz tymczasowo Verify email</td></tr>
+      <tr><td><code>403 Client not authorized to retrieve tokens</code></td><td>Brak roli <code>read-token</code> na service account</td><td>Clients → pkka-app → Service account roles → dodaj <code>broker/read-token</code></td></tr>
+      <tr><td><code>403</code> z tokenem użytkownika na <code>/broker/discord/token</code></td><td>Brak roli <code>broker.read-token</code> na koncie</td><td><code>Stored tokens readable = ON</code> LUB ręczne nadanie roli w User → Role mapping</td></tr>
+      <tr><td>Auth failed w Postmanie z YubiKey</td><td>Webview Postmana nie obsługuje WebAuthn/FIDO2</td><td>Użyj testowego konta bez 2FA</td></tr>
+      <tr><td>Discord: "verified email or phone"</td><td>Testowe konto Discord bez weryfikacji</td><td>Użyj konta z zweryfikowanym emailem</td></tr>
+      <tr><td>Rola <code>verified-alumn</code> nie pojawia się w JWT</td><td>Stary token po nadaniu roli</td><td>Użytkownik musi uzyskać nowy token (ponowne logowanie)</td></tr>
+      <tr><td><code>invalid_client</code> w logach Spring</td><td>Zły Client Secret</td><td>Sprawdź <code>application.yml</code> vs zakładka Credentials w Keycloak</td></tr>
+    </table>
+  </section>
+
+
+  <!-- ROLE I GRUPY KEYCLOAK -->
+  <section id="roles-keycloak">
+    <div class="section-header">
+      <div class="section-num">13</div>
+      <h2 style="margin:0;border:none;">Keycloak — Role i Grupy (na podstawie User Stories)</h2>
+    </div>
+
+    <p>Na podstawie aktorów zdefiniowanych w <code>miro_plan.md</code> definiujemy cztery role i odpowiadające im grupy w realmie <code>pkka</code>. Grupy są wygodniejsze niż ręczne przypisywanie ról — użytkownik dodany do grupy dziedziczy jej role automatycznie.</p>
+
+    <h3>Role realmowe (Realm Roles)</h3>
+    <table>
+      <tr><th>Rola</th><th>Aktor z US</th><th>Uprawnienia</th></tr>
+      <tr><td><code>user</code></td><td>Zalogowany użytkownik</td><td>Składanie wniosku o dołączenie, przeglądanie statusu, linkowanie konta Discord</td></tr>
+      <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumn</td><td>Lista alumnów, materiały, wydarzenia, edycja profilu, koła zainteresowań</td></tr>
+      <tr><td><code>admin</code></td><td>Administrator</td><td>Panel administracyjny, weryfikacja wniosków, tworzenie wydarzeń, ankiety, statystyki</td></tr>
+      <tr><td><code>bot</code></td><td>Bot Discord</td><td>Service account — synchronizacja ról, powiadamianie o wydarzeniach</td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>.</div></div>
+
+    <h3>Grupy (Groups)</h3>
+    <p>Grupy upraszczają zarządzanie — zamiast przypisywać role każdemu użytkownikowi osobno, dodajesz go do grupy.</p>
+    <table>
+      <tr><th>Grupa</th><th>Role przypisane do grupy</th><th>Kto trafia do grupy</th></tr>
+      <tr><td><code>users</code></td><td><code>user</code></td><td>Domyślna grupa — każdy nowo zarejestrowany użytkownik (ustaw jako Default Group)</td></tr>
+      <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Alumnus po pozytywnym rozpatrzeniu wniosku przez admina</td></tr>
+      <tr><td><code>administrators</code></td><td><code>user</code>, <code>verified-alumn</code>, <code>admin</code></td><td>Pracownicy wydziału / zarząd klubu</td></tr>
+      <tr><td><code>bots</code></td><td><code>bot</code></td><td>Service account bota Discord</td></tr>
+    </table>
+
+    <h3>Jak utworzyć role w Keycloak</h3>
+    <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> — powtórz dla każdej roli:</p>
+    <table>
+      <tr><th>Role name</th><th>Description</th></tr>
+      <tr><td><code>user</code></td><td>Zarejestrowany użytkownik platformy</td></tr>
+      <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumnus AGH</td></tr>
+      <tr><td><code>admin</code></td><td>Administrator platformy</td></tr>
+      <tr><td><code>bot</code></td><td>Konto serwisowe bota Discord</td></tr>
+    </table>
+
+    <h3>Jak utworzyć grupy w Keycloak</h3>
+    <p>Sidebar → <strong>Groups</strong> → <strong>Create group</strong> → po zapisaniu wejdź w grupę → zakładka <strong>Role mapping</strong> → przypisz role:</p>
+    <div class="callout info"><div class="callout-icon"></div><div>Żeby każdy nowo zarejestrowany użytkownik automatycznie trafił do grupy <code>users</code>: <strong>Realm Settings → zakładka General → Default Groups</strong> → dodaj <code>users</code>.</div></div>
+
+    <h3>Mapowanie ról na endpointy backendu</h3>
+    <table>
+      <tr><th>Endpoint / Akcja</th><th>Wymagana rola</th></tr>
+      <tr><td>Publiczne wpisy blogowe, kalendarz wydarzeń</td><td>Brak (publiczne)</td></tr>
+      <tr><td>Formularz wniosku o dołączenie</td><td><code>user</code></td></tr>
+      <tr><td>Status wniosku, linkowanie Discord</td><td><code>user</code></td></tr>
+      <tr><td>Lista alumnów, profile, materiały, wydarzenia</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Edycja własnego profilu</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Koła zainteresowań</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Panel administracyjny, weryfikacja wniosków</td><td><code>admin</code></td></tr>
+      <tr><td>Tworzenie wydarzeń, ankiety, statystyki</td><td><code>admin</code></td></tr>
+      <tr><td>Synchronizacja Discord, powiadomienia</td><td><code>bot</code></td></tr>
+    </table>
+
+    <h3>Jak odczytać rolę w Spring Boot</h3>
+    <p>Keycloak umieszcza role realmowe w tokenie JWT pod kluczem <code>realm_access.roles</code>. Spring Security musi być skonfigurowany żeby je odczytać:</p>
+    <pre><code><span class="cm">// GrantedAuthoritiesMapper — mapuje Keycloak realm roles na Spring authorities</span>
+<span class="kw">public class</span> KeycloakRoleConverter <span class="kw">implements</span> Converter&lt;Jwt, Collection&lt;GrantedAuthority&gt;&gt; {
+
+    <span class="kw">@Override</span>
+    <span class="kw">public</span> Collection&lt;GrantedAuthority&gt; convert(Jwt jwt) {
+        Map&lt;String, Object&gt; realmAccess = jwt.getClaimAsMap(<span class="str">"realm_access"</span>);
+        <span class="kw">if</span> (realmAccess == <span class="kw">null</span>) <span class="kw">return</span> List.of();
+
+        List&lt;String&gt; roles = (List&lt;String&gt;) realmAccess.get(<span class="str">"roles"</span>);
+        <span class="kw">return</span> roles.stream()
+            .map(r -&gt; <span class="kw">new</span> SimpleGrantedAuthority(<span class="str">"ROLE_"</span> + r.toUpperCase()))
+            .collect(Collectors.toList());
+    }
+}</code></pre>
+    <pre><code><span class="cm">// Użycie w SecurityConfig</span>
+.authorizeHttpRequests(auth -&gt; auth
+    .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
+    .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
+    .requestMatchers(<span class="str">"/api/admin/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
+    .anyRequest().hasRole(<span class="str">"USER"</span>)
+)</code></pre>
+  </section>
+
+  <!-- GRADLE -->
+  <section id="gradle">
+    <div class="section-header">
+      <div class="section-num">14</div>
+      <h2 style="margin:0;border:none;">build.gradle</h2>
+    </div>
+
+    <pre><code>plugins {
+    id <span class="str">'java'</span>
+    id <span class="str">'org.springframework.boot'</span> version <span class="str">'4.0.6'</span>
+    id <span class="str">'io.spring.dependency-management'</span> version <span class="str">'1.1.7'</span>
+    id <span class="str">'com.diffplug.spotless'</span> version <span class="str">'7.0.4'</span>
+    id <span class="str">'net.ltgt.errorprone'</span> version <span class="str">'5.1.0'</span>
+}
+
+group = <span class="str">'pl.edu.agh'</span>
+version = <span class="str">'0.0.1-SNAPSHOT'</span>
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(<span class="num">25</span>)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-security'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc'</span>
+    implementation <span class="str">'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-oauth2-client'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-thymeleaf'</span>
+    implementation <span class="str">"org.keycloak:keycloak-admin-client:26.0.8"</span>
+
+    compileOnly <span class="str">'org.projectlombok:lombok'</span>
+    annotationProcessor <span class="str">'org.projectlombok:lombok'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-security-test'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc-test'</span>
+    testCompileOnly <span class="str">'org.projectlombok:lombok'</span>
+    testRuntimeOnly <span class="str">'org.junit.platform:junit-platform-launcher'</span>
+    testAnnotationProcessor <span class="str">'org.projectlombok:lombok'</span>
+
+    errorprone <span class="str">'com.google.errorprone:error_prone_core:2.49.0'</span>
+}
+
+tasks.named(<span class="str">'test'</span>) {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        disableWarningsInGeneratedCode = <span class="kw">true</span>
+        excludedPaths = <span class="str">'.*/build/generated/.*'</span>
+    }
+    <span class="kw">if</span> (project.hasProperty(<span class="str">'strict'</span>)) {
+        options.compilerArgs &lt;&lt; <span class="str">'-Werror'</span>
+    }
+}
+
+spotless {
+    java {
+        target <span class="str">'src/**/*.java'</span>
+        googleJavaFormat(<span class="str">'1.35.0'</span>).aosp().reflowLongStrings()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}</code></pre>
+  </section>
+
+  <!-- APPLICATION.YML -->
+  <section id="appyml">
+    <div class="section-header">
+      <div class="section-num">15</div>
+      <h2 style="margin:0;border:none;">application.yml</h2>
+    </div>
+
+    <p>Plik podzielony na trzy sekcje: wspólna konfiguracja bazowa, profil <code>dev</code> (localhost, Swagger włączony, debug logging) i profil <code>prod</code> (wyłączony Swagger, zmienne środowiskowe obowiązkowe, WARN logging). Aktywacja profilu przez <code>-Dspring.profiles.active=prod</code> lub zmienną środowiskową <code>SPRING_PROFILES_ACTIVE=prod</code>.</p>
+
+    <pre><code>spring:
+  application:
+    name: pkka-backend
+  profiles:
+    default: dev
+
+<span class="cm"># OpenAPI / Swagger</span>
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: <span class="kw">true</span>
+    display-request-duration: <span class="kw">true</span>
+    disable-swagger-default-url: <span class="kw">true</span>
+
+
+<span class="cm"># PROFILE: dev</span>
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  <span class="cm"># OAuth2 / OIDC (Keycloak)</span>
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: pkka-app
+            client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET:change-me}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+        provider:
+          keycloak:
+            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/pkka}</span>
+            user-name-attribute: preferred_username
+
+<span class="cm"># OpenAPI — enabled on dev</span>
+springdoc:
+  api-docs:
+    enabled: <span class="kw">true</span>
+  swagger-ui:
+    enabled: <span class="kw">true</span>
+
+<span class="cm"># Keycloak Admin Client</span>
+keycloak:
+  server-url: <span class="prop">${KEYCLOAK_URL:http://localhost:8080}</span>
+  realm: <span class="prop">${KEYCLOAK_REALM:pkka}</span>
+  client-id: <span class="prop">${KEYCLOAK_CLIENT_ID:pkka-app}</span>
+  client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET:change-me}</span>
+
+<span class="cm"># Discord</span>
+discord:
+  guild-id: <span class="prop">${DISCORD_GUILD_ID:change-me}</span>
+
+<span class="cm"># Server</span>
+server:
+  port: <span class="num">8081</span>
+
+<span class="cm"># Logging</span>
+logging:
+  level:
+    root: INFO
+    pl.edu.agh.pkka: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+<span class="cm"># PROFILE: prod</span>
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: <span class="prop">${KEYCLOAK_CLIENT_ID}</span>
+            client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+        provider:
+          keycloak:
+            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI}</span>
+            user-name-attribute: preferred_username
+
+springdoc:
+  api-docs:
+    enabled: <span class="kw">false</span>
+  swagger-ui:
+    enabled: <span class="kw">false</span>
+
+keycloak:
+  server-url: <span class="prop">${KEYCLOAK_URL}</span>
+  realm: <span class="prop">${KEYCLOAK_REALM}</span>
+  client-id: <span class="prop">${KEYCLOAK_CLIENT_ID}</span>
+  client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET}</span>
+
+discord:
+  guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
+
+server:
+  port: <span class="prop">${PORT:8081}</span>
+  tomcat:
+    remote-ip-header: x-forwarded-for
+    protocol-header: x-forwarded-proto
+
+logging:
+  level:
+    root: WARN
+    pl.edu.agh.pkka: INFO</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars.</div></div>
+  </section>
+
+</main>
+</div>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(l => l.classList.remove('active'));
+        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
