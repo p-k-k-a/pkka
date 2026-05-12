@@ -267,7 +267,7 @@ services:
       KC_HOSTNAME: localhost
       KC_HTTP_ENABLED: <span class="str">"true"</span>
     ports:
-      - <span class="str">"8080:8080"</span>
+      - <span class="str">"8081:8081"</span>
     depends_on:
       postgres:
         condition: service_healthy
@@ -302,7 +302,7 @@ networks:
     </div>
     <div class="steps">
       <div class="step"><div class="step-num"></div><div class="step-body"><p>Wejdź na <code>https://discord.com/developers/applications</code> i wybierz swoją aplikację.</p></div></div>
-      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>OAuth2</strong> → sekcja <strong>Redirects</strong> → <strong>Add Redirect</strong>:</p><pre><code>http://localhost:8080/realms/pkka/broker/discord/endpoint</code></pre></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>OAuth2</strong> → sekcja <strong>Redirects</strong> → <strong>Add Redirect</strong>:</p><pre><code>http://localhost:8081/realms/pkka/broker/discord/endpoint</code></pre></div></div>
       <div class="step"><div class="step-num"></div><div class="step-body"><p>Kliknij <strong>Save Changes</strong>. Skopiuj <strong>Client ID</strong> i wygeneruj <strong>Client Secret</strong>.</p></div></div>
     </div>
     <div class="callout info"><div class="callout-icon"></div><div>Sekcja <strong>URL Generator</strong> i pole <strong>Select redirect URI</strong> to narzędzie pomocnicze — ignorujesz je całkowicie. Nie zaznaczasz tam żadnych scopów.</div></div>
@@ -394,13 +394,13 @@ networks:
     <h3>Ekran 3 — Login settings</h3>
     <table>
       <tr><th>Pole</th><th>Wartość</th></tr>
-      <tr><td>Root URL</td><td><code>http://localhost:8081</code></td></tr>
-      <tr><td>Valid redirect URIs</td><td><code>http://localhost:8081/*</code></td></tr>
-      <tr><td>Valid post logout redirect URIs</td><td><code>http://localhost:8081/*</code></td></tr>
-      <tr><td>Web origins</td><td><code>http://localhost:8081</code></td></tr>
+      <tr><td>Root URL</td><td><code>http://localhost:8080</code></td></tr>
+      <tr><td>Valid redirect URIs</td><td><code>http://localhost:8080/*</code></td></tr>
+      <tr><td>Valid post logout redirect URIs</td><td><code>http://localhost:8080/*</code></td></tr>
+      <tr><td>Web origins</td><td><code>http://localhost:8080</code></td></tr>
     </table>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Port <strong>8081</strong> — żeby nie kolidować z Keycloakiem na 8080. Możesz użyć dowolnego wolnego portu.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Port <strong>8080</strong> — backend. Keycloak działa na <strong>8081</strong>, żeby uniknąć kolizji.</div></div>
 
     <h3>Skopiuj Client Secret</h3>
     <p>Po zapisaniu → zakładka <strong>Credentials</strong> → skopiuj <strong>Client secret</strong>.</p>
@@ -544,14 +544,14 @@ networks:
     </div>
 
     <p>Otwórz w trybie incognito:</p>
-    <pre><code>http://localhost:8080/realms/pkka/protocol/openid-connect/auth?client_id=pkka-app&response_type=code&scope=openid&redirect_uri=http://localhost:8081/login/oauth2/code/keycloak</code></pre>
+    <pre><code>http://localhost:8081/realms/pkka/protocol/openid-connect/auth?client_id=pkka-app&response_type=code&scope=openid&redirect_uri=http://localhost:8080/login/oauth2/code/keycloak</code></pre>
 
     <figure class="screenshot">
       <img src="imgs/keycloak-login-page-discord-button.png" alt="Strona logowania Keycloaka">
       <figcaption>✅ Gotowa strona logowania — formularz email/hasło, link Register, przycisk Discord</figcaption>
     </figure>
 
-    <div class="callout success"><div class="callout-icon"></div><div>Strona <code>http://localhost:8080/realms/pkka/account</code> to Panel Zarządzania Kontem — przyciski zewnętrznych providerów się tam <strong>nie</strong> pojawiają. To normalne zachowanie.</div></div>
+    <div class="callout success"><div class="callout-icon"></div><div>Strona <code>http://localhost:8081/realms/pkka/account</code> to Panel Zarządzania Kontem — przyciski zewnętrznych providerów się tam <strong>nie</strong> pojawiają. To normalne zachowanie.</div></div>
 
     <h3>Efekt logowania przez Discord</h3>
     <div class="screenshot-row">
@@ -593,8 +593,8 @@ networks:
         <table>
           <tr><th>Pole</th><th>Wartość</th></tr>
           <tr><td>Grant Type</td><td><code>Authorization Code</code></td></tr>
-          <tr><td>Auth URL</td><td><code>http://localhost:8080/realms/pkka/protocol/openid-connect/auth</code></td></tr>
-          <tr><td>Access Token URL</td><td><code>http://localhost:8080/realms/pkka/protocol/openid-connect/token</code></td></tr>
+          <tr><td>Auth URL</td><td><code>http://localhost:8081/realms/pkka/protocol/openid-connect/auth</code></td></tr>
+          <tr><td>Access Token URL</td><td><code>http://localhost:8081/realms/pkka/protocol/openid-connect/token</code></td></tr>
           <tr><td>Client ID</td><td><code>pkka-app</code></td></tr>
           <tr><td>Client Secret</td><td><em>twój secret</em></td></tr>
           <tr><td>Scope</td><td><code>openid</code></td></tr>
@@ -631,7 +631,7 @@ networks:
     </figure>
 
     <h3>Krok 3 — Pobierz Discord Access Token z Keycloaka</h3>
-    <pre><code>GET http://localhost:8080/realms/pkka/broker/discord/token
+    <pre><code>GET http://localhost:8081/realms/pkka/broker/discord/token
 Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
 
     <figure class="screenshot">
@@ -682,7 +682,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
 
     <h3>application.yml — kluczowe sekcje</h3>
     <pre><code>server:
-  port: <span class="num">8081</span>
+  port: <span class="num">8080</span>
 
 spring:
   security:
@@ -697,11 +697,11 @@ spring:
             redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/pkka
+            issuer-uri: http://localhost:8081/realms/pkka
             user-name-attribute: preferred_username
 
 keycloak:
-  server-url: http://localhost:8080
+  server-url: http://localhost:8081
   realm: pkka
   client-id: pkka-app
   client-secret: <span class="str">&lt;SECRET&gt;</span>
@@ -730,7 +730,7 @@ discord:
     </div>
     <table>
       <tr><th>Błąd</th><th>Przyczyna</th><th>Rozwiązanie</th></tr>
-      <tr><td><code>redirect_uri mismatch</code> na Discordzie</td><td>Zły URI w Discord Dev Portal</td><td>Sprawdź: <code>http://localhost:8080/realms/pkka/broker/discord/endpoint</code></td></tr>
+      <tr><td><code>redirect_uri mismatch</code> na Discordzie</td><td>Zły URI w Discord Dev Portal</td><td>Sprawdź: <code>http://localhost:8081/realms/pkka/broker/discord/endpoint</code></td></tr>
       <tr><td>Brak przycisku Discord</td><td><code>Hide on login page = ON</code></td><td>Zmień na OFF w ustawieniach IDP</td></tr>
       <tr><td>Błąd przy pierwszym logowaniu Discordem</td><td><code>Account linking policy = LINK_ONLY</code></td><td>Zmień na <code>DEFAULT</code></td></tr>
       <tr><td>Email weryfikacyjny nie dochodzi</td><td>Brak SMTP</td><td>Uruchom Mailpit lub wyłącz tymczasowo Verify email</td></tr>
@@ -947,7 +947,7 @@ spring:
             redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
         provider:
           keycloak:
-            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/pkka}</span>
+            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
             user-name-attribute: preferred_username
 
 <span class="cm"># OpenAPI — enabled on dev</span>
@@ -959,7 +959,7 @@ springdoc:
 
 <span class="cm"># Keycloak Admin Client</span>
 keycloak:
-  server-url: <span class="prop">${KEYCLOAK_URL:http://localhost:8080}</span>
+  server-url: <span class="prop">${KEYCLOAK_URL:http://localhost:8081}</span>
   realm: <span class="prop">${KEYCLOAK_REALM:pkka}</span>
   client-id: <span class="prop">${KEYCLOAK_CLIENT_ID:pkka-app}</span>
   client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET:change-me}</span>
@@ -970,7 +970,7 @@ discord:
 
 <span class="cm"># Server</span>
 server:
-  port: <span class="num">8081</span>
+  port: <span class="num">8080</span>
 
 <span class="cm"># Logging</span>
 logging:
@@ -1018,7 +1018,7 @@ discord:
   guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
 
 server:
-  port: <span class="prop">${PORT:8081}</span>
+  port: <span class="prop">${PORT:8080}</span>
   tomcat:
     remote-ip-header: x-forwarded-for
     protocol-header: x-forwarded-proto
