@@ -9,14 +9,14 @@ paths:
       summary: Pobiera listę ogłoszeń
       operationId: getAnnouncements
       responses:
-        '200':
+        "200":
           description: Lista ogłoszeń pobrana pomyślnie
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Announcement'
+                  $ref: "#/components/schemas/Announcement"
 
 components:
   schemas:
