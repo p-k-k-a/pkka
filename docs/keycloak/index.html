@@ -138,6 +138,8 @@
     <a href="#idp">Identity Provider</a>
     <a href="#flow">First Broker Login</a>
     <a href="#roles">Role i uprawnienia</a>
+    <a href="#auth-code-flow">Authorization Code Flow</a>
+    <a href="#custom-theme">Custom Login Theme</a>
   </div>
   <div class="nav-section">
     <div class="nav-title">Testowanie</div>
@@ -1194,6 +1196,246 @@ Content-Type: application/json
     verificationService.grantVerifiedAlumn(keycloakUserId);
     <span class="kw">return</span> ResponseEntity.noContent().build();
 }</code></pre>
+  </section>
+
+  <!-- AUTHORIZATION CODE FLOW -->
+  <section id="auth-code-flow">
+    <div class="section-header">
+      <div class="section-num">17</div>
+      <h2 style="margin:0;border:none;">Authorization Code Flow — szczegółowy przepływ HTTP</h2>
+    </div>
+
+    <p>Pełny przepływ od kliknięcia "Zaloguj" do aktywnej sesji Spring Security. Dotyczy logowania emailem/hasłem przez Keycloak — wariant z Discordem opisany osobno poniżej.</p>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Korekta: <code>code_challenge</code> nie jest wysyłany domyślnie.</strong><br>
+      PKCE (<code>code_challenge</code> / <code>code_verifier</code>) jest dodawany przez Spring Security automatycznie wyłącznie dla <strong>publicznych klientów</strong> (<code>client-authentication-method: none</code>). Ten projekt używa <strong>confidential client</strong> (ustawione <code>Client authentication = ON</code> + client_secret) — Spring domyślnie nie dołącza PKCE. Wysyłane są tylko <code>state</code> i <code>nonce</code>. Jeśli chcesz wymusić PKCE dla confidential client, patrz uwaga na końcu sekcji.
+    </div></div>
+
+    <h3>Krok 1 — Inicjacja przez Spring</h3>
+    <pre><code>GET http://localhost:8080/oauth2/authorization/keycloak</code></pre>
+    <p>Spring Security (klasa <code>OAuth2AuthorizationRequestRedirectFilter</code>) generuje:</p>
+    <table>
+      <tr><th>Parametr</th><th>Przykład</th><th>Uwagi</th></tr>
+      <tr><td><code>state</code></td><td><code>abc123xyz</code></td><td>Losowy token CSRF — weryfikowany przy callbacku</td></tr>
+      <tr><td><code>nonce</code></td><td><code>def456uvw</code></td><td>Losowy token OIDC — wbudowany w ID token, weryfikowany przez Spring</td></tr>
+      <tr><td><code>code_challenge</code></td><td>—</td><td>❌ Nie wysyłany dla confidential client (bez jawnej konfiguracji PKCE)</td></tr>
+    </table>
+    <p>Spring zapisuje <code>state</code> i <code>nonce</code> w sesji HTTP (lub cookie), po czym odpowiada <code>302 Found</code>:</p>
+    <div class="flow"><span class="box">Browser</span>    GET /oauth2/authorization/keycloak
+    <span class="arrow">→</span>
+<span class="box">Spring</span>     302 Location: http://localhost:8081/realms/pkka/protocol/openid-connect/auth
+               ?response_type=code
+               &amp;client_id=pkka-app
+               &amp;redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fkeycloak
+               &amp;scope=openid+profile+email
+               &amp;state=abc123xyz
+               &amp;nonce=def456uvw</div>
+
+    <h3>Krok 2 — Autoryzacja w Keycloak</h3>
+    <pre><code>GET http://localhost:8081/realms/pkka/protocol/openid-connect/auth?...</code></pre>
+    <p>Keycloak wyświetla formularz logowania. Użytkownik podaje dane → Keycloak autentykuje i weryfikuje. Jeśli konto OK → Keycloak generuje jednorazowy <code>authorization_code</code> (ważny ~1 minutę) i odsyła przeglądarkę do <code>redirect_uri</code>.</p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Authorization code jest <strong>jednorazowy i krótkotrwały</strong>. Keycloak wiąże go z <code>redirect_uri</code>, <code>client_id</code> i sesją użytkownika — nie można go ponownie użyć ani użyć z innym redirect_uri.
+    </div></div>
+
+    <h3>Krok 3 — Callback do Spring</h3>
+    <pre><code>GET http://localhost:8080/login/oauth2/code/keycloak?code=AUTH_CODE&amp;state=abc123xyz</code></pre>
+    <p>Spring Security (<code>OAuth2LoginAuthenticationFilter</code>) odbiera request i:</p>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Porównuje <code>state</code> z zapisanym w sesji — jeśli niezgodność: <code>401</code>, atak CSRF.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Wyciąga <code>code</code> i przechodzi do wymiany tokenów.</p></div></div>
+    </div>
+
+    <h3>Krok 4 — Wymiana code → token</h3>
+    <pre><code>POST http://localhost:8081/realms/pkka/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+<span class="cm"># Client auth: Basic base64(pkka-app:CLIENT_SECRET) w nagłówku Authorization</span>
+<span class="cm"># (client_secret_basic — domyślna metoda Spring Security dla confidential client)</span>
+
+grant_type=authorization_code
+&amp;code=AUTH_CODE
+&amp;redirect_uri=http://localhost:8080/login/oauth2/code/keycloak</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Metoda uwierzytelniania klienta (<code>client-authentication-method</code>):</strong><br>
+      Spring Security domyślnie używa <code>client_secret_basic</code> — wysyła credentials w nagłówku <code>Authorization: Basic base64(id:secret)</code>. Alternatywnie <code>client_secret_post</code> (credentials w body requestu, wymagane gdy <code>client_authentication = client_secret_post</code> po stronie Keycloaka). W dokumentacji IDP Discorda ustawiono <code>client_secret_post</code> dla brokera — to <strong>osobny klient Keycloak–Discord</strong>, nie mylić z <code>pkka-app → Keycloak</code>.
+    </div></div>
+
+    <h4>Response Keycloaka (200 OK):</h4>
+    <pre><code>{
+  <span class="str">"access_token"</span>:  <span class="str">"eyJhb..."</span>,   <span class="cm">// Keycloak JWT — używany do wywołań API backendu</span>
+  <span class="str">"id_token"</span>:      <span class="str">"eyJhb..."</span>,   <span class="cm">// JWT z danymi użytkownika (sub, email, nonce)</span>
+  <span class="str">"refresh_token"</span>: <span class="str">"eyJhb..."</span>,   <span class="cm">// używany do odświeżania AT przez Spring</span>
+  <span class="str">"token_type"</span>:    <span class="str">"Bearer"</span>,
+  <span class="str">"expires_in"</span>:    <span class="num">300</span>            <span class="cm">// domyślnie 5 minut</span>
+}</code></pre>
+
+    <h3>Krok 5 — Walidacja ID tokena i budowa sesji</h3>
+    <p>Spring Security (klasa <code>OidcAuthorizationCodeAuthenticationProvider</code>) waliduje ID token przed stworzeniem sesji:</p>
+    <table>
+      <tr><th>Claim</th><th>Weryfikacja</th></tr>
+      <tr><td><code>iss</code></td><td>Musi być równy <code>http://localhost:8081/realms/pkka</code></td></tr>
+      <tr><td><code>aud</code></td><td>Musi zawierać <code>pkka-app</code></td></tr>
+      <tr><td><code>nonce</code></td><td>Musi być identyczny z zapisanym w sesji</td></tr>
+      <tr><td><code>exp</code></td><td>Token nie może być wygasły</td></tr>
+      <tr><td>Podpis</td><td>Weryfikowany kluczem publicznym z <code>/realms/pkka/protocol/openid-connect/certs</code></td></tr>
+    </table>
+    <p>Klucze JWKS są pobierane raz przy starcie i odświeżane automatycznie (Spring cachuje). Po pomyślnej walidacji Spring tworzy <code>SecurityContext</code>, zapisuje sesję HTTP i przekierowuje użytkownika na oryginalnie żądany zasób.</p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Spring może opcjonalnie wywołać <code>GET /realms/pkka/protocol/openid-connect/userinfo</code> (Bearer AT) żeby pobrać dodatkowe claimy — zależy od konfiguracji <code>user-info-uri</code> i <code>user-name-attribute</code>. Przy domyślnej konfiguracji OIDC klienta dane użytkownika są wyciągane bezpośrednio z ID tokena (bez dodatkowego wywołania).
+    </div></div>
+
+    <h3>Wariant — logowanie przez Discord (broker sub-flow)</h3>
+    <p>Gdy użytkownik klika przycisk Discord na stronie logowania Keycloaka, między krokiem 2 a 3 wchodzi dodatkowy sub-flow:</p>
+    <div class="flow"><span class="label">Krok 2a.</span> Keycloak → 302 → Discord OAuth2 auth endpoint
+          ?response_type=code&amp;client_id={DISCORD_CLIENT_ID}
+          &amp;scope=openid+email+identify+guilds
+          &amp;state={keycloak_state}&amp;nonce={nonce}
+
+<span class="label">Krok 2b.</span> Użytkownik zatwierdza zgodę na Discordzie
+
+<span class="label">Krok 2c.</span> Discord → 302 → Keycloak broker callback
+          GET /realms/pkka/broker/discord/endpoint?code=DISCORD_CODE
+
+<span class="label">Krok 2d.</span> Keycloak backend: POST discord.com/api/oauth2/token
+          → odbiera Discord AT + RT (zapisuje, bo Store tokens = ON)
+          → odpytuje Discord Userinfo → mapuje atrybuty
+          → uruchamia First Broker Login flow (tworzy/linkuje konto)
+
+<span class="label">Krok 2e.</span> Keycloak generuje SWÓJ authorization_code
+          → 302 → Spring callback (krok 3 z głównego flow)</div>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      Spring Boot <strong>nie widzi Discorda</strong> — z jego perspektywy to identyczny Authorization Code Flow jak przy logowaniu emailem. Różnica jest tylko wewnątrz Keycloaka. Po stronie Spring: zawsze Keycloak JWT.
+    </div></div>
+
+    <h3>Opcjonalnie — wymuszenie PKCE dla confidential client</h3>
+    <p>PKCE (RFC 7636) dla confidential client nie jest wymagane specyfikacją, ale stanowi dodatkową warstwę ochrony przed przechwyceniem authorization code. Aby włączyć:</p>
+    <p><strong>Po stronie Keycloaka</strong> (wymusza PKCE od klienta):<br>
+    <strong>Clients → pkka-app → Advanced → PKCE Code Challenge Method → S256</strong></p>
+    <p><strong>Po stronie Spring</strong> (dodaje code_challenge do requestu):</p>
+    <pre><code><span class="cm"># application.yml — dodaj pod registration.keycloak:</span>
+client-authentication-method: client_secret_basic
+<span class="cm"># Oraz skonfiguruj resolver (wymagany bean w SecurityConfig):</span></code></pre>
+    <pre><code><span class="cm">// SecurityConfig.java</span>
+<span class="kw">@Bean</span>
+<span class="kw">public</span> OAuth2AuthorizationRequestResolver pkceResolver(
+        ClientRegistrationRepository repo) {
+
+    DefaultOAuth2AuthorizationRequestResolver resolver =
+        <span class="kw">new</span> DefaultOAuth2AuthorizationRequestResolver(
+            repo, <span class="str">"/oauth2/authorization"</span>);
+
+    resolver.setAuthorizationRequestCustomizer(
+        OAuth2AuthorizationRequestCustomizers.withPkce());
+
+    <span class="kw">return</span> resolver;
+}</code></pre>
+    <div class="callout warn"><div class="callout-icon"></div><div>Jeśli włączysz <code>PKCE Code Challenge Method = S256</code> po stronie Keycloaka bez odpowiedniej konfiguracji Spring, logowanie przestanie działać — Keycloak odrzuci requesty bez <code>code_challenge</code>. Włączaj razem.</div></div>
+  </section>
+
+  <!-- CUSTOM LOGIN THEME -->
+  <section id="custom-theme">
+    <div class="section-header">
+      <div class="section-num">18</div>
+      <h2 style="margin:0;border:none;">Custom Login Theme — personalizacja UI Keycloaka</h2>
+    </div>
+
+    <p>Keycloak pozwala całkowicie zastąpić domyślny wygląd strony logowania własnym motywem (theme). W trybie deweloperskim (<code>start-dev</code>) zmiany są widoczne natychmiast bez restartu.</p>
+
+    <h3>Struktura katalogu motywu</h3>
+    <pre><code>themes/
+└── pkka/                          <span class="cm"># nazwa motywu = identyfikator w admin</span>
+    └── login/                     <span class="cm"># typ: login, account, admin, email</span>
+        ├── theme.properties       <span class="cm"># wymagany: dziedziczenie i lista CSS</span>
+        ├── resources/
+        │   ├── css/
+        │   │   └── pkka.css       <span class="cm"># własne style</span>
+        │   └── img/
+        │       └── logo.png       <span class="cm"># logo wydziału</span>
+        ├── messages/
+        │   └── messages_pl.properties   <span class="cm"># nadpisanie tekstów UI po polsku</span>
+        └── login.ftl              <span class="cm"># opcjonalnie: pełne przejęcie HTML</span></code></pre>
+
+    <h3>Opcja A — tylko CSS (najszybsza)</h3>
+    <p>Dziedziczysz cały HTML z motywu <code>keycloak</code>, dodajesz tylko własne style. Nie trzeba ruszać FreeMarkera.</p>
+
+    <h4>theme.properties</h4>
+    <pre><code>parent=keycloak
+import=common/keycloak
+styles=css/login.css css/pkka.css
+kcLogoLink=https://www.agh.edu.pl
+kcLogoClass=kcLogoLink</code></pre>
+
+    <h4>resources/css/pkka.css — przykład brandingu AGH</h4>
+    <pre><code><span class="cm">/* Tło strony logowania */</span>
+.login-pf {
+  background: #1a1a2e !important;
+}
+
+<span class="cm">/* Karta formularza */</span>
+.card-pf {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+}
+
+<span class="cm">/* Logo — zastąp obrazkiem AGH */</span>
+#kc-header-wrapper {
+  background-image: url(../img/logo.png) !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  height: 60px;
+  visibility: visible !important;
+}
+
+<span class="cm">/* Przycisk "Zaloguj" */</span>
+#kc-login {
+  background: #e94560 !important;
+  border-color: #e94560 !important;
+}
+#kc-login:hover {
+  background: #c73652 !important;
+}</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>W Keycloak 26 domyślny motyw to <code>keycloak</code> oparty na PatternFly 4. Selektory CSS (<code>.card-pf</code>, <code>.login-pf</code>) mogą się różnić między wersjami — użyj DevTools żeby zweryfikować. Alternatywnie, motyw <code>base</code> zawiera tylko minimalny HTML bez stylów, dając pełną kontrolę.</div></div>
+
+    <h3>Opcja B — pełna kontrola (FreeMarker)</h3>
+    <p>Skopiuj plik <code>login.ftl</code> z dystrybucji Keycloaka i zmodyfikuj go. Dostęp do oryginału przez Docker:</p>
+    <pre><code>docker exec -it iam-keycloak \
+  cat /opt/keycloak/themes/keycloak/login/login.ftl &gt; themes/pkka/login/login.ftl</code></pre>
+    <p>Plik jest szablonem FreeMarker — dostęp do zmiennych Keycloaka przez <code>${url.loginAction}</code>, <code>${realm.displayName}</code>, <code>${social.providers}</code> (lista zewnętrznych providerów, np. Discord) itp. Pełna dokumentacja zmiennych: <a href="https://www.keycloak.org/docs/latest/server_development/#_themes" style="color:var(--accent)">keycloak.org/docs → Server Development → Themes</a>.</p>
+
+    <h3>Montowanie przez Docker Compose</h3>
+    <pre><code>services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:<span class="num">26.0.8</span>
+    volumes:
+      - <span class="str">./themes/pkka:/opt/keycloak/themes/pkka</span>   <span class="cm"># mount całego katalogu</span>
+    <span class="cm"># ... reszta konfiguracji bez zmian</span></code></pre>
+    <div class="callout warn"><div class="callout-icon"></div><div>Ścieżka <code>/opt/keycloak/themes/pkka</code> — nazwa folderu wewnątrz <code>themes/</code> musi być identyczna jak <code>parent</code> folderu motywu. Keycloak wykrywa motywy automatycznie przy starcie.</div></div>
+
+    <h3>Aktywacja motywu w Keycloak Admin</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>Realm Settings</strong> → zakładka <strong>Themes</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p><strong>Login theme</strong> → wybierz <code>pkka</code> z dropdown → <strong>Save</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Odśwież stronę logowania w trybie incognito — motyw aktywny natychmiast (w trybie <code>start-dev</code>).</p></div></div>
+    </div>
+    <div class="callout success"><div class="callout-icon"></div><div>W trybie <code>start-dev</code> Keycloak wyłącza cache motywów — każda zmiana w plikach CSS/FTL jest widoczna po odświeżeniu strony bez restartu kontenera.</div></div>
+
+    <h3>Nadpisanie tekstów UI (komunikatów)</h3>
+    <p>Plik <code>messages/messages_pl.properties</code> nadpisuje teksty interfejsu. Przykład:</p>
+    <pre><code><span class="cm"># messages/messages_pl.properties</span>
+doLogIn=Zaloguj si\u0119
+doRegister=Utw\u00f3rz konto
+loginAccountTitle=Klub Alumna AGH Informatyki
+loginTitleHtml=Zaloguj si\u0119 do PKKA
+socialLoginTitle=Lub zaloguj si\u0119 przez
+errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</code></pre>
+    <div class="callout info"><div class="callout-icon"></div><div>Pełna lista kluczy komunikatów: <code>docker exec iam-keycloak cat /opt/keycloak/themes/base/login/messages/messages_en.properties</code></div></div>
   </section>
 
 </main>
