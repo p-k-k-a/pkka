@@ -152,6 +152,7 @@
   <div class="nav-section">
     <div class="nav-title">Konfiguracja backendu</div>
     <a href="#roles-keycloak">Role i grupy Keycloak</a>
+    <a href="#admin-api">Keycloak Admin API</a>
     <a href="#gradle">build.gradle</a>
     <a href="#appyml">application.yml</a>
   </div>
@@ -411,12 +412,16 @@ networks:
       <img src="imgs/assign-roles-broker-read-token.png" alt="Assign roles - broker read-token widoczny">
       <figcaption>Lista ról po przełączeniu na "Filter by clients" — widoczna rola <code>broker / read-token</code></figcaption>
     </figure>
-    <p>Dodaj obie role:</p>
+    <p>Dodaj rolę:</p>
     <table>
       <tr><th>Klient</th><th>Rola</th><th>Po co</th></tr>
-      <tr><td><code>broker</code></td><td><code>read-token</code></td><td>Pobieranie tokenów brokera (Discord AT) w imieniu użytkowników</td></tr>
-      <tr><td><code>realm-management</code></td><td><code>view-users</code></td><td>Odczyt danych użytkowników do nadawania ról</td></tr>
+      <tr><td><code>realm-management</code></td><td><code>manage-users</code></td><td>Odczyt i modyfikacja użytkowników — szukanie po ID, nadawanie i odbieranie ról realmowych przez Admin API</td></tr>
     </table>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego nie <code>broker / read-token</code> dla service account?</strong><br>
+      Opcja <strong>Stored tokens readable = ON</strong> na IDP Discorda automatycznie przyznaje rolę <code>broker.read-token</code> <em>samemu użytkownikowi</em> przy pierwszym logowaniu. Spring Boot wywołuje <code>GET /broker/discord/token</code> <strong>tokenem użytkownika</strong> (przesłanym przez frontend w nagłówku <code>Authorization</code>) — nie potrzebuje do tego service account.<br><br>
+      Service account jest wymagany wyłącznie do <strong>Admin API</strong> (nadawanie/odbieranie ról realmowych użytkownikom).
+    </div></div>
   </section>
 
   <!-- IDP -->
@@ -529,7 +534,13 @@ networks:
     <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>verified-alumn</code> → Save.</p>
 
     <h3>Rola broker.read-token dla użytkownika</h3>
-    <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord.</p>
+    <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord. <strong>Service account nie jest do tego potrzebny.</strong></p>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Przepływ odczytu Discord AT:</strong><br>
+      Frontend wysyła <strong>Keycloak AT użytkownika</strong> do Spring Boota → Spring Boot przekazuje go jako <code>Bearer</code> do <code>GET /realms/pkka/broker/discord/token</code> → Keycloak sprawdza czy użytkownik ma rolę <code>broker.read-token</code> → zwraca jego Discord AT.<br><br>
+      Service account jest używany <strong>tylko</strong> do Admin API (nadawanie roli <code>verified-alumn</code>).
+    </div></div>
 
     <p>Jeśli chcesz nadać ją ręcznie do testów:</p>
     <p><strong>Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token → Assign</strong></p>
@@ -788,6 +799,14 @@ discord:
     <p>Sidebar → <strong>Groups</strong> → <strong>Create group</strong> → po zapisaniu wejdź w grupę → zakładka <strong>Role mapping</strong> → przypisz role:</p>
     <div class="callout info"><div class="callout-icon"></div><div>Żeby każdy nowo zarejestrowany użytkownik automatycznie trafił do grupy <code>users</code>: <strong>Realm Settings → zakładka General → Default Groups</strong> → dodaj <code>users</code>.</div></div>
 
+    <h3>Niezalogowany użytkownik — brak sesji Keycloaka, brak cookies</h3>
+    <p>Niezalogowany użytkownik (US 1–4 aktora <em>Niezalogowany</em>) jest obsługiwany <strong>wyłącznie przez Spring Security</strong> — endpointy publiczne są oznaczone <code>permitAll()</code> i nie wymagają żadnego tokenu. Keycloak nie jest angażowany w żądania anonimowe.</p>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego nie cookies do tymczasowej identyfikacji?</strong><br>
+      User stories niezalogowanego użytkownika (publiczny blog, kalendarz, formularz rejestracji, logowanie) nie wymagają żadnego stanu po stronie serwera dla anonimowego requestu — pełna stateless obsługa przez Spring. Cookies anonimowej sesji dodają niepotrzebną złożoność i problemy GDPR (każde trwałe cookie = wymóg zgody). Ewentualny stan UI (np. zapamiętanie filtrów kalendarza) należy trzymać po stronie klienta (localStorage/URL params).<br><br>
+      Keycloak wchodzi do gry <strong>dopiero przy logowaniu</strong> (Authorization Code Flow) — wtedy tworzona jest sesja Keycloaka i wystawiany JWT.
+    </div></div>
+
     <h3>Mapowanie ról na endpointy backendu</h3>
     <table>
       <tr><th>Endpoint / Akcja</th><th>Wymagana rola</th></tr>
@@ -1029,6 +1048,152 @@ logging:
     pl.edu.agh.pkka: INFO</code></pre>
 
     <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars.</div></div>
+  </section>
+  <!-- KEYCLOAK ADMIN API -->
+  <section id="admin-api">
+    <div class="section-header">
+      <div class="section-num">16</div>
+      <h2 style="margin:0;border:none;">Keycloak Admin REST API</h2>
+    </div>
+
+    <p>Spring Boot używa Admin API do nadawania i odbierania ról realmowych. Dostęp wymaga tokenu service account (grant <code>client_credentials</code>).</p>
+
+    <h3>Drzewo endpointów Admin API (zakres projektu)</h3>
+    <pre><code><span class="cm"># Token service account</span>
+POST /realms/{realm}/protocol/openid-connect/token
+
+<span class="cm"># Użytkownicy</span>
+GET  /admin/realms/{realm}/users?search={q}&exact=true   <span class="cm"># szukaj po email/username</span>
+GET  /admin/realms/{realm}/users/{userId}                <span class="cm"># pobierz użytkownika</span>
+
+<span class="cm"># Role realmowe użytkownika</span>
+GET    /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># lista ról</span>
+POST   /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># nadaj role</span>
+DELETE /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># odbierz role</span>
+
+<span class="cm"># Definicja roli (potrzebna do uzyskania id roli)</span>
+GET  /admin/realms/{realm}/roles/{roleName}
+
+<span class="cm"># Grupy</span>
+GET  /admin/realms/{realm}/groups                                        <span class="cm"># lista grup</span>
+GET  /admin/realms/{realm}/users/{userId}/groups                         <span class="cm"># grupy użytkownika</span>
+PUT  /admin/realms/{realm}/users/{userId}/groups/{groupId}               <span class="cm"># dodaj do grupy</span>
+DELETE /admin/realms/{realm}/users/{userId}/groups/{groupId}             <span class="cm"># usuń z grupy</span></code></pre>
+
+    <h3>Pobranie Access Tokena service account</h3>
+    <p>Service account używa grant type <code>client_credentials</code>. Keycloak zwraca AT ważny domyślnie 5 minut — Spring Boot (<code>keycloak-admin-client</code>) obsługuje odświeżanie automatycznie.</p>
+
+    <pre><code><span class="cm">### HTTP — manualne wywołanie (Postman / curl)</span>
+POST http://localhost:8081/realms/pkka/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;client_id=pkka-app
+&amp;client_secret=YOUR_CLIENT_SECRET</code></pre>
+
+    <pre><code><span class="cm">// Java — keycloak-admin-client (automatycznie zarządza tokenem)</span>
+<span class="kw">@Configuration</span>
+<span class="kw">public class</span> KeycloakAdminConfig {
+
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.server-url}"</span>) <span class="kw">private</span> String serverUrl;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.realm}"</span>)      <span class="kw">private</span> String realm;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.client-id}"</span>)  <span class="kw">private</span> String clientId;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.client-secret}"</span>) <span class="kw">private</span> String clientSecret;
+
+    <span class="kw">@Bean</span>
+    <span class="kw">public</span> Keycloak keycloakAdmin() {
+        <span class="kw">return</span> KeycloakBuilder.builder()
+            .serverUrl(serverUrl)
+            .realm(realm)
+            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+            .clientId(clientId)
+            .clientSecret(clientSecret)
+            .build();
+    }
+}</code></pre>
+
+    <h3>Przykład — nadanie roli <code>verified-alumn</code></h3>
+    <p>Operacja dwuetapowa: najpierw pobieramy reprezentację roli (zawiera <code>id</code>), następnie przypisujemy ją do użytkownika.</p>
+
+    <h4>Krok 1 — pobierz reprezentację roli</h4>
+    <pre><code>GET /admin/realms/pkka/roles/verified-alumn
+Authorization: Bearer {service_account_at}
+
+<span class="cm">// Response 200 OK</span>
+{
+  <span class="str">"id"</span>: <span class="str">"3fa85f64-5717-4562-b3fc-2c963f66afa6"</span>,
+  <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>,
+  <span class="str">"composite"</span>: <span class="kw">false</span>,
+  <span class="str">"clientRole"</span>: <span class="kw">false</span>
+}</code></pre>
+
+    <h4>Krok 2 — przypisz rolę użytkownikowi</h4>
+    <pre><code>POST /admin/realms/pkka/users/{userId}/role-mappings/realm
+Authorization: Bearer {service_account_at}
+Content-Type: application/json
+
+[
+  {
+    <span class="str">"id"</span>: <span class="str">"3fa85f64-5717-4562-b3fc-2c963f66afa6"</span>,
+    <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>
+  }
+]
+
+<span class="cm">// Response 204 No Content — sukces</span></code></pre>
+
+    <h4>Java — kompletna metoda Service</h4>
+    <pre><code><span class="kw">@Service</span>
+<span class="kw">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> AlumnVerificationService {
+
+    <span class="kw">private final</span> Keycloak keycloakAdmin;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.realm}"</span>) <span class="kw">private</span> String realm;
+
+    <span class="kw">public void</span> grantVerifiedAlumn(String keycloakUserId) {
+        RealmResource realmRes = keycloakAdmin.realm(realm);
+
+        <span class="cm">// 1. Pobierz reprezentację roli</span>
+        RoleRepresentation role = realmRes.roles()
+            .get(<span class="str">"verified-alumn"</span>)
+            .toRepresentation();
+
+        <span class="cm">// 2. Nadaj rolę użytkownikowi</span>
+        realmRes.users()
+            .get(keycloakUserId)
+            .roles()
+            .realmLevel()
+            .add(List.of(role));
+    }
+
+    <span class="kw">public void</span> revokeVerifiedAlumn(String keycloakUserId) {
+        RealmResource realmRes = keycloakAdmin.realm(realm);
+        RoleRepresentation role = realmRes.roles()
+            .get(<span class="str">"verified-alumn"</span>)
+            .toRepresentation();
+
+        realmRes.users()
+            .get(keycloakUserId)
+            .roles()
+            .realmLevel()
+            .remove(List.of(role));
+    }
+}</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      Użytkownik musi uzyskać <strong>nowy AT</strong> (odświeżyć token lub zalogować się ponownie) po zmianie ról — stary JWT zawiera snapshot ról z momentu wystawienia i nie jest aktualizowany przez Keycloak retroaktywnie.
+    </div></div>
+
+    <h3>Jak znaleźć userId z Keycloak AT użytkownika</h3>
+    <p>JWT wystawiony przez Keycloak zawiera claim <code>sub</code> — to UUID użytkownika w Keycloaku (identyczny z <code>userId</code> w Admin API).</p>
+    <pre><code><span class="cm">// Spring Boot — wyciągnięcie sub z JWT w kontrolerze</span>
+<span class="kw">@GetMapping</span>(<span class="str">"/verify-guild"</span>)
+<span class="kw">public</span> ResponseEntity&lt;Void&gt; verifyGuild(
+        <span class="kw">@AuthenticationPrincipal</span> Jwt jwt) {
+
+    String keycloakUserId = jwt.getSubject(); <span class="cm">// claim "sub"</span>
+    verificationService.grantVerifiedAlumn(keycloakUserId);
+    <span class="kw">return</span> ResponseEntity.noContent().build();
+}</code></pre>
   </section>
 
 </main>
