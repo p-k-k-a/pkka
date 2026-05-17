@@ -137,6 +137,7 @@
     <a href="#client">Client pkka-web</a>
     <a href="#client-mobile">Client pkka-mobile</a>
     <a href="#idp">Identity Provider</a>
+    <a href="#discord-bypass">Discord IDP Bypass</a>
     <a href="#flow">First Broker Login</a>
     <a href="#roles">Role i uprawnienia</a>
     <a href="#auth-code-flow">Authorization Code Flow</a>
@@ -384,8 +385,9 @@ networks:
     <table>
       <tr><th>Pole</th><th>Wartość</th></tr>
       <tr><td>Client type</td><td><code>OpenID Connect</code></td></tr>
-      <tr><td>Client ID</td><td><code>pkka-web</code></td></tr>
-      <tr><td>Name</td><td><code>PKKA Web Application</code></td></tr>
+      <tr><td>Client ID *</td><td><code>pkka-web</code></td></tr>
+      <tr><td>Name</td><td><code>PKKA Web</code></td></tr>
+      <tr><td>Description</td><td><em>(puste)</em></td></tr>
     </table>
 
     <h3>Ekran 2 — Capability config</h3>
@@ -527,8 +529,9 @@ networks:
     <table>
       <tr><th>Pole</th><th>Wartość</th></tr>
       <tr><td>Client type</td><td><code>OpenID Connect</code></td></tr>
-      <tr><td>Client ID</td><td><code>pkka-mobile</code></td></tr>
-      <tr><td>Name</td><td><code>PKKA Mobile App (BFF)</code></td></tr>
+      <tr><td>Client ID *</td><td><code>pkka-mobile</code></td></tr>
+      <tr><td>Name</td><td><code>PKKA Mobile</code></td></tr>
+      <tr><td>Description</td><td><em>(puste)</em></td></tr>
     </table>
 
     <h3>Ekran 2 — Capability config</h3>
@@ -594,15 +597,22 @@ networks:
       <tr><td>Alias</td><td><code>discord</code></td></tr>
       <tr><td>Display name</td><td><code>Discord</code></td></tr>
       <tr><td>Enabled</td><td><span class="tag on">ON</span></td></tr>
-      <tr><td>Hide on login page</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Hide on login page</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— Spring wysyła <code>kc_idp_hint=discord</code>, przycisk niepotrzebny</span></td></tr>
       <tr><td>Store tokens</td><td><span class="tag on">ON</span></td></tr>
       <tr><td>Stored tokens readable</td><td><span class="tag on">ON</span></td></tr>
       <tr><td>Discovery endpoint</td><td><code>https://discord.com/.well-known/openid-configuration</code> → kliknij <strong>Import</strong></td></tr>
       <tr><td>Client ID</td><td>Discord Client ID</td></tr>
       <tr><td>Client Secret</td><td>Discord Client Secret</td></tr>
-      <tr><td>Client authentication</td><td><code>client_secret_post</code></td></tr>
+      <tr><td>Client authentication</td><td><code>client_secret_basic</code></td></tr>
+      <tr><td>PKCE</td><td><span class="tag on">ON</span> — metoda <code>S256</code></td></tr>
+      <tr><td>Pass login_hint</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— umożliwia prefill loginu na stronie Discorda</span></td></tr>
       <tr><td>Default Scopes</td><td><code>openid email identify guilds</code></td></tr>
     </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Zmiana: <code>client_secret_post</code> → <code>client_secret_basic</code>.</strong><br>
+      Discord wspiera obie metody. <code>client_secret_basic</code> to standard RFC 6749 — credentials lecą w nagłówku <code>Authorization: Basic base64(id:secret)</code>, nie w body requestu. Zgodne z PKCE i lepiej wspierane przez walidatory OAuth2.
+    </div></div>
 
     <div class="callout warn"><div class="callout-icon"></div><div><strong>Store tokens</strong> i <strong>Stored tokens readable</strong> muszą być ON — bez tego nie będzie można pobrać Access Tokena Discorda z Keycloaka.</div></div>
 
@@ -660,6 +670,135 @@ networks:
       <tr><td>User Attribute Name</td><td><code>picture</code></td></tr>
     </table>
     <div class="callout info"><div class="callout-icon"></div><div><code>preferred_username</code> pochodzi z Userinfo Endpoint Discorda — Keycloak odpytuje go automatycznie po logowaniu. Weryfikacja: <strong>Users → [konto] → zakładka Details</strong>.</div></div>
+  </section>
+
+  <!-- DISCORD BYPASS -->
+  <section id="discord-bypass">
+    <div class="section-header">
+      <div class="section-num">6b</div>
+      <h2 style="margin:0;border:none;">Discord IDP Bypass — pomijanie ekranu logowania Keycloaka</h2>
+    </div>
+
+    <p>Domyślnie Keycloak wyświetla własny formularz logowania z przyciskiem Discord. Bypass pozwala Spring Bootowi przekierować użytkownika <strong>bezpośrednio do Discorda</strong> — Keycloak nie pokazuje swojego UI w ogóle.</p>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Mechanizm: parametr <code>kc_idp_hint</code>.</strong><br>
+      Gdy Keycloak otrzyma w URL autoryzacji <code>&amp;kc_idp_hint=discord</code>, natychmiast przekierowuje przeglądarkę do Discord bez wyświetlania swojej strony logowania. Alias <code>discord</code> musi być identyczny jak Alias ustawiony w konfiguracji IDP.
+    </div></div>
+
+    <h3>Warunek wstępny — IDP: Hide on login page</h3>
+    <p>Ustaw <code>Hide on login page: ON</code> w konfiguracji IDP Discord (patrz sekcja wyżej). Bez tego Keycloak i tak pokaże przycisk Discord na stronie logowania — bypass przez <code>kc_idp_hint</code> działa niezależnie od tego ustawienia, ale spójność jest wskazana.</p>
+
+    <h3>Implementacja w Spring — <code>DiscordBypassRequestResolver</code></h3>
+    <p>Tworzymy własny <code>OAuth2AuthorizationRequestResolver</code> który łączy PKCE S256 z <code>kc_idp_hint=discord</code>. Zastępuje on lokalną zmienną <code>pkceResolver</code> z SecurityConfig — wydzielamy go jako Spring bean:</p>
+
+    <pre><code><span class="kw">@Configuration
+@RequiredArgsConstructor</span>
+<span class="kw">public class</span> DiscordBypassRequestResolver {
+
+    <span class="cm">/**
+     * Resolver łączący dwie odpowiedzialności:
+     *   1. PKCE S256 — wymagane przez Keycloak dla confidential clients
+     *   2. kc_idp_hint=discord — bezpośredni bypass do Discord IDP
+     *
+     * Stosowany dla OBYDWU rejestracji (keycloak-web + keycloak-mobile).
+     * Efekt: przeglądarka/Custom Tab nigdy nie widzi strony logowania Keycloaka.
+     */</span>
+    <span class="kw">@Bean</span>
+    <span class="kw">public</span> OAuth2AuthorizationRequestResolver discordBypassResolver(
+            ClientRegistrationRepository repo) {
+
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+            <span class="kw">new</span> DefaultOAuth2AuthorizationRequestResolver(
+                repo, <span class="str">"/oauth2/authorization"</span>);
+
+        resolver.setAuthorizationRequestCustomizer(
+            OAuth2AuthorizationRequestCustomizers.withPkce()      <span class="cm">// 1. PKCE S256</span>
+                .andThen(builder -&gt; builder                       <span class="cm">// 2. Discord bypass</span>
+                    .additionalParameters(params -&gt;
+                        params.put(<span class="str">"kc_idp_hint"</span>, <span class="str">"discord"</span>))));
+
+        <span class="kw">return</span> resolver;
+    }
+}</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>andThen</code>, nie osobny customizer?</strong><br>
+      <code>setAuthorizationRequestCustomizer</code> przyjmuje tylko jeden <code>Consumer</code>. Chcemy zastosować dwa efekty (<code>withPkce()</code> i własny <code>additionalParameters</code>), więc łączymy je przez <code>andThen</code>. <code>withPkce()</code> ustawia <code>code_challenge</code> i <code>code_challenge_method=S256</code>; <code>andThen</code> dokłada <code>kc_idp_hint</code> bez nadpisywania.
+    </div></div>
+
+    <h3>Podłączenie w Chain 2 — SecurityConfig</h3>
+    <p>Zastąp lokalną zmienną <code>pkceResolver</code> wstrzykniętym beanem:</p>
+
+    <pre><code><span class="kw">@Bean @Order</span>(<span class="num">2</span>)
+<span class="kw">public</span> SecurityFilterChain webChain(HttpSecurity http,
+        ClientRegistrationRepository repo,
+        OAuth2AuthorizationRequestResolver discordBypassResolver,  <span class="cm">// ← wstrzyknięty bean</span>
+        BffAuthenticationSuccessHandler bffHandler) <span class="kw">throws</span> Exception {
+
+    OidcClientInitiatedLogoutSuccessHandler oidcLogout =
+        <span class="kw">new</span> OidcClientInitiatedLogoutSuccessHandler(repo);
+    oidcLogout.setPostLogoutRedirectUri(<span class="str">"{baseUrl}/"</span>);
+
+    http
+        <span class="cm">// sessionManagement, csrf, authorizeHttpRequests — bez zmian</span>
+        .oauth2Login(oauth2 -&gt; oauth2
+            .authorizationEndpoint(ep -&gt; ep
+                .authorizationRequestResolver(discordBypassResolver))  <span class="cm">// ← PKCE + kc_idp_hint</span>
+            .userInfoEndpoint(ui -&gt; ui
+                .userAuthoritiesMapper(keycloakGrantedAuthoritiesMapper()))
+            .successHandler(bffHandler))
+        .logout(logout -&gt; logout
+            .logoutSuccessHandler(oidcLogout)
+            .invalidateHttpSession(<span class="kw">true</span>)
+            .deleteCookies(<span class="str">"JSESSIONID"</span>, <span class="str">"XSRF-TOKEN"</span>));
+    <span class="kw">return</span> http.build();
+}</code></pre>
+
+    <h3>Efektywny URL autoryzacji generowany przez Spring</h3>
+    <div class="flow"><span class="cm">Bez bypass (poprzednia wersja):</span>
+GET /realms/pkka/protocol/openid-connect/auth
+    ?client_id=pkka-web&amp;response_type=code
+    &amp;scope=openid+profile+email
+    &amp;redirect_uri=http://localhost:8080/login/oauth2/code/keycloak-web
+    &amp;code_challenge=mQ8s...&amp;code_challenge_method=S256
+
+<span class="box">↓ po dodaniu kc_idp_hint:</span>
+
+GET /realms/pkka/protocol/openid-connect/auth
+    ?client_id=pkka-web&amp;response_type=code
+    &amp;scope=openid+profile+email
+    &amp;redirect_uri=http://localhost:8080/login/oauth2/code/keycloak-web
+    &amp;code_challenge=mQ8s...&amp;code_challenge_method=S256
+    &amp;<span class="arrow">kc_idp_hint=discord</span>   ← Keycloak pomija własny UI → 302 → Discord</div>
+
+    <h3>Pełny przepływ z bypassem</h3>
+    <div class="flow"><span class="box">Użytkownik</span> klika "Zaloguj" → GET /oauth2/authorization/keycloak-web
+│
+▼
+<span class="box">Spring Security</span> generuje URL z kc_idp_hint=discord
+│   302 → Keycloak ?...&amp;kc_idp_hint=discord
+│
+▼
+<span class="box">Keycloak</span> wykrywa kc_idp_hint → POMIJA własny ekran logowania
+│   302 → Discord auth endpoint
+│
+▼
+<span class="box">Discord</span> wyświetla ekran zgody / logowania
+│   Użytkownik akceptuje → 302 → Keycloak broker callback
+│
+▼
+<span class="box">Keycloak</span> kończy broker flow (wymiana code, First Broker Login)
+│   Generuje własny authorization_code → 302 → Spring callback
+│
+▼
+<span class="box">Spring Security</span> wymienia code + code_verifier → AT, RT, IDT
+│   Wywołuje BffAuthenticationSuccessHandler</div>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong><code>kc_idp_hint</code> jest parametrem Keycloaka, nie standardem OAuth2.</strong><br>
+      Alias <code>discord</code> musi dokładnie odpowiadać polu <strong>Alias</strong> w konfiguracji IDP. Przy zmianie aliasu w Keycloaku zaktualizuj też wartość w resolverze.
+    </div></div>
   </section>
 
   <!-- FLOW -->
@@ -924,6 +1063,8 @@ discord:
       <tr><td>Discord: "verified email or phone"</td><td>Testowe konto Discord bez weryfikacji</td><td>Użyj konta z zweryfikowanym emailem</td></tr>
       <tr><td>Rola <code>verified-alumn</code> nie pojawia się w JWT</td><td>Stary token po nadaniu roli</td><td>Użytkownik musi uzyskać nowy token (ponowne logowanie)</td></tr>
       <tr><td><code>invalid_client</code> w logach Spring</td><td>Zły Client Secret</td><td>Sprawdź <code>application.yml</code> vs zakładka Credentials w Keycloak</td></tr>
+      <tr><td>Brak przekierowania do Discorda (pojawia się Keycloak login)</td><td>Brak parametru <code>kc_idp_hint</code> w URL</td><td>Sprawdź czy <code>discordBypassResolver</code> bean jest poprawnie podłączony w Chain 2</td></tr>
+      <tr><td><code>redirect_uri mismatch</code> przy logowaniu Spring→Keycloak</td><td>Keycloak ma inny URI niż Spring generuje</td><td>Sprawdź: Valid redirect URI w Keycloak = <code>/login/oauth2/code/keycloak-web</code> i <code>/login/oauth2/code/keycloak-mobile</code></td></tr>
     </table>
   </section>
 
@@ -1100,13 +1241,16 @@ spotless {
 
     <p>Plik podzielony na trzy sekcje: wspólna konfiguracja bazowa, profil <code>dev</code> (localhost, Swagger włączony, debug logging) i profil <code>prod</code> (wyłączony Swagger, zmienne środowiskowe obowiązkowe, WARN logging). Aktywacja profilu przez <code>-Dspring.profiles.active=prod</code> lub zmienną środowiskową <code>SPRING_PROFILES_ACTIVE=prod</code>.</p>
 
-    <p>Zmiany względem poprzedniej wersji: dodano <strong>rejestrację klienta <code>pkka-mobile</code></strong> (ścieżka Mobile BFF) oraz sekcję <strong><code>resourceserver.jwt</code></strong> (walidacja tokenów Bearer). Nowa zmienna środowiskowa: <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>.</p>
+    <p>Zmiany względem poprzedniej wersji: nazwy rejestracji zmienione na <code>keycloak-web</code> i <code>keycloak-mobile</code> (jawne, zamiast <code>keycloak</code> i <code>pkka-mobile</code>); oba używają <code>client_secret_basic</code>; redirect URI jawne (<code>{baseUrl}/login/oauth2/code/{registrationId}</code>); usunięte zdublowane bloki <code>keycloak-web:</code>/<code>keycloak-mobile:</code> z profilu prod — Admin Client używa jednego bloku <code>keycloak:</code> z credentialami <code>pkka-web</code>. Dodano <code>resourceserver.jwt</code> dla walidacji Bearer JWT.</p>
 
     <pre><code>spring:
   application:
     name: pkka-backend
   profiles:
     default: dev
+
+  config:
+    import: optional:file:./backend/.env[.properties]
 
 <span class="cm"># OpenAPI / Swagger</span>
 springdoc:
@@ -1132,53 +1276,65 @@ spring:
     oauth2:
       client:
         registration:
-          <span class="cm"># [1] Ścieżka Web (BFF Stateful) — bez zmian</span>
-          keycloak:
-            client-id: pkka-app
-            client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET:change-me}</span>
+          <span class="cm"># [1] Ścieżka Web — sesja Spring + JSESSIONID</span>
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
             client-authentication-method: client_secret_basic
 
-          <span class="cm"># [2] Ścieżka Mobile (BFF Pośrednik, PKCE + client-secret) — NOWE</span>
-          pkka-mobile:
+          <span class="cm"># [2] Ścieżka Mobile — deep link + Bearer JWT</span>
+          keycloak-mobile:
             provider: keycloak
             client-id: pkka-mobile
             client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET:change-me}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/api/mobile/auth/callback"</span>
-            client-authentication-method: client_secret_post
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            client-authentication-method: client_secret_basic
 
         provider:
           keycloak:
             issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
             user-name-attribute: preferred_username
 
-      <span class="cm"># Resource Server — walidacja Bearer JWT (ścieżka Mobile) — NOWE</span>
-      <span class="cm"># Spring pobiera klucze JWK z Keycloaka automatycznie przez .well-known/</span>
+      <span class="cm"># Resource Server — walidacja Bearer JWT (ścieżka Mobile)</span>
+      <span class="cm"># Spring pobiera klucze JWKS z Keycloaka automatycznie przez .well-known/</span>
       resourceserver:
         jwt:
           issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
 
-<span class="cm"># OpenAPI — enabled on dev</span>
+<span class="cm"># OpenAPI — włączone na dev</span>
 springdoc:
   api-docs:
     enabled: <span class="kw">true</span>
   swagger-ui:
     enabled: <span class="kw">true</span>
 
-<span class="cm"># Keycloak Admin Client</span>
+<span class="cm"># Keycloak Admin Client — używa service account pkka-web (manage-users)</span>
+<span class="cm"># Uwaga: client-id to pkka-web, ten sam co rejestracja keycloak-web.</span>
+<span class="cm"># To dwie różne role tego samego klienta Keycloaka:</span>
+<span class="cm">#   - registration.keycloak-web → user auth (Standard Flow)</span>
+<span class="cm">#   - keycloak.client-id → admin API (Service Account, client_credentials)</span>
 keycloak:
   server-url: <span class="prop">${KEYCLOAK_URL:http://localhost:8081}</span>
   realm: <span class="prop">${KEYCLOAK_REALM:pkka}</span>
-  client-id: <span class="prop">${KEYCLOAK_CLIENT_ID:pkka-app}</span>
-  client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET:change-me}</span>
+  client-id: pkka-web
+  client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
 
 <span class="cm"># Discord</span>
 discord:
   guild-id: <span class="prop">${DISCORD_GUILD_ID:change-me}</span>
+
+<span class="cm"># App</span>
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
 
 <span class="cm"># Server</span>
 server:
@@ -1203,22 +1359,23 @@ spring:
     oauth2:
       client:
         registration:
-          keycloak:
-            client-id: <span class="prop">${KEYCLOAK_CLIENT_ID}</span>
-            client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET}</span>
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
             client-authentication-method: client_secret_basic
 
-          pkka-mobile:
+          keycloak-mobile:
             provider: keycloak
             client-id: pkka-mobile
             client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/api/mobile/auth/callback"</span>
-            client-authentication-method: client_secret_post
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            client-authentication-method: client_secret_basic
 
         provider:
           keycloak:
@@ -1235,14 +1392,21 @@ springdoc:
   swagger-ui:
     enabled: <span class="kw">false</span>
 
+<span class="cm"># Keycloak Admin Client (prod) — jeden blok, service account pkka-web</span>
 keycloak:
   server-url: <span class="prop">${KEYCLOAK_URL}</span>
   realm: <span class="prop">${KEYCLOAK_REALM}</span>
-  client-id: <span class="prop">${KEYCLOAK_CLIENT_ID}</span>
-  client-secret: <span class="prop">${KEYCLOAK_CLIENT_SECRET}</span>
+  client-id: pkka-web
+  client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
 
 discord:
   guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
+
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
 
 server:
   port: <span class="prop">${PORT:8080}</span>
@@ -1253,10 +1417,16 @@ server:
 logging:
   level:
     root: WARN
-    pl.edu.agh.pkka: INFO
-    org.springframework.security: WARN</code></pre>
+    pl.edu.agh.pkka: INFO</code></pre>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Nowa zmienna obowiązkowa na prod: <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>client-id</code> pojawia się w dwóch miejscach?</strong><br>
+      <code>spring.security.oauth2.client.registration.keycloak-web.client-id: pkka-web</code> — to <em>user auth</em>: Spring wysyła tę wartość jako <code>client_id</code> w URL autoryzacji i przy wymianie code → token (Standard Flow, przeglądarka użytkownika).<br><br>
+      <code>keycloak.client-id: pkka-web</code> — to <em>admin API</em>: Keycloak Admin Client używa tych credentials do pobrania service account tokena przez <code>client_credentials</code> grant, a następnie wywołuje Admin REST API (nadawanie ról, szukanie użytkowników).<br><br>
+      Oba punkty odnoszą się do tego samego klienta Keycloaka (<code>pkka-web</code>), bo ma on włączone jednocześnie <strong>Standard Flow</strong> (user login) i <strong>Service Accounts</strong> (admin API). Użycie tych samych credentials upraszcza konfigurację — zamiast utrzymywać osobny klient tylko do admina, <code>pkka-web</code> pełni obie role.
+    </div></div>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>DISCORD_GUILD_ID</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>.</div></div>
   </section>
   <!-- KEYCLOAK ADMIN API -->
   <section id="admin-api">
@@ -1751,14 +1921,11 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
     <pre><code><span class="kw">@Bean @Order</span>(<span class="num">2</span>)
 <span class="kw">public</span> SecurityFilterChain webChain(HttpSecurity http,
         ClientRegistrationRepository repo,
+        OAuth2AuthorizationRequestResolver discordBypassResolver,  <span class="cm">// PKCE + kc_idp_hint=discord</span>
         BffAuthenticationSuccessHandler bffHandler) <span class="kw">throws</span> Exception {
 
-    <span class="cm">// PKCE S256 dla obu rejestracji (keycloak-web i keycloak-mobile)</span>
-    <span class="cm">// Bez tej konfiguracji Spring wysyła PKCE tylko dla public clients.</span>
-    DefaultOAuth2AuthorizationRequestResolver pkceResolver =
-        <span class="kw">new</span> DefaultOAuth2AuthorizationRequestResolver(repo, <span class="str">"/oauth2/authorization"</span>);
-    pkceResolver.setAuthorizationRequestCustomizer(
-        OAuth2AuthorizationRequestCustomizers.withPkce());
+    <span class="cm">// discordBypassResolver — wstrzyknięty bean (klasa DiscordBypassRequestResolver)</span>
+    <span class="cm">// Łączy: PKCE S256 + kc_idp_hint=discord (patrz sekcja "Discord IDP Bypass")</span>
 
     OidcClientInitiatedLogoutSuccessHandler oidcLogout =
         <span class="kw">new</span> OidcClientInitiatedLogoutSuccessHandler(repo);
@@ -1776,8 +1943,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
             .anyRequest().authenticated())
         .oauth2Login(oauth2 -&gt; oauth2
             .authorizationEndpoint(ep -&gt; ep
-                <span class="cm">// PKCE dla confidential clients (keycloak-web i keycloak-mobile)</span>
-                .authorizationRequestResolver(pkceResolver))
+                .authorizationRequestResolver(discordBypassResolver))  <span class="cm">// PKCE + Discord bypass</span>
             .userInfoEndpoint(ui -&gt; ui
                 .userAuthoritiesMapper(keycloakGrantedAuthoritiesMapper()))
             <span class="cm">// Rozgałęzienie Web ↔ Mobile po zakończeniu flow</span>
@@ -1908,14 +2074,6 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         res.sendRedirect(link.toString());
     }
 }</code></pre>
-
-    <h3>Konfiguracja w application.yml</h3>
-    <pre><code><span class="cm"># Schemat deep linka mobilki (iOS: Info.plist → URL Schemes, Android: intent-filter)</span>
-app:
-  mobile:
-    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
-  web:
-    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span></code></pre>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>AT w URL deep linka — implikacje bezpieczeństwa:</strong><br>
