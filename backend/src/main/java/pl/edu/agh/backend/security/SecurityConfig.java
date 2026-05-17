@@ -12,20 +12,24 @@ public class SecurityConfig {
     @Profile("dev")
     public SecurityFilterChain devFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(
-                auth ->
-                        auth.requestMatchers(
-                                        "/v3/api-docs/**",
-                                        "/v3/api-docs.yaml",
-                                        "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/oauth2/authorization/**",
-                                        "/login",
-                                        "/login/oauth2/**",
-                                        "/error")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated());
-        http.oauth2Login(oauth2 -> {});
+                auth -> auth
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/oauth2/authorization/**",
+                                "/login",
+                                "/login/oauth2/**",
+                                "/error").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/alumni/**").hasRole("VERIFIED_ALUMN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyRequest().hasRole("USER")
+                        .anyRequest()
+                        .authenticated());
+        http.oauth2Login(oauth2 -> {
+        });
         return http.build();
     }
 }
