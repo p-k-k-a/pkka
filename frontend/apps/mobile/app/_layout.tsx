@@ -11,7 +11,10 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={NAV_THEME[colorScheme]}>
-      <Stack></Stack>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+      </Stack>
       <StatusBar style="auto" />
       <PortalHost />
     </ThemeProvider>
