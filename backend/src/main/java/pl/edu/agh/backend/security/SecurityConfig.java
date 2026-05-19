@@ -1,35 +1,178 @@
 package pl.edu.agh.backend.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
+
     @Bean
-    @Profile("dev")
-    public SecurityFilterChain devFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(
-                auth -> auth
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/v3/api-docs.yaml",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/oauth2/authorization/**",
-                                "/login",
-                                "/login/oauth2/**",
-                                "/error").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/api/alumni/**").hasRole("VERIFIED_ALUMN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyRequest().hasRole("USER")
-                        .anyRequest()
-                        .authenticated());
-        http.oauth2Login(oauth2 -> {
-        });
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter) {
+
+        // session read when it exists (web), not created for mobile
+        // CSRF enabled for web sessions, ignored for mobile
+
+        http
+            .securityMatcher("/api/**")
+            .sessionManagement(s -> s
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
+                    .ignoringRequestMatchers(SecurityConfig::hasBearerToken))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/public/**").permitAll()
+                    .requestMatchers("/api/alumni/**").hasRole("VERIFIED_ALUMN")
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    .anyRequest().hasRole("USER"))
+            // we as resource server validate JWT by Keycloak JWKS, if SecurityContext is filled up from session,
+            // that is skipped
+            .oauth2ResourceServer(rs -> rs
+                    .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                    .authenticationEntryPoint((req, res, ex) ->
+                            res.sendError(401, "Unauthorized")));
+
         return http.build();
+    }
+
+    // Chain 2 — handles the rest of the traffic that Chain 1 didn't intercept /**  (Web login/logout, Swagger, static paths),
+    // direct access to discord authn flow via oauth2Login with DiscordByPassResolver
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(
+            HttpSecurity http,
+            ClientRegistrationRepository clientRegistrationRepository,
+            OAuth2AuthorizationRequestResolver discordBypassResolver,
+            BffAuthenticationSuccessHandler bffHandler) {
+
+        OidcClientInitiatedLogoutSuccessHandler oidcLogout =
+                new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+        oidcLogout.setPostLogoutRedirectUri("{baseUrl}/");
+
+        http
+            .sessionManagement(s -> s
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                            "/", "/login/**", "/error",
+                            "/oauth2/authorization/**", "/login/oauth2/**",
+                            "/v3/api-docs/**", "/v3/api-docs.yaml",
+                            "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                    .anyRequest().authenticated())
+            .oauth2Login(oauth2 -> oauth2
+                    .authorizationEndpoint(ep -> ep
+                            .authorizationRequestResolver(discordBypassResolver))
+                    .userInfoEndpoint(ui -> ui
+                            .userAuthoritiesMapper(keycloakGrantedAuthoritiesMapper()))
+                    .successHandler(bffHandler))
+            .logout(logout -> logout
+                    .logoutSuccessHandler(oidcLogout)
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
+
+        return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(new KeycloakJwtRoleConverter());
+        converter.setPrincipalClaimName("preferred_username");
+        return converter;
+    }
+
+    @Bean
+    public GrantedAuthoritiesMapper keycloakGrantedAuthoritiesMapper() {
+        return authorities -> {
+            Set<GrantedAuthority> mapped = new HashSet<>();
+            for (GrantedAuthority authority : authorities) {
+                if (authority instanceof OidcUserAuthority oidcAuthority) {
+                    mapped.addAll(extractRealmRoles(
+                            oidcAuthority.getIdToken().getClaims()));
+                } else {
+                    mapped.add(authority);
+                }
+            }
+            return mapped;
+        };
+    }
+
+    /**
+     * Extrahuje role z claim {@code realm_access.roles}.
+     * Mapowanie: "verified-alumn" → ROLE_VERIFIED_ALUMN (myślnik → podkreślnik).
+     * Używane przez oba konwertery (Web i Mobile).
+     */
+    static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
+        if (realmAccess == null) {
+            return Set.of();
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> roles = (List<String>) realmAccess.get("roles");
+        if (roles == null) {
+            return Set.of();
+        }
+
+        return roles.stream()
+                .map(r -> new SimpleGrantedAuthority(
+                        "ROLE_" + r.toUpperCase().replace("-", "_")))
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * Predykat CSRF — czy żądanie niesie nagłówek Authorization: Bearer?
+     * Bearer jest CSRF-safe z natury (nie wysyłany automatycznie przez przeglądarkę).
+     */
+    static boolean hasBearerToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        return header != null && header.startsWith("Bearer ");
+    }
+
+    /**
+     * Wewnętrzny konwerter dla Resource Server — deleguje do extractRealmRoles.
+     * Używany przez jwtAuthenticationConverter()
+     */
+    static class KeycloakJwtRoleConverter
+            implements Converter<Jwt, Collection<GrantedAuthority>> {
+        @Override
+        public Collection<GrantedAuthority> convert(Jwt jwt) {
+            return extractRealmRoles(jwt.getClaims());
+        }
     }
 }
