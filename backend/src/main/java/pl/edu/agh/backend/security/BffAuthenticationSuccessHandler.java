@@ -68,10 +68,10 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if (session != null) session.invalidate();
 
         StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
-                .append("://auth-success?token=")
+                .append("://auth-success?at=")
                 .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
-        if (rt != null) link.append("&refresh=")
+        if (rt != null) link.append("&rt=")
                 .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
 
         res.sendRedirect(link.toString());

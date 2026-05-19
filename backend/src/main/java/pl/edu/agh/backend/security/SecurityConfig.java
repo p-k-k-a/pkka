@@ -11,12 +11,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
-import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -74,7 +78,7 @@ public class SecurityConfig {
             HttpSecurity http,
             ClientRegistrationRepository clientRegistrationRepository,
             OAuth2AuthorizationRequestResolver discordBypassResolver,
-            BffAuthenticationSuccessHandler bffHandler) {
+            BffAuthenticationSuccessHandler bffHandler, JwtDecoder jwtDecoder) {
 
         OidcClientInitiatedLogoutSuccessHandler oidcLogout =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
@@ -97,7 +101,7 @@ public class SecurityConfig {
                     .authorizationEndpoint(ep -> ep
                             .authorizationRequestResolver(discordBypassResolver))
                     .userInfoEndpoint(ui -> ui
-                            .userAuthoritiesMapper(keycloakGrantedAuthoritiesMapper()))
+                            .oidcUserService(oidcUserService(jwtDecoder)))
                     .successHandler(bffHandler))
             .logout(logout -> logout
                     .logoutSuccessHandler(oidcLogout)
@@ -115,19 +119,18 @@ public class SecurityConfig {
         return converter;
     }
 
-    @Bean
-    public GrantedAuthoritiesMapper keycloakGrantedAuthoritiesMapper() {
-        return authorities -> {
-            Set<GrantedAuthority> mapped = new HashSet<>();
-            for (GrantedAuthority authority : authorities) {
-                if (authority instanceof OidcUserAuthority oidcAuthority) {
-                    mapped.addAll(extractRealmRoles(
-                            oidcAuthority.getIdToken().getClaims()));
-                } else {
-                    mapped.add(authority);
-                }
-            }
-            return mapped;
+    /**
+     *  Web (oauth2Login) — OidcUserService is an AT roles reader
+     */
+    private OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService(JwtDecoder atDecoder) {
+        OidcUserService delegate = new OidcUserService();
+        return request -> {
+            OidcUser oidcUser = delegate.loadUser(request);
+            Jwt at = atDecoder.decode(request.getAccessToken().getTokenValue());
+            Set<GrantedAuthority> authorities = new HashSet<>(oidcUser.getAuthorities());
+            authorities.addAll(extractRealmRoles(at.getClaims()));
+            return new DefaultOidcUser(
+                    List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
     }
 
@@ -142,13 +145,11 @@ public class SecurityConfig {
         if (realmAccess == null) {
             return Set.of();
         }
-
         @SuppressWarnings("unchecked")
         List<String> roles = (List<String>) realmAccess.get("roles");
         if (roles == null) {
             return Set.of();
         }
-
         return roles.stream()
                 .map(r -> new SimpleGrantedAuthority(
                         "ROLE_" + r.toUpperCase().replace("-", "_")))
