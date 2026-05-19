@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.config;
+package pl.edu.agh.backend.openapi;
 
 import java.net.URI;
 import java.net.http.HttpClient;
