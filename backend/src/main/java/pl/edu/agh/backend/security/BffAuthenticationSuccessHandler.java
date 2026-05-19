@@ -27,7 +27,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private final OAuth2AuthorizedClientService authorizedClientService;
 
-    @Value("${app.mobile.deep-link-scheme:myapp}")
+    @Value("${app.mobile.deep-link-scheme:pkka}")
     private String mobileDeepLinkScheme;
 
     @Value("${app.web.success-url:/}")
@@ -73,7 +73,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
-                .append("://auth-success?at=")
+                .append("://auth-success#at=")
                 .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
         if (rt != null) link.append("&rt=")
