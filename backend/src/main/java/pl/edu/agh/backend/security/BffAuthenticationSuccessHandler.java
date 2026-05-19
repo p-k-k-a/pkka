@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -64,8 +65,12 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
         authorizedClientService.removeAuthorizedClient(regId, token.getName()); // mobile stateless approach
 
+        SecurityContextHolder.clearContext();
+
         HttpSession session = req.getSession(false);
-        if (session != null) session.invalidate();
+        if (session != null) {
+            session.invalidate();
+        }
 
         StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
                 .append("://auth-success?at=")
@@ -74,6 +79,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if (rt != null) link.append("&rt=")
                 .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
 
+        log.debug("Mobile auth success — redirecting to deep link for user: {}", token.getName());
         res.sendRedirect(link.toString());
     }
 }
