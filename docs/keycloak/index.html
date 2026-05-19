@@ -378,7 +378,7 @@ networks:
     <p>Sidebar → <strong>Clients</strong> → <strong>Create client</strong></p>
 
     <div class="callout info"><div class="callout-icon"></div><div>
-      <strong>Zmiana względem poprzedniej wersji:</strong> klient <code>pkka-app</code> został zastąpiony przez <code>pkka-web</code>. Obie ścieżki (Web i Mobile) mają teraz oddzielne klienty Keycloaka z identyczną konfiguracją bezpieczeństwa (Client Auth ON + PKCE S256). Różnią się wyłącznie redirect URI i uprawnieniami service account.
+      Obie ścieżki (Web i Mobile) mają teraz oddzielne klienty Keycloaka z identyczną konfiguracją bezpieczeństwa (Client Auth ON + PKCE S256). Różnią się wyłącznie redirect URI i uprawnieniami service account.
     </div></div>
 
     <h3>Ekran 1 — General Settings</h3>
@@ -496,9 +496,11 @@ networks:
 │       - POST token endpoint: code + code_verifier + client_secret (Basic)
 │       - dostaje AT (JWT), RT, IDT od Keycloaka
 │  7. Wywołuje BffAuthenticationSuccessHandler(registrationId="keycloak-mobile"):
+│       - SecurityContextHolder.clearContext()
 │       - wyciąga AT + RT z OAuth2AuthorizedClient
-│       - invaliduje sesję serwerową
-│       - 302 → myapp://auth-success?token=&lt;AT&gt;&amp;refresh=&lt;RT&gt;
+│       - usuwa OAuth2AuthorizedClient z serwisu
+│       - invaliduje sesję tymczasową
+│       - 302 → myapp://auth-success?at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
 │
 ▼
 <span class="box">Mobilka</span>
@@ -665,7 +667,7 @@ networks:
       <h2 style="margin:0;border:none;">Discord IDP Bypass</h2>
     </div>
 
-    <p>Parametr <code>kc_idp_hint=discord</code> powoduje, że Keycloak <strong>pomija własną stronę logowania</strong> i przekierowuje przeglądarkę bezpośrednio do Discorda. Kluczowe: bypass musi być warunkowy — dotyczy tylko rejestracji <code>keycloak-mobile</code>, nie <code>keycloak-web</code>.</p>
+    <p>Parametr <code>kc_idp_hint=discord</code> powoduje, że Keycloak <strong>pomija własną stronę logowania</strong> i przekierowuje przeglądarkę bezpośrednio do Discorda. Bypass jest stosowany dla <strong>obu logowań/rejestracji</strong> (<code>keycloak-web</code> i <code>keycloak-mobile</code>) — w obu przypadkach chcemy ominąć ekran Keycloaka i trafić prosto do Discorda.</p>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <code>OAuth2AuthorizationRequestResolver</code> sprawdza <code>registrationId</code> z atrybutów żądania.
@@ -923,7 +925,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
     <table>
       <tr><th>Klasa</th><th>Odpowiedzialność</th></tr>
       <tr><td><strong><code>SecurityConfig</code></strong></td><td>Dwie <code>SecurityFilterChain</code>: Chain 1 (<code>/api/**</code>), Chain 2 (login/logout). Konwertery ról dla Web (<code>OidcUserService</code> + AT) i Mobile (JWT). → sekcja 20</td></tr>
-      <tr><td><code>DiscordBypassRequestResolver</code></td><td>PKCE S256 dla obu rejestracji + warunkowy <code>kc_idp_hint=discord</code> tylko dla <code>keycloak-mobile</code>. → sekcja 6b</td></tr>
+      <tr><td><code>DiscordBypassRequestResolver</code></td><td>PKCE S256 + <code>kc_idp_hint=discord</code> dla obu logowań/rejestracji — bezpośredni bypass do Discord IDP. → sekcja 6b</td></tr>
       <tr><td><code>KeycloakAdminConfig</code></td><td>Bean Keycloak Admin Client (client credentials) do Admin API</td></tr>
       <tr><td><code>BffAuthenticationSuccessHandler</code></td><td>Po <code>oauth2Login</code>: Web → redirect z JSESSIONID, Mobile → deep link z AT+RT, sesja invalidowana. → sekcja 21</td></tr>
       <tr><td><code>DiscordGuildService</code></td><td>Pobieranie Discord AT z Keycloaka, weryfikacja serwera, nadawanie roli</td></tr>
@@ -1028,28 +1030,12 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
     </table>
 
     <h3>Jak odczytać rolę w Spring Boot</h3>
-    <p>Keycloak umieszcza role realmowe w tokenie JWT pod kluczem <code>realm_access.roles</code>. Spring Security musi być skonfigurowany żeby je odczytać:</p>
-    <pre><code><span class="cm">// GrantedAuthoritiesMapper — mapuje Keycloak realm roles na Spring authorities</span>
-<span class="kw">public class</span> KeycloakRoleConverter <span class="kw">implements</span> Converter&lt;Jwt, Collection&lt;GrantedAuthority&gt;&gt; {
-
-    <span class="kw">@Override</span>
-    <span class="kw">public</span> Collection&lt;GrantedAuthority&gt; convert(Jwt jwt) {
-        Map&lt;String, Object&gt; realmAccess = jwt.getClaimAsMap(<span class="str">"realm_access"</span>);
-        <span class="kw">if</span> (realmAccess == <span class="kw">null</span>) <span class="kw">return</span> List.of();
-
-        List&lt;String&gt; roles = (List&lt;String&gt;) realmAccess.get(<span class="str">"roles"</span>);
-        <span class="kw">return</span> roles.stream()
-            .map(r -&gt; <span class="kw">new</span> SimpleGrantedAuthority(<span class="str">"ROLE_"</span> + r.toUpperCase()))
-            .collect(Collectors.toList());
-    }
-}</code></pre>
-    <pre><code><span class="cm">// Użycie w SecurityConfig</span>
-.authorizeHttpRequests(auth -&gt; auth
-    .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
-    .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
-    .requestMatchers(<span class="str">"/api/admin/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
-    .anyRequest().hasRole(<span class="str">"USER"</span>)
-)</code></pre>
+    <p>Keycloak umieszcza role realmowe w tokenie JWT pod <code>realm_access.roles</code>. Konwersja jest zaimplementowana w dwóch miejscach w <code>SecurityConfig</code>:</p>
+    <table>
+      <tr><th>Ścieżka</th><th>Mechanizm</th><th>Mapowanie</th></tr>
+      <tr><td>Mobile (Bearer JWT)</td><td><code>KeycloakJwtRoleConverter</code> (inner class w SecurityConfig) + <code>JwtAuthenticationConverter</code></td><td><code>realm_access.roles</code> z AT</td></tr>
+      <tr><td>Web (oauth2Login)</td><td>Niestandardowy <code>OidcUserService</code> dekoduje AT tym samym JwtDecoderem</td><td><code>realm_access.roles</code> z AT</td></tr>
+    </table>
   </section>
 
   <!-- GRADLE -->
@@ -1720,9 +1706,10 @@ errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</cod
 └─ registrationId == "keycloak-mobile"
     │
     └─ Wyciągnij AT + RT z OAuth2AuthorizedClient
+       SecurityContextHolder.clearContext()
        Usuń OAuth2AuthorizedClient z serwisu
-       Invaliduj sesję HTTP
-       Redirect → myapp://auth-success?token=&lt;AT&gt;&amp;refresh=&lt;RT&gt;
+       Invaliduj sesję HTTP (była tymczasowa dla state/nonce)
+       Redirect → myapp://auth-success?at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
        Mobilka: zapisz w Keychain / EncryptedSharedPreferences</div>
 
     <h3>Kolejne żądania API (/api/**)</h3>
@@ -1778,7 +1765,10 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>Dlaczego dwie osobne SecurityFilterChain?</strong><br>
-      Chain 1 (<code>/api/**</code>) obsługuje uwierzytelnianie przez sesję (Web) lub Bearer JWT (Mobile) i zwraca <code>401 JSON</code> gdy brak auth — mobilka nie może być przekierowywana na stronę logowania. Chain 2 (reszta) obsługuje <em>sam flow logowania</em> (<code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>) i właśnie przekierowuje przeglądarkę do Keycloaka. Nie można ich połączyć — te wymagania są wzajemnie sprzeczne.
+      Chodzi wyłącznie o <strong>authenticationEntryPoint</strong> — co Spring zwraca gdy żądanie nie jest uwierzytelnione:<br><br>
+      <strong>Chain 1</strong> (<code>/api/**</code>) → <code>401 JSON</code>. Mobilka wysyła Bearer do <code>/api/alumni</code> z wygasłym tokenem — powinna dostać 401, nie redirect na stronę logowania Keycloaka. To samo dla web: gdy sesja wygaśnie podczas AJAX-a, 401 jest obsługiwalny przez JS.<br><br>
+      <strong>Chain 2</strong> (<code>/**</code>) → redirect do Keycloaka. Przeglądarka wchodzi na <code>/dashboard</code> bez sesji — powinna być odesłana do Keycloaka. Tutaj też żyje cały <code>oauth2Login</code> flow (<code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>) oraz logout.<br><br>
+      Jeden chain nie może mieć dwóch różnych entry pointów. Podział jest wyłącznie po to żeby <code>/api/**</code> odpowiadało 401, a reszta robiła redirect. <code>oauth2Login</code> nie jest w Chain 1 — nie jest tam potrzebny, bo API nigdy nie inicjuje flow logowania.
     </div></div>
 
     <div class="callout warn"><div class="callout-icon"></div><div>
@@ -1787,15 +1777,15 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
     <h3>Chain 1 — /api/**</h3>
     <pre><code><span class="kw">@Bean @Order</span>(<span class="num">1</span>)
-<span class="kw">public</span> SecurityFilterChain apiChain(HttpSecurity http,
-        JwtAuthenticationConverter jwtAuthenticationConverter) <span class="kw">throws</span> Exception {
+<span class="kw">public</span> SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+        JwtAuthenticationConverter jwtAuthenticationConverter) {
     http
         .securityMatcher(<span class="str">"/api/**"</span>)
         .sessionManagement(s -&gt; s.sessionCreationPolicy(IF_REQUIRED))
         .csrf(csrf -&gt; csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler())
-            .ignoringRequestMatchers(SecurityConfig::hasBearerToken))
+            .ignoringRequestMatchers(SecurityConfig::hasBearerToken))  <span class="cm">// Bearer jest CSRF-safe z natury</span>
         .authorizeHttpRequests(auth -&gt; auth
             .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
             .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
@@ -1803,7 +1793,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
             .anyRequest().hasRole(<span class="str">"USER"</span>))
         .oauth2ResourceServer(rs -&gt; rs
             .jwt(jwt -&gt; jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-            .authenticationEntryPoint((req, res, ex) -&gt; res.sendError(<span class="num">401</span>, <span class="str">"Unauthorized"</span>)));
+            .authenticationEntryPoint((req, res, ex) -&gt; res.sendError(<span class="num">401</span>, <span class="str">"Unauthorized"</span>)));  <span class="cm">// nie redirect!</span>
     <span class="kw">return</span> http.build();
 }</code></pre>
 
@@ -1911,7 +1901,10 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
       <h2 style="margin:0;border:none;">BffAuthenticationSuccessHandler.java</h2>
     </div>
 
-    <p>Wywoływany przez Spring Security po każdym udanym <code>oauth2Login</code>. Sprawdza <code>registrationId</code> i rozgałęzia na ścieżkę Web lub Mobile.</p>
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego Spring tworzy sesję dla mobile, skoro BffHandler ją invaliduje?</strong><br>
+      Sesja jest <em>tymczasowo wymagana</em> przez samo Spring Security podczas OAuth2 code flow: gdy mobilka uderza w <code>/oauth2/authorization/keycloak-mobile</code>, Spring musi gdzieś zapisać <code>state</code>, <code>nonce</code> i <code>code_verifier</code>, żeby zwalidować callback. Używa do tego sesji HTTP. Po udanej wymianie code → token, BffHandler ma dostęp do tokenów i czyści sesję. Bez poniższego kroku z <code>SecurityContextHolder.clearContext()</code> Spring tworzy <em>nową</em> sesję — szczegóły niżej.
+    </div></div>
 
     <h3>Schemat działania</h3>
     <pre><code><span class="kw">@Component @RequiredArgsConstructor @Slf4j</span>
@@ -1928,7 +1921,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
     <span class="kw">@Override</span>
     <span class="kw">public void</span> onAuthenticationSuccess(HttpServletRequest req,
-            HttpServletResponse res, Authentication auth) <span class="kw">throws</span> IOException {
+            HttpServletResponse res, Authentication auth) <span class="kw">throws</span> IOException, ServletException {
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
         String registrationId = token.getAuthorizedClientRegistrationId();
@@ -1947,7 +1940,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
         String regId = token.getAuthorizedClientRegistrationId();
 
-        <span class="cm">// 1. Pobierz OAuth2AuthorizedClient (zawiera AT + RT)</span>
+        <span class="cm">// 1. Pobierz tokeny (sesja jeszcze istnieje — musi być przed invalidate)</span>
         OAuth2AuthorizedClient client = authorizedClientService
             .loadAuthorizedClient(regId, token.getName());
 
@@ -1960,23 +1953,35 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         String rt = client.getRefreshToken() != <span class="kw">null</span>
             ? client.getRefreshToken().getTokenValue() : <span class="kw">null</span>;
 
-        <span class="cm">// 2. Wyczyść OAuth2AuthorizedClient (mobilka ma tokeny, serwer nie musi)</span>
+        <span class="cm">// 2. Usuń OAuth2AuthorizedClient — mobilka ma tokeny, backend nie musi</span>
         authorizedClientService.removeAuthorizedClient(regId, token.getName());
 
-        <span class="cm">// 3. Invaliduj sesję — mobilka nie używa JSESSIONID</span>
+        <span class="cm">// 3. KRYTYCZNE: wyczyść SecurityContext PRZED invalidate() i sendRedirect()</span>
+        <span class="cm">//    Bez tego SaveContextOnUpdateOrErrorResponseWrapper przechwytuje sendRedirect(),</span>
+        <span class="cm">//    widzi niepusty SecurityContextHolder, wywołuje getSession(true) i tworzy</span>
+        <span class="cm">//    NOWĄ sesję — response mobilki dostaje Set-Cookie: JSESSIONID=new-id!</span>
+        SecurityContextHolder.clearContext();
+
+        <span class="cm">// 4. Invaliduj tymczasową sesję (była potrzebna tylko na state/nonce/code_verifier)</span>
         HttpSession session = req.getSession(<span class="kw">false</span>);
         <span class="kw">if</span> (session != <span class="kw">null</span>) session.invalidate();
 
-        <span class="cm">// 4. Zbuduj deep link i przekieruj</span>
+        <span class="cm">// 5. Deep link z AT + RT</span>
         StringBuilder link = <span class="kw">new</span> StringBuilder(mobileDeepLinkScheme)
-            .append(<span class="str">"://auth-success?token="</span>)
+            .append(<span class="str">"://auth-success?at="</span>)
             .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
-        <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;refresh="</span>)
+        <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;rt="</span>)
             .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
 
+        log.debug(<span class="str">"Mobile auth success for user: {}"</span>, token.getName());
         res.sendRedirect(link.toString());
     }
 }</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>SecurityContextHolder.clearContext()</code> musi być przed <code>session.invalidate()</code>?</strong><br>
+      Spring Security owija <code>HttpServletResponse</code> w <code>SaveContextOnUpdateOrErrorResponseWrapper</code>. Kiedy wywołujesz <code>res.sendRedirect()</code>, wrapper najpierw wywołuje <code>saveContext()</code>. Jeśli <code>SecurityContextHolder</code> nie jest pusty, <code>HttpSessionSecurityContextRepository.saveContext()</code> wywołuje <code>request.getSession(true)</code> — tworzy <em>nową</em> sesję i ustawia <code>Set-Cookie: JSESSIONID=&lt;new-id&gt;</code> na response'ie z deep linkiem. Mobilka nieświadomie dostaje ciasteczko sesji na odpowiedzi z <code>302 myapp://auth-success</code>. <code>clearContext()</code> sprawia, że <code>saveContext()</code> nie ma co zapisać i pomija tworzenie sesji.
+    </div></div>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>AT w URL deep linka — implikacje bezpieczeństwa:</strong><br>
