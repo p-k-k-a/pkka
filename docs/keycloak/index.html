@@ -439,6 +439,21 @@ networks:
       <strong>Mapper ID tokena nie jest potrzebny.</strong> Aktualny <code>SecurityConfig</code> używa niestandardowego <code>OidcUserService</code>, który dekoduje <strong>Access Token</strong> (zawsze niesie <code>realm_access.roles</code>) tym samym <code>JwtDecoder</code> co ścieżka Mobile. Zero dodatkowej konfiguracji Keycloaka.
     </div></div>
 
+    <h3>Client scopes — ogranicz claims w Access Tokenie</h3>
+    <p>W obu klientach (<code>pkka-web</code> i <code>pkka-mobile</code>): <strong>Clients → [client] → Client scopes</strong> → scope <strong>profile</strong>/<strong>email</strong> → <strong>Mappers</strong>. Dla poniższych mapperów ustaw <strong>Add to access token = OFF</strong> (pozostaw <strong>Add to ID token</strong> i <strong>Add to userinfo</strong> bez zmian):</p>
+    <table>
+      <tr><th>Mapper / claim</th><th>Ustawienie</th></tr>
+      <tr><td><code>email</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>given_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>name</code> (full name)</td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>nickname</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>preferred_username</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>middle_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>family_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>gender</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+    </table>
+    <p class="subtitle" style="margin-top:-8px">Cel: mniejszy Access Token/RODO dla API; dane profilu pozostają w ID tokenie / userinfo.</p>
+
     <h3>Service Account Roles</h3>
     <p>Zakładka <strong>Service account roles</strong> → <strong>Assign role</strong> → <strong>Filter by clients</strong>:</p>
     <table>
@@ -1778,7 +1793,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
       <strong>Dlaczego dwie osobne SecurityFilterChain?</strong><br>
       Chodzi wyłącznie o <strong>authenticationEntryPoint</strong> — co Spring zwraca gdy żądanie nie jest uwierzytelnione:<br><br>
       <strong>Chain 1</strong> (<code>/api/**</code>) → <code>401 JSON</code>. Mobilka wysyła Bearer do <code>/api/alumni</code> z wygasłym tokenem — powinna dostać 401, nie redirect na stronę logowania Keycloaka. To samo dla web: gdy sesja wygaśnie podczas AJAX-a, 401 jest obsługiwalny przez JS.<br><br>
-      <strong>Chain 2</strong> (<code>/**</code>) → redirect do Keycloaka. Przeglądarka wchodzi na <code>/dashboard</code> bez sesji — powinna być odesłana do Keycloaka. Tutaj też żyje cały <code>oauth2Login</code> flow (<code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>) oraz logout.<br><br>
+      <strong>Chain 2</strong> (<code>/**</code>) → redirect do Keycloaka. Przeglądarka wchodzi na <code>/dashboard</code> bez sesji — powinna być odesłana do Keycloaka. Tutaj również jest obsługiwany cały <code>oauth2Login</code> flow (<code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>, <code>/v3/api-docs/**</code>, <code>/swagger-ui/**</code>) oraz logout.<br><br>
       Jeden chain nie może mieć dwóch różnych entry pointów. Podział jest wyłącznie po to żeby <code>/api/**</code> odpowiadało 401, a reszta robiła redirect. <code>oauth2Login</code> nie jest w Chain 1 — nie jest tam potrzebny, bo API nigdy nie inicjuje flow logowania.
     </div></div>
 
