@@ -299,8 +299,24 @@ networks:
   iam-network:
     driver: bridge</code></pre>
 
-    <div class="callout warn"><div class="callout-icon"></div><div><code>KC_BOOTSTRAP_ADMIN_*</code> działa tylko przy pierwszym starcie (tworzeniu bazy). Przy kolejnych uruchomieniach Keycloak używa konta zapisanego w PostgreSQL.</div></div>
-    <div class="callout info"><div class="callout-icon"></div><div>Mailpit przechwytuje wszystkie maile lokalnie (weryfikacja, reset hasła). UI pod <code>http://localhost:8025</code>. Nie wysyła nic na zewnątrz.</div></div>
+      <div class="callout warn"><div class="callout-icon"></div><div><code>Zmienne KC_BOOTSTRAP_ADMIN_*</code> działa tylko przy pierwszym starcie (tworzeniu bazy). Przy kolejnych uruchomieniach Keycloak używa konta zapisanego w PostgreSQL.</div></div>
+      <div class="callout info"><div class="callout-icon"></div><div>Mailpit przechwytuje wszystkie maile lokalnie (weryfikacja, reset hasła). UI pod <code>http://localhost:8025</code>. Nie wysyła nic na zewnątrz.</div></div>
+
+    <h3>Import wyeksportowanego Realmu</h3>
+    <p>Jeśli posiadasz gotowy plik konfiguracyjny <code>realm-export.json</code>, możesz załadować go przy starcie modyfikując sekcję <code>keycloak</code> w pliku <code>docker-compose.yml</code>. Należy dodać flagę <code>--import-realm</code> do komendy oraz podmontować plik JSON bezpośrednio w odpowiednią ścieżkę katalogu importów w kontenerze.</p>
+
+    <pre><code>  keycloak:
+    <span class="cm"># ... pozostałe dyrektywy bez zmian ...</span>
+    command: start-dev --import-realm
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm.json:ro</code></pre>
+
+    <div class="callout tip"><div class="callout-icon"></div><div>
+      <strong>Oznaczenie <code>:ro</code></strong><br>
+      Skrót <code>:ro</code> oznacza <em>read-only</em> (tylko do odczytu). Gwarantuje to, że baza danych / aplikacja dążąca do załadowania tych danych wewnątrz kontenera nie będzie w stanie nadpisać ani zmodyfikować zawartości Twojego lokalnego pliku źródłowego <code>realm-export.json</code>.<br><br>
+      <strong>Konfiguracja środowiska .env</strong><br>
+      Pamiętaj, że po udanym imporcie z tego pliku należy odpowiednio skonfigurować plik <code>.env</code> w katalogu /backend. Zmienne, o które chodzi, to te użyte w konfiguracji Springa (opisane w sekcji <a href="#appyml" style="color:var(--accent)">application.yml</a>: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_GUILD_ID</code>, itp.).
+    </div></div>
   </section>
 
   <!-- DISCORD PORTAL -->
