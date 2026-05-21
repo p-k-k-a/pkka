@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Announcement } from "@pkka/api";
+import type { Announcement, BlogPost } from "@pkka/api";
 
 const generateMockAnnouncements = (): Announcement[] =>
   Array.from({ length: faker.number.int({ min: 2, max: 5 }) }, () => ({
@@ -19,6 +19,22 @@ const generateMockAnnouncements = (): Announcement[] =>
     },
   }));
 
+const generateMockBlogPost = (): BlogPost => ({
+  id: faker.string.uuid(),
+  title: faker.lorem.sentence(),
+  description: faker.lorem.sentence(),
+  content: faker.lorem.paragraphs(3, "\n\n"),
+  publishedAt: faker.date.recent().toISOString(),
+  tag: faker.helpers.arrayElement(["Wydarzenie", "Warsztaty", "Konferencja", "Aktualności"]),
+  imageUrl: faker.image.url(),
+  slug: faker.lorem.slug(),
+  author: {
+    name: faker.person.fullName(),
+    role: faker.person.jobTitle(),
+    avatarUrl: faker.image.avatar(),
+  },
+});
+
 const _originalFetch = global.fetch;
 
 global.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
@@ -27,6 +43,13 @@ global.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Pr
 
   if (url.includes("/api/announcements")) {
     return new Response(JSON.stringify(generateMockAnnouncements()), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (url.includes("/api/blog-posts/")) {
+    return new Response(JSON.stringify(generateMockBlogPost()), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

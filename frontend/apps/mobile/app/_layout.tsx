@@ -1,9 +1,9 @@
 import "@/global.css";
 import { NAV_THEME } from "@/lib/theme";
 import { configureApi } from "@pkka/api";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
@@ -30,7 +30,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ headerShown: false }} />
             </Stack>
           </SafeAreaView>
-          <StatusBar style="dark" />
+          <StatusBar style="auto" />
           <PortalHost />
         </ThemeProvider>
       </QueryClientProvider>

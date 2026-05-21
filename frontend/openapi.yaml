@@ -18,6 +18,25 @@ paths:
                 items:
                   $ref: "#/components/schemas/Announcement"
 
+  /api/blog-posts/{slug}:
+    get:
+      summary: Pobiera pojedynczy wpis bloga
+      operationId: getBlogPostBySlug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Przyjazny URL wpisu
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Wpis bloga pobrany pomyślnie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogPost"
+
 components:
   schemas:
     Author:
@@ -76,6 +95,50 @@ components:
         imageUrl:
           type: string
           description: Ścieżka do obrazka
+        slug:
+          type: string
+          description: Przyjazny URL
+        author:
+          $ref: "#/components/schemas/Author"
+
+    BlogPost:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - content
+        - publishedAt
+        - tag
+        - imageUrl
+        - slug
+        - author
+      properties:
+        id:
+          type: string
+          description: Unikalne ID wpisu
+        title:
+          type: string
+          description: Tytuł wpisu
+          x-faker: lorem.sentence
+        description:
+          type: string
+          description: Krótki opis (zajawka)
+          x-faker: lorem.sentence
+        content:
+          type: string
+          description: Pełna treść wpisu z akapitami
+          x-faker: lorem.paragraphs
+        publishedAt:
+          type: string
+          format: date-time
+          description: Data publikacji ISO 8601
+        tag:
+          type: string
+          description: Kategoria wpisu (np. Wydarzenie, Warsztaty)
+        imageUrl:
+          type: string
+          description: URL obrazka głównego
         slug:
           type: string
           description: Przyjazny URL
