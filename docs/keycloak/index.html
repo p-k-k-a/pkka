@@ -352,6 +352,14 @@ networks:
       <tr><td>Port</td><td><code>1025</code></td></tr>
     </table>
 
+    <h3>Dodatkowa konfiguracja zabezpieczeń i sesji</h3>
+    <p>Skonfigurowano również poniższe wartości w ustawieniach realmu (konkretne parametry są poufne ze względów bezpieczeństwa):</p>
+    <ul>
+      <li><strong>Realm settings → Security Defenses → Brute Force Mode:</strong> Skonfigurowano <em>Lockout temporarily (Brute Force Mode)</em>, w tym parametry takie jak <em>Max login failures</em>, <em>Strategy to increase wait time</em>, <em>Wait increment</em>, <em>Max wait</em>, <em>Failure reset time</em>, <em>Quick login check milliseconds</em> oraz <em>Minimum quick login wait</em>.</li>
+      <li><strong>Realm settings → Sessions:</strong> Skonfigurowano parametry sesji, <em>SSO Session Settings</em> (SSO Session Idle, SSO Session Max), <em>Offline session settings</em> (Offline Session Idle, Offline Session Max Limited) oraz <em>Login settings</em> (Login timeout, Login action timeout).</li>
+      <li><strong>Realm settings → Tokens:</strong> Skonfigurowano: <em>Refresh tokens</em> (aktywowanie opcji <em>Revoke Refresh Token</em> umożliwia skuteczne unieważnienie RT po jego użyciu; skonfigurowano również <em>Refresh Token Max Reuse</em>), <em>Access tokens</em> (Lifespan, Lifespan For Implicit Flow, Client Login Timeout) a także <em>Action tokens</em> (User-Initiated Action Lifespan, Default Admin-Initiated Action Lifespan).</li>
+    </ul>
+
     <h3>Efekt — działające emaile i rejestracja</h3>
     <div class="screenshot-row">
       <figure class="screenshot">
