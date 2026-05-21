@@ -2032,17 +2032,29 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 <script>
   // Highlight active nav link on scroll
   const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('nav a');
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        navLinks.forEach(l => l.classList.remove('active'));
-        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
-        if (link) link.classList.add('active');
+  const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+  function updateNav() {
+    let current = '';
+    const scrollY = window.scrollY;
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      if (scrollY >= sectionTop - 100) {
+        current = section.getAttribute('id');
       }
     });
-  }, { threshold: 0.3 });
-  sections.forEach(s => observer.observe(s));
+
+    navLinks.forEach(l => {
+      l.classList.remove('active');
+      if (current && l.getAttribute('href') === `#${current}`) {
+        l.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('load', updateNav);
+  updateNav();
 </script>
 </body>
 </html>
