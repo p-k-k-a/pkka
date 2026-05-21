@@ -132,6 +132,7 @@
   </div>
   <div class="nav-section">
     <div class="nav-title">Keycloak</div>
+    <a href="http://localhost:8081/admin/master/console/" target="_blank">Konsola Admina 🡕</a>
     <a href="#discord-portal">Discord Dev Portal</a>
     <a href="#realm">Realm</a>
     <a href="#client">Client pkka-web</a>
@@ -677,36 +678,34 @@ networks:
     <p>Ustaw <code>Hide on login page: OFF</code> — przeglądarka webowa powinna widzieć przycisk Discord na stronie Keycloaka. Mobilka i tak dostaje <code>kc_idp_hint</code> i pomija ten ekran.</p>
 
     <h3>Implementacja — <code>DiscordBypassRequestResolver</code></h3>
-    <p>PKCE S256 dla obu rejestracji. <code>kc_idp_hint=discord</code> tylko dla <code>keycloak-mobile</code> — wykrycie przez <code>OAuth2ParameterNames.REGISTRATION_ID</code> z atrybutów gotowego żądania (ustawianych przez <code>DefaultOAuth2AuthorizationRequestResolver</code> przed customizerem):</p>
+    <p>PKCE S256 dla obu rejestracji. <code>kc_idp_hint=discord</code> jest wstrzykiwany gdy żądanie zawiera parametr URL <code>?idp=discord</code> — mobilka i web mogą go użyć jawnie, by ominąć stronę logowania Keycloaka i trafiać prosto do Discorda:</p>
 
     <pre><code><span class="kw">@Configuration</span>
 <span class="kw">public class</span> DiscordBypassRequestResolver {
-
-    <span class="kw">private static final</span> String MOBILE_ID = <span class="str">"keycloak-mobile"</span>;
 
     <span class="kw">@Bean</span>
     <span class="kw">public</span> OAuth2AuthorizationRequestResolver discordBypassResolver(
             ClientRegistrationRepository repo) {
 
-        DefaultOAuth2AuthorizationRequestResolver pkceResolver =
+        DefaultOAuth2AuthorizationRequestResolver resolver =
             <span class="kw">new</span> DefaultOAuth2AuthorizationRequestResolver(repo, <span class="str">"/oauth2/authorization"</span>);
-        pkceResolver.setAuthorizationRequestCustomizer(          <span class="cm">// PKCE dla wszystkich</span>
+        resolver.setAuthorizationRequestCustomizer(          <span class="cm">// PKCE dla wszystkich</span>
             OAuth2AuthorizationRequestCustomizers.withPkce());
 
         <span class="kw">return new</span> OAuth2AuthorizationRequestResolver() {
-            <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(HttpServletRequest req) {
-                <span class="kw">return</span> addHintIfMobile(pkceResolver.resolve(req));
+            <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request));
             }
             <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(
-                    HttpServletRequest req, String regId) {
-                <span class="kw">return</span> addHintIfMobile(pkceResolver.resolve(req, regId));
+                    HttpServletRequest request, String clientRegistrationId) {
+                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request));
             }
-            <span class="kw">private</span> OAuth2AuthorizationRequest addHintIfMobile(OAuth2AuthorizationRequest r) {
-                <span class="kw">if</span> (r == <span class="kw">null</span>) <span class="kw">return null</span>;
-                String id = (String) r.getAttributes()
-                    .get(OAuth2ParameterNames.REGISTRATION_ID);
-                <span class="kw">if</span> (!MOBILE_ID.equals(id)) <span class="kw">return</span> r;           <span class="cm">// web — bez hintu</span>
-                <span class="kw">return</span> OAuth2AuthorizationRequest.from(r)
+            <span class="kw">private</span> OAuth2AuthorizationRequest applyIdpHint(
+                    HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
+                <span class="kw">if</span> (authReq == <span class="kw">null</span>) <span class="kw">return null</span>;
+                String idpHint = request.getParameter(<span class="str">"idp"</span>);
+                <span class="kw">if</span> (!"discord".equalsIgnoreCase(idpHint)) <span class="kw">return</span> authReq;
+                <span class="kw">return</span> OAuth2AuthorizationRequest.from(authReq)
                     .additionalParameters(p -&gt; p.put(<span class="str">"kc_idp_hint"</span>, <span class="str">"discord"</span>))
                     .build();
             }
@@ -714,18 +713,19 @@ networks:
     }
 }</code></pre>
 
-    <h3>Efekt — różne URL autoryzacji per rejestracja</h3>
+    <h3>Efekt — bypass per parametr ?idp=discord</h3>
     <div class="flow"><span class="box">keycloak-web</span>  → /oauth2/authorization/keycloak-web
 GET /realms/pkka/.../auth?client_id=pkka-web&amp;code_challenge=...
-<span class="cm">↑ bez kc_idp_hint → Keycloak pokazuje stronę logowania z przyciskiem Discord</span>
+<span class="cm">↑ bez ?idp=discord → Keycloak pokazuje stronę logowania z przyciskiem Discord</span>
 
-<span class="box">keycloak-mobile</span> → /oauth2/authorization/keycloak-mobile
-GET /realms/pkka/.../auth?client_id=pkka-mobile&amp;code_challenge=...
+<span class="box">keycloak-web z bypasem</span>  → /oauth2/authorization/keycloak-web?idp=discord
+<span class="box">keycloak-mobile z bypasem</span> → /oauth2/authorization/keycloak-mobile?idp=discord
+GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
     &amp;<span class="arrow">kc_idp_hint=discord</span>
 <span class="cm">↑ Keycloak pomija stronę → 302 → Discord</span></div>
 
     <div class="callout info"><div class="callout-icon"></div><div>
-      <code>OAuth2ParameterNames.REGISTRATION_ID</code> (<code>"registration_id"</code>) jest kluczem atrybutu ustawianego przez <code>DefaultOAuth2AuthorizationRequestResolver</code>. Atrybut trafia do mapy <code>attributes</code> (wewnętrzna, nie wysyłana do serwera autoryzacji) i jest dostępny po wywołaniu <code>pkceResolver.resolve()</code>. Alias <code>discord</code> musi odpowiadać polu Alias w konfiguracji IDP.
+      Parametr <code>?idp=discord</code> musi być dodany do URL inicjacji logowania. Alias <code>discord</code> musi odpowiadać polu Alias w konfiguracji IDP Keycloaka.
     </div></div>
   </section>
 
@@ -874,7 +874,7 @@ Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
       <figcaption>Błąd 403 przed nadaniem roli <code>broker/read-token</code> — Client not authorized</figcaption>
     </figure>
 
-    <p>Po nadaniu roli <code>broker/read-token</code> na service account klienta <code>pkka-web</code> oraz roli użytkownikowi — odpowiedź 200 OK:</p>
+    <p>Po nadaniu roli <code>broker.read-token</code> użytkownikowi (przez <code>Stored tokens readable = ON</code> lub ręcznie w User → Role mapping) — wywołanie z <strong>AT użytkownika</strong> zwraca 200 OK:</p>
 
     <figure class="screenshot">
       <img src="imgs/postman-200-discord-access-token.png" alt="200 OK - Discord access_token pobrany">
@@ -951,7 +951,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td>Brak przycisku Discord</td><td><code>Hide on login page = ON</code></td><td>Zmień na OFF w ustawieniach IDP</td></tr>
       <tr><td>Błąd przy pierwszym logowaniu Discordem</td><td><code>Account linking policy = LINK_ONLY</code></td><td>Zmień na <code>DEFAULT</code></td></tr>
       <tr><td>Email weryfikacyjny nie dochodzi</td><td>Brak SMTP</td><td>Uruchom Mailpit lub wyłącz tymczasowo Verify email</td></tr>
-      <tr><td><code>403 Client not authorized to retrieve tokens</code></td><td>Brak roli <code>read-token</code> na service account</td><td>Clients → pkka-web → Service account roles → dodaj <code>broker/read-token</code></td></tr>
+      <tr><td><code>403 Client not authorized to retrieve tokens</code></td><td>Brak roli <code>broker.read-token</code> na koncie użytkownika</td><td>Ustaw <code>Stored tokens readable = ON</code> w IDP Discord LUB ręcznie: Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token</td></tr>
       <tr><td><code>403</code> z tokenem użytkownika na <code>/broker/discord/token</code></td><td>Brak roli <code>broker.read-token</code> na koncie</td><td><code>Stored tokens readable = ON</code> LUB ręczne nadanie roli w User → Role mapping</td></tr>
       <tr><td>Auth failed w Postmanie z YubiKey</td><td>Webview Postmana nie obsługuje WebAuthn/FIDO2</td><td>Użyj testowego konta bez 2FA</td></tr>
       <tr><td>Discord: "verified email or phone"</td><td>Testowe konto Discord bez weryfikacji</td><td>Użyj konta z zweryfikowanym emailem</td></tr>
@@ -997,10 +997,10 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
     <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> — powtórz dla każdej roli:</p>
     <table>
       <tr><th>Role name</th><th>Description</th></tr>
-      <tr><td><code>user</code></td><td>Zarejestrowany użytkownik platformy</td></tr>
-      <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumn AGH</td></tr>
-      <tr><td><code>admin</code></td><td>Administrator platformy</td></tr>
-      <tr><td><code>bot</code></td><td>Konto serwisowe bota Discord</td></tr>
+      <tr><td><code>user</code></td><td>Registered platform user</td></tr>
+      <tr><td><code>verified-alumn</code></td><td>Verified AGH alumn</td></tr>
+      <tr><td><code>admin</code></td><td>App admin</td></tr>
+      <tr><td><code>bot</code></td><td>Discord bot service account</td></tr>
     </table>
 
     <h3>Jak utworzyć grupy w Keycloak</h3>
@@ -1378,10 +1378,13 @@ Authorization: Bearer {service_account_at}
 
 <span class="cm">// Response 200 OK</span>
 {
-  <span class="str">"id"</span>: <span class="str">"3fa85f64-5717-4562-b3fc-2c963f66afa6"</span>,
+  <span class="str">"id"</span>: <span class="str">"fb246a7f-0cbf-4f3e-ac40-587047b7daca"</span>,
   <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>,
+  <span class="str">"description"</span>: <span class="str">"Verified AGH alumn"</span>,
   <span class="str">"composite"</span>: <span class="kw">false</span>,
-  <span class="str">"clientRole"</span>: <span class="kw">false</span>
+  <span class="str">"clientRole"</span>: <span class="kw">false</span>,
+  <span class="str">"containerId"</span>: <span class="str">"765dd9b0-6782-432d-ab69-8094551d9e3b"</span>,
+  <span class="str">"attributes"</span>: {}
 }</code></pre>
 
     <h4>Krok 2 — przypisz rolę użytkownikowi</h4>
@@ -1391,12 +1394,12 @@ Content-Type: application/json
 
 [
   {
-    <span class="str">"id"</span>: <span class="str">"3fa85f64-5717-4562-b3fc-2c963f66afa6"</span>,
+    <span class="str">"id"</span>: <span class="str">"fb246a7f-0cbf-4f3e-ac40-587047b7daca"</span>,
     <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>
   }
 ]
 
-<span class="cm">// Response 204 No Content — sukces</span></code></pre>
+<span class="cm">// Response 204 No Content — sukces ✅</span></code></pre>
 
     <h4>Java — kompletna metoda Service</h4>
     <pre><code><span class="kw">@Service</span>
@@ -1438,6 +1441,14 @@ Content-Type: application/json
 
     <div class="callout warn"><div class="callout-icon"></div><div>
       Użytkownik musi uzyskać <strong>nowy AT</strong> (odświeżyć token lub zalogować się ponownie) po zmianie ról — stary JWT zawiera snapshot ról z momentu wystawienia i nie jest aktualizowany przez Keycloak retroaktywnie.
+    </div></div>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>End-to-end przetestowane ✅</strong><br>
+      Poniższy przepływ działa:<br>
+      1. GET service account AT (<code>client_credentials</code>) → 200 OK<br>
+      2. GET <code>/admin/realms/pkka/roles/verified-alumn</code> → rola z <code>id: fb246a7f-...</code><br>
+      3. POST <code>/admin/realms/pkka/users/f6930bca-.../role-mappings/realm</code> z <code>[{"id":"fb246a7f-...","name":"verified-alumn"}]</code> → 204 No Content ✅
     </div></div>
 
     <h3>Jak znaleźć userId z Keycloak AT użytkownika</h3>
