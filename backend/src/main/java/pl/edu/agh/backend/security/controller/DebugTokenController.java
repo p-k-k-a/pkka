@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.dev;
+package pl.edu.agh.backend.security.controller;
 
 import java.time.Instant;
 import java.util.ArrayList;

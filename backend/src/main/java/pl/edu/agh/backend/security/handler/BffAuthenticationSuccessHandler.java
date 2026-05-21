@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.security;
+package pl.edu.agh.backend.security.handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

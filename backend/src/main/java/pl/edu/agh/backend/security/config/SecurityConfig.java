@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.security;
+package pl.edu.agh.backend.security.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 import java.util.Collection;
 import java.util.HashSet;

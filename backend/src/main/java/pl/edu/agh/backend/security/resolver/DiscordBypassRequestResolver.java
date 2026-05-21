@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.security;
+package pl.edu.agh.backend.security.resolver;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;

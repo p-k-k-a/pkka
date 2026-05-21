@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.security;
+package pl.edu.agh.backend.infrastructure.keycloak;
 
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
