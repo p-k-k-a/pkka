@@ -20,6 +20,22 @@ paths:
 
 components:
   schemas:
+    Author:
+      type: object
+      required:
+        - name
+        - role
+      properties:
+        name:
+          type: string
+          x-faker: person.fullName
+        role:
+          type: string
+          x-faker: person.jobTitle
+        avatarUrl:
+          type: string
+          x-faker: image.avatar
+
     Announcement:
       type: object
       required:
@@ -28,9 +44,11 @@ components:
         - description
         - content
         - date
+        - time
         - tag
         - imageUrl
         - slug
+        - author
       properties:
         id:
           type: string
@@ -49,6 +67,9 @@ components:
         date:
           type: string
           description: Data w formacie tekstowym (np. 10 maja 2026)
+        time:
+          type: string
+          description: Godzina publikacji (np. 14:30)
         tag:
           type: string
           description: Kategoria (np. Wydarzenie, Warsztaty)
@@ -58,3 +79,5 @@ components:
         slug:
           type: string
           description: Przyjazny URL
+        author:
+          $ref: "#/components/schemas/Author"
