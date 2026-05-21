@@ -1,10 +1,77 @@
-import { Text, View } from "react-native";
+import { CtaCard } from "@/components/home/cta-card";
+import { Hero } from "@/components/home/hero";
+import { PostCard } from "@/components/home/post-card";
+import { SectionHeading } from "@/components/home/section-heading";
+import { Text } from "@/components/ui/text";
+import type { Announcement } from "@pkka/api";
+import { useGetAnnouncements } from "@pkka/api";
+import { ChevronDown } from "lucide-react-native";
+import * as React from "react";
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+
+const HERO = {
+  title: "Witaj w P.K.K.A",
+  body: "Platforma łącząca inżynierów i specjalistów IT Wydziału Informatyki AGH. Współpracuj, rozwijaj się i buduj przyszłość technologii.",
+};
+
+const CTA = {
+  title: "Dołącz do naszej społeczności",
+  subtitle:
+    "Dostęp do zamkniętych wydarzeń i katalogu ekspertów. Weryfikacja tylko dla absolwentów WI AGH.",
+  primaryLabel: "Zarejestruj się",
+  secondaryLabel: "Dowiedz się więcej",
+};
+
+function ListHeader() {
+  return (
+    <View className="px-5 gap-10">
+      <Hero {...HERO} />
+      <CtaCard {...CTA} />
+      <SectionHeading title={"Publiczne\nAktualności"} />
+    </View>
+  );
+}
+
+function ListFooter() {
+  return (
+    <Pressable className="flex-row items-center justify-center gap-2 py-4 pb-12">
+      <Text className="text-xs font-bold tracking-widest uppercase text-foreground">
+        ZOBACZ STARSZE WPISY
+      </Text>
+      <ChevronDown size={16} />
+    </Pressable>
+  );
+}
 
 export default function HomeScreen() {
+  const { data, isLoading, isError } = useGetAnnouncements();
+
+  const announcements = (data?.data ?? []) as Announcement[];
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ fontSize: 24, fontWeight: "bold" }}>Home</Text>
-      <Text style={{ marginTop: 8, color: "#6b7280" }}>Welcome to the app!</Text>
-    </View>
+    <FlatList
+      className="flex-1 bg-background"
+      data={announcements}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <View className="px-5">
+          <PostCard announcement={item} />
+        </View>
+      )}
+      ItemSeparatorComponent={() => <View className="h-5" />}
+      ListHeaderComponent={ListHeader}
+      ListHeaderComponentStyle={{ marginBottom: 20 }}
+      ListFooterComponent={
+        isLoading ? (
+          <ActivityIndicator className="py-8" />
+        ) : isError ? (
+          <Text className="text-muted-foreground text-sm text-center py-8">
+            Nie udało się załadować aktualności.
+          </Text>
+        ) : (
+          <ListFooter />
+        )
+      }
+    />
   );
 }

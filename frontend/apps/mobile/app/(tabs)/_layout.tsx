@@ -19,21 +19,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "AKTUALNOŚCI",
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="events"
         options={{
-          title: "Events",
+          title: "WYDARZENIA",
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="login"
         options={{
-          title: "Login",
+          title: "ZALOGUJ",
           tabBarIcon: ({ color, size }) => <LogIn color={color} size={size} />,
         }}
       />

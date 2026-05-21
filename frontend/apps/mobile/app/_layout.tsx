@@ -7,6 +7,7 @@ import { PortalHost } from "@rn-primitives/portal";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 configureApi({ baseUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080" });
 
@@ -20,15 +21,19 @@ export default function RootLayout() {
   const colorScheme: "light" | "dark" = "light";
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={NAV_THEME[colorScheme]}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="dark" />
-        <PortalHost />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={NAV_THEME[colorScheme]}>
+          <SafeAreaView className="flex-1 bg-background">
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+            </Stack>
+          </SafeAreaView>
+          <StatusBar style="dark" />
+          <PortalHost />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
