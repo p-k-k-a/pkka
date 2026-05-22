@@ -70,7 +70,7 @@ keycloak:
   server-url: ${KEYCLOAK_URL:http://localhost:8081}
   realm: ${KEYCLOAK_REALM:pkka}
   client-id: pkka-web
-  client-secret: ${KEYCLOAK_CLIENT_SECRET:change-me}
+  client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET:change-me}
 
 # Discord
 discord:
@@ -113,6 +113,7 @@ spring:
             scope: openid, profile
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
 
           keycloak-mobile:
             provider: keycloak
@@ -121,6 +122,7 @@ spring:
             scope: openid, profile
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
 
         provider:
           keycloak:
@@ -142,7 +144,7 @@ keycloak:
   server-url: ${KEYCLOAK_URL}
   realm: ${KEYCLOAK_REALM}
   client-id: pkka-web
-  client-secret: ${KEYCLOAK_CLIENT_SECRET}
+  client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
 
 discord:
   guild-id: ${DISCORD_GUILD_ID}

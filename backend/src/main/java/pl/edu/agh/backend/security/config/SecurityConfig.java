@@ -130,8 +130,11 @@ public class SecurityConfig {
             Jwt at = atDecoder.decode(request.getAccessToken().getTokenValue());
             Set<GrantedAuthority> authorities = new HashSet<>(oidcUser.getAuthorities());
             authorities.addAll(extractRealmRoles(at.getClaims()));
+            String nameAttr = request.getClientRegistration()
+                    .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+
             return new DefaultOidcUser(
-                    List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo());
+                    List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo(), nameAttr);
         };
     }
 

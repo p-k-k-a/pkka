@@ -29,7 +29,7 @@ public class DiscordBypassRequestResolver {
 
             @Override
             public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
-                return applyIdpHint(request, resolver.resolve(request));
+                return applyIdpHint(request, resolver.resolve(request, clientRegistrationId));
             }
 
             private OAuth2AuthorizationRequest applyIdpHint(HttpServletRequest request, OAuth2AuthorizationRequest authReq) {

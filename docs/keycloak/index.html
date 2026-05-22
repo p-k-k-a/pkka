@@ -540,7 +540,7 @@ networks:
 │       - wyciąga AT + RT z OAuth2AuthorizedClient
 │       - usuwa OAuth2AuthorizedClient z serwisu
 │       - invaliduje sesję tymczasową
-│       - 302 → myapp://auth-success?at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+│       - 302 → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
 │
 ▼
 <span class="box">Mobilka</span>
@@ -737,7 +737,11 @@ networks:
             }
             <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(
                     HttpServletRequest request, String clientRegistrationId) {
-                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request));
+                <span class="cm">// WAŻNE: przekazujemy clientRegistrationId do delegate resolvers,</span>
+                <span class="cm">// bo Spring może wołać tę metodę bezpośrednio (z już określonym registrationId),</span>
+                <span class="cm">// np. z OAuth2AuthorizationRequestRedirectFilter.</span>
+                <span class="cm">// Bez tego resolver ignoruje argument i może zwrócić null lub złą rejestrację.</span>
+                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request, clientRegistrationId));
             }
             <span class="kw">private</span> OAuth2AuthorizationRequest applyIdpHint(
                     HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
@@ -751,6 +755,11 @@ networks:
         };
     }
 }</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>resolve(request, clientRegistrationId)</code> musi przekazywać argument dalej?</strong><br>
+      Spring Security wywołuje drugą przeciążoną metodę bezpośrednio z <code>OAuth2AuthorizationRequestRedirectFilter</code>, gdy zna <code>registrationId</code> z atrybutów żądania. Przekazanie <code>null</code> lub ponowne parsowanie URL bez tego argumentu może spowodować, że delegate zwróci <code>null</code> (brak dopasowania) albo nieoczekiwanie wybierze inną rejestrację. Zawsze deleguj oba parametry do <code>resolver.resolve(request, clientRegistrationId)</code>.
+    </div></div>
 
     <h3>Efekt — bypass per parametr ?idp=discord</h3>
     <div class="flow"><span class="box">keycloak-web</span>  → /oauth2/authorization/keycloak-web
@@ -1385,7 +1394,11 @@ Content-Type: application/x-www-form-urlencoded
 
 grant_type=client_credentials
 &amp;client_id=pkka-web
-&amp;client_secret=YOUR_CLIENT_SECRET</code></pre>
+&amp;client_secret=<span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>  <span class="cm"># ten sam secret co rejestracja keycloak-web</span></code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+        Jedna zmienna <code>${KEYCLOAK_WEB_CLIENT_SECRET}</code> obsługuje zarówno OAuth2 login (<code>spring.security.oauth2.client.registration.keycloak-web.client-secret</code>) jak i Admin API (<code>keycloak.client-secret</code>).
+    </div></div>
 
     <pre><code><span class="cm">// Java — keycloak-admin-client (automatycznie zarządza tokenem)</span>
 <span class="kw">@Configuration</span>
@@ -1407,6 +1420,11 @@ grant_type=client_credentials
             .build();
     }
 }</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong><code>@Value</code> w <code>KeycloakAdminConfig</code> — czy musisz definiować je w YML?</strong><br>
+      Tak. <code>@Value("${keycloak.server-url}")</code> czyta z Spring Environment, który budowany jest z <code>application.yml</code>, pliku <code>.env</code> i zmiennych systemowych. Właściwości <code>keycloak.server-url</code>, <code>keycloak.realm</code>, <code>keycloak.client-id</code>, <code>keycloak.client-secret</code> muszą być zdefiniowane w jednym z tych źródeł — w tym projekcie są w bloku <code>keycloak:</code> w <code>application.yml</code>. Bez nich aplikacja nie uruchomi się (<code>IllegalArgumentException: Could not resolve placeholder</code>).
+    </div></div>
 
     <h3>Przykład — nadanie roli <code>verified-alumn</code></h3>
     <p>Operacja dwuetapowa: najpierw pobieramy reprezentację roli (zawiera <code>id</code>), następnie przypisujemy ją do użytkownika.</p>
@@ -1759,7 +1777,7 @@ errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</cod
        SecurityContextHolder.clearContext()
        Usuń OAuth2AuthorizedClient z serwisu
        Invaliduj sesję HTTP (była tymczasowa dla state/nonce)
-       Redirect → myapp://auth-success?at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+       Redirect → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
        Mobilka: zapisz w Keychain / EncryptedSharedPreferences</div>
 
     <h3>Kolejne żądania API (/api/**)</h3>
@@ -1902,8 +1920,13 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         Jwt at = atDecoder.decode(request.getAccessToken().getTokenValue());
         Set&lt;GrantedAuthority&gt; authorities = <span class="kw">new</span> HashSet&lt;&gt;(oidcUser.getAuthorities());
         authorities.addAll(extractRealmRoles(at.getClaims()));
+        <span class="cm">// Zachowaj skonfigurowany user-name-attribute (preferred_username z yml).</span>
+        <span class="cm">// DefaultOidcUser bez nameAttributeKey resetuje getName() do "sub" (UUID),</span>
+        <span class="cm">// ignorując user-name-attribute: preferred_username z konfiguracji providera.</span>
+        String nameAttr = request.getClientRegistration()
+            .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
         <span class="kw">return new</span> DefaultOidcUser(
-            List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo());
+            List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo(), nameAttr);
     };
 }
 
@@ -1929,6 +1952,11 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         <span class="kw">return</span> extractRealmRoles(jwt.getClaims());
     }
 }</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Fix: <code>nameAttributeKey</code> — zachowaj <code>preferred_username</code> jako nazwę główną</strong><br>
+      <code>DefaultOidcUser(authorities, idToken, userInfo)</code> bez czwartego argumentu zawsze szuka nazwy głównej w claimie <code>sub</code> (UUID Keycloaka). Konfiguracja <code>user-name-attribute: preferred_username</code> jest wtedy ignorowana — <code>authentication.getName()</code> i <code>token.getName()</code> zwracają UUID zamiast nazwy użytkownika. Wyciągnij skonfigurowany atrybut przez <code>request.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName()</code> i przekaż jako czwarty argument konstruktora.
+    </div></div>
 
     <div class="callout success"><div class="callout-icon"></div><div>
       <strong>Dlaczego <code>oidcUserService</code> zamiast <code>keycloakGrantedAuthoritiesMapper</code>?</strong><br>
@@ -2018,7 +2046,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
         <span class="cm">// 5. Deep link z AT + RT</span>
         StringBuilder link = <span class="kw">new</span> StringBuilder(mobileDeepLinkScheme)
-            .append(<span class="str">"://auth-success?at="</span>)
+            .append(<span class="str">"://auth-success#at="</span>)
             .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
         <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;rt="</span>)
             .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
