@@ -10,8 +10,7 @@
     "web": "expo start --web",
     "build": "expo export --platform web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit",
-    "reset-project": "node ./scripts/reset-project.js"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -59,7 +58,6 @@
     "babel-preset-expo": "^55.0.21",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
-    "msw": "^2.14.6",
     "prettier-plugin-tailwindcss": "^0.5.14",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"

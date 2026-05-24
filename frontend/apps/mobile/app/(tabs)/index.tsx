@@ -34,7 +34,12 @@ function ListHeader() {
 
 function ListFooter() {
   return (
-    <Pressable className="flex-row items-center justify-center gap-2 py-4 pb-12">
+    <Pressable
+      className="flex-row items-center justify-center gap-2 py-8"
+      onPress={() => {
+        console.log("nothing yet");
+      }}
+    >
       <Text className="text-xs font-bold tracking-widest uppercase text-foreground">
         ZOBACZ STARSZE WPISY
       </Text>
