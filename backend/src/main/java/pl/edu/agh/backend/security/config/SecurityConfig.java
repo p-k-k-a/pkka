@@ -139,9 +139,9 @@ public class SecurityConfig {
     }
 
     /**
-     * Extrahuje role z claim {@code realm_access.roles}.
-     * Mapowanie: "verified-alumn" → ROLE_VERIFIED_ALUMN (myślnik → podkreślnik).
-     * Używane przez oba konwertery (Web i Mobile).
+     * Extracts roles from the {@code realm_access.roles} claim.
+     * Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash -> underscore).
+     * Used by both converters (Web and Mobile).
      */
     static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
         @SuppressWarnings("unchecked")
@@ -161,8 +161,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Predykat CSRF — czy żądanie niesie nagłówek Authorization: Bearer?
-     * Bearer jest CSRF-safe z natury (nie wysyłany automatycznie przez przeglądarkę).
+     * CSRF predicate - does the request carry the Authorization: Bearer header?
+     * Bearer is CSRF-safe by nature (not automatically sent by the browser).
      */
     static boolean hasBearerToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -170,8 +170,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Wewnętrzny konwerter dla Resource Server — deleguje do extractRealmRoles.
-     * Używany przez jwtAuthenticationConverter()
+     * Internal converter for the Resource Server - delegates to extractRealmRoles.
+     * Used by jwtAuthenticationConverter().
      */
     static class KeycloakJwtRoleConverter
             implements Converter<Jwt, Collection<GrantedAuthority>> {
