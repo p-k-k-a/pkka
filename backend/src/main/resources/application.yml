@@ -1,9 +1,13 @@
 spring:
   application:
-    name: backend
+    name: pkka-backend
   profiles:
     default: dev
 
+  config:
+    import: optional:file:./backend/.env[.properties]
+
+# OpenAPI / Swagger
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -15,24 +19,149 @@ springdoc:
     display-request-duration: true
     disable-swagger-default-url: true
 
+
+# PROFILE: dev
 ---
 spring:
   config:
     activate:
       on-profile: dev
+
+  # OAuth2 / OIDC (Keycloak)
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET:change-me}
+            scope: openid, profile
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
+
+          keycloak-mobile:
+            provider: keycloak
+            client-id: pkka-mobile
+            client-secret: ${KEYCLOAK_MOBILE_CLIENT_SECRET:change-me}
+            scope: openid, profile
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
+
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}
+
+# App
+app:
+  mobile:
+    deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
+  web:
+    success-url: ${WEB_SUCCESS_URL:/}
+
+# Keycloak Admin Client
+keycloak:
+  server-url: ${KEYCLOAK_URL:http://localhost:8081}
+  realm: ${KEYCLOAK_REALM:pkka}
+  client-id: pkka-web
+  client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET:change-me}
+
+# Discord
+discord:
+  guild-id: ${DISCORD_GUILD_ID:change-me}
+
+# Server
+server:
+  port: 8080
+
+# OpenAPI — enabled on dev
 springdoc:
   api-docs:
     enabled: true
   swagger-ui:
     enabled: true
 
+# Logging
+logging:
+  level:
+    root: INFO
+    pl.edu.agh.pkka: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+# PROFILE: prod
 ---
 spring:
   config:
     activate:
       on-profile: prod
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
+            scope: openid, profile
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
+
+          keycloak-mobile:
+            provider: keycloak
+            client-id: pkka-mobile
+            client-secret: ${KEYCLOAK_MOBILE_CLIENT_SECRET}
+            scope: openid, profile
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-authentication-method: client_secret_basic
+
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI}
+            user-name-attribute: preferred_username
+
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+app:
+  mobile:
+    deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
+  web:
+    success-url: ${WEB_SUCCESS_URL:/}
+
+# Keycloak Admin Client
+keycloak:
+  server-url: ${KEYCLOAK_URL}
+  realm: ${KEYCLOAK_REALM}
+  client-id: pkka-web
+  client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
+
+discord:
+  guild-id: ${DISCORD_GUILD_ID}
+
 springdoc:
   api-docs:
     enabled: false
   swagger-ui:
     enabled: false
+
+server:
+  port: ${PORT:8080}
+  tomcat:
+    remote-ip-header: x-forwarded-for
+    protocol-header: x-forwarded-proto
+
+logging:
+  level:
+    root: WARN
+    pl.edu.agh.pkka: INFO

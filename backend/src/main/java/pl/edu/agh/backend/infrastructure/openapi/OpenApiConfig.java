@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.config;
+package pl.edu.agh.backend.infrastructure.openapi;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
