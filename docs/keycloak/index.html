@@ -300,7 +300,15 @@ networks:
     driver: bridge</code></pre>
 
       <div class="callout warn"><div class="callout-icon"></div><div><code>Zmienne KC_BOOTSTRAP_ADMIN_*</code> działa tylko przy pierwszym starcie (tworzeniu bazy). Przy kolejnych uruchomieniach Keycloak używa konta zapisanego w PostgreSQL.</div></div>
-      <div class="callout info"><div class="callout-icon"></div><div>Mailpit przechwytuje wszystkie maile lokalnie (weryfikacja, reset hasła). UI pod <code>http://localhost:8025</code>. Nie wysyła nic na zewnątrz.</div></div>
+      <div class="callout info"><div class="callout-icon"></div><div>
+        <strong>Trwałe konto admina (zamiast admin/admin):</strong><br>
+        1) Zaloguj się jednorazowym bootstrap adminem do <code>master</code>.<br>
+        2) <strong>Users → Add user</strong> → ustaw email/username i zapisz.<br>
+        3) <strong>Credentials</strong> → ustaw haslo (Temporary = OFF).<br>
+        4) <strong>Role mapping</strong> → <strong>Assign role</strong> → <strong>Filter by realm roles</strong> → nadaj <code>admin</code>.<br>
+        5) Usuń bootstrap konto.<br>
+        6) Usuń <code>KC_BOOTSTRAP_ADMIN_USERNAME</code>/<code>KC_BOOTSTRAP_ADMIN_PASSWORD</code> z <code>docker-compose.yml</code> i zrestartuj.
+      </div></div>
 
     <h3>Import wyeksportowanego Realmu</h3>
     <p>Jeśli posiadasz gotowy plik konfiguracyjny <code>realm-export.json</code>, możesz załadować go przy starcie modyfikując sekcję <code>keycloak</code> w pliku <code>docker-compose.yml</code>. Należy dodać flagę <code>--import-realm</code> do komendy oraz podmontować plik JSON bezpośrednio w odpowiednią ścieżkę katalogu importów w kontenerze.</p>
@@ -1990,16 +1998,20 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         <span class="kw">implements</span> AuthenticationSuccessHandler {
 
     <span class="kw">private final</span> OAuth2AuthorizedClientService authorizedClientService;
+    <span class="kw">private final</span> UserProvisioningService userProvisioningService;
+    <span class="kw">private final</span> UserPrincipalExtractor principalExtractor;
 
-    <span class="kw">@Value</span>(<span class="str">"${app.mobile.deep-link-scheme:myapp}"</span>)
+    <span class="kw">@Value</span>(<span class="str">"${app.mobile.deep-link-scheme}"</span>)
     <span class="kw">private</span> String mobileDeepLinkScheme;
 
-    <span class="kw">@Value</span>(<span class="str">"${app.web.success-url:/}"</span>)
+    <span class="kw">@Value</span>(<span class="str">"${app.web.success-url}"</span>)
     <span class="kw">private</span> String webSuccessUrl;
 
     <span class="kw">@Override</span>
     <span class="kw">public void</span> onAuthenticationSuccess(HttpServletRequest req,
             HttpServletResponse res, Authentication auth) <span class="kw">throws</span> IOException, ServletException {
+
+        principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
         String registrationId = token.getAuthorizedClientRegistrationId();
@@ -2051,7 +2063,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;rt="</span>)
             .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
 
-        log.debug(<span class="str">"Mobile auth success for user: {}"</span>, token.getName());
+        log.debug(<span class="str">"Mobile auth success — redirecting to deep link for user: {}"</span>, token.getName());
         res.sendRedirect(link.toString());
     }
 }</code></pre>
