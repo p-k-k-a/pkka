@@ -21,23 +21,28 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web' // Poprawiona nazwa startera
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.keycloak:keycloak-admin-client:26.0.8'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	runtimeOnly 'org.postgresql:postgresql'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testCompileOnly 'org.projectlombok:lombok'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test' // Zawiera w sobie testy dla weba i jpa
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	errorprone 'com.google.errorprone:error_prone_core:2.49.0'
 }
-
 tasks.named('test') {
 	useJUnitPlatform()
 }
