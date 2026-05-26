@@ -8,8 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import pl.edu.agh.backend.domain.Event;
 
-public interface EventRepository
-        extends JpaRepository<Event, UUID>, JpaSpecificationExecutor<Event> {
+public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecificationExecutor<Event> {
 
     @EntityGraph(attributePaths = "tags")
     @Override

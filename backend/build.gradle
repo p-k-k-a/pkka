@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-web' // Poprawiona nazwa startera
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
@@ -37,7 +37,7 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
-	testImplementation 'org.springframework.boot:spring-boot-starter-test' // Zawiera w sobie testy dla weba i jpa
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
@@ -60,7 +60,7 @@ tasks.withType(JavaCompile).configureEach {
 spotless {
 	java {
 		target 'src/**/*.java'
-		googleJavaFormat('1.35.0').aosp().reflowLongStrings()
+		palantirJavaFormat('2.91.0')
 		removeUnusedImports()
 		trimTrailingWhitespace()
 		endWithNewline()

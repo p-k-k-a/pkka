@@ -11,8 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EventNotFoundException.class)
     public ProblemDetail handleEventNotFound(EventNotFoundException ex) {
-        ProblemDetail problem =
-                ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Event not found");
         return problem;
     }

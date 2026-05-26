@@ -13,15 +13,13 @@ import pl.edu.agh.backend.domain.Tag;
 public class EventSpecifications {
 
     public Specification<Event> startsAfter(LocalDateTime dateTime) {
-        return (root, query, cb) ->
-                dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
+        return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
     }
 
     public Specification<Event> audienceIn(Collection<Audience> audiences) {
-        return (root, query, cb) ->
-                (audiences == null || audiences.isEmpty())
-                        ? null
-                        : root.get("audience").in(audiences);
+        return (root, query, cb) -> (audiences == null || audiences.isEmpty())
+                ? null
+                : root.get("audience").in(audiences);
     }
 
     public Specification<Event> hasAnyTag(Collection<String> tagNames) {

@@ -33,8 +33,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
     private String webSuccessUrl;
 
     @Override
-    public void onAuthenticationSuccess(
-            HttpServletRequest req, HttpServletResponse res, Authentication auth)
+    public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth)
             throws IOException, ServletException {
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
@@ -43,19 +42,16 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if ("keycloak-mobile".equals(registrationId)) {
             handleMobile(req, res, token);
         } else {
-            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl)
-                    .onAuthenticationSuccess(req, res, auth);
+            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl).onAuthenticationSuccess(req, res, auth);
         }
     }
 
-    private void handleMobile(
-            HttpServletRequest req, HttpServletResponse res, OAuth2AuthenticationToken token)
+    private void handleMobile(HttpServletRequest req, HttpServletResponse res, OAuth2AuthenticationToken token)
             throws IOException {
 
         String regId = token.getAuthorizedClientRegistrationId();
 
-        OAuth2AuthorizedClient client =
-                authorizedClientService.loadAuthorizedClient(regId, token.getName());
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(regId, token.getName());
 
         if (client == null || client.getAccessToken() == null) {
             res.sendError(500, "Failed to retrieve access token");
@@ -63,11 +59,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         String at = client.getAccessToken().getTokenValue();
-        String rt =
-                client.getRefreshToken() != null ? client.getRefreshToken().getTokenValue() : null;
+        String rt = client.getRefreshToken() != null ? client.getRefreshToken().getTokenValue() : null;
 
-        authorizedClientService.removeAuthorizedClient(
-                regId, token.getName()); // mobile stateless approach
+        authorizedClientService.removeAuthorizedClient(regId, token.getName()); // mobile stateless approach
 
         SecurityContextHolder.clearContext();
 
@@ -76,10 +70,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
             session.invalidate();
         }
 
-        StringBuilder link =
-                new StringBuilder(mobileDeepLinkScheme)
-                        .append("://auth-success#at=")
-                        .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
+        StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
+                .append("://auth-success#at=")
+                .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
         if (rt != null) link.append("&rt=").append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
 

@@ -31,19 +31,16 @@ public class EventService {
     private final EventRepository eventRepository;
     private final Clock clock;
 
-    public Page<Event> list(
-            Authentication authentication, Collection<String> tagNames, Pageable pageable) {
-        Specification<Event> spec =
-                Specification.where(startsAfter(LocalDateTime.now(clock)))
-                        .and(audienceIn(visibleAudiences(authentication)))
-                        .and(hasAnyTag(tagNames));
+    public Page<Event> list(Authentication authentication, Collection<String> tagNames, Pageable pageable) {
+        Specification<Event> spec = Specification.where(startsAfter(LocalDateTime.now(clock)))
+                .and(audienceIn(visibleAudiences(authentication)))
+                .and(hasAnyTag(tagNames));
 
         return eventRepository.findAll(spec, pageable);
     }
 
     public Event findById(UUID id, Authentication authentication) {
-        Event event =
-                eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
         if (!visibleAudiences(authentication).contains(event.getAudience())) {
             throw new EventNotFoundException(id);
         }

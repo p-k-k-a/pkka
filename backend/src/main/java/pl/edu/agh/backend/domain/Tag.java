@@ -7,9 +7,7 @@ import java.util.UUID;
 import lombok.*;
 
 @Entity
-@Table(
-        name = "tags",
-        uniqueConstraints = @UniqueConstraint(name = "uk_tags_name", columnNames = "name"))
+@Table(name = "tags", uniqueConstraints = @UniqueConstraint(name = "uk_tags_name", columnNames = "name"))
 @Getter
 @Setter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
