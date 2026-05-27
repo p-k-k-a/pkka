@@ -4,6 +4,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,10 +20,6 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.springframework.stereotype.Component;
 import pl.edu.agh.backend.user.UserPrincipalExtractor;
 import pl.edu.agh.backend.user.UserProvisioningService;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 @Component
 @RequiredArgsConstructor
@@ -38,8 +37,8 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
     private String webSuccessUrl;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest req,
-                                        HttpServletResponse res, Authentication auth) throws IOException, ServletException {
+    public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth)
+            throws IOException, ServletException {
 
         principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
 
@@ -49,13 +48,12 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if ("keycloak-mobile".equals(registrationId)) {
             handleMobile(req, res, token);
         } else {
-            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl)
-                    .onAuthenticationSuccess(req, res, auth);
+            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl).onAuthenticationSuccess(req, res, auth);
         }
     }
 
-    private void handleMobile(HttpServletRequest req, HttpServletResponse res,
-                              OAuth2AuthenticationToken token) throws IOException {
+    private void handleMobile(HttpServletRequest req, HttpServletResponse res, OAuth2AuthenticationToken token)
+            throws IOException {
 
         String regId = token.getAuthorizedClientRegistrationId();
 
@@ -82,8 +80,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
                 .append("://auth-success#at=")
                 .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
-        if (rt != null) link.append("&rt=")
-                .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
+        if (rt != null) {
+            link.append("&rt=").append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
+        }
 
         log.debug("Mobile auth success — redirecting to deep link for user: {}", token.getName());
         res.sendRedirect(link.toString());
