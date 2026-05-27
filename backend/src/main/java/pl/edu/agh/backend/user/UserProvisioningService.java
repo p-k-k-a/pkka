@@ -15,15 +15,17 @@ public class UserProvisioningService {
 
     @Transactional
     public void provisionIfAbsent(UserPrincipalExtractor.UserPrincipalInfo info) {
-        userRepository
+        var user = userRepository
                 .findByKeycloakId(info.keycloakId())
                 .orElseGet(() -> {
                     log.info("Provisioning new user keycloakId={}", info.keycloakId());
-                    var user = new User();
-                    user.setKeycloakId(info.keycloakId());
-                    user.setFirstName(info.firstName());
-                    user.setLastName(info.lastName());
-                    return userRepository.save(user);
+                    var createdUser = new User();
+                    createdUser.setKeycloakId(info.keycloakId());
+                    createdUser.setFirstName(info.firstName());
+                    createdUser.setLastName(info.lastName());
+                    return userRepository.save(createdUser);
                 });
+
+        log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), user.getId());
     }
 }

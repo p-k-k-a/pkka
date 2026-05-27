@@ -107,7 +107,7 @@ springdoc:
 logging:
   level:
     root: INFO
-    pl.edu.agh.pkka: DEBUG
+    pl.edu.agh.backend: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
 
@@ -194,4 +194,4 @@ server:
 logging:
   level:
     root: WARN
-    pl.edu.agh.pkka: INFO
+    pl.edu.agh.backend: INFO
