@@ -141,6 +141,7 @@
     <a href="#discord-bypass">Discord IDP Bypass</a>
     <a href="#flow">First Broker Login</a>
     <a href="#roles">Role i uprawnienia</a>
+    <a href="#keycloak-events">User/Admin Events</a>
   </div>
   <div class="nav-section">
     <div class="nav-title">Testowanie</div>
@@ -825,6 +826,40 @@ GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
     <p>Jeśli chcesz nadać ją ręcznie do testów:</p>
     <p><strong>Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token → Assign</strong></p>
     <div class="callout warn"><div class="callout-icon"></div><div>Po ręcznym nadaniu roli zdobądź <strong>nowy AT</strong> — stary token nie będzie zawierał nowej roli w claims.</div></div>
+  </section>
+
+  <!-- EVENTS -->
+  <section id="keycloak-events">
+    <div class="section-header">
+      <div class="section-num">8b</div>
+      <h2 style="margin:0;border:none;">Keycloak — konfiguracja User Events i Admin Events</h2>
+    </div>
+
+    <h3>User Events</h3>
+    <p>Ścieżka:</p>
+    <pre><code>Realm Settings
+  → Events
+    → User events settings</code></pre>
+    <table>
+      <tr><th>Ustawienie</th><th>Wartość</th></tr>
+      <tr><td>Save events</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Expiration</td><td><code>30 Days</code></td></tr>
+    </table>
+
+    <h3>Admin Events</h3>
+    <p>Ścieżka:</p>
+    <pre><code>Realm Settings
+  → Events
+    → Admin events settings</code></pre>
+    <table>
+      <tr><th>Ustawienie</th><th>Wartość</th></tr>
+      <tr><td>Save events</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Include representation</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Expiration</td><td><code>30 Days</code></td></tr>
+    </table>
+
+    <h3>Weryfikacja</h3>
+    <p>W zakładce <strong>Events</strong> w sekcjach <strong>Admin events</strong> i <strong>User events</strong> pojawiają się rekordy wykonanych operacji.</p>
   </section>
 
   <!-- WERYFIKACJA -->
