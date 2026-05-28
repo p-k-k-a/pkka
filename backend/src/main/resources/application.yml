@@ -194,4 +194,4 @@ server:
 logging:
   level:
     root: WARN
-    pl.edu.agh.pkka: INFO
+    pl.edu.agh.backend: INFO
