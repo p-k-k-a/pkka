@@ -2,9 +2,9 @@ package pl.edu.agh.backend.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +18,10 @@ public class UserProvisioningService {
         var userOpt = userRepository.findByKeycloakId(info.keycloakId());
         if (userOpt.isPresent()) {
             var existingUser = userOpt.get();
-            log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), existingUser.getId());
+            log.debug(
+                    "User provisioning check completed keycloakId={} userId={}",
+                    info.keycloakId(),
+                    existingUser.getId());
             return;
         }
 
@@ -30,11 +33,16 @@ public class UserProvisioningService {
             createdUser.setFirstName(info.firstName());
             createdUser.setLastName(info.lastName());
             var savedUser = userRepository.save(createdUser);
-            log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), savedUser.getId());
+            log.debug(
+                    "User provisioning check completed keycloakId={} userId={}", info.keycloakId(), savedUser.getId());
         } catch (DataIntegrityViolationException ex) {
             // Another concurrent request created the user; re-load and continue.
-            var existingUser = userRepository.findByKeycloakId(info.keycloakId()).orElseThrow(() -> ex);
-            log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), existingUser.getId());
+            var existingUser =
+                    userRepository.findByKeycloakId(info.keycloakId()).orElseThrow(() -> ex);
+            log.debug(
+                    "User provisioning check completed keycloakId={} userId={}",
+                    info.keycloakId(),
+                    existingUser.getId());
         }
     }
 }
