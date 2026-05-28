@@ -201,16 +201,19 @@ importers:
 
   packages/api:
     dependencies:
+      '@faker-js/faker':
+        specifier: ^10.0.0
+        version: 10.4.0
       '@tanstack/react-query':
         specifier: ^5
         version: 5.100.9(react@19.1.0)
+      msw:
+        specifier: ^2.14.6
+        version: 2.14.6(@types/node@20.19.39)(typescript@5.9.3)
       react:
         specifier: 19.1.0
         version: 19.1.0
     devDependencies:
-      '@faker-js/faker':
-        specifier: ^10.4.0
-        version: 10.4.0
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
