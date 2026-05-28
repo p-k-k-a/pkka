@@ -139,8 +139,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" ->
-     * ROLE_VERIFIED_ALUMN (dash -> underscore). Used by both converters (Web and Mobile).
+     * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash
+     * -> underscore). Used by both converters (Web and Mobile).
      */
     static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
         @SuppressWarnings("unchecked")
@@ -160,8 +160,8 @@ public class SecurityConfig {
     }
 
     /**
-     * CSRF predicate - does the request carry the Authorization: Bearer header? Bearer is CSRF-safe
-     * by nature (not automatically sent by the browser).
+     * CSRF predicate - does the request carry the Authorization: Bearer header? Bearer is CSRF-safe by nature (not
+     * automatically sent by the browser).
      */
     static boolean hasBearerToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
