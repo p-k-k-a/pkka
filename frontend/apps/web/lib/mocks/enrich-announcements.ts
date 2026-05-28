@@ -53,7 +53,10 @@ function formatTime(date: Date) {
 }
 
 function enrichBase(
-  item: Pick<Announcement, "title" | "description" | "content" | "tag" | "imageUrl" | "slug" | "author">,
+  item: Pick<
+    Announcement,
+    "title" | "description" | "content" | "tag" | "imageUrl" | "slug" | "author"
+  >,
   faker: Faker,
 ) {
   const title = faker.lorem.sentence({ min: 5, max: 10 }).replace(/\.$/, "");

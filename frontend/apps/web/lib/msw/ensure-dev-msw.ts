@@ -1,4 +1,9 @@
-import { getGetAnnouncementsResponseMock, getGetAnnouncementsMockHandler, getGetBlogPostBySlugMockHandler, getGetBlogPostBySlugResponseMock } from "@pkka/api/msw";
+import {
+  getGetAnnouncementsResponseMock,
+  getGetAnnouncementsMockHandler,
+  getGetBlogPostBySlugMockHandler,
+  getGetBlogPostBySlugResponseMock,
+} from "@pkka/api/msw";
 import { enrichAnnouncements, enrichBlogPost } from "@/lib/mocks/enrich-announcements";
 
 const isDev = process.env.NODE_ENV === "development";

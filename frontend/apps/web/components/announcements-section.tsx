@@ -20,12 +20,15 @@ export function AnnouncementsSection() {
   if (isLoading) {
     return (
       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-        <h2 className="mb-10 text-3xl font-extrabold tracking-tight md:text-4xl text-foreground">
+        <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
           Publiczne Aktualności
         </h2>
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className={`h-64 rounded-[24px] ${i === 0 ? "md:col-span-2 md:h-80" : ""}`} />
+            <Skeleton
+              key={i}
+              className={`h-64 rounded-[24px] ${i === 0 ? "md:col-span-2 md:h-80" : ""}`}
+            />
           ))}
         </div>
       </section>
@@ -42,11 +45,11 @@ export function AnnouncementsSection() {
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-      <h2 className="mb-10 text-3xl font-extrabold tracking-tight md:text-4xl text-foreground">
+      <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
         Publiczne Aktualności
       </h2>
 
-      <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {announcements.map((post, index) => {
           const isFeatured = index === 0;
 
@@ -55,10 +58,10 @@ export function AnnouncementsSection() {
               <Link
                 key={post.id}
                 href={`/announcements/${post.slug}`}
-                className="group md:col-span-2 flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-[24px]"
+                className="group focus-visible:ring-ring flex rounded-[24px] focus-visible:ring-2 focus-visible:outline-none md:col-span-2"
               >
-                <Card className="overflow-hidden flex w-full flex-col rounded-[24px] border border-border/70 bg-card p-0 text-card-foreground shadow-sm transition-all duration-300 hover:bg-muted/30 hover:shadow-md md:flex-row">
-                  <div className="relative shrink-0 overflow-hidden bg-muted md:w-[50%] w-full aspect-[4/3] md:aspect-auto">
+                <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col overflow-hidden rounded-[24px] border p-0 shadow-sm transition-all duration-300 hover:shadow-md md:flex-row">
+                  <div className="bg-muted relative aspect-[4/3] w-full shrink-0 overflow-hidden md:aspect-auto md:w-[50%]">
                     <Image
                       src={announcementImageSrc(post.imageUrl)}
                       alt={post.title}
@@ -68,30 +71,33 @@ export function AnnouncementsSection() {
                       priority
                     />
                     <div className="absolute top-4 left-4">
-                      <Badge variant="secondary" className="rounded-md border-none bg-background/90 px-2.5 py-1 text-foreground shadow-none hover:bg-background">
+                      <Badge
+                        variant="secondary"
+                        className="bg-background/90 text-foreground hover:bg-background rounded-md border-none px-2.5 py-1 shadow-none"
+                      >
                         {post.tag}
                       </Badge>
                     </div>
                   </div>
 
-                  <div className="flex flex-col flex-1 justify-between p-8 md:p-10">
+                  <div className="flex flex-1 flex-col justify-between p-8 md:p-10">
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                      <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
                         <span>{post.date}</span>
                         <span>•</span>
                         <span>{post.time}</span>
                       </div>
 
-                      <CardTitle className="text-2xl font-extrabold leading-tight text-foreground transition-colors group-hover:text-primary md:text-3xl">
+                      <CardTitle className="text-foreground group-hover:text-primary text-2xl leading-tight font-extrabold transition-colors md:text-3xl">
                         {post.title}
                       </CardTitle>
 
-                      <p className="line-clamp-3 leading-relaxed text-muted-foreground md:line-clamp-4">
+                      <p className="text-muted-foreground line-clamp-3 leading-relaxed md:line-clamp-4">
                         {post.description}
                       </p>
                     </div>
 
-                    <div className="mt-6 flex items-center justify-between border-t border-border/70 pt-6">
+                    <div className="border-border/70 mt-6 flex items-center justify-between border-t pt-6">
                       <div className="flex items-center gap-3">
                         <Avatar
                           src={post.author?.avatarUrl}
@@ -100,16 +106,16 @@ export function AnnouncementsSection() {
                           size="md"
                         />
                         <div>
-                          <div className="text-sm font-semibold text-foreground">
+                          <div className="text-foreground text-sm font-semibold">
                             {post.author?.name}
                           </div>
-                          <div className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                          <div className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
                             {post.author?.role}
                           </div>
                         </div>
                       </div>
 
-                      <span className="text-xs font-bold tracking-widest text-foreground uppercase transition-transform group-hover:translate-x-1">
+                      <span className="text-foreground text-xs font-bold tracking-widest uppercase transition-transform group-hover:translate-x-1">
                         CZYTAJ WIĘCEJ →
                       </span>
                     </div>
@@ -123,31 +129,34 @@ export function AnnouncementsSection() {
             <Link
               key={post.id}
               href={`/announcements/${post.slug}`}
-              className="group flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-[24px] h-full"
+              className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
             >
-              <Card className="flex w-full flex-col justify-between rounded-[24px] border border-border/70 bg-card p-8 text-card-foreground shadow-sm transition-all duration-300 hover:bg-muted/30 hover:shadow-md">
+              <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
                       <span>{post.date}</span>
                       <span>-</span>
                       <span>{post.time}</span>
                     </div>
-                    <Badge variant="secondary" className="shadow-none rounded-md px-2 py-0.5 text-xs font-semibold">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-md px-2 py-0.5 text-xs font-semibold shadow-none"
+                    >
                       {post.tag}
                     </Badge>
                   </div>
 
-                  <CardTitle className="text-xl font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
+                  <CardTitle className="text-foreground group-hover:text-primary text-xl leading-tight font-bold transition-colors">
                     {post.title}
                   </CardTitle>
 
-                  <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
                     {post.description}
                   </p>
                 </div>
 
-                <div className="mt-8 flex flex-col justify-between gap-4 border-t border-border/70 pt-6 sm:flex-row sm:items-center">
+                <div className="border-border/70 mt-8 flex flex-col justify-between gap-4 border-t pt-6 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-3">
                     <Avatar
                       src={post.author?.avatarUrl}
@@ -156,16 +165,16 @@ export function AnnouncementsSection() {
                       size="sm"
                     />
                     <div>
-                      <div className="text-sm font-semibold text-foreground">
+                      <div className="text-foreground text-sm font-semibold">
                         {post.author?.name}
                       </div>
-                      <div className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                      <div className="text-muted-foreground text-[10px] font-bold tracking-wider uppercase">
                         {post.author?.role}
                       </div>
                     </div>
                   </div>
 
-                  <span className="self-start text-xs font-bold tracking-widest text-foreground uppercase transition-transform group-hover:translate-x-1 sm:self-auto">
+                  <span className="text-foreground self-start text-xs font-bold tracking-widest uppercase transition-transform group-hover:translate-x-1 sm:self-auto">
                     CZYTAJ WIĘCEJ →
                   </span>
                 </div>
@@ -177,4 +186,3 @@ export function AnnouncementsSection() {
     </section>
   );
 }
-

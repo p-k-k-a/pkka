@@ -20,8 +20,10 @@ export function ThemeToggle() {
     const stored = window.localStorage.getItem("theme");
     const initialTheme: Theme =
       stored === "dark" || stored === "light"
-        ? stored : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark" : "light";
+        ? stored
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
 
     applyTheme(initialTheme);
     setTheme(initialTheme);

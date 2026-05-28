@@ -24,7 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pl" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="pl"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{

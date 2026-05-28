@@ -39,13 +39,13 @@ function AnnouncementContent({ content }: { content: string }) {
   const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 0);
 
   if (paragraphs.length === 0) {
-    return <p className="text-base leading-8 text-foreground/90">{content}</p>;
+    return <p className="text-foreground/90 text-base leading-8">{content}</p>;
   }
 
   return (
     <div className="space-y-6">
       {paragraphs.map((paragraph, index) => (
-        <p key={index} className="text-base leading-8 text-foreground/90">
+        <p key={index} className="text-foreground/90 text-base leading-8">
           {paragraph.trim()}
         </p>
       ))}
@@ -55,14 +55,19 @@ function AnnouncementContent({ content }: { content: string }) {
 
 function HeaderBar() {
   return (
-    <div className="mb-8 flex items-center justify-between border-b border-border/70 pb-4">
-      <Button asChild variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground">
+    <div className="border-border/70 mb-8 flex items-center justify-between border-b pb-4">
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className="text-muted-foreground hover:text-foreground rounded-full"
+      >
         <Link href="/">
           <ArrowLeft className="size-5" />
           <span className="sr-only">Wróć</span>
         </Link>
       </Button>
-      <h2 className="text-sm font-bold tracking-widest text-foreground uppercase">
+      <h2 className="text-foreground text-sm font-bold tracking-widest uppercase">
         SZCZEGÓŁY WPISU
       </h2>
       <div className="w-10" aria-hidden="true" />
@@ -74,13 +79,12 @@ function BackLink({ className }: { className?: string }) {
   return (
     <Button asChild variant="outline" className={cn("rounded-xl font-semibold", className)}>
       <Link href="/">
-        <ArrowLeft className="size-4 mr-2" />
+        <ArrowLeft className="mr-2 size-4" />
         Wróć do aktualności
       </Link>
     </Button>
   );
 }
-
 
 export function AnnouncementDetail({ slug }: { slug: string }) {
   const { data: response, isLoading, isError, isFetching } = useGetBlogPostBySlug(slug);
@@ -94,14 +98,14 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
   if (isLoading && !post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-10 md:py-14">
-        <div className="h-10 border-b mb-8 flex items-center justify-between">
+        <div className="mb-8 flex h-10 items-center justify-between border-b">
           <Skeleton className="size-8 rounded-full" />
           <Skeleton className="h-4 w-32" />
           <div className="w-8" />
         </div>
-        <Skeleton className="aspect-[16/9] w-full rounded-2xl mb-8" />
-        <Skeleton className="h-6 w-32 mb-4" />
-        <Skeleton className="h-12 w-full max-w-2xl mb-8" />
+        <Skeleton className="mb-8 aspect-[16/9] w-full rounded-2xl" />
+        <Skeleton className="mb-4 h-6 w-32" />
+        <Skeleton className="mb-8 h-12 w-full max-w-2xl" />
         <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
@@ -110,7 +114,7 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
   if (isError) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p className="text-destructive font-semibold mb-6">Nie udało się załadować ogłoszenia.</p>
+        <p className="text-destructive mb-6 font-semibold">Nie udało się załadować ogłoszenia.</p>
         <BackLink />
       </div>
     );
@@ -119,7 +123,7 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-2">Nie znaleziono ogłoszenia</h1>
+        <h1 className="mb-2 text-2xl font-bold">Nie znaleziono ogłoszenia</h1>
         <p className="text-muted-foreground mb-8">
           {isFetching
             ? "Szukamy ogłoszenia…"
@@ -134,7 +138,7 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
     <article className="mx-auto max-w-3xl px-6 py-10 md:py-14">
       <HeaderBar />
 
-      <div className="relative mb-8 aspect-[16/9] overflow-hidden rounded-2xl border bg-muted shadow-sm">
+      <div className="bg-muted relative mb-8 aspect-[16/9] overflow-hidden rounded-2xl border shadow-sm">
         <Image
           src={announcementImageSrc(post.imageUrl)}
           alt={post.title}
@@ -145,23 +149,26 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
         />
       </div>
 
-      <header className="space-y-4 mb-8">
+      <header className="mb-8 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+          <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
             <span>{publication?.dateLabel}</span>
             <span>-</span>
             <span>{publication?.timeLabel}</span>
           </div>
-          <Badge variant="secondary" className="shadow-none rounded-md px-2.5 py-0.5 text-xs font-semibold">
+          <Badge
+            variant="secondary"
+            className="rounded-md px-2.5 py-0.5 text-xs font-semibold shadow-none"
+          >
             {post.tag}
           </Badge>
         </div>
 
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground md:text-3xl md:leading-tight">
+        <h1 className="text-foreground text-2xl font-extrabold tracking-tight md:text-3xl md:leading-tight">
           {post.title}
         </h1>
 
-        <div className="pt-4 flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-4">
           <Avatar
             src={post.author?.avatarUrl}
             fallback={post.author?.name}
@@ -169,24 +176,20 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
             size="lg"
           />
           <div>
-            <div className="text-base font-bold text-foreground">
-              {post.author?.name}
-            </div>
-            <div className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
+            <div className="text-foreground text-base font-bold">{post.author?.name}</div>
+            <div className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
               {post.author?.role}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="mt-8 space-y-6 border-t border-border/70 pt-8">
+      <div className="border-border/70 mt-8 space-y-6 border-t pt-8">
         <div className="space-y-2">
-          <h3 className="text-xs font-extrabold tracking-widest text-muted-foreground uppercase">
+          <h3 className="text-muted-foreground text-xs font-extrabold tracking-widest uppercase">
             O WPISIE
           </h3>
-          <p className="text-lg font-medium leading-relaxed text-foreground">
-            {post.description}
-          </p>
+          <p className="text-foreground text-lg leading-relaxed font-medium">{post.description}</p>
         </div>
 
         <div className="pt-4">
@@ -200,4 +203,3 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
     </article>
   );
 }
-

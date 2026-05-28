@@ -55,10 +55,10 @@ export function Avatar({
   return (
     <div
       className={cn(
-        "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center bg-muted border select-none",
+        "bg-muted relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border select-none",
         sizeClasses[size],
         showFallback && getColorClass(fallback || alt),
-        className
+        className,
       )}
       {...props}
     >
