@@ -31,3 +31,5 @@ CREATE TABLE event_tags (
                             tag_id   UUID NOT NULL REFERENCES tags(id)   ON DELETE CASCADE,
                             PRIMARY KEY (event_id, tag_id)
 );
+
+CREATE INDEX idx_event_tags_tag_id ON event_tags(tag_id);
