@@ -13,22 +13,16 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [ready, setReady] = useState(false);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
+    const stored = window.localStorage.getItem("theme");
+    if (stored === "dark" || stored === "light") return stored;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("theme");
-    const initialTheme: Theme =
-      stored === "dark" || stored === "light"
-        ? stored
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-
-    applyTheme(initialTheme);
-    setTheme(initialTheme);
-    setReady(true);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   const toggleTheme = () => {
     const nextTheme: Theme = theme === "dark" ? "light" : "dark";
@@ -44,10 +38,10 @@ export function ThemeToggle() {
       size="icon"
       onClick={toggleTheme}
       className="rounded-full"
-      aria-label={ready && theme === "dark" ? "Włącz jasny motyw" : "Włącz ciemny motyw"}
-      title={ready && theme === "dark" ? "Jasny motyw" : "Ciemny motyw"}
+      aria-label={theme === "dark" ? "Włącz jasny motyw" : "Włącz ciemny motyw"}
+      title={theme === "dark" ? "Jasny motyw" : "Ciemny motyw"}
     >
-      {ready && theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
   );
 }

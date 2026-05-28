@@ -11,15 +11,11 @@ configureApi({ baseUrl: "" });
 const isDev = process.env.NODE_ENV === "development";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(isMswReady());
+  const [ready, setReady] = useState(() => !isDev || isMswReady());
   const queryClient = getQueryClient();
 
   useEffect(() => {
-    if (!isDev) return;
-    if (isMswReady()) {
-      setReady(true);
-      return;
-    }
+    if (!isDev || isMswReady()) return;
     void ensureDevMsw().then(() => setReady(true));
   }, []);
 
