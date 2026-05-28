@@ -14,7 +14,8 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 @RequiredArgsConstructor
 public class DiscordBypassRequestResolver {
     @Bean
-    public OAuth2AuthorizationRequestResolver discordBypassResolver(ClientRegistrationRepository repo) {
+    public OAuth2AuthorizationRequestResolver discordBypassResolver(
+            ClientRegistrationRepository repo) {
         DefaultOAuth2AuthorizationRequestResolver resolver =
                 new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
 
@@ -28,11 +29,13 @@ public class DiscordBypassRequestResolver {
             }
 
             @Override
-            public OAuth2AuthorizationRequest resolve(HttpServletRequest request, String clientRegistrationId) {
+            public OAuth2AuthorizationRequest resolve(
+                    HttpServletRequest request, String clientRegistrationId) {
                 return applyIdpHint(request, resolver.resolve(request, clientRegistrationId));
             }
 
-            private OAuth2AuthorizationRequest applyIdpHint(HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
+            private OAuth2AuthorizationRequest applyIdpHint(
+                    HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
                 if (authReq == null) {
                     return null;
                 }

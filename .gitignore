@@ -1,8 +1,5 @@
 thesis.yaml
-<<<<<<< HEAD
 **/.env
 **/.idea
-=======
 
 .pnpm-store/
->>>>>>> 39b5a843 (chore: ignore local pnpm store)
