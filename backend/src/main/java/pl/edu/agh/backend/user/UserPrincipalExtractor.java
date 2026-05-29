@@ -13,12 +13,10 @@ public class UserPrincipalExtractor {
     public Optional<UserPrincipalInfo> extract(Authentication authentication) {
         return switch (authentication) {
             case OAuth2AuthenticationToken t
-            when t.getPrincipal() instanceof OidcUser u ->
-                Optional.of(new UserPrincipalInfo(u.getSubject()));
+            when t.getPrincipal() instanceof OidcUser u -> Optional.of(new UserPrincipalInfo(u.getSubject()));
             case JwtAuthenticationToken t -> {
                 var jwt = t.getToken();
-                yield Optional.of(new UserPrincipalInfo(
-                        jwt.getSubject()));
+                yield Optional.of(new UserPrincipalInfo(jwt.getSubject()));
             }
             default -> Optional.empty();
         };
