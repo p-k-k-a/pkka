@@ -156,7 +156,8 @@ public class SecurityConfig {
             return Set.of();
         }
         return roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toUpperCase(Locale.ROOT).replace("-", "_")))
+                .map(r -> new SimpleGrantedAuthority(
+                        "ROLE_" + r.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .collect(Collectors.toUnmodifiableSet());
     }
 
