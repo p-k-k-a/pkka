@@ -487,6 +487,26 @@ networks:
     </table>
     <p class="subtitle" style="margin-top:-8px">Cel: mniejszy Access Token/RODO dla API; dane profilu pozostają w ID tokenie / userinfo.</p>
 
+    <h3>Identity Provider claim</h3>
+    <p>Wejdź w <strong>Client scopes</strong> i wybierz <strong>Profile</strong> scope. Dodaj mapper, który zapisuje <code>origin_idp</code> claim na podstawie <code>identity_provider</code> w sesji użytkownika.
+        W scope kliknij <strong>Add mapper</strong> → <strong>By configuration</strong> → wybierz typ <code>User Session Note</code> i wypełnij pola:</p>
+
+    <h4>Mapper details (origin_idp)</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Mapper type</td><td><code>User Session Note</code></td></tr>
+      <tr><td>Name *</td><td><code>identity provider mapper</code></td></tr>
+      <tr><td>User Session Note</td><td><code>identity_provider</code></td></tr>
+      <tr><td>Token Claim Name</td><td><code>origin_idp</code></td></tr>
+      <tr><td>Claim JSON Type</td><td><code>String</code></td></tr>
+      <tr><td>Add to ID token</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to access token</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Add to lightweight access token</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to userinfo</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Add to access token response</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to token introspection</td><td><span class="tag on">ON</span></td></tr>
+    </table>
+
     <h3>Service Account Roles</h3>
     <p>Zakładka <strong>Service account roles</strong> → <strong>Assign role</strong> → <strong>Filter by clients</strong>:</p>
     <table>
