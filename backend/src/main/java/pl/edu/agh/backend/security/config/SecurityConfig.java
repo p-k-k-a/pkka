@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -155,7 +156,7 @@ public class SecurityConfig {
             return Set.of();
         }
         return roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toUpperCase().replace("-", "_")))
+                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .collect(Collectors.toUnmodifiableSet());
     }
 
