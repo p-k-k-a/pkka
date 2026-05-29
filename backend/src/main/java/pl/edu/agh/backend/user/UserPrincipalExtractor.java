@@ -14,15 +14,15 @@ public class UserPrincipalExtractor {
         return switch (authentication) {
             case OAuth2AuthenticationToken t
             when t.getPrincipal() instanceof OidcUser u ->
-                Optional.of(new UserPrincipalInfo(u.getSubject(), u.getGivenName(), u.getFamilyName()));
+                Optional.of(new UserPrincipalInfo(u.getSubject()));
             case JwtAuthenticationToken t -> {
                 var jwt = t.getToken();
                 yield Optional.of(new UserPrincipalInfo(
-                        jwt.getSubject(), jwt.getClaimAsString("given_name"), jwt.getClaimAsString("family_name")));
+                        jwt.getSubject()));
             }
             default -> Optional.empty();
         };
     }
 
-    public record UserPrincipalInfo(String keycloakId, String firstName, String lastName) {}
+    public record UserPrincipalInfo(String keycloakId) {}
 }

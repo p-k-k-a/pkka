@@ -1,7 +1,8 @@
 package pl.edu.agh.backend.user;
 
 import jakarta.persistence.*;
-import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class User {
 
+    private static final ZoneId POLAND_ZONE = ZoneId.of("Europe/Warsaw");
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -28,25 +31,19 @@ public class User {
     @Column(name = "keycloak_id", nullable = false, unique = true, length = 36)
     private String keycloakId;
 
-    @Column(name = "first_name", length = 100)
-    private String firstName;
-
-    @Column(name = "last_name", length = 100)
-    private String lastName;
-
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private OffsetDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private OffsetDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = updatedAt = Instant.now();
+        createdAt = updatedAt = OffsetDateTime.now(POLAND_ZONE);
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = Instant.now();
+        updatedAt = OffsetDateTime.now(POLAND_ZONE);
     }
 }

@@ -30,8 +30,6 @@ public class UserProvisioningService {
 
             var createdUser = new User();
             createdUser.setKeycloakId(info.keycloakId());
-            createdUser.setFirstName(info.firstName());
-            createdUser.setLastName(info.lastName());
             var savedUser = userRepository.save(createdUser);
             log.debug(
                     "User provisioning check completed keycloakId={} userId={}", info.keycloakId(), savedUser.getId());
