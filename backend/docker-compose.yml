@@ -39,6 +39,12 @@ services:
         condition: service_healthy
     networks:
       - iam-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/health/ready | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   mailpit:
     image: axllent/mailpit:latest
@@ -49,8 +55,55 @@ services:
     networks:
       - iam-network
 
+  pkka-postgres:
+    image: postgres:16
+    container_name: pkka-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: pkka
+      POSTGRES_USER: pkka
+      POSTGRES_PASSWORD: pkka
+    volumes:
+      - pkka_postgres_data:/var/lib/postgresql/data
+    networks:
+      - iam-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pkka -d pkka"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pkka-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://pkka-postgres:5432/pkka
+      SPRING_DATASOURCE_USERNAME: pkka
+      SPRING_DATASOURCE_PASSWORD: pkka
+      # Backend talking to Keycloak inside the network:
+      KEYCLOAK_URL: http://iam-keycloak:8081
+      # WARN: issuer-uri tokenów wystawianych przez Keycloak ma host `localhost`
+      # (z KC_HOSTNAME=localhost), więc walidacja JWT z kontenera nie zadziała
+      # out-of-the-box. Do testów auth na razie odpalaj backend z IDE.
+      KEYCLOAK_ISSUER_URI: http://localhost:8081/realms/pkka
+    depends_on:
+      pkka-postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - iam-network
+
 volumes:
   postgres_data:
+  pkka_postgres_data:
 
 networks:
   iam-network:

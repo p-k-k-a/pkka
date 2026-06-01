@@ -18,8 +18,7 @@ public class DiscordBypassRequestResolver {
         DefaultOAuth2AuthorizationRequestResolver resolver =
                 new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
 
-        resolver.setAuthorizationRequestCustomizer(
-                OAuth2AuthorizationRequestCustomizers.withPkce());
+        resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
 
         return new OAuth2AuthorizationRequestResolver() {
             @Override
@@ -32,7 +31,8 @@ public class DiscordBypassRequestResolver {
                 return applyIdpHint(request, resolver.resolve(request, clientRegistrationId));
             }
 
-            private OAuth2AuthorizationRequest applyIdpHint(HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
+            private OAuth2AuthorizationRequest applyIdpHint(
+                    HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
                 if (authReq == null) {
                     return null;
                 }
