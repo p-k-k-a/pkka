@@ -133,10 +133,7 @@ public class SecurityConfig {
                     .getUserNameAttributeName();
 
             return new DefaultOidcUser(
-                    List.copyOf(authorities),
-                    oidcUser.getIdToken(),
-                    oidcUser.getUserInfo(),
-                    nameAttr);
+                    List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo(), nameAttr);
         };
     }
 

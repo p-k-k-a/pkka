@@ -57,8 +57,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
         String regId = token.getAuthorizedClientRegistrationId();
 
-        OAuth2AuthorizedClient client =
-                authorizedClientService.loadAuthorizedClient(regId, token.getName());
+        OAuth2AuthorizedClient client = authorizedClientService.loadAuthorizedClient(regId, token.getName());
 
         if (client == null || client.getAccessToken() == null) {
             res.sendError(500, "Failed to retrieve access token");
@@ -66,11 +65,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         String at = client.getAccessToken().getTokenValue();
-        String rt =
-                client.getRefreshToken() != null ? client.getRefreshToken().getTokenValue() : null;
+        String rt = client.getRefreshToken() != null ? client.getRefreshToken().getTokenValue() : null;
 
-        authorizedClientService.removeAuthorizedClient(
-                regId, token.getName()); // mobile stateless approach
+        authorizedClientService.removeAuthorizedClient(regId, token.getName()); // mobile stateless approach
 
         SecurityContextHolder.clearContext();
 
@@ -79,10 +76,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
             session.invalidate();
         }
 
-        StringBuilder link =
-                new StringBuilder(mobileDeepLinkScheme)
-                        .append("://auth-success#at=")
-                        .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
+        StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
+                .append("://auth-success#at=")
+                .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
         if (rt != null) {
             link.append("&rt=").append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
