@@ -6,10 +6,14 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import pl.edu.agh.backend.user.User;
 
 @Entity
 @Table(name = "posts", indexes = @Index(name = "idx_posts_slug", columnList = "slug", unique = true))
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,9 +24,9 @@ public class Post {
     private UUID id;
 
     /**
-     * URL-friendly identyfikator posta, np. "witajcie-na-agh-alumni".
-     * Generowany z tytułu przy @PrePersist jeśli nie podany.
-     * Nie zmieniany przy edycji tytułu — zapobiega rotacji linków.
+     * URL-friendly post identifier, e.g. "welcome-to-agh-alumni".
+     * Generated from the title on @PrePersist if not provided.
+     * Not updated when the title changes to avoid link rotation.
      */
     @Column(nullable = false, unique = true, length = 300)
     private String slug;
@@ -30,7 +34,7 @@ public class Post {
     @Column(nullable = false, length = 300)
     private String title;
 
-    /** Krótki opis na listing strony. Nullable — admin wpisuje ręcznie. */
+    /** Short description for listing pages. Nullable - admin fills it manually. */
     @Column(length = 500)
     private String excerpt;
 
@@ -45,30 +49,26 @@ public class Post {
     @Column(nullable = false, length = 20)
     private PostStatus status = PostStatus.DRAFT;
 
-    /** Ustawiane automatycznie przy pierwszej zmianie statusu na PUBLISHED. */
+    /** Set automatically on the first status change to PUBLISHED. */
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = updatedAt = Instant.now();
         if (slug == null || slug.isBlank()) {
             slug = SlugUtils.toSlug(title);
         }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = Instant.now();
-    }
-
-    /** Publikuje post — ustawia status i publishedAt (tylko przy pierwszej publikacji). */
+    /** Publishes the post, setting status and publishedAt (only on first publication). */
     public void publish() {
         if (this.status != PostStatus.PUBLISHED) {
             this.status = PostStatus.PUBLISHED;
@@ -78,7 +78,7 @@ public class Post {
         }
     }
 
-    /** Cofa post do draftu. publishedAt zostaje — zachowuje oryginalną datę publikacji. */
+    /** Reverts the post to draft. publishedAt remains to preserve the original publication date. */
     public void unpublish() {
         this.status = PostStatus.DRAFT;
     }

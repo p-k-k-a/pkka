@@ -6,6 +6,9 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Local application user record. Keycloak is the source of truth for identity and roles.
@@ -13,6 +16,7 @@ import lombok.Setter;
  */
 @Entity
 @Table(name = "users", indexes = @Index(name = "idx_users_keycloak_id", columnList = "keycloak_id", unique = true))
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -34,19 +38,11 @@ public class User {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = updatedAt = Instant.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = Instant.now();
-    }
 }
