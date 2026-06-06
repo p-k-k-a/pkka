@@ -7,7 +7,7 @@ import { defineConfig } from "orval";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const input = process.env.OPENAPI_INPUT ?? "./openapi.yaml";
+const input = process.env.OPENAPI_INPUT || path.resolve(__dirname, "openapi.yaml");
 
 export default defineConfig({
   pkka: {
