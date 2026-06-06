@@ -17,5 +17,4 @@ CREATE TABLE posts
     CONSTRAINT chk_posts_status      CHECK (status IN ('DRAFT', 'PUBLISHED'))
 );
 
--- Przyspiesza findAllByStatusOrderByPublishedAtDesc
 CREATE INDEX idx_posts_status_published_at ON posts (status, published_at DESC);
