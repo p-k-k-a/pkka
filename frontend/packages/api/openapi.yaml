@@ -5,22 +5,22 @@ info:
     Science.
   version: v1
 servers:
-- url: http://localhost:8080
-  description: Local dev
+  - url: http://localhost:8080
+    description: Local dev
 tags:
-- name: Posts
-  description: Public posts on the faculty blog
+  - name: Posts
+    description: Public posts on the faculty blog
 paths:
   /debug/token:
     get:
       tags:
-      - debug-token-controller
+        - debug-token-controller
       operationId: debugToken
       responses:
         "200":
           description: OK
           content:
-            '*/*':
+            "*/*":
               schema:
                 type: array
                 items:
@@ -29,50 +29,50 @@ paths:
   /api/public/posts:
     get:
       tags:
-      - Posts
+        - Posts
       summary: List of published posts
       description: |
         Available without authentication. Posts are ordered from newest to oldest.
         Pagination parameters: page (default 0), size (default 10).
       operationId: listPosts
       parameters:
-      - name: pageable
-        in: query
-        required: true
-        schema:
-          $ref: "#/components/schemas/Pageable"
+        - name: pageable
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Pageable"
       responses:
         "200":
           description: OK
           content:
-            '*/*':
+            "*/*":
               schema:
                 $ref: "#/components/schemas/PostSummaryResponse"
   /api/public/posts/{slug}:
     get:
       tags:
-      - Posts
+        - Posts
       summary: Single post by slug
       description: Available without authentication. Returns 404 if the post does
         not exist or is a draft.
       operationId: getPost
       parameters:
-      - name: slug
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
           content:
-            '*/*':
+            "*/*":
               schema:
                 $ref: "#/components/schemas/PostResponse"
         "404":
           description: Post does not exist or is not published
           content:
-            '*/*':
+            "*/*":
               schema:
                 $ref: "#/components/schemas/PostResponse"
 components:

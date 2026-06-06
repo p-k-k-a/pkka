@@ -20,13 +20,11 @@ class PostDataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         if (postRepository.count() > 0) return;
 
-        User author = userRepository.findAll().stream()
-                .findFirst()
-                .orElseGet(() -> {
-                    var u = new User();
-                    u.setKeycloakId("00000000-0000-0000-0000-000000000001");
-                    return userRepository.save(u);
-                });
+        User author = userRepository.findAll().stream().findFirst().orElseGet(() -> {
+            var u = new User();
+            u.setKeycloakId("00000000-0000-0000-0000-000000000001");
+            return userRepository.save(u);
+        });
 
         postRepository.save(buildPost(
                 author,
@@ -56,11 +54,7 @@ class PostDataInitializer implements ApplicationRunner {
                 oraz materiałów archiwalnych.
                 """));
 
-        postRepository.save(buildPost(
-                author,
-                "Pierwsze wydarzenie Klubu Alumna — save the date",
-                null,
-                """
+        postRepository.save(buildPost(author, "Pierwsze wydarzenie Klubu Alumna — save the date", null, """
                 ## Save the date
 
                 Już wkrótce ogłosimy datę pierwszego spotkania Klubu Alumna Wydziału \
