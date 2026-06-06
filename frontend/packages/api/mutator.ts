@@ -1,7 +1,7 @@
 let baseUrl = "";
 let getAuthToken: () => string | null | Promise<string | null> = () => null;
 let onUnauthenticated: () => void = () => {};
-let getRefreshToken: () => Promise<string | null>;
+let getRefreshToken: () => Promise<string | null> = () => null;
 let onTokenRefreshed: (newAT: string, newRT: string) => void = () => {};
 
 export function configureApi(opts: {
@@ -49,16 +49,10 @@ const refreshTokens = async (): Promise<string> => {
     throw new Error("No refresh token");
   }
 
-  const body = new URLSearchParams({
-    grant_type: "refresh_token",
-    refresh_token: rt,
-    client_id: "pkka-mobile",
-  });
-
-  const res = await fetch(process.env.EXPO_PUBLIC_KEYCLOAK_TOKEN_URL!, {
+  const res = await fetch(buildUrl("/api/public/auth/refresh"), {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: rt }),
   });
 
   if (!res.ok) {
