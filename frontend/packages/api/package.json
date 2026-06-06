@@ -7,7 +7,6 @@
     "./msw": "./src/generated/api.msw.ts"
   },
   "scripts": {
-    "sync-spec": "curl http://localhost:8080/v3/api-docs.yaml -o openapi.yaml",
     "generate": "orval --config orval.config.ts",
     "typecheck": "tsc --noEmit"
   },
