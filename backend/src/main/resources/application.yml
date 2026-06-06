@@ -5,7 +5,10 @@ spring:
     default: dev
 
   config:
-    import: optional:file:./backend/.env[.properties]
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:./backend/.env[.properties]
+      - optional:classpath:.env[.properties]
 
 # OpenAPI / Swagger
 springdoc:
@@ -29,6 +32,10 @@ spring:
 
   # OAuth2 / OIDC (Keycloak)
   security:
+    logging:
+      level:
+        org.springframework.security.oauth2: TRACE
+        org.springframework.web.client.RestTemplate: DEBUG
     oauth2:
       client:
         registration:
