@@ -36,18 +36,38 @@ paths:
         Pagination parameters: page (default 0), size (default 10).
       operationId: listPosts
       parameters:
-        - name: pageable
+        - name: page
           in: query
-          required: true
+          description: Zero-based page index (0..N)
+          required: false
           schema:
-            $ref: "#/components/schemas/Pageable"
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: The size of the page to be returned
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+        - name: sort
+          in: query
+          description: "Sorting criteria in the format: property,(asc|desc). Default\
+            \ sort order is ascending. Multiple sort criteria are supported."
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         "200":
           description: OK
           content:
             "*/*":
               schema:
-                $ref: "#/components/schemas/PostSummaryResponse"
+                $ref: "#/components/schemas/PagePostSummaryResponse"
   /api/public/posts/{slug}:
     get:
       tags:
@@ -71,27 +91,58 @@ paths:
                 $ref: "#/components/schemas/PostResponse"
         "404":
           description: Post does not exist or is not published
-          content:
-            "*/*":
-              schema:
-                $ref: "#/components/schemas/PostResponse"
 components:
   schemas:
-    Pageable:
+    PagePostSummaryResponse:
       type: object
       properties:
-        page:
+        totalPages:
           type: integer
           format: int32
-          minimum: 0
+        totalElements:
+          type: integer
+          format: int64
         size:
           type: integer
           format: int32
-          minimum: 1
-        sort:
+        content:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/PostSummaryResponse"
+        number:
+          type: integer
+          format: int32
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        paged:
+          type: boolean
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        unpaged:
+          type: boolean
     PostSummaryResponse:
       type: object
       properties:
@@ -109,6 +160,15 @@ components:
         publishedAt:
           type: string
           format: date-time
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
     PostResponse:
       type: object
       properties:
