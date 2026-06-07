@@ -94,6 +94,14 @@ export const logoutTokens = async (): Promise<void> => {
   }
 };
 
+const safeFetch = async (url: string, options: RequestInit): Promise<Response> => {
+  try {
+    return await fetch(url, options);
+  } catch (e) {
+    throw new ApiError(0, `network error: ${(e as Error).message}`, url);
+  }
+};
+
 export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const fullUrl = buildUrl(url);
   const token = await getAuthToken();
@@ -102,19 +110,13 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
   if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
-  let res: Response;
-  try {
-    res = await fetch(fullUrl, { ...options, headers });
-  } catch (e) {
-    throw new ApiError(0, `network error: ${(e as Error).message}`, fullUrl);
-  }
-
+  let res = await safeFetch(fullUrl, { ...options, headers });
   let body = await parseBody<unknown>(res);
 
   if (res.status === 401) {
     const newAT = await refreshTokens();
     headers.set("Authorization", `Bearer ${newAT}`);
-    res = await fetch(fullUrl, { ...options, headers });
+    res = await safeFetch(fullUrl, { ...options, headers });
     body = await parseBody<unknown>(res);
   }
 
