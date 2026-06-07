@@ -9,17 +9,17 @@ CREATE TABLE events (
                         title                   VARCHAR(200) NOT NULL,
                         full_description        TEXT,
                         type                    VARCHAR(32) NOT NULL,
-                        starts_at               TIMESTAMP NOT NULL,
-                        ends_at                 TIMESTAMP NOT NULL,
+                        starts_at               TIMESTAMPTZ NOT NULL,
+                        ends_at                 TIMESTAMPTZ NOT NULL,
                         transmission_url        VARCHAR(500),
                         location                VARCHAR(300),
                         seat_limit              INTEGER,
-                        registration_closes_at  TIMESTAMP,
+                        registration_closes_at  TIMESTAMPTZ,
                         audience                VARCHAR(32) NOT NULL,
                         cover_image_url         VARCHAR(500),
-                        created_at              TIMESTAMP NOT NULL,
-                        updated_at              TIMESTAMP NOT NULL,
-                        deleted_at              TIMESTAMP,
+                        created_at              TIMESTAMPTZ NOT NULL,
+                        updated_at              TIMESTAMPTZ NOT NULL,
+                        deleted_at              TIMESTAMPTZ,
                         version                 BIGINT NOT NULL DEFAULT 0
 );
 

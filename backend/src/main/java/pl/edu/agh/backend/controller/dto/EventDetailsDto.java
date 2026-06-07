@@ -1,6 +1,6 @@
 package pl.edu.agh.backend.controller.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,12 +14,12 @@ public record EventDetailsDto(
         String title,
         String fullDescription,
         EventType type,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
+        Instant startsAt,
+        Instant endsAt,
         String location,
         Integer seatLimit,
         Integer seatsTaken,
-        LocalDateTime registrationClosesAt,
+        Instant registrationClosesAt,
         Audience audience,
         String coverImageUrl,
         Set<String> tags) {

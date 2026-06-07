@@ -1,7 +1,7 @@
 package pl.edu.agh.backend.repository;
 
 import jakarta.persistence.criteria.Join;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collection;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,7 +12,7 @@ import pl.edu.agh.backend.domain.Tag;
 @UtilityClass
 public class EventSpecifications {
 
-    public Specification<Event> startsAfter(LocalDateTime dateTime) {
+    public Specification<Event> startsAfter(Instant dateTime) {
         return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
     }
 
