@@ -3,7 +3,6 @@ CREATE TABLE posts
     id           UUID         NOT NULL,
     slug         VARCHAR(300) NOT NULL,
     title        VARCHAR(300) NOT NULL,
-    excerpt      VARCHAR(500),
     content      TEXT         NOT NULL,
     author_id    UUID         NOT NULL,
     status       VARCHAR(20)  NOT NULL DEFAULT 'DRAFT',

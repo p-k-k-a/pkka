@@ -34,10 +34,6 @@ public class Post {
     @Column(nullable = false, length = 300)
     private String title;
 
-    /** Short description for listing pages. Nullable - admin fills it manually. */
-    @Column(length = 500)
-    private String excerpt;
-
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
