@@ -10,6 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
@@ -54,5 +55,29 @@ public class AuthRefreshController {
                                     HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
                         })
                 .body(TokenResponse.class);
+    }
+
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/logout")
+    public void logout(@RequestBody RefreshRequest body) {
+        MultiValueMap<String, String> form =
+                MultiValueMap.fromSingleValue(
+                        Map.of(
+                                "client_id", mobile.getClientId(),
+                                "client_secret", mobile.getClientSecret(),
+                                "refresh_token", body.refreshToken()));
+
+        restClient
+                .post()
+                .uri(
+                        mobile.getProviderDetails()
+                                .getConfigurationMetadata()
+                                .get("end_session_endpoint")
+                                .toString())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(form)
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError(), (req, res) -> {})
+                .toBodilessEntity();
     }
 }

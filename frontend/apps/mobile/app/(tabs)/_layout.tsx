@@ -1,9 +1,12 @@
+import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@react-navigation/native";
 import { Tabs } from "expo-router";
 import { Calendar, Home, LogIn } from "lucide-react-native";
 
 export default function TabsLayout() {
   const { colors } = useTheme();
+  const { user } = useAuth();
+  console.log(user);
 
   return (
     <Tabs
@@ -33,7 +36,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="login"
         options={{
-          title: "ZALOGUJ",
+          title: user ? "WYLOGUJ" : "ZALOGUJ",
           tabBarIcon: ({ color, size }) => <LogIn color={color} size={size} />,
         }}
       />

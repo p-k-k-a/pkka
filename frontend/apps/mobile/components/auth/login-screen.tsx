@@ -12,9 +12,7 @@ const DISCORD_URL = process.env.EXPO_PUBLIC_DISCORD_URL ?? "";
 const REDIRECT_URI = "pkka://";
 
 export function LoginScreen() {
-  const { login, user } = useAuth();
-
-  console.log(user);
+  const { login } = useAuth();
 
   async function loginWithKeycloak() {
     const result = await WebBrowser.openAuthSessionAsync(KEYCLOAK_URL, REDIRECT_URI);

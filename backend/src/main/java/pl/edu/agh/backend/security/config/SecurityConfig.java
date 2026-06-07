@@ -51,7 +51,9 @@ public class SecurityConfig {
                                         .csrfTokenRequestHandler(
                                                 new XorCsrfTokenRequestAttributeHandler())
                                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
-                                        .ignoringRequestMatchers("/api/public/auth/refresh"))
+                                        .ignoringRequestMatchers(
+                                                "/api/public/auth/refresh",
+                                                "/api/public/auth/logout"))
                 .authorizeHttpRequests(
                         auth ->
                                 auth.requestMatchers("/api/public/**")

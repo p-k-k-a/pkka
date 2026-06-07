@@ -1,5 +1,5 @@
 import { AuthContextType, User } from "@/types/auth";
-import { configureApi, refreshTokens } from "@pkka/api";
+import { configureApi, logoutTokens, refreshTokens } from "@pkka/api";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    await logoutTokens();
     setUser(null);
     await SecureStore.deleteItemAsync("at");
     await SecureStore.deleteItemAsync("rt");

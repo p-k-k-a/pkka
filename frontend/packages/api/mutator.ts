@@ -79,6 +79,21 @@ const performTokenRefresh = async (rt: string): Promise<string> => {
   return data.access_token;
 };
 
+export const logoutTokens = async (): Promise<void> => {
+  const rt = await getRefreshToken();
+  if (!rt) return;
+
+  try {
+    await fetch(buildUrl("/api/public/auth/logout"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: rt }),
+    });
+  } catch {
+    // best-effort: network failure shouldn't block the local logout that follows
+  }
+};
+
 export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const fullUrl = buildUrl(url);
   const token = await getAuthToken();
