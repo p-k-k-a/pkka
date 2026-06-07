@@ -14,7 +14,6 @@ CREATE TABLE events (
                         transmission_url        VARCHAR(500),
                         location                VARCHAR(300),
                         seat_limit              INTEGER,
-                        waiting_list_enabled    BOOLEAN NOT NULL DEFAULT FALSE,
                         registration_closes_at  TIMESTAMP,
                         audience                VARCHAR(32) NOT NULL,
                         cover_image_url         VARCHAR(500),

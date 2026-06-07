@@ -1,4 +1,3 @@
-// controller/dto/EventListItemDto.java
 package pl.edu.agh.backend.controller.dto;
 
 import java.time.LocalDateTime;

@@ -23,7 +23,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.8
     container_name: iam-keycloak
-    command: start-dev # Tryb deweloperski, do zmiany na "start" w produkcji
+    command: start-dev # Development mode, switch to "start" in production
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -59,7 +59,7 @@ services:
       POSTGRES_USER: pkka
       POSTGRES_PASSWORD: pkka
     volumes:
-      - pkka_postgres_data:/var/lib/postgresql/data
+      - app_postgres_data:/var/lib/postgresql/data
     networks:
       - iam-network
     healthcheck:
@@ -83,9 +83,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: pkka
       # Backend talking to Keycloak inside the network:
       KEYCLOAK_URL: http://iam-keycloak:8081
-      # WARN: issuer-uri tokenów wystawianych przez Keycloak ma host `localhost`
-      # (z KC_HOSTNAME=localhost), więc walidacja JWT z kontenera nie zadziała
-      # out-of-the-box. Do testów auth na razie odpalaj backend z IDE.
+      # WARN: the issuer-uri of tokens issued by Keycloak uses the `localhost`
+      # host (from KC_HOSTNAME=localhost), so JWT validation from inside the
+      # container won't work out-of-the-box. For now, run the backend from the
+      # IDE when testing auth.
       KEYCLOAK_ISSUER_URI: http://localhost:8081/realms/pkka
     depends_on:
       pkka-postgres:
@@ -97,7 +98,7 @@ services:
 
 volumes:
   postgres_data:
-  pkka_postgres_data:
+  app_postgres_data:
 
 networks:
   iam-network:

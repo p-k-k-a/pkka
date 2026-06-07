@@ -1,4 +1,3 @@
-// controller/dto/EventDetailsDto.java
 package pl.edu.agh.backend.controller.dto;
 
 import java.time.LocalDateTime;
@@ -20,7 +19,6 @@ public record EventDetailsDto(
         String location,
         Integer seatLimit,
         Integer seatsTaken,
-        boolean waitingListEnabled,
         LocalDateTime registrationClosesAt,
         Audience audience,
         String coverImageUrl,
@@ -36,7 +34,6 @@ public record EventDetailsDto(
                 e.getLocation(),
                 e.getSeatLimit(),
                 0, // TODO(events-registrations)
-                e.isWaitingListEnabled(),
                 e.getRegistrationClosesAt(),
                 e.getAudience(),
                 e.getCoverImageUrl(),

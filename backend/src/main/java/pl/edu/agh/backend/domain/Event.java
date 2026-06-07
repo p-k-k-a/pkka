@@ -68,10 +68,6 @@ public class Event {
     @Column(name = "seat_limit")
     private Integer seatLimit;
 
-    @Column(name = "waiting_list_enabled", nullable = false)
-    @Builder.Default
-    private boolean waitingListEnabled = false;
-
     @Column(name = "registration_closes_at")
     private LocalDateTime registrationClosesAt;
 
