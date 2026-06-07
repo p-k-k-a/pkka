@@ -10,16 +10,21 @@
     "web": "expo start --web",
     "build": "expo export --platform web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit",
-    "reset-project": "node ./scripts/reset-project.js"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@pkka/api": "workspace:*",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "@rn-primitives/accordion": "^1.4.0",
+    "@rn-primitives/avatar": "^1.4.0",
+    "@rn-primitives/portal": "^1.4.0",
+    "@rn-primitives/slot": "^1.4.0",
     "@tanstack/react-query": "^5.100.9",
-    "@pkka/api": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "expo": "~54.0.33",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",
@@ -33,6 +38,8 @@
     "expo-symbols": "~1.0.8",
     "expo-system-ui": "~6.0.9",
     "expo-web-browser": "~15.0.10",
+    "lucide-react-native": "^1.16.0",
+    "nativewind": "^4.2.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
@@ -41,12 +48,18 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.5.1"
+    "react-native-worklets": "0.5.1",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.4.0",
     "@types/react": "~19.1.0",
+    "babel-preset-expo": "^55.0.21",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "prettier-plugin-tailwindcss": "^0.5.14",
+    "tailwindcss": "^3.4.19",
     "typescript": "~5.9.2"
   },
   "private": true
