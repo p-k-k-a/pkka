@@ -17,7 +17,7 @@
       "dependsOn": ["^build", "^generate", "generate"]
     },
     "generate": {
-      "inputs": ["orval.config.ts", "mutator.ts"],
+      "inputs": ["orval.config.ts", "mutator.ts", "../../../backend/openapi.json"],
       "outputs": ["src/generated/**"]
     }
   }

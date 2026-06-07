@@ -15,7 +15,7 @@ function PostCard({ announcement }: PostCardProps) {
   return (
     <Link href={{ pathname: "/blog/[slug]", params: { slug } }} asChild>
       <Pressable className="active:opacity-90">
-        <Card className="border-0 bg-card shadow-md shadow-black/10">
+        <Card className="border-0 bg-secondary rounded-3xl shadow-md shadow-black/10">
           <CardHeader className="gap-2">
             <Text className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
               {date} - {time}

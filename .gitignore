@@ -1,1 +1,4 @@
 thesis.yaml
+**/.env
+**/.idea
+**/package-lock.json

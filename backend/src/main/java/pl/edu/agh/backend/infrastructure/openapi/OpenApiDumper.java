@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.config;
+package pl.edu.agh.backend.infrastructure.openapi;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -33,14 +33,10 @@ public class OpenApiDumper implements ApplicationListener<ApplicationReadyEvent>
 
         try (HttpClient client = HttpClient.newHttpClient()) {
             HttpRequest request = HttpRequest.newBuilder().uri(uri).GET().build();
-            HttpResponse<String> response =
-                    client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() != 200) {
-                log.warn(
-                        "Failed to fetch OpenAPI spec from {}: HTTP {}",
-                        uri,
-                        response.statusCode());
+                log.warn("Failed to fetch OpenAPI spec from {}: HTTP {}", uri, response.statusCode());
                 return;
             }
 

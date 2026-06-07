@@ -1,0 +1,2171 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PKKA — Dokumentacja Techniczna</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222536;
+    --border: #2e3248;
+    --accent: #5865f2;
+    --accent2: #57f287;
+    --warn: #faa61a;
+    --danger: #ed4245;
+    --text: #e3e5e8;
+    --text-muted: #8e9297;
+    --code-bg: #11131c;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.7; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  nav { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  main { flex: 1; padding: 48px 56px; max-width: 960px; }
+
+  /* Nav */
+  .nav-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); padding: 0 20px 8px; }
+  .nav-section { margin-bottom: 24px; }
+  nav a { display: block; padding: 6px 20px; color: var(--text-muted); text-decoration: none; font-size: 13.5px; border-left: 3px solid transparent; transition: all .15s; }
+  nav a:hover { color: var(--text); background: var(--surface2); }
+  nav a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,101,242,.08); }
+  .nav-logo { padding: 0 20px 24px; font-weight: 700; font-size: 16px; color: var(--text); }
+  .nav-logo span { color: var(--accent); }
+
+  /* Content */
+  h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+  h2 { font-size: 22px; font-weight: 700; margin: 48px 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 700; margin: 28px 0 12px; color: var(--text); }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+  p { margin-bottom: 14px; color: var(--text); }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* Badges */
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+  .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 12px; color: var(--text-muted); }
+  .badge.blue { border-color: var(--accent); color: var(--accent); background: rgba(88,101,242,.1); }
+  .badge.green { border-color: var(--accent2); color: var(--accent2); background: rgba(87,242,135,.1); }
+
+  /* Callouts */
+  .callout { border-radius: var(--radius); padding: 14px 16px; margin: 16px 0; display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+  .callout-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .callout.warn { background: rgba(250,166,26,.08); border: 1px solid rgba(250,166,26,.25); }
+  .callout.warn .callout-icon::before { content: '⚠️'; }
+  .callout.info { background: rgba(88,101,242,.08); border: 1px solid rgba(88,101,242,.25); }
+  .callout.info .callout-icon::before { content: 'ℹ️'; }
+  .callout.success { background: rgba(87,242,135,.08); border: 1px solid rgba(87,242,135,.25); }
+  .callout.success .callout-icon::before { content: '✅'; }
+  .callout.danger { background: rgba(237,66,69,.08); border: 1px solid rgba(237,66,69,.25); }
+  .callout.danger .callout-icon::before { content: '🚫'; }
+
+  /* Code */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; overflow-x: auto; margin: 12px 0 20px; }
+  code { font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 13px; }
+  p code, li code, td code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12.5px; color: #a8b4d8; }
+  .kw { color: #c678dd; }
+  .str { color: #98c379; }
+  .cm { color: #5c6370; font-style: italic; }
+  .num { color: #e5c07b; }
+  .prop { color: #e06c75; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+  th { background: var(--surface2); color: var(--text-muted); font-weight: 600; padding: 10px 14px; text-align: left; border: 1px solid var(--border); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: 10px 14px; border: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  td strong { color: var(--accent2); }
+
+  /* Steps */
+  .steps { counter-reset: step; }
+  .step { display: flex; gap: 16px; margin-bottom: 20px; }
+  .step-num { counter-increment: step; width: 28px; height: 28px; min-width: 28px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: white; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-body p { margin-bottom: 8px; }
+
+  /* Screenshots */
+  .screenshot { margin: 16px 0 24px; }
+  .screenshot img { width: 100%; border-radius: var(--radius); border: 1px solid var(--border); display: block; }
+  .screenshot figcaption { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 8px; }
+  .screenshot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 24px; }
+  .screenshot-row .screenshot { margin: 0; }
+  .screenshot-sm img { max-width: 480px; }
+
+  /* Flow diagram */
+  .flow { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin: 16px 0 24px; font-family: monospace; font-size: 13px; line-height: 1.8; white-space: pre; overflow-x: auto; }
+  .flow .arrow { color: var(--accent); }
+  .flow .box { color: var(--accent2); }
+  .flow .label { color: var(--text-muted); }
+
+  /* Sections */
+  section { margin-bottom: 64px; }
+  .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .section-num { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0; }
+
+  /* Inline tag */
+  .tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; font-size: 12px; color: var(--text-muted); vertical-align: middle; }
+  .tag.on { border-color: var(--accent2); color: var(--accent2); background: rgba(87,242,135,.1); }
+  .tag.off { border-color: var(--danger); color: var(--danger); background: rgba(237,66,69,.1); }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- NAVIGATION -->
+<nav>
+  <div class="nav-logo">PKKA <span>Docs</span></div>
+  <div class="nav-section">
+    <div class="nav-title">Wprowadzenie</div>
+    <a href="#architektura">Architektura</a>
+    <a href="#infrastruktura">Infrastruktura</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Keycloak</div>
+    <a href="http://localhost:8081/admin/master/console/" target="_blank">Konsola Admina 🡕</a>
+    <a href="#discord-portal">Discord Dev Portal</a>
+    <a href="#realm">Realm</a>
+    <a href="#client">Client pkka-web</a>
+    <a href="#client-mobile">Client pkka-mobile</a>
+    <a href="#idp">Identity Provider</a>
+    <a href="#discord-bypass">Discord IDP Bypass</a>
+    <a href="#flow">First Broker Login</a>
+    <a href="#roles">Role i uprawnienia</a>
+    <a href="#keycloak-events">User/Admin Events</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Testowanie</div>
+    <a href="#weryfikacja">Weryfikacja UI</a>
+    <a href="#postman">Postman — krok po kroku</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Dalsze kroki</div>
+    <a href="#spring">Spring Boot</a>
+    <a href="#bledy">Typowe błędy</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-title">Konfiguracja backendu</div>
+    <a href="#roles-keycloak">Role i grupy Keycloak</a>
+    <a href="#gradle">build.gradle</a>
+    <a href="#appyml">application.yml</a>
+    <a href="#admin-api">Keycloak Admin API</a>
+    <a href="#auth-code-flow">Auth Code Flow</a>
+    <a href="#custom-theme">Custom Login Theme</a>
+    <a href="#bff-arch">BFF — Architektura</a>
+    <a href="#security-config">SecurityConfig.java</a>
+    <a href="#bff-success-handler">BffSuccessHandler.java</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main>
+
+  <!-- HEADER -->
+  <h1>PKKA — Dokumentacja Techniczna</h1>
+  <p class="subtitle">Keycloak 26 + Discord OIDC + Guild Verification + Spring Boot 4</p>
+  <div class="badges">
+    <span class="badge blue">Keycloak 26.0.8</span>
+    <span class="badge blue">Spring Boot 4.0.6</span>
+    <span class="badge blue">Java 25</span>
+    <span class="badge">PostgreSQL 16</span>
+    <span class="badge green">✓ Działające</span>
+  </div>
+
+  <!-- ARCHITEKTURA -->
+  <section id="architektura">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2 style="margin:0;border:none;">Architektura systemu</h2>
+    </div>
+
+    <h3>Decyzje architektoniczne</h3>
+    <p>System oparty jest na <strong>rozdzieleniu odpowiedzialności</strong> między dwa komponenty:</p>
+    <table>
+      <tr><th>Komponent</th><th>Odpowiedzialność</th></tr>
+      <tr><td><strong>Keycloak</strong></td><td>Wyłącznie tożsamość — autentykacja, zarządzanie kontami, federacja przez Discord OIDC, przechowywanie tokenów brokera</td></tr>
+      <tr><td><strong>Spring Boot</strong></td><td>Logika biznesowa — weryfikacja przynależności do serwera Discord, nadawanie ról przez Keycloak Admin API</td></tr>
+    </table>
+
+    <p>Zrezygnowano z customowych wtyczek Keycloaka (np. <code>keycloak-discord</code>) na rzecz natywnego OIDC:</p>
+    <table>
+      <tr><th>Problem z wtyczkami</th><th>Rozwiązanie w tej architekturze</th></tr>
+      <tr><td>Oparte na OAuth2, nie OIDC — brak weryfikacji pola <code>aud</code> w ID tokenie podczas broker handshake (ryzyko <em>Confused Deputy Attack</em>)</td><td>Keycloak weryfikuje <code>aud</code> ID tokenu podczas wymiany authorization code — blokuje podstawienie kodu wygenerowanego dla innego <code>client_id</code></td></tr>
+      <tr><td>Ręczne mapowanie profilu i ról w <code>.jar</code></td><td>Keycloak obsługuje to przez standardowe mappery</td></tr>
+      <tr><td>Konieczność utrzymania wersji <code>.jar</code> zgodnej z Keycloakiem</td><td>Brak zewnętrznych zależności, zero maintenance</td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Precyzyjny zakres ochrony OIDC:</strong> Discord AT i RT to opaque tokeny — Discord API przy callach do <code>/users/@me/guilds</code> nie weryfikuje <code>client_id</code>, bearer token wystarczy. Korzyść OIDC jest wyłącznie w warstwie brokera:
+      <table style="margin-top:10px">
+        <tr><th>Etap</th><th>Token</th><th>Weryfikacja aud</th><th>Korzyść OIDC nad OAuth2</th></tr>
+        <tr><td>Broker handshake (Keycloak ↔ Discord)</td><td>ID token (JWT)</td><td>✅ Keycloak weryfikuje</td><td>Tak — blokuje Confused Deputy</td></tr>
+        <tr><td>Runtime API calls (Spring ↔ Discord API)</td><td>Access token (opaque)</td><td>❌ Discord nie weryfikuje</td><td>Nie — identyczne jak OAuth2</td></tr>
+      </table>
+    </div></div>
+
+    <h3>Przepływ — Guild Verification</h3>
+    <div class="flow"><span class="box">Użytkownik</span> klika "Zaloguj przez Discord"
+    │
+    ▼
+<span class="box">Keycloak</span> (OIDC broker)
+├── zapisuje Access Token Discorda (Store Tokens = ON)
+└── wydaje własny token JWT użytkownikowi
+    │
+    ▼
+<span class="box">Spring Boot</span> odbiera token Keycloaka
+    │
+    ▼
+POST /verify-guild
+├── pobiera Discord AT z Keycloaka  <span class="label">GET /broker/discord/token</span>
+├── odpytuje Discord API            <span class="label">GET /users/@me/guilds</span>
+├── sprawdza presence na serwerze
+└── nadaje rolę `verified-alumn`    <span class="label">Keycloak Admin API</span>
+    │
+    ▼
+<span class="box">Frontend</span> odświeża token → nowy JWT zawiera rolę</div>
+  </section>
+
+  <!-- INFRASTRUKTURA -->
+  <section id="infrastruktura">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2 style="margin:0;border:none;">Infrastruktura — Docker</h2>
+    </div>
+
+    <pre><code><span class="cm"># docker-compose.yml</span>
+services:
+  postgres:
+    image: postgres:16
+    container_name: iam-postgres
+    ports:
+      - <span class="str">"5432:5432"</span>
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iam-network
+    healthcheck:
+      test: [<span class="str">"CMD-SHELL"</span>, <span class="str">"pg_isready -U keycloak -d keycloak"</span>]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.8
+    container_name: iam-keycloak
+    command: start-dev <span class="cm"># Tryb deweloperski, do zmiany na "start" w produkcji</span>
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: <span class="str">"true"</span>
+    ports:
+      - <span class="str">"8081:8081"</span>
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - iam-network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: iam-mailpit
+    ports:
+      - <span class="str">"8025:8025"</span>   <span class="cm"># UI web</span>
+      - <span class="str">"1025:1025"</span>   <span class="cm"># SMTP</span>
+    networks:
+      - iam-network
+
+volumes:
+  postgres_data:
+
+networks:
+  iam-network:
+    driver: bridge</code></pre>
+
+      <div class="callout warn"><div class="callout-icon"></div><div><code>Zmienne KC_BOOTSTRAP_ADMIN_*</code> działa tylko przy pierwszym starcie (tworzeniu bazy). Przy kolejnych uruchomieniach Keycloak używa konta zapisanego w PostgreSQL.</div></div>
+      <div class="callout info"><div class="callout-icon"></div><div>
+        <strong>Trwałe konto admina (zamiast admin/admin):</strong><br>
+        1) Zaloguj się jednorazowym bootstrap adminem do <code>master</code>.<br>
+        2) <strong>Users → Add user</strong> → ustaw email/username i zapisz.<br>
+        3) <strong>Credentials</strong> → ustaw hasło (Temporary = OFF).<br>
+        4) <strong>Role mapping</strong> → <strong>Assign role</strong> → <strong>Filter by realm roles</strong> → nadaj <code>admin</code>.<br>
+        5) Usuń bootstrap konto.<br>
+        6) Usuń <code>KC_BOOTSTRAP_ADMIN_USERNAME</code>/<code>KC_BOOTSTRAP_ADMIN_PASSWORD</code> z <code>docker-compose.yml</code> i zrestartuj.
+      </div></div>
+
+    <h3>Import wyeksportowanego Realmu</h3>
+    <p>Jeśli posiadasz gotowy plik konfiguracyjny <code>realm-export.json</code>, możesz załadować go przy starcie modyfikując sekcję <code>keycloak</code> w pliku <code>docker-compose.yml</code>. Należy dodać flagę <code>--import-realm</code> do komendy oraz podmontować plik JSON bezpośrednio w odpowiednią ścieżkę katalogu importów w kontenerze.</p>
+
+    <pre><code>  keycloak:
+    <span class="cm"># ... pozostałe dyrektywy bez zmian ...</span>
+    command: start-dev --import-realm
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm.json:ro</code></pre>
+
+    <div class="callout tip"><div class="callout-icon"></div><div>
+      <strong>Oznaczenie <code>:ro</code></strong><br>
+      Skrót <code>:ro</code> oznacza <em>read-only</em> (tylko do odczytu). Gwarantuje to, że baza danych / aplikacja dążąca do załadowania tych danych wewnątrz kontenera nie będzie w stanie nadpisać ani zmodyfikować zawartości Twojego lokalnego pliku źródłowego <code>realm-export.json</code>.<br><br>
+      <strong>Konfiguracja środowiska .env</strong><br>
+      Pamiętaj, że po udanym imporcie z tego pliku należy odpowiednio skonfigurować plik <code>.env</code> w katalogu /backend. Zmienne, o które chodzi, to te użyte w konfiguracji Springa (opisane w sekcji <a href="#appyml" style="color:var(--accent)">application.yml</a>: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_GUILD_ID</code>, itp.).
+    </div></div>
+  </section>
+
+  <!-- DISCORD PORTAL -->
+  <section id="discord-portal">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2 style="margin:0;border:none;">Discord Developer Portal</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Wejdź na <code>https://discord.com/developers/applications</code> i wybierz swoją aplikację.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>OAuth2</strong> → sekcja <strong>Redirects</strong> → <strong>Add Redirect</strong>:</p><pre><code>http://localhost:8081/realms/pkka/broker/discord/endpoint</code></pre></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Kliknij <strong>Save Changes</strong>. Skopiuj <strong>Client ID</strong> i wygeneruj <strong>Client Secret</strong>.</p></div></div>
+    </div>
+    <div class="callout info"><div class="callout-icon"></div><div>Sekcja <strong>URL Generator</strong> i pole <strong>Select redirect URI</strong> to narzędzie pomocnicze — ignorujesz je całkowicie. Nie zaznaczasz tam żadnych scopów.</div></div>
+  </section>
+
+  <!-- REALM -->
+  <section id="realm">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <h2 style="margin:0;border:none;">Keycloak — Realm</h2>
+    </div>
+    <div class="callout warn"><div class="callout-icon"></div><div>Realm <code>master</code> służy wyłącznie do administracji Keycloakiem. Nigdy nie twórz tam użytkowników ani klientów swojej aplikacji.</div></div>
+
+    <h3>Tworzenie Realmu</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Lewy górny róg → kliknij nazwę aktualnego realmu → <strong>Create realm</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p><strong>Realm name:</strong> <code>pkka</code> — pole <strong>Resource file</strong> zostaw puste (służy do importu JSON z gotowej konfiguracji). Kliknij <strong>Create</strong>.</p></div></div>
+    </div>
+
+    <h3>Zakładka Login</h3>
+    <table>
+      <tr><th>Opcja</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>User registration</td><td><span class="tag on">ON</span></td><td>Samodzielna rejestracja emailem</td></tr>
+      <tr><td>Forgot password</td><td><span class="tag on">ON</span></td><td>Link "zapomniałem hasła"</td></tr>
+      <tr><td>Remember me</td><td><span class="tag on">ON</span></td><td>Checkbox na stronie logowania</td></tr>
+      <tr><td>Verify email</td><td><span class="tag on">ON</span></td><td>Wyłącz tymczasowo jeśli brak SMTP</td></tr>
+      <tr><td>Login with email</td><td><span class="tag on">ON</span></td><td>Logowanie emailem zamiast usernamem</td></tr>
+      <tr><td>Duplicate emails</td><td><span class="tag off">OFF</span></td><td>Jedno konto na jeden adres email</td></tr>
+      <tr><td>SSL Required</td><td><code>none</code></td><td>Tylko dev — na prod: <code>external requests</code></td></tr>
+    </table>
+
+    <h3>Zakładka Email (Mailpit)</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>From</td><td><code>noreply@pkka.local</code></td></tr>
+      <tr><td>From display name</td><td><code>PKKA</code></td></tr>
+      <tr><td>Host</td><td><code>mailpit</code></td></tr>
+      <tr><td>Port</td><td><code>1025</code></td></tr>
+    </table>
+
+    <h3>Dodatkowa konfiguracja zabezpieczeń i sesji</h3>
+    <p>Skonfigurowano również poniższe wartości w ustawieniach realmu (konkretne parametry są poufne ze względów bezpieczeństwa):</p>
+    <ul>
+      <li><strong>Realm settings → Security Defenses → Brute Force Mode:</strong> Skonfigurowano <em>Lockout temporarily (Brute Force Mode)</em>, w tym parametry takie jak <em>Max login failures</em>, <em>Strategy to increase wait time</em>, <em>Wait increment</em>, <em>Max wait</em>, <em>Failure reset time</em>, <em>Quick login check milliseconds</em> oraz <em>Minimum quick login wait</em>.</li>
+      <li><strong>Realm settings → Sessions:</strong> Skonfigurowano parametry sesji, <em>SSO Session Settings</em> (SSO Session Idle, SSO Session Max), <em>Offline session settings</em> (Offline Session Idle, Offline Session Max Limited) oraz <em>Login settings</em> (Login timeout, Login action timeout).</li>
+      <li><strong>Realm settings → Tokens:</strong> Skonfigurowano: <em>Refresh tokens</em> (aktywowanie opcji <em>Revoke Refresh Token</em> umożliwia skuteczne unieważnienie RT po jego użyciu; skonfigurowano również <em>Refresh Token Max Reuse</em>), <em>Access tokens</em> (Lifespan, Lifespan For Implicit Flow, Client Login Timeout) a także <em>Action tokens</em> (User-Initiated Action Lifespan, Default Admin-Initiated Action Lifespan).</li>
+    </ul>
+
+    <h3>Efekt — działające emaile i rejestracja</h3>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/registration-form.png" alt="Formularz rejestracji">
+        <figcaption>Formularz rejestracji Keycloaka — Username, Email, First/Last name</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/email-verification-screen.png" alt="Email verification screen">
+        <figcaption>Ekran weryfikacji emaila po rejestracji</figcaption>
+      </figure>
+    </div>
+    <figure class="screenshot">
+      <img src="imgs/mailpit-verification-email.png" alt="Mailpit - email weryfikacyjny">
+      <figcaption>Mailpit (<code>http://localhost:8025</code>) — przechwycony email weryfikacyjny od PKKA</figcaption>
+    </figure>
+  </section>
+
+  <!-- CLIENT WEB -->
+  <section id="client">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <h2 style="margin:0;border:none;">Keycloak — Client <code>pkka-web</code></h2>
+    </div>
+
+    <p>Sidebar → <strong>Clients</strong> → <strong>Create client</strong></p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Obie ścieżki (Web i Mobile) mają teraz oddzielne klienty Keycloaka z identyczną konfiguracją bezpieczeństwa (Client Auth ON + PKCE S256). Różnią się wyłącznie redirect URI i uprawnieniami service account.
+    </div></div>
+
+    <h3>Ekran 1 — General Settings</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Client type</td><td><code>OpenID Connect</code></td></tr>
+      <tr><td>Client ID *</td><td><code>pkka-web</code></td></tr>
+      <tr><td>Name</td><td><code>PKKA Web</code></td></tr>
+      <tr><td>Description</td><td><em>(puste)</em></td></tr>
+    </table>
+
+    <h3>Ekran 2 — Capability config</h3>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/capability-config-service-accounts.png" alt="Capability config">
+      <figcaption>Capability config — widoczny tooltip wyjaśniający Client authentication</figcaption>
+    </figure>
+    <table>
+      <tr><th>Opcja</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Client authentication</td><td><span class="tag on">ON</span></td><td>Confidential client — client-secret trzymany wyłącznie po stronie serwera</td></tr>
+      <tr><td>Authorization</td><td><span class="tag off">OFF</span></td><td>Nie potrzebujemy fine-grained authz</td></tr>
+      <tr><td>Standard flow</td><td>✓</td><td>Authorization Code Flow z PKCE</td></tr>
+      <tr><td>Direct access grants</td><td>✗</td><td>Wyłącz — włącz tylko tymczasowo do testów Postmanem</td></tr>
+      <tr><td>Service accounts enabled</td><td>✓</td><td>Wymagane do Keycloak Admin API (nadawanie ról)</td></tr>
+    </table>
+
+    <h3>Ekran 3 — Login settings</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość (dev)</th><th>Wartość (prod)</th></tr>
+      <tr><td>Root URL</td><td><code>http://localhost:8080</code></td><td><code>https://api.pkka.example.com</code></td></tr>
+      <tr><td>Valid redirect URIs</td><td><code>http://localhost:8080/login/oauth2/code/keycloak-web</code></td><td><code>https://api.pkka.example.com/login/oauth2/code/keycloak-web</code></td></tr>
+      <tr><td>Valid post logout redirect URIs</td><td><code>http://localhost:8080/*</code></td><td><code>https://api.pkka.example.com/*</code></td></tr>
+      <tr><td>Web origins</td><td><code>http://localhost:8080</code></td><td><code>https://api.pkka.example.com</code></td></tr>
+    </table>
+
+    <div class="callout danger"><div class="callout-icon"></div><div>
+      <strong>Valid redirect URI — dokładna ścieżka, bez wildcarda.</strong><br>
+      Użyj <code>/login/oauth2/code/keycloak-web</code> zamiast <code>/*</code>. Wildcard pozwoliłby na <em>Open Redirect Attack</em> — atakujący podstawia własny <code>redirect_uri</code> i przechwytuje authorization code. Spring Security weryfikuje <code>redirect_uri</code> przy każdej wymianie code → token.
+    </div></div>
+
+    <h3>Aktywacja PKCE — zakładka Advanced</h3>
+    <p>Po zapisaniu klienta przejdź do zakładki <strong>Advanced</strong>:</p>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Proof Key for Code Exchange Code Challenge Method</td><td><code>S256</code></td><td>Wymusza PKCE SHA-256 — Keycloak odrzuci auth request bez <code>code_challenge</code></td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Spring Security automatycznie generuje <code>code_verifier</code> i <code>code_challenge</code> dzięki konfiguracji <code>OAuth2AuthorizationRequestCustomizers.withPkce()</code> w <code>SecurityConfig</code>. Działa to dla obu rejestracji (<code>keycloak-web</code> i <code>keycloak-mobile</code>) bez dodatkowej konfiguracji.
+    </div></div>
+
+    <h3>Skopiuj Client Secret</h3>
+    <p>Zakładka <strong>Credentials</strong> → skopiuj <strong>Client secret</strong> → ustaw jako <code>KEYCLOAK_WEB_CLIENT_SECRET</code> w <code>.env</code>.</p>
+
+    <h3>Mapper ról — opcjonalnie</h3>
+    <p>Domyślnie Keycloak dołącza <code>realm_access.roles</code> tylko do Access Tokena, nie ID Tokena. Poprzednie podejście (<code>GrantedAuthoritiesMapper</code>) wymagało dodania mappera "User Realm Role → Add to ID token: ON" — to konfiguracyjny <em>overhead</em> po stronie Keycloaka.</p>
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Mapper ID tokena nie jest potrzebny.</strong> Aktualny <code>SecurityConfig</code> używa niestandardowego <code>OidcUserService</code>, który dekoduje <strong>Access Token</strong> (zawsze niesie <code>realm_access.roles</code>) tym samym <code>JwtDecoder</code> co ścieżka Mobile. Zero dodatkowej konfiguracji Keycloaka.
+    </div></div>
+
+    <h3>Client scopes — ogranicz claims w Access Tokenie</h3>
+    <p>W obu klientach (<code>pkka-web</code> i <code>pkka-mobile</code>): <strong>Clients → [client] → Client scopes</strong> → scope <strong>profile</strong>/<strong>email</strong> → <strong>Mappers</strong>. Dla poniższych mapperów ustaw <strong>Add to access token = OFF</strong> (pozostaw <strong>Add to ID token</strong> i <strong>Add to userinfo</strong> bez zmian):</p>
+    <table>
+      <tr><th>Mapper / claim</th><th>Ustawienie</th></tr>
+      <tr><td><code>email</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>given_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>name</code> (full name)</td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>nickname</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>preferred_username</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>middle_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>family_name</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+      <tr><td><code>gender</code></td><td><span class="tag off">OFF</span> — Add to access token</td></tr>
+    </table>
+    <p class="subtitle" style="margin-top:-8px">Cel: mniejszy Access Token/RODO dla API; dane profilu pozostają w ID tokenie / userinfo.</p>
+
+    <h3>Identity Provider claim</h3>
+    <p>Wejdź w <strong>Client scopes</strong> i wybierz <strong>Profile</strong> scope. Dodaj mapper, który zapisuje <code>origin_idp</code> claim na podstawie <code>identity_provider</code> w sesji użytkownika.
+        W scope kliknij <strong>Add mapper</strong> → <strong>By configuration</strong> → wybierz typ <code>User Session Note</code> i wypełnij pola:</p>
+
+    <h4>Mapper details (origin_idp)</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Mapper type</td><td><code>User Session Note</code></td></tr>
+      <tr><td>Name *</td><td><code>identity provider mapper</code></td></tr>
+      <tr><td>User Session Note</td><td><code>identity_provider</code></td></tr>
+      <tr><td>Token Claim Name</td><td><code>origin_idp</code></td></tr>
+      <tr><td>Claim JSON Type</td><td><code>String</code></td></tr>
+      <tr><td>Add to ID token</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to access token</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Add to lightweight access token</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to userinfo</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Add to access token response</td><td><span class="tag off">OFF</span></td></tr>
+      <tr><td>Add to token introspection</td><td><span class="tag on">ON</span></td></tr>
+    </table>
+
+    <h3>Service Account Roles</h3>
+    <p>Zakładka <strong>Service account roles</strong> → <strong>Assign role</strong> → <strong>Filter by clients</strong>:</p>
+    <table>
+      <tr><th>Klient</th><th>Rola</th><th>Po co</th></tr>
+      <tr><td><code>realm-management</code></td><td><code>manage-users</code></td><td>Szukanie użytkowników, nadawanie i odbieranie ról realmowych przez Admin API</td></tr>
+    </table>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego nie <code>broker / read-token</code> dla service account?</strong><br>
+      Opcja <strong>Stored tokens readable = ON</strong> na IDP Discorda automatycznie przyznaje rolę <code>broker.read-token</code> <em>samemu użytkownikowi</em> przy pierwszym logowaniu. Spring Boot wywołuje <code>GET /broker/discord/token</code> <strong>tokenem użytkownika</strong> — nie potrzebuje do tego service account.<br><br>
+      Service account jest używany <strong>tylko</strong> do Admin API (nadawanie roli <code>verified-alumn</code>).
+    </div></div>
+  </section>
+
+  <!-- CLIENT MOBILE -->
+  <section id="client-mobile">
+    <div class="section-header">
+      <div class="section-num">5b</div>
+      <h2 style="margin:0;border:none;">Keycloak — Client <code>pkka-mobile</code></h2>
+    </div>
+
+    <p>Klient dla ścieżki mobilnej BFF Token Handler Pattern. Konfiguracja <strong>identyczna</strong> jak <code>pkka-web</code> (Client Auth ON + PKCE S256 + Standard Flow), z jedną różnicą: brak Service Account (Admin API obsługuje <code>pkka-web</code>).</p>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Uproszczona architektura:</strong> oba klienty używają tego samego <code>oauth2Login</code> w Spring. Rozgałęzienie Web ↔ Mobile następuje wyłącznie w <code>BffAuthenticationSuccessHandler</code> na podstawie <code>registrationId</code>. Mobilka nie wymaga żadnego osobnego kontrolera.
+    </div></div>
+
+    <h3>Przepływ Mobile — oauth2Login przez system browser</h3>
+    <div class="flow"><span class="box">Mobilka</span>
+│  1. Otwiera Custom Tabs (Android) / SFSafariViewController (iOS):
+│     GET http://localhost:8080/oauth2/authorization/keycloak-mobile
+│
+▼
+<span class="box">Spring Security (Backend)</span>
+│  2. OAuth2AuthorizationRequestResolver generuje:
+│       code_verifier (losowy Base64URL)
+│       code_challenge = BASE64URL(SHA256(code_verifier))
+│     Zapisuje code_verifier w sesji tymczasowej (powiązanej ze state).
+│  3. 302 → Keycloak auth endpoint:
+│       ?client_id=pkka-mobile
+│       &amp;redirect_uri=http://localhost:8080/login/oauth2/code/keycloak-mobile
+│       &amp;code_challenge=mQ8s5...&amp;code_challenge_method=S256
+│       &amp;state=abc123
+│
+▼
+<span class="box">Keycloak</span>
+│  4. Wyświetla stronę logowania (formularz / Discord)
+│  5. Po uwierzytelnieniu: 302 →
+│     http://localhost:8080/login/oauth2/code/keycloak-mobile
+│       ?code=AUTH_CODE&amp;state=abc123
+│
+▼
+<span class="box">Spring Security (Backend)</span>
+│  6. OAuth2LoginAuthenticationFilter odbiera callback:
+│       - weryfikuje state
+│       - pobiera code_verifier z sesji
+│       - POST token endpoint: code + code_verifier + client_secret (Basic)
+│       - dostaje AT (JWT), RT, IDT od Keycloaka
+│  7. Wywołuje BffAuthenticationSuccessHandler(registrationId="keycloak-mobile"):
+│       - SecurityContextHolder.clearContext()
+│       - wyciąga AT + RT z OAuth2AuthorizedClient
+│       - usuwa OAuth2AuthorizedClient z serwisu
+│       - invaliduje sesję tymczasową
+│       - 302 → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+│
+▼
+<span class="box">Mobilka</span>
+│  8. System przechwytuje deep link, przekazuje do aplikacji
+│  9. Aplikacja zapisuje AT + RT w Keychain / EncryptedSharedPreferences
+│
+▼
+<span class="box">Każde żądanie API</span>
+    GET/POST /api/...
+    Authorization: Bearer &lt;AT&gt;  → BearerTokenAuthenticationFilter waliduje przez JWKS</div>
+
+    <h3>Ekran 1 — General Settings</h3>
+    <p>Sidebar → <strong>Clients</strong> → <strong>Create client</strong></p>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Client type</td><td><code>OpenID Connect</code></td></tr>
+      <tr><td>Client ID *</td><td><code>pkka-mobile</code></td></tr>
+      <tr><td>Name</td><td><code>PKKA Mobile</code></td></tr>
+      <tr><td>Description</td><td><em>(puste)</em></td></tr>
+    </table>
+
+    <h3>Ekran 2 — Capability config</h3>
+    <table>
+      <tr><th>Opcja</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Client authentication</td><td><span class="tag on">ON</span></td><td>Confidential — client-secret wyłącznie po stronie backendu</td></tr>
+      <tr><td>Authorization</td><td><span class="tag off">OFF</span></td><td>Nie potrzebujemy fine-grained authz</td></tr>
+      <tr><td>Standard flow</td><td>✓</td><td>Authorization Code Flow z PKCE</td></tr>
+      <tr><td>Direct access grants</td><td>✗</td><td>Wyłącz — mobilka zawsze przez przeglądarkę systemową</td></tr>
+      <tr><td>Service accounts enabled</td><td>✗</td><td>Admin API → obsługuje <code>pkka-web</code></td></tr>
+    </table>
+
+    <h3>Ekran 3 — Login settings</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość (dev)</th><th>Wartość (prod)</th></tr>
+      <tr><td>Root URL</td><td><code>http://localhost:8080</code></td><td><code>https://api.pkka.example.com</code></td></tr>
+      <tr><td>Valid redirect URIs</td><td><code>http://localhost:8080/login/oauth2/code/keycloak-mobile</code></td><td><code>https://api.pkka.example.com/login/oauth2/code/keycloak-mobile</code></td></tr>
+      <tr><td>Valid post logout redirect URIs</td><td><em>(puste)</em></td><td><em>(puste)</em></td></tr>
+      <tr><td>Web origins</td><td><em>(puste)</em></td><td><em>(puste)</em></td></tr>
+    </table>
+
+    <div class="callout danger"><div class="callout-icon"></div><div>
+      <strong>Dokładna ścieżka, bez wildcarda.</strong> Redirect URI musi być identyczny jak <code>{baseUrl}/login/oauth2/code/keycloak-mobile</code> — Spring generuje tę wartość automatycznie z szablonu <code>{baseUrl}/login/oauth2/code/{registrationId}</code>. Wildcard <code>/*</code> otwiera wektor <em>Open Redirect Attack</em>.
+    </div></div>
+
+    <h3>Aktywacja PKCE — zakładka Advanced</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Proof Key for Code Exchange Code Challenge Method</td><td><code>S256</code></td><td>Wymusza PKCE SHA-256 — ochrona przed przechwyceniem kodu przez inną aplikację na urządzeniu (intent hijacking)</td></tr>
+    </table>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>Ustaw <code>S256</code>, nie <code>plain</code>. Metoda <code>plain</code> jest de facto bezużyteczna — <code>code_challenge</code> jest wysyłany jawnie w URL i atakujący może użyć go bezpośrednio jako <code>code_verifier</code>.</div></div>
+
+    <h3>Skopiuj Client Secret</h3>
+    <p>Zakładka <strong>Credentials</strong> → skopiuj <strong>Client secret</strong> → ustaw jako <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code> w <code>.env</code> backendu (nigdy w kodzie mobilki).</p>
+
+    <h3>Porównanie obu klientów</h3>
+    <table>
+      <tr><th>Cecha</th><th><code>pkka-web</code> (rejestracja: <code>keycloak-web</code>)</th><th><code>pkka-mobile</code> (rejestracja: <code>keycloak-mobile</code>)</th></tr>
+      <tr><td>Client Authentication</td><td>ON (confidential)</td><td>ON (confidential)</td></tr>
+      <tr><td>PKCE</td><td>S256 (wymagany)</td><td>S256 (wymagany)</td></tr>
+      <tr><td>client-authentication-method</td><td><code>client_secret_basic</code></td><td><code>client_secret_basic</code></td></tr>
+      <tr><td>Redirect URI</td><td><code>/login/oauth2/code/keycloak-web</code></td><td><code>/login/oauth2/code/keycloak-mobile</code></td></tr>
+      <tr><td>Service Account</td><td>✓ (Admin API, manage-users)</td><td>✗</td></tr>
+      <tr><td>Tokeny po zakończeniu flow</td><td>W sesji Spring (JSESSIONID)</td><td>Przekazane przez deep link (Keychain)</td></tr>
+      <tr><td>Identyfikacja kolejnych żądań</td><td>Cookie <code>JSESSIONID</code></td><td>Header <code>Authorization: Bearer</code></td></tr>
+      <tr><td>Punkt wejścia mobilki</td><td><em>nie dotyczy</em></td><td><code>/oauth2/authorization/keycloak-mobile</code></td></tr>
+    </table>
+  </section>
+
+  <!-- IDP -->
+  <section id="idp">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <h2 style="margin:0;border:none;">Keycloak — Identity Provider Discord</h2>
+    </div>
+
+    <p>Sidebar → <strong>Identity providers</strong> → <strong>Add provider</strong> → <strong>OpenID Connect v1.0</strong></p>
+
+    <h3>Formularz podstawowy</h3>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Alias</td><td><code>discord</code></td></tr>
+      <tr><td>Display name</td><td><code>Discord</code></td></tr>
+      <tr><td>Enabled</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Hide on login page</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— Spring wysyła <code>kc_idp_hint=discord</code>, przycisk niepotrzebny</span></td></tr>
+      <tr><td>Store tokens</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Stored tokens readable</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Discovery endpoint</td><td><code>https://discord.com/.well-known/openid-configuration</code> → kliknij <strong>Import</strong></td></tr>
+      <tr><td>Client ID</td><td>Discord Client ID</td></tr>
+      <tr><td>Client Secret</td><td>Discord Client Secret</td></tr>
+      <tr><td>Client authentication</td><td><code>client_secret_basic</code></td></tr>
+      <tr><td>PKCE</td><td><span class="tag on">ON</span> — metoda <code>S256</code></td></tr>
+      <tr><td>Pass login_hint</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— umożliwia prefill loginu na stronie Discorda</span></td></tr>
+      <tr><td>Default Scopes</td><td><code>openid email identify guilds</code></td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Zmiana: <code>client_secret_post</code> → <code>client_secret_basic</code>.</strong><br>
+      Discord wspiera obie metody. <code>client_secret_basic</code> to standard RFC 6749 — credentials lecą w nagłówku <code>Authorization: Basic base64(id:secret)</code>, nie w body requestu. Zgodne z PKCE i lepiej wspierane przez walidatory OAuth2.
+    </div></div>
+
+    <div class="callout warn"><div class="callout-icon"></div><div><strong>Store tokens</strong> i <strong>Stored tokens readable</strong> muszą być ON — bez tego nie będzie można pobrać Access Tokena Discorda z Keycloaka.</div></div>
+
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/store-tokens-off-default.png" alt="Store tokens OFF - stan przed konfiguracją">
+      <figcaption>Stan domyślny przed konfiguracją — oba przełączniki wyłączone</figcaption>
+    </figure>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/stored-tokens-readable-tooltip.png" alt="Tooltip Stored tokens readable">
+      <figcaption>Tooltip wyjaśniający działanie Stored tokens readable — przypisuje rolę <code>broker.read-token</code></figcaption>
+    </figure>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Scope <code>identify</code> zwraca username i avatar Discorda. Scope <code>guilds</code> zwraca listę serwerów. Oba są wymagane dla weryfikacji alumni.</div></div>
+
+    <h4>Efekt — zgoda Discord po dodaniu scope guilds</h4>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/discord-consent-without-guilds-scope.png" alt="Discord consent - bez guilds">
+        <figcaption>Zgoda Discord bez scope <code>guilds</code> — brak "Know what servers you're in"</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/discord-consent-with-guilds-scope.png" alt="Discord consent - z guilds">
+        <figcaption>Po dodaniu scope <code>guilds</code> — pojawia się "Know what servers you're in"</figcaption>
+      </figure>
+    </div>
+
+    <h3>Advanced settings (po kliknięciu Save — wróć do edycji IDP)</h3>
+    <div class="callout warn"><div class="callout-icon"></div><div>Sekcja <strong>Advanced settings</strong> pojawia się dopiero po zapisaniu IDP. Zapisz → wróć do edycji → przewiń na dół.</div></div>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th><th>Dlaczego</th></tr>
+      <tr><td>Trust email</td><td><span class="tag on">ON</span></td><td>Discord weryfikuje maile — nie pytamy użytkownika ponownie</td></tr>
+      <tr><td>Account linking policy</td><td><code>DEFAULT</code></td><td>Tworzy nowe konta LUB linkuje z istniejącym gdy email się zgadza</td></tr>
+    </table>
+    <div class="callout danger"><div class="callout-icon"></div><div>Nie ustawiaj <code>LINK_ONLY</code> — blokuje tworzenie nowych kont. Użytkownicy logujący się Discordem po raz pierwszy dostaną błąd.</div></div>
+
+    <h3>Mappery atrybutów (zakładka Mappers — pojawia się po Save)</h3>
+    <p>Zakładka <strong>Mappers</strong> jest dostępna dopiero po pierwszym zapisaniu IDP.</p>
+
+    <h4>Mapper 1 — Username</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Name</td><td><code>discord-username</code></td></tr>
+      <tr><td>Sync mode</td><td><code>Inherit</code></td></tr>
+      <tr><td>Mapper type</td><td><code>Attribute Importer</code></td></tr>
+      <tr><td>Claim</td><td><code>preferred_username</code></td></tr>
+      <tr><td>User Attribute Name</td><td><code>username</code></td></tr>
+    </table>
+
+    <h4>Mapper 2 — Avatar (opcjonalnie)</h4>
+    <table>
+      <tr><th>Pole</th><th>Wartość</th></tr>
+      <tr><td>Name</td><td><code>discord-avatar</code></td></tr>
+      <tr><td>Mapper type</td><td><code>Attribute Importer</code></td></tr>
+      <tr><td>Claim</td><td><code>picture</code></td></tr>
+      <tr><td>User Attribute Name</td><td><code>picture</code></td></tr>
+    </table>
+    <div class="callout info"><div class="callout-icon"></div><div><code>preferred_username</code> pochodzi z Userinfo Endpoint Discorda — Keycloak odpytuje go automatycznie po logowaniu. Weryfikacja: <strong>Users → [konto] → zakładka Details</strong>.</div></div>
+  </section>
+
+  <!-- DISCORD BYPASS -->
+  <section id="discord-bypass">
+    <div class="section-header">
+      <div class="section-num">6b</div>
+      <h2 style="margin:0;border:none;">Discord IDP Bypass</h2>
+    </div>
+
+    <p>Parametr <code>kc_idp_hint=discord</code> powoduje, że Keycloak <strong>pomija własną stronę logowania</strong> i przekierowuje przeglądarkę bezpośrednio do Discorda. Bypass jest stosowany dla <strong>obu logowań/rejestracji</strong> (<code>keycloak-web</code> i <code>keycloak-mobile</code>) — w obu przypadkach chcemy ominąć ekran Keycloaka i trafić prosto do Discorda.</p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <code>OAuth2AuthorizationRequestResolver</code> sprawdza <code>registrationId</code> z atrybutów żądania.
+    </div></div>
+
+    <h3>Konfiguracja IDP — Hide on login page</h3>
+    <p>Ustaw <code>Hide on login page: OFF</code> — przeglądarka webowa powinna widzieć przycisk Discord na stronie Keycloaka. Mobilka i tak dostaje <code>kc_idp_hint</code> i pomija ten ekran.</p>
+
+    <h3>Implementacja — <code>DiscordBypassRequestResolver</code></h3>
+    <p>PKCE S256 dla obu rejestracji. <code>kc_idp_hint=discord</code> jest wstrzykiwany gdy żądanie zawiera parametr URL <code>?idp=discord</code> — mobilka i web mogą go użyć jawnie, by ominąć stronę logowania Keycloaka i trafiać prosto do Discorda:</p>
+
+    <pre><code><span class="kw">@Configuration</span>
+<span class="kw">public class</span> DiscordBypassRequestResolver {
+
+    <span class="kw">@Bean</span>
+    <span class="kw">public</span> OAuth2AuthorizationRequestResolver discordBypassResolver(
+            ClientRegistrationRepository repo) {
+
+        DefaultOAuth2AuthorizationRequestResolver resolver =
+            <span class="kw">new</span> DefaultOAuth2AuthorizationRequestResolver(repo, <span class="str">"/oauth2/authorization"</span>);
+        resolver.setAuthorizationRequestCustomizer(          <span class="cm">// PKCE dla wszystkich</span>
+            OAuth2AuthorizationRequestCustomizers.withPkce());
+
+        <span class="kw">return new</span> OAuth2AuthorizationRequestResolver() {
+            <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
+                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request));
+            }
+            <span class="kw">@Override public</span> OAuth2AuthorizationRequest resolve(
+                    HttpServletRequest request, String clientRegistrationId) {
+                <span class="cm">// WAŻNE: przekazujemy clientRegistrationId do delegate resolvers,</span>
+                <span class="cm">// bo Spring może wołać tę metodę bezpośrednio (z już określonym registrationId),</span>
+                <span class="cm">// np. z OAuth2AuthorizationRequestRedirectFilter.</span>
+                <span class="cm">// Bez tego resolver ignoruje argument i może zwrócić null lub złą rejestrację.</span>
+                <span class="kw">return</span> applyIdpHint(request, resolver.resolve(request, clientRegistrationId));
+            }
+            <span class="kw">private</span> OAuth2AuthorizationRequest applyIdpHint(
+                    HttpServletRequest request, OAuth2AuthorizationRequest authReq) {
+                <span class="kw">if</span> (authReq == <span class="kw">null</span>) <span class="kw">return null</span>;
+                String idpHint = request.getParameter(<span class="str">"idp"</span>);
+                <span class="kw">if</span> (!"discord".equalsIgnoreCase(idpHint)) <span class="kw">return</span> authReq;
+                <span class="kw">return</span> OAuth2AuthorizationRequest.from(authReq)
+                    .additionalParameters(p -&gt; p.put(<span class="str">"kc_idp_hint"</span>, <span class="str">"discord"</span>))
+                    .build();
+            }
+        };
+    }
+}</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>resolve(request, clientRegistrationId)</code> musi przekazywać argument dalej?</strong><br>
+      Spring Security wywołuje drugą przeciążoną metodę bezpośrednio z <code>OAuth2AuthorizationRequestRedirectFilter</code>, gdy zna <code>registrationId</code> z atrybutów żądania. Przekazanie <code>null</code> lub ponowne parsowanie URL bez tego argumentu może spowodować, że delegate zwróci <code>null</code> (brak dopasowania) albo nieoczekiwanie wybierze inną rejestrację. Zawsze deleguj oba parametry do <code>resolver.resolve(request, clientRegistrationId)</code>.
+    </div></div>
+
+    <h3>Efekt — bypass per parametr ?idp=discord</h3>
+    <div class="flow"><span class="box">keycloak-web</span>  → /oauth2/authorization/keycloak-web
+GET /realms/pkka/.../auth?client_id=pkka-web&amp;code_challenge=...
+<span class="cm">↑ bez ?idp=discord → Keycloak pokazuje stronę logowania z przyciskiem Discord</span>
+
+<span class="box">keycloak-web z bypasem</span>  → /oauth2/authorization/keycloak-web?idp=discord
+<span class="box">keycloak-mobile z bypasem</span> → /oauth2/authorization/keycloak-mobile?idp=discord
+GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
+    &amp;<span class="arrow">kc_idp_hint=discord</span>
+<span class="cm">↑ Keycloak pomija stronę → 302 → Discord</span></div>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Parametr <code>?idp=discord</code> musi być dodany do URL inicjacji logowania. Alias <code>discord</code> musi odpowiadać polu Alias w konfiguracji IDP Keycloaka.
+    </div></div>
+  </section>
+
+
+
+  <!-- FLOW -->
+  <section id="flow">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2 style="margin:0;border:none;">Keycloak — First Broker Login Flow</h2>
+    </div>
+    <p>Sidebar → <strong>Authentication</strong> → flow <strong>first broker login</strong></p>
+    <table>
+      <tr><th>Krok</th><th>Ustawienie</th><th>Znaczenie</th></tr>
+      <tr><td>Review Profile</td><td><code>DISABLED</code></td><td>Pomijamy formularz uzupełniania danych — Keycloak pobiera je z mapperów Discorda</td></tr>
+      <tr><td>Handle Existing Account</td><td><code>ALTERNATIVE</code></td><td>Wykonuje się gdy email z Discorda już istnieje w bazie</td></tr>
+      <tr><td>Verify Existing Account by Email</td><td><code>ALTERNATIVE</code></td><td>Wysyła mail weryfikacyjny przy linkowaniu kont — zabezpieczenie przed przejęciem konta</td></tr>
+    </table>
+    <div class="callout info"><div class="callout-icon"></div><div><code>ALTERNATIVE</code> = krok wykona się jeśli zajdzie potrzeba, nie blokuje flow gdy nie jest potrzebny.</div></div>
+  </section>
+
+  <!-- ROLES -->
+  <section id="roles">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <h2 style="margin:0;border:none;">Keycloak — Role i uprawnienia</h2>
+    </div>
+
+    <h3>Utwórz rolę verified-alumn</h3>
+    <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>verified-alumn</code> → Save.</p>
+
+    <h3>Rola broker.read-token dla użytkownika</h3>
+    <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord. <strong>Service account nie jest do tego potrzebny.</strong></p>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Przepływ odczytu Discord AT:</strong><br>
+      Frontend wysyła <strong>Keycloak AT użytkownika</strong> do Spring Boota → Spring Boot przekazuje go jako <code>Bearer</code> do <code>GET /realms/pkka/broker/discord/token</code> → Keycloak sprawdza czy użytkownik ma rolę <code>broker.read-token</code> → zwraca jego Discord AT.<br><br>
+      Service account jest używany <strong>tylko</strong> do Admin API (nadawanie roli <code>verified-alumn</code>).
+    </div></div>
+
+    <p>Jeśli chcesz nadać ją ręcznie do testów:</p>
+    <p><strong>Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token → Assign</strong></p>
+    <div class="callout warn"><div class="callout-icon"></div><div>Po ręcznym nadaniu roli zdobądź <strong>nowy AT</strong> — stary token nie będzie zawierał nowej roli w claims.</div></div>
+  </section>
+
+  <!-- EVENTS -->
+  <section id="keycloak-events">
+    <div class="section-header">
+      <div class="section-num">8b</div>
+      <h2 style="margin:0;border:none;">Keycloak — konfiguracja User Events i Admin Events</h2>
+    </div>
+
+    <h3>User Events</h3>
+    <p>Ścieżka:</p>
+    <pre><code>Realm Settings
+  → Events
+    → User events settings</code></pre>
+    <table>
+      <tr><th>Ustawienie</th><th>Wartość</th></tr>
+      <tr><td>Save events</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Expiration</td><td><code>30 Days</code></td></tr>
+    </table>
+
+    <h3>Admin Events</h3>
+    <p>Ścieżka:</p>
+    <pre><code>Realm Settings
+  → Events
+    → Admin events settings</code></pre>
+    <table>
+      <tr><th>Ustawienie</th><th>Wartość</th></tr>
+      <tr><td>Save events</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Include representation</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Expiration</td><td><code>30 Days</code></td></tr>
+    </table>
+
+    <h3>Weryfikacja</h3>
+    <p>W zakładce <strong>Events</strong> w sekcjach <strong>Admin events</strong> i <strong>User events</strong> pojawiają się rekordy wykonanych operacji.</p>
+  </section>
+
+  <!-- WERYFIKACJA -->
+  <section id="weryfikacja">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <h2 style="margin:0;border:none;">Weryfikacja konfiguracji Keycloaka</h2>
+    </div>
+
+    <p>Otwórz w trybie incognito:</p>
+    <pre><code>http://localhost:8081/realms/pkka/protocol/openid-connect/auth?client_id=pkka-web&response_type=code&scope=openid&redirect_uri=http://localhost:8080/login/oauth2/code/keycloak-web</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/keycloak-login-page-discord-button.png" alt="Strona logowania Keycloaka">
+      <figcaption>✅ Gotowa strona logowania — formularz email/hasło, link Register, przycisk Discord</figcaption>
+    </figure>
+
+    <div class="callout success"><div class="callout-icon"></div><div>Strona <code>http://localhost:8081/realms/pkka/account</code> to Panel Zarządzania Kontem — przyciski zewnętrznych providerów się tam <strong>nie</strong> pojawiają. To normalne zachowanie.</div></div>
+
+    <h3>Efekt logowania przez Discord</h3>
+    <div class="screenshot-row">
+      <figure class="screenshot">
+        <img src="imgs/email-verification-after-discord-login.png" alt="Email verification po Discord login">
+        <figcaption>Po pierwszym logowaniu Discordem — Keycloak prosi o weryfikację emaila</figcaption>
+      </figure>
+      <figure class="screenshot">
+        <img src="imgs/linked-login-providers-discord.png" alt="Linked accounts - Discord powiązany">
+        <figcaption>Po zalogowaniu Discord widnieje w "Linked login providers" konta</figcaption>
+      </figure>
+    </div>
+    <figure class="screenshot">
+      <img src="imgs/account-management-device-activity.png" alt="Device activity w Account Management">
+      <figcaption>Keycloak Account Management — Device activity po zalogowaniu</figcaption>
+    </figure>
+  </section>
+
+  <!-- POSTMAN -->
+  <section id="postman">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <h2 style="margin:0;border:none;">Testowanie przez Postman</h2>
+    </div>
+
+    <p>Poniższy przepływ pozwala zweryfikować działanie całej integracji bez uruchamiania Spring Boota. Postman pełni rolę aplikacji frontendowej — wykonuje Authorization Code Flow żeby zdobyć Keycloak Access Token użytkownika.</p>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>Konta z <strong>2FA (YubiKey/WebAuthn)</strong> nie działają w webview Postmana — FIDO2 nie jest obsługiwany. Użyj testowego konta bez 2FA.</div></div>
+
+    <h3>Krok 1 — Dodaj Redirect URI Postmana do Keycloaka</h3>
+    <p><strong>Clients → pkka-web → Valid redirect URIs</strong> — dodaj tymczasowo:</p>
+    <pre><code>https://oauth.pstmn.io/v1/callback</code></pre>
+
+    <h3>Krok 2 — Zdobądź Keycloak Access Token przez OAuth2 flow</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Utwórz nowy request <code>GET /broker/discord/token</code>. Zakładka <strong>Authorization</strong> → Type: <strong>OAuth 2.0</strong> → kliknij <strong>Get New Access Token</strong>.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body">
+        <p>Wypełnij formularz:</p>
+        <table>
+          <tr><th>Pole</th><th>Wartość</th></tr>
+          <tr><td>Grant Type</td><td><code>Authorization Code</code></td></tr>
+          <tr><td>Auth URL</td><td><code>http://localhost:8081/realms/pkka/protocol/openid-connect/auth</code></td></tr>
+          <tr><td>Access Token URL</td><td><code>http://localhost:8081/realms/pkka/protocol/openid-connect/token</code></td></tr>
+          <tr><td>Client ID</td><td><code>pkka-web</code></td></tr>
+          <tr><td>Client Secret</td><td><em>twój secret</em></td></tr>
+          <tr><td>Scope</td><td><code>openid</code></td></tr>
+          <tr><td>Redirect URI</td><td><code>https://oauth.pstmn.io/v1/callback</code></td></tr>
+        </table>
+      </div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Kliknij <strong>Proceed</strong> — otworzy się webview z prawdziwą stroną logowania Keycloaka z przyciskiem Discord.</p></div></div>
+    </div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-keycloak-login-webview.png" alt="Postman webview - strona logowania Keycloaka">
+      <figcaption>Postman webview — strona logowania Keycloaka z przyciskiem Discord</figcaption>
+    </figure>
+
+    <div class="step"><div class="step-num" style="counter-increment:none;background:var(--accent)">4</div><div class="step-body" style="margin-left:16px"><p>Discord pyta o zgodę. Upewnij się że widnieje <strong>"Know what servers you're in"</strong> — to potwierdza poprawność scope <code>guilds</code>.</p></div></div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-discord-consent-guilds.png" alt="Discord consent w Postmanie - z guilds scope">
+      <figcaption>Okno zgody Discorda w Postmanie — widoczne "Know what servers you're in" (scope guilds aktywny)</figcaption>
+    </figure>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>Konto Discorda musi mieć zweryfikowany email lub numer telefonu. Nowe konta testowe bez weryfikacji zostaną odrzucone przez Discord.</div></div>
+
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/discord-verified-email-required-error.png" alt="Discord - You need a verified email">
+      <figcaption>Błąd Discord — konto testowe bez zweryfikowanego emaila. Użyj konta z weryfikacją.</figcaption>
+    </figure>
+
+    <div class="step"><div class="step-num" style="counter-increment:none;background:var(--accent)">5</div><div class="step-body" style="margin-left:16px"><p>Po zalogowaniu przez Discord Postman przechwyci kod i wymieni go na token. Kliknij <strong>Use Token</strong>.</p></div></div>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-manage-access-tokens.png" alt="Postman Manage Access Tokens - AT, refresh, id_token">
+      <figcaption>Postman — okno Manage Access Tokens z Keycloak access_token, refresh_token i id_token</figcaption>
+    </figure>
+
+    <h3>Krok 3 — Pobierz Discord Access Token z Keycloaka</h3>
+    <pre><code>GET http://localhost:8081/realms/pkka/broker/discord/token
+Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-403-client-not-authorized.png" alt="403 - Client not authorized">
+      <figcaption>Błąd 403 przed nadaniem roli <code>broker/read-token</code> — Client not authorized</figcaption>
+    </figure>
+
+    <p>Po nadaniu roli <code>broker.read-token</code> użytkownikowi (przez <code>Stored tokens readable = ON</code> lub ręcznie w User → Role mapping) — wywołanie z <strong>AT użytkownika</strong> zwraca 200 OK:</p>
+
+    <figure class="screenshot">
+      <img src="imgs/postman-200-discord-access-token.png" alt="200 OK - Discord access_token pobrany">
+      <figcaption>✅ 200 OK — Discord access_token pobrany z Keycloaka</figcaption>
+    </figure>
+    <figure class="screenshot screenshot-sm">
+      <img src="imgs/discord-token-scope-guilds-email-identify.png" alt="Scope guilds email identify w odpowiedzi">
+      <figcaption>Scope w odpowiedzi: <code>guilds email identify</code> — potwierdzenie poprawnej konfiguracji</figcaption>
+    </figure>
+
+    <h3>Krok 4 — Weryfikacja listy serwerów Discord</h3>
+    <pre><code>GET https://discord.com/api/users/@me/guilds
+Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
+
+    <figure class="screenshot">
+      <img src="imgs/discord-guilds-api-200-response.png" alt="Discord guilds API - lista serwerów">
+      <figcaption>✅ 200 OK — lista serwerów użytkownika z Discord API. Pole <code>id</code> to wartość do sprawdzenia w logice autoryzacji.</figcaption>
+    </figure>
+
+    <div class="callout success"><div class="callout-icon"></div><div>Cały przepływ działa poprawnie. Keycloak przechowuje Discord AT, Spring Boot może go pobrać i użyć do weryfikacji przynależności do serwera.</div></div>
+  </section>
+
+  <!-- SPRING -->
+  <section id="spring">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <h2 style="margin:0;border:none;">Dalsze kroki — Spring Boot</h2>
+    </div>
+    <p>Pełna implementacja Spring Boot z architekturą BFF Token Handler Pattern wymaga następujących komponentów. Szczegółowy kod <code>SecurityConfig.java</code> opisany w <a href="#security-config" style="color:var(--accent)">sekcji 19</a>.</p>
+
+    <h3>Wymagane zależności (build.gradle)</h3>
+    <table>
+      <tr><th>Artefakt</th><th>Cel</th></tr>
+      <tr><td><code>spring-boot-starter-webmvc</code></td><td>HTTP, REST kontrolery</td></tr>
+      <tr><td><code>spring-boot-starter-security</code></td><td>Spring Security</td></tr>
+      <tr><td><code>spring-boot-starter-oauth2-client</code></td><td>oauth2Login (ścieżka Web) + klient mobilny (pkka-mobile)</td></tr>
+      <tr><td><strong><code>spring-boot-starter-oauth2-resource-server</code></strong></td><td><strong>Walidacja Bearer JWT (ścieżka Mobile) — NOWE</strong></td></tr>
+      <tr><td><code>spring-boot-starter-thymeleaf</code></td><td>Templating HTML</td></tr>
+      <tr><td><code>keycloak-admin-client:26.0.8</code></td><td>Nadawanie ról przez Keycloak Admin API</td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div><code>spring-boot-starter-oauth2-resource-server</code> wnosi <code>spring-security-oauth2-resource-server</code> oraz <code>spring-security-oauth2-jose</code> (parsowanie i walidacja JWT/JWK). Zależność <code>oauth2-client</code> <strong>nie</strong> zawiera tych bibliotek — obie muszą być wymienione explicite.</div></div>
+
+    <h3>application.yml</h3>
+    <p>Pełna konfiguracja z profilami <code>dev</code> i <code>prod</code> opisana w <a href="#appyml" style="color:var(--accent)">sekcji 15</a>. Klucze wymagające uzupełnienia: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_GUILD_ID</code>.</p>
+
+    <h3>Komponenty do implementacji</h3>
+    <table>
+      <tr><th>Klasa</th><th>Odpowiedzialność</th></tr>
+      <tr><td><strong><code>SecurityConfig</code></strong></td><td>Dwie <code>SecurityFilterChain</code>: Chain 1 (<code>/api/**</code>), Chain 2 (login/logout). Konwertery ról dla Web (<code>OidcUserService</code> + AT) i Mobile (JWT). → sekcja 20</td></tr>
+      <tr><td><code>DiscordBypassRequestResolver</code></td><td>PKCE S256 + <code>kc_idp_hint=discord</code> dla obu logowań/rejestracji — bezpośredni bypass do Discord IDP. → sekcja 6b</td></tr>
+      <tr><td><code>KeycloakAdminConfig</code></td><td>Bean Keycloak Admin Client (client credentials) do Admin API</td></tr>
+      <tr><td><code>BffAuthenticationSuccessHandler</code></td><td>Po <code>oauth2Login</code>: Web → redirect z JSESSIONID, Mobile → deep link z AT+RT, sesja invalidowana. → sekcja 21</td></tr>
+      <tr><td><code>DiscordGuildService</code></td><td>Pobieranie Discord AT z Keycloaka, weryfikacja serwera, nadawanie roli</td></tr>
+      <tr><td><code>GuildVerificationController</code></td><td>Endpoint <code>POST /api/verify-guild</code> — działa z obu ścieżek</td></tr>
+      <tr><td><code>ProfileController</code></td><td>Dane zalogowanego użytkownika, obsługa <code>OidcUser</code> i <code>Jwt</code></td></tr>
+    </table>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>@PreAuthorize działa identycznie dla obu ścieżek.</strong><br>
+      <code>SecurityConfig</code> mapuje <code>realm_access.roles</code> na <code>ROLE_*</code> zarówno dla sesji Web (przez <code>GrantedAuthoritiesMapper</code>) jak i dla JWT Mobile (przez <code>KeycloakJwtRoleConverter</code>). Adnotacja <code>@PreAuthorize("hasRole('VERIFIED_ALUMN')")</code> na kontrolerze nie wymaga żadnej modyfikacji dla obsługi obu klientów.
+    </div></div>
+  </section>
+
+  <!-- BŁĘDY -->
+  <section id="bledy">
+    <div class="section-header">
+      <div class="section-num">12</div>
+      <h2 style="margin:0;border:none;">Typowe błędy</h2>
+    </div>
+    <table>
+      <tr><th>Błąd</th><th>Przyczyna</th><th>Rozwiązanie</th></tr>
+      <tr><td><code>redirect_uri mismatch</code> na Discordzie</td><td>Zły URI w Discord Dev Portal</td><td>Sprawdź: <code>http://localhost:8081/realms/pkka/broker/discord/endpoint</code></td></tr>
+      <tr><td>Brak przycisku Discord</td><td><code>Hide on login page = ON</code></td><td>Zmień na OFF w ustawieniach IDP</td></tr>
+      <tr><td>Błąd przy pierwszym logowaniu Discordem</td><td><code>Account linking policy = LINK_ONLY</code></td><td>Zmień na <code>DEFAULT</code></td></tr>
+      <tr><td>Email weryfikacyjny nie dochodzi</td><td>Brak SMTP</td><td>Uruchom Mailpit lub wyłącz tymczasowo Verify email</td></tr>
+      <tr><td><code>403 Client not authorized to retrieve tokens</code></td><td>Brak roli <code>broker.read-token</code> na koncie użytkownika</td><td>Ustaw <code>Stored tokens readable = ON</code> w IDP Discord LUB ręcznie: Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token</td></tr>
+      <tr><td><code>403</code> z tokenem użytkownika na <code>/broker/discord/token</code></td><td>Brak roli <code>broker.read-token</code> na koncie</td><td><code>Stored tokens readable = ON</code> LUB ręczne nadanie roli w User → Role mapping</td></tr>
+      <tr><td>Auth failed w Postmanie z YubiKey</td><td>Webview Postmana nie obsługuje WebAuthn/FIDO2</td><td>Użyj testowego konta bez 2FA</td></tr>
+      <tr><td>Discord: "verified email or phone"</td><td>Testowe konto Discord bez weryfikacji</td><td>Użyj konta z zweryfikowanym emailem</td></tr>
+      <tr><td>Rola <code>verified-alumn</code> nie pojawia się w JWT</td><td>Stary token po nadaniu roli</td><td>Użytkownik musi uzyskać nowy token (ponowne logowanie)</td></tr>
+      <tr><td><code>invalid_client</code> w logach Spring</td><td>Zły Client Secret</td><td>Sprawdź <code>application.yml</code> vs zakładka Credentials w Keycloak</td></tr>
+      <tr><td>Brak przekierowania do Discorda (pojawia się Keycloak login)</td><td>Brak parametru <code>kc_idp_hint</code> w URL</td><td>Sprawdź czy <code>discordBypassResolver</code> bean jest poprawnie podłączony w Chain 2</td></tr>
+      <tr><td><code>redirect_uri mismatch</code> przy logowaniu Spring→Keycloak</td><td>Keycloak ma inny URI niż Spring generuje</td><td>Sprawdź: Valid redirect URI w Keycloak = <code>/login/oauth2/code/keycloak-web</code> i <code>/login/oauth2/code/keycloak-mobile</code></td></tr>
+    </table>
+  </section>
+
+
+  <!-- ROLE I GRUPY KEYCLOAK -->
+  <section id="roles-keycloak">
+    <div class="section-header">
+      <div class="section-num">13</div>
+      <h2 style="margin:0;border:none;">Keycloak — Role i Grupy (na podstawie User Stories)</h2>
+    </div>
+
+    <p>Na podstawie aktorów zdefiniowanych w <code>miro_plan.md</code> definiujemy cztery role i odpowiadające im grupy w realmie <code>pkka</code>. Grupy są wygodniejsze niż ręczne przypisywanie ról — użytkownik dodany do grupy dziedziczy jej role automatycznie.</p>
+
+    <h3>Role realmowe (Realm Roles)</h3>
+    <table>
+      <tr><th>Rola</th><th>Aktor z US</th><th>Uprawnienia</th></tr>
+      <tr><td><code>user</code></td><td>Zalogowany użytkownik</td><td>Składanie wniosku o dołączenie, przeglądanie statusu, linkowanie konta Discord</td></tr>
+      <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumn</td><td>Lista alumnów, materiały, wydarzenia, edycja profilu, grupy tematyczne</td></tr>
+      <tr><td><code>admin</code></td><td>Administrator</td><td>Panel administracyjny, weryfikacja wniosków, tworzenie wydarzeń, ankiety, statystyki</td></tr>
+      <tr><td><code>bot</code></td><td>Bot Discord</td><td>Service account — synchronizacja ról, powiadamianie o wydarzeniach</td></tr>
+    </table>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>.</div></div>
+
+    <h3>Grupy (Groups)</h3>
+    <p>Grupy upraszczają zarządzanie — zamiast przypisywać role każdemu użytkownikowi osobno, dodajesz go do grupy.</p>
+    <table>
+      <tr><th>Grupa</th><th>Role przypisane do grupy</th><th>Kto trafia do grupy</th></tr>
+      <tr><td><code>users</code></td><td><code>user</code></td><td>Domyślna grupa — każdy nowo zarejestrowany użytkownik (ustaw jako Default Group)</td></tr>
+      <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Alumn po pozytywnym rozpatrzeniu wniosku przez admina</td></tr>
+      <tr><td><code>administrators</code></td><td><code>user</code>, <code>verified-alumn</code>, <code>admin</code></td><td>Pracownicy wydziału / zarząd klubu</td></tr>
+      <tr><td><code>bots</code></td><td><code>bot</code></td><td>Service account bota Discord</td></tr>
+    </table>
+
+    <h3>Jak utworzyć role w Keycloak</h3>
+    <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> — powtórz dla każdej roli:</p>
+    <table>
+      <tr><th>Role name</th><th>Description</th></tr>
+      <tr><td><code>user</code></td><td>Registered platform user</td></tr>
+      <tr><td><code>verified-alumn</code></td><td>Verified AGH alumn</td></tr>
+      <tr><td><code>admin</code></td><td>App admin</td></tr>
+      <tr><td><code>bot</code></td><td>Discord bot service account</td></tr>
+    </table>
+
+    <h3>Jak utworzyć grupy w Keycloak</h3>
+    <p>Sidebar → <strong>Groups</strong> → <strong>Create group</strong> → po zapisaniu wejdź w grupę → zakładka <strong>Role mapping</strong> → przypisz odpowiednie role (Filter by realm roles).</p>
+    <div class="callout info"><div class="callout-icon"></div><div>Żeby każdy nowo zarejestrowany użytkownik automatycznie trafił do grupy <code>users</code>: <strong>Realm Settings → zakładka General → Default Groups</strong> → dodaj <code>users</code>.</div></div>
+
+    <h3>Niezalogowany użytkownik — brak sesji Keycloaka, brak cookies</h3>
+    <p>Niezalogowany użytkownik (US 1–4 aktora <em>Niezalogowany</em>) jest obsługiwany <strong>wyłącznie przez Spring Security</strong> — endpointy publiczne są oznaczone <code>permitAll()</code> i nie wymagają żadnego tokenu. Keycloak nie jest angażowany w żądania anonimowe.</p>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego nie cookies do tymczasowej identyfikacji?</strong><br>
+      User stories niezalogowanego użytkownika (publiczny blog, kalendarz, formularz rejestracji, logowanie) nie wymagają żadnego stanu po stronie serwera dla anonimowego requestu — pełna stateless obsługa przez Spring. Cookies anonimowej sesji dodają niepotrzebną złożoność i problemy GDPR (każde trwałe cookie = wymóg zgody). Ewentualny stan UI (np. zapamiętanie filtrów kalendarza) należy trzymać po stronie klienta (localStorage/URL params).<br><br>
+      Keycloak wchodzi do gry <strong>dopiero przy logowaniu</strong> (Authorization Code Flow) — wtedy tworzona jest sesja Keycloaka i wystawiany JWT.
+    </div></div>
+
+    <h3>Mapowanie ról na endpointy backendu</h3>
+    <table>
+      <tr><th>Endpoint / Akcja</th><th>Wymagana rola</th></tr>
+      <tr><td>Publiczne wpisy blogowe, kalendarz wydarzeń</td><td>Brak (publiczne)</td></tr>
+      <tr><td>Formularz wniosku o dołączenie</td><td><code>user</code></td></tr>
+      <tr><td>Status wniosku, linkowanie Discord</td><td><code>user</code></td></tr>
+      <tr><td>Lista alumnów, profile, materiały, wydarzenia</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Edycja własnego profilu</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Grupy tematyczne</td><td><code>verified-alumn</code></td></tr>
+      <tr><td>Panel administracyjny, weryfikacja wniosków</td><td><code>admin</code></td></tr>
+      <tr><td>Tworzenie wydarzeń, ankiety, statystyki</td><td><code>admin</code></td></tr>
+      <tr><td>Synchronizacja Discord, powiadomienia</td><td><code>bot</code></td></tr>
+    </table>
+
+    <h3>Jak odczytać rolę w Spring Boot</h3>
+    <p>Keycloak umieszcza role realmowe w tokenie JWT pod <code>realm_access.roles</code>. Konwersja jest zaimplementowana w dwóch miejscach w <code>SecurityConfig</code>:</p>
+    <table>
+      <tr><th>Ścieżka</th><th>Mechanizm</th><th>Mapowanie</th></tr>
+      <tr><td>Mobile (Bearer JWT)</td><td><code>KeycloakJwtRoleConverter</code> (inner class w SecurityConfig) + <code>JwtAuthenticationConverter</code></td><td><code>realm_access.roles</code> z AT</td></tr>
+      <tr><td>Web (oauth2Login)</td><td>Niestandardowy <code>OidcUserService</code> dekoduje AT tym samym JwtDecoderem</td><td><code>realm_access.roles</code> z AT</td></tr>
+    </table>
+  </section>
+
+  <!-- GRADLE -->
+  <section id="gradle">
+    <div class="section-header">
+      <div class="section-num">14</div>
+      <h2 style="margin:0;border:none;">build.gradle</h2>
+    </div>
+
+    <pre><code>plugins {
+    id <span class="str">'java'</span>
+    id <span class="str">'org.springframework.boot'</span> version <span class="str">'4.0.6'</span>
+    id <span class="str">'io.spring.dependency-management'</span> version <span class="str">'1.1.7'</span>
+    id <span class="str">'com.diffplug.spotless'</span> version <span class="str">'7.0.4'</span>
+    id <span class="str">'net.ltgt.errorprone'</span> version <span class="str">'5.1.0'</span>
+}
+
+group = <span class="str">'pl.edu.agh'</span>
+version = <span class="str">'0.0.1-SNAPSHOT'</span>
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(<span class="num">25</span>)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-security'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc'</span>
+    implementation <span class="str">'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-oauth2-client'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-thymeleaf'</span>
+    implementation <span class="str">"org.keycloak:keycloak-admin-client:26.0.8"</span>
+
+    compileOnly <span class="str">'org.projectlombok:lombok'</span>
+    annotationProcessor <span class="str">'org.projectlombok:lombok'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-security-test'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc-test'</span>
+    testCompileOnly <span class="str">'org.projectlombok:lombok'</span>
+    testRuntimeOnly <span class="str">'org.junit.platform:junit-platform-launcher'</span>
+    testAnnotationProcessor <span class="str">'org.projectlombok:lombok'</span>
+
+    errorprone <span class="str">'com.google.errorprone:error_prone_core:2.49.0'</span>
+}
+
+tasks.named(<span class="str">'test'</span>) {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.errorprone {
+        disableWarningsInGeneratedCode = <span class="kw">true</span>
+        excludedPaths = <span class="str">'.*/build/generated/.*'</span>
+    }
+    <span class="kw">if</span> (project.hasProperty(<span class="str">'strict'</span>)) {
+        options.compilerArgs &lt;&lt; <span class="str">'-Werror'</span>
+    }
+}
+
+spotless {
+    java {
+        target <span class="str">'src/**/*.java'</span>
+        googleJavaFormat(<span class="str">'1.35.0'</span>).aosp().reflowLongStrings()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}</code></pre>
+  </section>
+
+  <!-- APPLICATION.YML -->
+  <section id="appyml">
+    <div class="section-header">
+      <div class="section-num">15</div>
+      <h2 style="margin:0;border:none;">application.yml</h2>
+    </div>
+
+    <p>Plik podzielony na trzy sekcje: wspólna konfiguracja bazowa, profil <code>dev</code> (localhost, Swagger włączony, debug logging) i profil <code>prod</code> (wyłączony Swagger, zmienne środowiskowe obowiązkowe, WARN logging). Aktywacja profilu przez <code>-Dspring.profiles.active=prod</code> lub zmienną środowiskową <code>SPRING_PROFILES_ACTIVE=prod</code>.</p>
+
+    <p>Zmiany względem poprzedniej wersji: nazwy rejestracji zmienione na <code>keycloak-web</code> i <code>keycloak-mobile</code> (jawne, zamiast <code>keycloak</code> i <code>pkka-mobile</code>); oba używają <code>client_secret_basic</code>; redirect URI jawne (<code>{baseUrl}/login/oauth2/code/{registrationId}</code>); usunięte zdublowane bloki <code>keycloak-web:</code>/<code>keycloak-mobile:</code> z profilu prod — Admin Client używa jednego bloku <code>keycloak:</code> z credentialami <code>pkka-web</code>. Dodano <code>resourceserver.jwt</code> dla walidacji Bearer JWT.</p>
+
+    <pre><code>spring:
+  application:
+    name: pkka-backend
+  profiles:
+    default: dev
+
+  config:
+    import: optional:file:.env[.properties],optional:file:./backend/.env[.properties]
+
+<span class="cm"># OpenAPI / Swagger</span>
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: <span class="kw">true</span>
+    display-request-duration: <span class="kw">true</span>
+    disable-swagger-default-url: <span class="kw">true</span>
+
+
+<span class="cm"># PROFILE: dev</span>
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  security:
+    oauth2:
+      client:
+        registration:
+          <span class="cm"># [1] Ścieżka Web — sesja Spring + JSESSIONID</span>
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
+            client-authentication-method: client_secret_basic
+
+          <span class="cm"># [2] Ścieżka Mobile — deep link + Bearer JWT</span>
+          keycloak-mobile:
+            provider: keycloak
+            client-id: pkka-mobile
+            client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET:change-me}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            client-authentication-method: client_secret_basic
+
+        provider:
+          keycloak:
+            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
+            user-name-attribute: preferred_username
+
+      <span class="cm"># Resource Server — walidacja Bearer JWT (ścieżka Mobile)</span>
+      <span class="cm"># Spring pobiera klucze JWKS z Keycloaka automatycznie przez .well-known/</span>
+      resourceserver:
+        jwt:
+          issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
+
+<span class="cm"># OpenAPI — włączone na dev</span>
+springdoc:
+  api-docs:
+    enabled: <span class="kw">true</span>
+  swagger-ui:
+    enabled: <span class="kw">true</span>
+
+<span class="cm"># Keycloak Admin Client — używa service account pkka-web (manage-users)</span>
+<span class="cm"># Uwaga: client-id to pkka-web, ten sam co rejestracja keycloak-web.</span>
+<span class="cm"># To dwie różne role tego samego klienta Keycloaka:</span>
+<span class="cm">#   - registration.keycloak-web → user auth (Standard Flow)</span>
+<span class="cm">#   - keycloak.client-id → admin API (Service Account, client_credentials)</span>
+keycloak:
+  server-url: <span class="prop">${KEYCLOAK_URL:http://localhost:8081}</span>
+  realm: <span class="prop">${KEYCLOAK_REALM:pkka}</span>
+  client-id: pkka-web
+  client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
+
+<span class="cm"># Discord</span>
+discord:
+  guild-id: <span class="prop">${DISCORD_GUILD_ID:change-me}</span>
+
+<span class="cm"># App</span>
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
+
+<span class="cm"># Server</span>
+server:
+  port: <span class="num">8080</span>
+
+<span class="cm"># Logging</span>
+logging:
+  level:
+    root: INFO
+    pl.edu.agh.pkka: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+
+<span class="cm"># PROFILE: prod</span>
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak-web:
+            provider: keycloak
+            client-id: pkka-web
+            client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
+            client-authentication-method: client_secret_basic
+
+          keycloak-mobile:
+            provider: keycloak
+            client-id: pkka-mobile
+            client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET}</span>
+            scope: openid, profile, email
+            authorization-grant-type: authorization_code
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            client-authentication-method: client_secret_basic
+
+        provider:
+          keycloak:
+            issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI}</span>
+            user-name-attribute: preferred_username
+
+      resourceserver:
+        jwt:
+          issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI}</span>
+
+springdoc:
+  api-docs:
+    enabled: <span class="kw">false</span>
+  swagger-ui:
+    enabled: <span class="kw">false</span>
+
+<span class="cm"># Keycloak Admin Client (prod) — jeden blok, service account pkka-web</span>
+keycloak:
+  server-url: <span class="prop">${KEYCLOAK_URL}</span>
+  realm: <span class="prop">${KEYCLOAK_REALM}</span>
+  client-id: pkka-web
+  client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
+
+discord:
+  guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
+
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
+
+server:
+  port: <span class="prop">${PORT:8080}</span>
+  tomcat:
+    remote-ip-header: x-forwarded-for
+    protocol-header: x-forwarded-proto
+
+logging:
+  level:
+    root: WARN
+    pl.edu.agh.pkka: INFO</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>client-id</code> pojawia się w dwóch miejscach?</strong><br>
+      <code>spring.security.oauth2.client.registration.keycloak-web.client-id: pkka-web</code> — to <em>user auth</em>: Spring wysyła tę wartość jako <code>client_id</code> w URL autoryzacji i przy wymianie code → token (Standard Flow, przeglądarka użytkownika).<br><br>
+      <code>keycloak.client-id: pkka-web</code> — to <em>admin API</em>: Keycloak Admin Client używa tych credentials do pobrania service account tokena przez <code>client_credentials</code> grant, a następnie wywołuje Admin REST API (nadawanie ról, szukanie użytkowników).<br><br>
+      Oba punkty odnoszą się do tego samego klienta Keycloaka (<code>pkka-web</code>), bo ma on włączone jednocześnie <strong>Standard Flow</strong> (user login) i <strong>Service Accounts</strong> (admin API). Użycie tych samych credentials upraszcza konfigurację — zamiast utrzymywać osobny klient tylko do admina, <code>pkka-web</code> pełni obie role.
+    </div></div>
+
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>DISCORD_GUILD_ID</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>.</div></div>
+  </section>
+  <!-- KEYCLOAK ADMIN API -->
+  <section id="admin-api">
+    <div class="section-header">
+      <div class="section-num">16</div>
+      <h2 style="margin:0;border:none;">Keycloak Admin REST API</h2>
+    </div>
+
+    <p>Spring Boot używa Admin API do nadawania i odbierania ról realmowych. Dostęp wymaga tokenu service account (grant <code>client_credentials</code>).</p>
+
+    <h3>Drzewo endpointów Admin API (zakres projektu)</h3>
+    <pre><code><span class="cm"># Token service account</span>
+POST /realms/{realm}/protocol/openid-connect/token
+
+<span class="cm"># Użytkownicy</span>
+GET  /admin/realms/{realm}/users?search={q}&exact=true   <span class="cm"># szukaj po email/username</span>
+GET  /admin/realms/{realm}/users/{userId}                <span class="cm"># pobierz użytkownika</span>
+
+<span class="cm"># Role realmowe użytkownika</span>
+GET    /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># lista ról</span>
+POST   /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># nadaj role</span>
+DELETE /admin/realms/{realm}/users/{userId}/role-mappings/realm          <span class="cm"># odbierz role</span>
+
+<span class="cm"># Definicja roli (potrzebna do uzyskania id roli)</span>
+GET  /admin/realms/{realm}/roles/{roleName}
+
+<span class="cm"># Grupy</span>
+GET  /admin/realms/{realm}/groups                                        <span class="cm"># lista grup</span>
+GET  /admin/realms/{realm}/users/{userId}/groups                         <span class="cm"># grupy użytkownika</span>
+PUT  /admin/realms/{realm}/users/{userId}/groups/{groupId}               <span class="cm"># dodaj do grupy</span>
+DELETE /admin/realms/{realm}/users/{userId}/groups/{groupId}             <span class="cm"># usuń z grupy</span></code></pre>
+
+    <h3>Pobranie Access Tokena service account</h3>
+    <p>Service account używa grant type <code>client_credentials</code>. Keycloak zwraca AT ważny domyślnie 5 minut — Spring Boot (<code>keycloak-admin-client</code>) obsługuje odświeżanie automatycznie.</p>
+
+    <pre><code><span class="cm">### HTTP — manualne wywołanie (Postman / curl)</span>
+POST http://localhost:8081/realms/pkka/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&amp;client_id=pkka-web
+&amp;client_secret=<span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>  <span class="cm"># ten sam secret co rejestracja keycloak-web</span></code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+        Jedna zmienna <code>${KEYCLOAK_WEB_CLIENT_SECRET}</code> obsługuje zarówno OAuth2 login (<code>spring.security.oauth2.client.registration.keycloak-web.client-secret</code>) jak i Admin API (<code>keycloak.client-secret</code>).
+    </div></div>
+
+    <pre><code><span class="cm">// Java — keycloak-admin-client (automatycznie zarządza tokenem)</span>
+<span class="kw">@Configuration</span>
+<span class="kw">public class</span> KeycloakAdminConfig {
+
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.server-url}"</span>) <span class="kw">private</span> String serverUrl;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.realm}"</span>)      <span class="kw">private</span> String realm;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.client-id}"</span>)  <span class="kw">private</span> String clientId;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.client-secret}"</span>) <span class="kw">private</span> String clientSecret;
+
+    <span class="kw">@Bean</span>
+    <span class="kw">public</span> Keycloak keycloakAdmin() {
+        <span class="kw">return</span> KeycloakBuilder.builder()
+            .serverUrl(serverUrl)
+            .realm(realm)
+            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+            .clientId(clientId)
+            .clientSecret(clientSecret)
+            .build();
+    }
+}</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong><code>@Value</code> w <code>KeycloakAdminConfig</code> — czy musisz definiować je w YML?</strong><br>
+      Tak. <code>@Value("${keycloak.server-url}")</code> czyta z Spring Environment, który budowany jest z <code>application.yml</code>, pliku <code>.env</code> i zmiennych systemowych. Właściwości <code>keycloak.server-url</code>, <code>keycloak.realm</code>, <code>keycloak.client-id</code>, <code>keycloak.client-secret</code> muszą być zdefiniowane w jednym z tych źródeł — w tym projekcie są w bloku <code>keycloak:</code> w <code>application.yml</code>. Bez nich aplikacja nie uruchomi się (<code>IllegalArgumentException: Could not resolve placeholder</code>).
+    </div></div>
+
+    <h3>Przykład — nadanie roli <code>verified-alumn</code></h3>
+    <p>Operacja dwuetapowa: najpierw pobieramy reprezentację roli (zawiera <code>id</code>), następnie przypisujemy ją do użytkownika.</p>
+
+    <h4>Krok 1 — pobierz reprezentację roli</h4>
+    <pre><code>GET /admin/realms/pkka/roles/verified-alumn
+Authorization: Bearer {service_account_at}
+
+<span class="cm">// Response 200 OK</span>
+{
+  <span class="str">"id"</span>: <span class="str">"fb246a7f-0cbf-4f3e-ac40-587047b7daca"</span>,
+  <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>,
+  <span class="str">"description"</span>: <span class="str">"Verified AGH alumn"</span>,
+  <span class="str">"composite"</span>: <span class="kw">false</span>,
+  <span class="str">"clientRole"</span>: <span class="kw">false</span>,
+  <span class="str">"containerId"</span>: <span class="str">"765dd9b0-6782-432d-ab69-8094551d9e3b"</span>,
+  <span class="str">"attributes"</span>: {}
+}</code></pre>
+
+    <h4>Krok 2 — przypisz rolę użytkownikowi</h4>
+    <pre><code>POST /admin/realms/pkka/users/{userId}/role-mappings/realm
+Authorization: Bearer {service_account_at}
+Content-Type: application/json
+
+[
+  {
+    <span class="str">"id"</span>: <span class="str">"fb246a7f-0cbf-4f3e-ac40-587047b7daca"</span>,
+    <span class="str">"name"</span>: <span class="str">"verified-alumn"</span>
+  }
+]
+
+<span class="cm">// Response 204 No Content — sukces ✅</span></code></pre>
+
+    <h4>Java — kompletna metoda Service</h4>
+    <pre><code><span class="kw">@Service</span>
+<span class="kw">@RequiredArgsConstructor</span>
+<span class="kw">public class</span> AlumnVerificationService {
+
+    <span class="kw">private final</span> Keycloak keycloakAdmin;
+    <span class="kw">@Value</span>(<span class="str">"${keycloak.realm}"</span>) <span class="kw">private</span> String realm;
+
+    <span class="kw">public void</span> grantVerifiedAlumn(String keycloakUserId) {
+        RealmResource realmRes = keycloakAdmin.realm(realm);
+
+        <span class="cm">// 1. Pobierz reprezentację roli</span>
+        RoleRepresentation role = realmRes.roles()
+            .get(<span class="str">"verified-alumn"</span>)
+            .toRepresentation();
+
+        <span class="cm">// 2. Nadaj rolę użytkownikowi</span>
+        realmRes.users()
+            .get(keycloakUserId)
+            .roles()
+            .realmLevel()
+            .add(List.of(role));
+    }
+
+    <span class="kw">public void</span> revokeVerifiedAlumn(String keycloakUserId) {
+        RealmResource realmRes = keycloakAdmin.realm(realm);
+        RoleRepresentation role = realmRes.roles()
+            .get(<span class="str">"verified-alumn"</span>)
+            .toRepresentation();
+
+        realmRes.users()
+            .get(keycloakUserId)
+            .roles()
+            .realmLevel()
+            .remove(List.of(role));
+    }
+}</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      Użytkownik musi uzyskać <strong>nowy AT</strong> (odświeżyć token lub zalogować się ponownie) po zmianie ról — stary JWT zawiera snapshot ról z momentu wystawienia i nie jest aktualizowany przez Keycloak retroaktywnie.
+    </div></div>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>End-to-end przetestowane ✅</strong><br>
+      Poniższy przepływ działa:<br>
+      1. GET service account AT (<code>client_credentials</code>) → 200 OK<br>
+      2. GET <code>/admin/realms/pkka/roles/verified-alumn</code> → rola z <code>id: fb246a7f-...</code><br>
+      3. POST <code>/admin/realms/pkka/users/f6930bca-.../role-mappings/realm</code> z <code>[{"id":"fb246a7f-...","name":"verified-alumn"}]</code> → 204 No Content ✅
+    </div></div>
+
+    <h3>Jak znaleźć userId z Keycloak AT użytkownika</h3>
+    <p>JWT wystawiony przez Keycloak zawiera claim <code>sub</code> — to UUID użytkownika w Keycloaku (identyczny z <code>userId</code> w Admin API).</p>
+    <pre><code><span class="cm">// Spring Boot — wyciągnięcie sub z JWT w kontrolerze</span>
+<span class="kw">@GetMapping</span>(<span class="str">"/verify-guild"</span>)
+<span class="kw">public</span> ResponseEntity&lt;Void&gt; verifyGuild(
+        <span class="kw">@AuthenticationPrincipal</span> Jwt jwt) {
+
+    String keycloakUserId = jwt.getSubject(); <span class="cm">// claim "sub"</span>
+    verificationService.grantVerifiedAlumn(keycloakUserId);
+    <span class="kw">return</span> ResponseEntity.noContent().build();
+}</code></pre>
+  </section>
+
+  <!-- AUTHORIZATION CODE FLOW -->
+  <section id="auth-code-flow">
+    <div class="section-header">
+      <div class="section-num">17</div>
+      <h2 style="margin:0;border:none;">Authorization Code Flow — szczegółowy przepływ HTTP</h2>
+    </div>
+
+    <p>Pełny przepływ od kliknięcia "Zaloguj" do aktywnej sesji Spring Security. Dotyczy logowania emailem/hasłem przez Keycloak — wariant z Discordem opisany osobno poniżej.</p>
+
+    <figure class="screenshot">
+      <img src="imgs/pkce-flow.png" alt="PKCE S256 - przepływ">
+      <figcaption>PKCE S256 — code_challenge w żądaniu autoryzacji i code_verifier przy wymianie na token</figcaption>
+    </figure>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>PKCE S256 jest włączone dla klienta <code>pkka-web</code>.</strong> Spring dołącza <code>code_challenge</code> w kroku autoryzacji i <code>code_verifier</code> przy wymianie na token.
+    </div></div>
+
+    <h3>Krok 1 — Inicjacja przez Spring</h3>
+    <pre><code>GET http://localhost:8080/oauth2/authorization/keycloak-web</code></pre>
+    <p>Spring Security (klasa <code>OAuth2AuthorizationRequestRedirectFilter</code>) generuje:</p>
+    <table>
+      <tr><th>Parametr</th><th>Przykład</th><th>Uwagi</th></tr>
+      <tr><td><code>state</code></td><td><code>abc123xyz</code></td><td>Losowy token CSRF — weryfikowany przy callbacku</td></tr>
+      <tr><td><code>nonce</code></td><td><code>def456uvw</code></td><td>Losowy token OIDC — wbudowany w ID token, weryfikowany przez Spring</td></tr>
+      <tr><td><code>code_challenge</code></td><td><code>mQ8s5...S256</code></td><td>PKCE S256 — wysyłane do Keycloaka</td></tr>
+    </table>
+    <p>Spring zapisuje <code>state</code>, <code>nonce</code> i <code>code_verifier</code> w sesji HTTP (lub cookie), po czym odpowiada <code>302 Found</code>:</p>
+    <div class="flow"><span class="box">Browser</span>    GET /oauth2/authorization/keycloak-web
+    <span class="arrow">→</span>
+<span class="box">Spring</span>     302 Location: http://localhost:8081/realms/pkka/protocol/openid-connect/auth
+               ?response_type=code
+               &amp;client_id=pkka-web
+               &amp;redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fkeycloak-web
+               &amp;scope=openid+profile
+               &amp;state=abc123xyz
+               &amp;nonce=def456uvw
+               &amp;code_challenge=mQ8s5...S256
+               &amp;code_challenge_method=S256</div>
+
+    <h3>Krok 2 — Autoryzacja w Keycloak</h3>
+    <pre><code>GET http://localhost:8081/realms/pkka/protocol/openid-connect/auth?...</code></pre>
+    <p>Keycloak wyświetla formularz logowania. Użytkownik podaje dane → Keycloak autentykuje i weryfikuje. Jeśli konto OK → Keycloak generuje jednorazowy <code>authorization_code</code> (ważny ~1 minutę) i odsyła przeglądarkę do <code>redirect_uri</code>.</p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Authorization code jest <strong>jednorazowy i krótkotrwały</strong>. Keycloak wiąże go z <code>redirect_uri</code>, <code>client_id</code> i sesją użytkownika — nie można go ponownie użyć ani użyć z innym redirect_uri.
+    </div></div>
+
+    <h3>Krok 3 — Callback do Spring</h3>
+    <pre><code>GET http://localhost:8080/login/oauth2/code/keycloak-web?code=AUTH_CODE&amp;state=abc123xyz</code></pre>
+    <p>Spring Security (<code>OAuth2LoginAuthenticationFilter</code>) odbiera request i:</p>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Porównuje <code>state</code> z zapisanym w sesji — jeśli niezgodność: <code>401</code>, atak CSRF.</p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Wyciąga <code>code</code> i przechodzi do wymiany tokenów.</p></div></div>
+    </div>
+
+    <h3>Krok 4 — Wymiana code → token</h3>
+    <pre><code>POST http://localhost:8081/realms/pkka/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+<span class="cm"># Client auth: Basic base64(pkka-web:CLIENT_SECRET) w nagłówku Authorization</span>
+<span class="cm"># (client_secret_basic — domyślna metoda Spring Security dla confidential client)</span>
+
+grant_type=authorization_code
+&amp;code=AUTH_CODE
+&amp;redirect_uri=http://localhost:8080/login/oauth2/code/keycloak-web
+&amp;code_verifier=R2K9...verifier</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Metoda uwierzytelniania klienta (<code>client-authentication-method</code>):</strong><br>
+      Spring Security domyślnie używa <code>client_secret_basic</code> — wysyła credentials w nagłówku <code>Authorization: Basic base64(id:secret)</code>. Alternatywnie <code>client_secret_post</code> (credentials w body requestu). W dokumentacji IDP Discorda ustawiono <code>client_secret_post</code> dla brokera — to <strong>osobny klient Keycloak–Discord</strong>, nie mylić z <code>pkka-web → Keycloak</code>.
+    </div></div>
+
+    <h4>Response Keycloaka (200 OK):</h4>
+    <pre><code>{
+  <span class="str">"access_token"</span>:  <span class="str">"eyJhb..."</span>,   <span class="cm">// Keycloak JWT — używany do wywołań API backendu</span>
+  <span class="str">"id_token"</span>:      <span class="str">"eyJhb..."</span>,   <span class="cm">// JWT z danymi użytkownika (sub, email, nonce)</span>
+  <span class="str">"refresh_token"</span>: <span class="str">"eyJhb..."</span>,   <span class="cm">// używany do odświeżania AT przez Spring</span>
+  <span class="str">"token_type"</span>:    <span class="str">"Bearer"</span>
+  <span class="str">"expires_in"</span>:    <span class="num">300</span>            <span class="cm">// domyślnie 5 minut</span>
+}</code></pre>
+
+    <h3>Krok 5 — Walidacja ID tokena i budowa sesji</h3>
+    <p>Spring Security (klasa <code>OidcAuthorizationCodeAuthenticationProvider</code>) waliduje ID token przed stworzeniem sesji:</p>
+    <table>
+      <tr><th>Claim</th><th>Weryfikacja</th></tr>
+      <tr><td><code>iss</code></td><td>Musi być równy <code>http://localhost:8081/realms/pkka</code></td></tr>
+      <tr><td><code>aud</code></td><td>Musi zawierać <code>pkka-web</code></td></tr>
+      <tr><td><code>nonce</code></td><td>Musi być identyczny z zapisanym w sesji</td></tr>
+      <tr><td><code>exp</code></td><td>Token nie może być wygasły</td></tr>
+      <tr><td>Podpis</td><td>Weryfikowany kluczem publicznym z <code>/realms/pkka/protocol/openid-connect/certs</code></td></tr>
+    </table>
+    <p>Klucze JWKS są pobierane raz przy starcie i odświeżane automatycznie (Spring cachuje). Po pomyślnej walidacji Spring tworzy <code>SecurityContext</code>, zapisuje sesję HTTP i przekierowuje użytkownika na oryginalnie żądany zasób.</p>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Spring może opcjonalnie wywołać <code>GET /realms/pkka/protocol/openid-connect/userinfo</code> (Bearer AT) żeby pobrać dodatkowe claimy — zależy od konfiguracji <code>user-info-uri</code> i <code>user-name-attribute</code>. Przy domyślnej konfiguracji OIDC klienta dane użytkownika są wyciągane bezpośrednio z ID tokena (bez dodatkowego wywołania).
+    </div></div>
+
+    <h3>Wariant — logowanie przez Discord (broker sub-flow)</h3>
+    <p>Gdy użytkownik klika przycisk Discord na stronie logowania Keycloaka, między krokiem 2 a 3 wchodzi dodatkowy sub-flow:</p>
+    <div class="flow"><span class="label">Krok 2a.</span> Keycloak → 302 → Discord OAuth2 auth endpoint
+          ?response_type=code&amp;client_id={DISCORD_CLIENT_ID}
+          &amp;scope=openid+email+identify+guilds
+          &amp;state={keycloak_state}&amp;nonce={nonce}
+
+<span class="label">Krok 2b.</span> Użytkownik zatwierdza zgodę na Discordzie
+
+<span class="label">Krok 2c.</span> Discord → 302 → Keycloak broker callback
+          GET /realms/pkka/broker/discord/endpoint?code=DISCORD_CODE
+
+<span class="label">Krok 2d.</span> Keycloak backend: POST discord.com/api/oauth2/token
+          → odbiera Discord AT + RT (zapisuje, bo Store tokens = ON)
+          → odpytuje Discord Userinfo → mapuje atrybuty
+          → uruchamia First Broker Login flow (tworzy/linkuje konto)
+
+<span class="label">Krok 2e.</span> Keycloak generuje SWÓJ authorization_code
+          → 302 → Spring callback (krok 3 z głównego flow)</div>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      Spring Boot <strong>nie widzi Discorda</strong> — z jego perspektywy to identyczny Authorization Code Flow jak przy logowaniu emailem. Różnica jest tylko wewnątrz Keycloaka. Po stronie Spring: zawsze Keycloak JWT.
+    </div></div>
+  </section>
+
+  <!-- CUSTOM LOGIN THEME -->
+  <section id="custom-theme">
+    <div class="section-header">
+      <div class="section-num">18</div>
+      <h2 style="margin:0;border:none;">Custom Login Theme — personalizacja UI Keycloaka</h2>
+    </div>
+
+    <p>Keycloak pozwala całkowicie zastąpić domyślny wygląd strony logowania własnym motywem (theme). W trybie deweloperskim (<code>start-dev</code>) zmiany są widoczne natychmiast bez restartu.</p>
+
+    <h3>Struktura katalogu motywu</h3>
+    <pre><code>themes/
+└── pkka/                          <span class="cm"># nazwa motywu = identyfikator w admin</span>
+    └── login/                     <span class="cm"># typ: login, account, admin, email</span>
+        ├── theme.properties       <span class="cm"># wymagany: dziedziczenie i lista CSS</span>
+        ├── resources/
+        │   ├── css/
+        │   │   └── pkka.css       <span class="cm"># własne style</span>
+        │   └── img/
+        │       └── logo.png       <span class="cm"># logo wydziału</span>
+        ├── messages/
+        │   └── messages_pl.properties   <span class="cm"># nadpisanie tekstów UI po polsku</span>
+        └── login.ftl              <span class="cm"># opcjonalnie: pełne przejęcie HTML</span></code></pre>
+
+    <h3>Opcja A — tylko CSS (najszybsza)</h3>
+    <p>Dziedziczysz cały HTML z motywu <code>keycloak</code>, dodajesz tylko własne style. Nie trzeba ruszać FreeMarkera.</p>
+
+    <h4>theme.properties</h4>
+    <pre><code>parent=keycloak
+import=common/keycloak
+styles=css/login.css css/pkka.css
+kcLogoLink=https://www.agh.edu.pl
+kcLogoClass=kcLogoLink</code></pre>
+
+    <h4>resources/css/pkka.css — przykład brandingu AGH</h4>
+    <pre><code><span class="cm">/* Tło strony logowania */</span>
+.login-pf {
+  background: #1a1a2e !important;
+}
+
+<span class="cm">/* Karta formularza */</span>
+.card-pf {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+}
+
+<span class="cm">/* Logo — zastąp obrazkiem AGH */</span>
+#kc-header-wrapper {
+  background-image: url(../img/logo.png) !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  height: 60px;
+  visibility: visible !important;
+}
+
+<span class="cm">/* Przycisk "Zaloguj" */</span>
+#kc-login {
+  background: #e94560 !important;
+  border-color: #e94560 !important;
+}
+#kc-login:hover {
+  background: #c73652 !important;
+}</code></pre>
+
+    <div class="callout info"><div class="callout-icon"></div><div>W Keycloak 26 domyślny motyw to <code>keycloak</code> oparty na PatternFly 4. Selektory CSS (<code>.card-pf</code>, <code>.login-pf</code>) mogą się różnić między wersjami — użyj DevTools żeby zweryfikować. Alternatywnie, motyw <code>base</code> zawiera tylko minimalny HTML bez stylów, dając pełną kontrolę.</div></div>
+
+    <h3>Opcja B — pełna kontrola (FreeMarker)</h3>
+    <p>Skopiuj plik <code>login.ftl</code> z dystrybucji Keycloaka i zmodyfikuj go. Dostęp do oryginału przez Docker:</p>
+    <pre><code>docker exec -it iam-keycloak \
+  cat /opt/keycloak/themes/keycloak/login/login.ftl &gt; themes/pkka/login/login.ftl</code></pre>
+    <p>Plik jest szablonem FreeMarker — dostęp do zmiennych Keycloaka przez <code>${url.loginAction}</code>, <code>${realm.displayName}</code>, <code>${social.providers}</code> (lista zewnętrznych providerów, np. Discord) itp. Pełna dokumentacja zmiennych: <a href="https://www.keycloak.org/docs/latest/server_development/#_themes" style="color:var(--accent)">keycloak.org/docs → Server Development → Themes</a>.</p>
+
+    <h3>Montowanie przez Docker Compose</h3>
+    <pre><code>services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:<span class="num">26.0.8</span>
+    volumes:
+      - <span class="str">./themes/pkka:/opt/keycloak/themes/pkka</span>   <span class="cm"># mount całego katalogu</span>
+    <span class="cm"># ... reszta konfiguracji bez zmian</span></code></pre>
+    <div class="callout warn"><div class="callout-icon"></div><div>Ścieżka <code>/opt/keycloak/themes/pkka</code> — nazwa folderu wewnątrz <code>themes/</code> musi być identyczna jak <code>parent</code> folderu motywu. Keycloak wykrywa motywy automatycznie przy starcie.</div></div>
+
+    <h3>Aktywacja motywu w Keycloak Admin</h3>
+    <div class="steps">
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Sidebar → <strong>Realm Settings</strong> → zakładka <strong>Themes</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p><strong>Login theme</strong> → wybierz <code>pkka</code> z dropdown → <strong>Save</strong></p></div></div>
+      <div class="step"><div class="step-num"></div><div class="step-body"><p>Odśwież stronę logowania w trybie incognito — motyw aktywny natychmiast (w trybie <code>start-dev</code>).</p></div></div>
+    </div>
+    <div class="callout success"><div class="callout-icon"></div><div>W trybie <code>start-dev</code> Keycloak wyłącza cache motywów — każda zmiana w plikach CSS/FTL jest widoczna po odświeżeniu strony bez restartu kontenera.</div></div>
+
+    <h3>Nadpisanie tekstów UI (komunikatów)</h3>
+    <p>Plik <code>messages/messages_pl.properties</code> nadpisuje teksty interfejsu. Przykład:</p>
+    <pre><code><span class="cm"># messages/messages_pl.properties</span>
+doLogIn=Zaloguj si\u0119
+doRegister=Utw\u00f3rz konto
+loginAccountTitle=Klub Alumna AGH Informatyki
+loginTitleHtml=Zaloguj si\u0119 do PKKA
+socialLoginTitle=Lub zaloguj si\u0119 przez
+errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</code></pre>
+    <div class="callout info"><div class="callout-icon"></div><div>Pełna lista kluczy komunikatów: <code>docker exec iam-keycloak cat /opt/keycloak/themes/base/login/messages/messages_en.properties</code></div></div>
+  </section>
+  <!-- BFF ARCHITEKTURA -->
+  <section id="bff-arch">
+    <div class="section-header">
+      <div class="section-num">19</div>
+      <h2 style="margin:0;border:none;">BFF Token Handler Pattern — Architektura dwuścieżkowa</h2>
+    </div>
+
+    <p>Jeden moduł <code>pkka-backend</code>, jeden <code>oauth2Login</code>, dwie rejestracje Keycloaka. Rozgałęzienie Web/Mobile następuje w jednym miejscu — <code>BffAuthenticationSuccessHandler</code>.</p>
+
+    <h3>Inicjacja logowania</h3>
+    <table>
+      <tr><th>Klient</th><th>URL wejścia</th><th>Kto otwiera</th></tr>
+      <tr><td><code>keycloak-web</code></td><td><code>GET /oauth2/authorization/keycloak-web</code></td><td>Przeglądarka (klik "Zaloguj")</td></tr>
+      <tr><td><code>keycloak-mobile</code></td><td><code>GET /oauth2/authorization/keycloak-mobile</code></td><td>Mobilka (Custom Tabs / SFSafariVC)</td></tr>
+    </table>
+
+    <h3>Przepływ po zakończeniu oauth2Login</h3>
+    <div class="flow"><span class="box">Spring</span>: OAuth2LoginAuthenticationFilter odbiera callback
+│  → exchange code + code_verifier + client_secret → AT, RT, IDT
+│  → zapisuje OAuth2AuthorizedClient
+│  → wywołuje BffAuthenticationSuccessHandler
+│
+├─ registrationId == "keycloak-web"
+│   │
+│   └─ Tokeny zostają w sesji Spring (OAuth2AuthorizedClient)
+│      Przeglądarka otrzymuje JSESSIONID
+│      Redirect → app.web.success-url (domyślnie "/")
+│
+└─ registrationId == "keycloak-mobile"
+    │
+    └─ Wyciągnij AT + RT z OAuth2AuthorizedClient
+       SecurityContextHolder.clearContext()
+       Usuń OAuth2AuthorizedClient z serwisu
+       Invaliduj sesję HTTP (była tymczasowa dla state/nonce)
+       Redirect → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+       Mobilka: zapisz w Keychain / EncryptedSharedPreferences</div>
+
+    <h3>Kolejne żądania API (/api/**)</h3>
+    <div class="flow"><span class="box">Żądanie HTTP → /api/cokolwiek</span>
+│
+├─ Czy JSESSIONID w cookie? (ścieżka Web)
+│   └─ TAK → SecurityContextHolderFilter ładuje OidcUser z sesji
+│              → principal: OidcUser | @AuthenticationPrincipal OidcUser
+│
+└─ Czy Authorization: Bearer? (ścieżka Mobile)
+    └─ TAK → BearerTokenAuthenticationFilter waliduje JWT przez JWKS
+              → principal: Jwt | @AuthenticationPrincipal Jwt
+
+BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
+
+    <h3>Spójność ról — @PreAuthorize działa identycznie</h3>
+    <pre><code><span class="cm">// Ta sama adnotacja, dwa typy principal — Spring Security obsługuje oba</span>
+<span class="kw">@GetMapping</span>(<span class="str">"/api/alumni"</span>)
+<span class="kw">@PreAuthorize</span>(<span class="str">"hasRole('VERIFIED_ALUMN')"</span>)
+<span class="kw">public</span> List&lt;AlumniDto&gt; list(<span class="kw">@AuthenticationPrincipal</span> Object principal) {
+    String username = <span class="kw">switch</span> (principal) {
+        <span class="kw">case</span> OidcUser u  -&gt; u.getPreferredUsername();  <span class="cm">// Web (sesja)</span>
+        <span class="kw">case</span> Jwt jwt     -&gt; jwt.getClaimAsString(<span class="str">"preferred_username"</span>); <span class="cm">// Mobile (Bearer)</span>
+        <span class="kw">default</span>         -&gt; <span class="kw">throw new</span> IllegalStateException();
+    };
+    <span class="cm">// logika identyczna dla obu ścieżek</span>
+}</code></pre>
+
+    <h3>Porównanie ścieżek</h3>
+    <table>
+      <tr><th>Aspekt</th><th>Web (<code>keycloak-web</code>)</th><th>Mobile (<code>keycloak-mobile</code>)</th></tr>
+      <tr><td>Wejście do flow</td><td><code>/oauth2/authorization/keycloak-web</code></td><td><code>/oauth2/authorization/keycloak-mobile</code></td></tr>
+      <tr><td>Callback URI</td><td><code>/login/oauth2/code/keycloak-web</code></td><td><code>/login/oauth2/code/keycloak-mobile</code></td></tr>
+      <tr><td>PKCE</td><td>S256 (wymagany przez Keycloak)</td><td>S256 (wymagany przez Keycloak)</td></tr>
+      <tr><td>client-authentication-method</td><td><code>client_secret_basic</code></td><td><code>client_secret_basic</code></td></tr>
+      <tr><td>Tokeny po flow</td><td>Sesja Spring (serwer)</td><td>Deep link (mobilka → Keychain)</td></tr>
+      <tr><td>Identyfikacja żądań API</td><td>Cookie <code>JSESSIONID</code></td><td>Header <code>Authorization: Bearer</code></td></tr>
+      <tr><td>Typ principal</td><td><code>OidcUser</code></td><td><code>Jwt</code></td></tr>
+      <tr><td>CSRF wymagany</td><td>Tak (<code>XSRF-TOKEN</code>)</td><td>Nie (Bearer jest CSRF-safe)</td></tr>
+    </table>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Bezpieczeństwo przez separację:</strong> Przeglądarka nigdy nie otrzymuje surowego JWT. Mobilka nigdy nie widzi <code>client-secret</code>. Obie rejestracje (<code>pkka-web</code>, <code>pkka-mobile</code>) to odrębne klienty Keycloaka — kompromitacja jednego nie wpływa na drugi.
+    </div></div>
+  </section>
+
+  <!-- SECURITY CONFIG -->
+  <section id="security-config">
+    <div class="section-header">
+      <div class="section-num">20</div>
+      <h2 style="margin:0;border:none;">SecurityConfig.java</h2>
+    </div>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Dlaczego dwie osobne SecurityFilterChain?</strong><br>
+      Chodzi wyłącznie o <strong>authenticationEntryPoint</strong> — co Spring zwraca gdy żądanie nie jest uwierzytelnione:<br><br>
+      <strong>Chain 1</strong> (<code>/api/**</code>) → <code>401 JSON</code>. Mobilka wysyła Bearer do <code>/api/alumni</code> z wygasłym tokenem — powinna dostać 401, nie redirect na stronę logowania Keycloaka. To samo dla web: gdy sesja wygaśnie podczas AJAX-a, 401 jest obsługiwalny przez JS.<br><br>
+      <strong>Chain 2</strong> (<code>/**</code>) → redirect do Keycloaka. Przeglądarka wchodzi na <code>/dashboard</code> bez sesji — powinna być odesłana do Keycloaka. Tutaj również jest obsługiwany cały <code>oauth2Login</code> flow (<code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>, <code>/v3/api-docs/**</code>, <code>/swagger-ui/**</code>) oraz logout.<br><br>
+      Jeden chain nie może mieć dwóch różnych entry pointów. Podział jest wyłącznie po to żeby <code>/api/**</code> odpowiadało 401, a reszta robiła redirect. <code>oauth2Login</code> nie jest w Chain 1 — nie jest tam potrzebny, bo API nigdy nie inicjuje flow logowania.
+    </div></div>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      Wymagana zależność: <code>spring-boot-starter-oauth2-resource-server</code>
+    </div></div>
+
+    <h3>Chain 1 — /api/**</h3>
+    <pre><code><span class="kw">@Bean @Order</span>(<span class="num">1</span>)
+<span class="kw">public</span> SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+        JwtAuthenticationConverter jwtAuthenticationConverter) {
+    http
+        .securityMatcher(<span class="str">"/api/**"</span>)
+        .sessionManagement(s -&gt; s.sessionCreationPolicy(IF_REQUIRED))
+        .csrf(csrf -&gt; csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler())
+            .ignoringRequestMatchers(SecurityConfig::hasBearerToken))  <span class="cm">// Bearer jest CSRF-safe z natury</span>
+        .authorizeHttpRequests(auth -&gt; auth
+            .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
+            .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
+            .requestMatchers(<span class="str">"/api/admin/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
+            .anyRequest().hasRole(<span class="str">"USER"</span>))
+        .oauth2ResourceServer(rs -&gt; rs
+            .jwt(jwt -&gt; jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+            .authenticationEntryPoint((req, res, ex) -&gt; res.sendError(<span class="num">401</span>, <span class="str">"Unauthorized"</span>)));  <span class="cm">// nie redirect!</span>
+    <span class="kw">return</span> http.build();
+}</code></pre>
+
+    <h3>Chain 2 — oauth2Login (inicjacja logowania Web + Mobile)</h3>
+    <pre><code><span class="kw">@Bean @Order</span>(<span class="num">2</span>)
+<span class="kw">public</span> SecurityFilterChain webChain(HttpSecurity http,
+        ClientRegistrationRepository repo,
+        OAuth2AuthorizationRequestResolver discordBypassResolver,
+        BffAuthenticationSuccessHandler bffHandler,
+        JwtDecoder jwtDecoder) <span class="kw">throws</span> Exception {   <span class="cm">// JwtDecoder — do oidcUserService</span>
+
+    OidcClientInitiatedLogoutSuccessHandler oidcLogout =
+        <span class="kw">new</span> OidcClientInitiatedLogoutSuccessHandler(repo);
+    oidcLogout.setPostLogoutRedirectUri(<span class="str">"{baseUrl}/"</span>);
+
+    http
+        .sessionManagement(s -&gt; s.sessionCreationPolicy(IF_REQUIRED))
+        .csrf(csrf -&gt; csrf
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler()))
+        .authorizeHttpRequests(auth -&gt; auth
+            .requestMatchers(<span class="str">"/"</span>, <span class="str">"/login/**"</span>, <span class="str">"/error"</span>,
+                <span class="str">"/oauth2/authorization/**"</span>, <span class="str">"/login/oauth2/**"</span>,
+                <span class="str">"/v3/api-docs/**"</span>, <span class="str">"/v3/api-docs.yaml"</span>,
+                <span class="str">"/swagger-ui/**"</span>, <span class="str">"/swagger-ui.html"</span>).permitAll()
+            .anyRequest().authenticated())
+        .oauth2Login(oauth2 -&gt; oauth2
+            .authorizationEndpoint(ep -&gt; ep
+                .authorizationRequestResolver(discordBypassResolver))
+            .userInfoEndpoint(ui -&gt; ui
+                .oidcUserService(oidcUserService(jwtDecoder)))  <span class="cm">// czyta role z AT</span>
+            .successHandler(bffHandler))
+        .logout(logout -&gt; logout
+            .logoutSuccessHandler(oidcLogout)
+            .invalidateHttpSession(<span class="kw">true</span>)
+            .deleteCookies(<span class="str">"JSESSIONID"</span>, <span class="str">"XSRF-TOKEN"</span>));
+    <span class="kw">return</span> http.build();
+}</code></pre>
+
+    <h3>Mapowanie ról — Web i Mobile unified</h3>
+    <pre><code><span class="cm">// Mobile (Bearer JWT) — Resource Server</span>
+<span class="kw">@Bean</span>
+<span class="kw">public</span> JwtAuthenticationConverter jwtAuthenticationConverter() {
+    <span class="kw">var</span> conv = <span class="kw">new</span> JwtAuthenticationConverter();
+    conv.setJwtGrantedAuthoritiesConverter(<span class="kw">new</span> KeycloakJwtRoleConverter());
+    conv.setPrincipalClaimName(<span class="str">"preferred_username"</span>);
+    <span class="kw">return</span> conv;
+}
+
+<span class="cm">// Web (oauth2Login) — OidcUserService czytający role z Access Tokena</span>
+<span class="cm">// AT zawsze niesie realm_access.roles — zero dodatkowej konfiguracji Keycloaka</span>
+<span class="kw">private</span> OAuth2UserService&lt;OidcUserRequest, OidcUser&gt; oidcUserService(JwtDecoder atDecoder) {
+    OidcUserService delegate = <span class="kw">new</span> OidcUserService();
+    <span class="kw">return</span> request -&gt; {
+        OidcUser oidcUser = delegate.loadUser(request);
+        Jwt at = atDecoder.decode(request.getAccessToken().getTokenValue());
+        Set&lt;GrantedAuthority&gt; authorities = <span class="kw">new</span> HashSet&lt;&gt;(oidcUser.getAuthorities());
+        authorities.addAll(extractRealmRoles(at.getClaims()));
+        <span class="cm">// Zachowaj skonfigurowany user-name-attribute (preferred_username z yml).</span>
+        <span class="cm">// DefaultOidcUser bez nameAttributeKey resetuje getName() do "sub" (UUID),</span>
+        <span class="cm">// ignorując user-name-attribute: preferred_username z konfiguracji providera.</span>
+        String nameAttr = request.getClientRegistration()
+            .getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName();
+        <span class="kw">return new</span> DefaultOidcUser(
+            List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo(), nameAttr);
+    };
+}
+
+<span class="cm">// Wspólna ekstrakcja — "verified-alumn" → ROLE_VERIFIED_ALUMN</span>
+<span class="kw">static</span> Set&lt;GrantedAuthority&gt; extractRealmRoles(Map&lt;String, Object&gt; claims) {
+    Map&lt;String, Object&gt; ra = (Map&lt;String, Object&gt;) claims.get(<span class="str">"realm_access"</span>);
+    <span class="kw">if</span> (ra == <span class="kw">null</span>) <span class="kw">return</span> Set.of();
+    List&lt;String&gt; roles = (List&lt;String&gt;) ra.get(<span class="str">"roles"</span>);
+    <span class="kw">if</span> (roles == <span class="kw">null</span>) <span class="kw">return</span> Set.of();
+    <span class="kw">return</span> roles.stream()
+        .map(r -&gt; <span class="kw">new</span> SimpleGrantedAuthority(<span class="str">"ROLE_"</span> + r.toUpperCase().replace(<span class="str">"-"</span>, <span class="str">"_"</span>)))
+        .collect(Collectors.toUnmodifiableSet());
+}
+
+<span class="kw">static boolean</span> hasBearerToken(HttpServletRequest req) {
+    String h = req.getHeader(<span class="str">"Authorization"</span>);
+    <span class="kw">return</span> h != <span class="kw">null</span> &amp;&amp; h.startsWith(<span class="str">"Bearer "</span>);
+}
+
+<span class="kw">static class</span> KeycloakJwtRoleConverter
+        <span class="kw">implements</span> Converter&lt;Jwt, Collection&lt;GrantedAuthority&gt;&gt; {
+    <span class="kw">@Override public</span> Collection&lt;GrantedAuthority&gt; convert(Jwt jwt) {
+        <span class="kw">return</span> extractRealmRoles(jwt.getClaims());
+    }
+}</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Fix: <code>nameAttributeKey</code> — zachowaj <code>preferred_username</code> jako nazwę główną</strong><br>
+      <code>DefaultOidcUser(authorities, idToken, userInfo)</code> bez czwartego argumentu zawsze szuka nazwy głównej w claimie <code>sub</code> (UUID Keycloaka). Konfiguracja <code>user-name-attribute: preferred_username</code> jest wtedy ignorowana — <code>authentication.getName()</code> i <code>token.getName()</code> zwracają UUID zamiast nazwy użytkownika. Wyciągnij skonfigurowany atrybut przez <code>request.getClientRegistration().getProviderDetails().getUserInfoEndpoint().getUserNameAttributeName()</code> i przekaż jako czwarty argument konstruktora.
+    </div></div>
+
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>oidcUserService</code> zamiast <code>keycloakGrantedAuthoritiesMapper</code>?</strong><br>
+      <code>GrantedAuthoritiesMapper</code> działa na <code>OidcUserAuthority</code> niosącym <em>ID token</em> — Keycloak domyślnie nie dołącza <code>realm_access</code> do ID tokena, więc wymagał ręcznego mappera w konfiguracji klienta. <code>OidcUserService</code> ma dostęp do <code>OidcUserRequest</code> z Access Tokenem, który <em>zawsze</em> niesie <code>realm_access.roles</code> — zero konfiguracji Keycloaka.
+    </div></div>
+
+    <table>
+      <tr><th>Reguła</th><th>Efekt</th></tr>
+      <tr><td>Chain 1 (<code>@Order(1)</code>) — <code>securityMatcher("/api/**")</code></td><td>Tylko <code>/api/**</code> wchodzi do Chain 1, reszta (login flow) do Chain 2</td></tr>
+      <tr><td>Chain 2 — brak <code>securityMatcher</code></td><td>Obsługuje <code>/oauth2/authorization/**</code>, <code>/login/oauth2/code/**</code>, logout</td></tr>
+      <tr><td>Chain 1: <code>IF_REQUIRED</code> + Resource Server</td><td>Spring sprawdza sesję przed BearerTokenFilter — istniejąca sesja Web wygrywa nad Bearer</td></tr>
+      <tr><td><code>authenticationEntryPoint</code> w Chain 1</td><td>Brak auth → <code>401 JSON</code>, nie redirect na <code>/login</code></td></tr>
+    </table>
+  </section>
+
+  <!-- BFF SUCCESS HANDLER -->
+  <section id="bff-success-handler">
+    <div class="section-header">
+      <div class="section-num">21</div>
+      <h2 style="margin:0;border:none;">BffAuthenticationSuccessHandler.java</h2>
+    </div>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego Spring tworzy sesję dla mobile, skoro BffHandler ją invaliduje?</strong><br>
+      Sesja jest <em>tymczasowo wymagana</em> przez samo Spring Security podczas OAuth2 code flow: gdy mobilka uderza w <code>/oauth2/authorization/keycloak-mobile</code>, Spring musi gdzieś zapisać <code>state</code>, <code>nonce</code> i <code>code_verifier</code>, żeby zwalidować callback. Używa do tego sesji HTTP. Po udanej wymianie code → token, BffHandler ma dostęp do tokenów i czyści sesję. Bez poniższego kroku z <code>SecurityContextHolder.clearContext()</code> Spring tworzy <em>nową</em> sesję — szczegóły niżej.
+    </div></div>
+
+    <h3>Schemat działania</h3>
+    <pre><code><span class="kw">@Component @RequiredArgsConstructor @Slf4j</span>
+<span class="kw">public class</span> BffAuthenticationSuccessHandler
+        <span class="kw">implements</span> AuthenticationSuccessHandler {
+
+    <span class="kw">private final</span> OAuth2AuthorizedClientService authorizedClientService;
+    <span class="kw">private final</span> UserProvisioningService userProvisioningService;
+    <span class="kw">private final</span> UserPrincipalExtractor principalExtractor;
+
+    <span class="kw">@Value</span>(<span class="str">"${app.mobile.deep-link-scheme}"</span>)
+    <span class="kw">private</span> String mobileDeepLinkScheme;
+
+    <span class="kw">@Value</span>(<span class="str">"${app.web.success-url}"</span>)
+    <span class="kw">private</span> String webSuccessUrl;
+
+    <span class="kw">@Override</span>
+    <span class="kw">public void</span> onAuthenticationSuccess(HttpServletRequest req,
+            HttpServletResponse res, Authentication auth) <span class="kw">throws</span> IOException, ServletException {
+
+        principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
+
+        OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
+        String registrationId = token.getAuthorizedClientRegistrationId();
+
+        <span class="kw">if</span> (<span class="str">"keycloak-mobile"</span>.equals(registrationId)) {
+            handleMobile(req, res, token);
+        } <span class="kw">else</span> {
+            <span class="cm">// keycloak-web: tokeny zostają w sesji, redirect na stronę</span>
+            <span class="kw">new</span> SimpleUrlAuthenticationSuccessHandler(webSuccessUrl)
+                .onAuthenticationSuccess(req, res, auth);
+        }
+    }
+
+    <span class="kw">private void</span> handleMobile(HttpServletRequest req, HttpServletResponse res,
+            OAuth2AuthenticationToken token) <span class="kw">throws</span> IOException {
+
+        String regId = token.getAuthorizedClientRegistrationId();
+
+        <span class="cm">// 1. Pobierz tokeny (sesja jeszcze istnieje — musi być przed invalidate)</span>
+        OAuth2AuthorizedClient client = authorizedClientService
+            .loadAuthorizedClient(regId, token.getName());
+
+        <span class="kw">if</span> (client == <span class="kw">null</span> || client.getAccessToken() == <span class="kw">null</span>) {
+            res.sendError(<span class="num">500</span>, <span class="str">"Failed to retrieve access token"</span>);
+            <span class="kw">return</span>;
+        }
+
+        String at = client.getAccessToken().getTokenValue();
+        String rt = client.getRefreshToken() != <span class="kw">null</span>
+            ? client.getRefreshToken().getTokenValue() : <span class="kw">null</span>;
+
+        <span class="cm">// 2. Usuń OAuth2AuthorizedClient — mobilka ma tokeny, backend nie musi</span>
+        authorizedClientService.removeAuthorizedClient(regId, token.getName());
+
+        <span class="cm">// 3. KRYTYCZNE: wyczyść SecurityContext PRZED invalidate() i sendRedirect()</span>
+        <span class="cm">//    Bez tego SaveContextOnUpdateOrErrorResponseWrapper przechwytuje sendRedirect(),</span>
+        <span class="cm">//    widzi niepusty SecurityContextHolder, wywołuje getSession(true) i tworzy</span>
+        <span class="cm">//    NOWĄ sesję — response mobilki dostaje Set-Cookie: JSESSIONID=new-id!</span>
+        SecurityContextHolder.clearContext();
+
+        <span class="cm">// 4. Invaliduj tymczasową sesję (była potrzebna tylko na state/nonce/code_verifier)</span>
+        HttpSession session = req.getSession(<span class="kw">false</span>);
+        <span class="kw">if</span> (session != <span class="kw">null</span>) session.invalidate();
+
+        <span class="cm">// 5. Deep link z AT + RT</span>
+        StringBuilder link = <span class="kw">new</span> StringBuilder(mobileDeepLinkScheme)
+            .append(<span class="str">"://auth-success#at="</span>)
+            .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
+        <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;rt="</span>)
+            .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
+
+        log.debug(<span class="str">"Mobile auth success — redirecting to deep link for user: {}"</span>, token.getName());
+        res.sendRedirect(link.toString());
+    }
+}</code></pre>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Dlaczego <code>SecurityContextHolder.clearContext()</code> musi być przed <code>session.invalidate()</code>?</strong><br>
+      Spring Security owija <code>HttpServletResponse</code> w <code>SaveContextOnUpdateOrErrorResponseWrapper</code>. Kiedy wywołujesz <code>res.sendRedirect()</code>, wrapper najpierw wywołuje <code>saveContext()</code>. Jeśli <code>SecurityContextHolder</code> nie jest pusty, <code>HttpSessionSecurityContextRepository.saveContext()</code> wywołuje <code>request.getSession(true)</code> — tworzy <em>nową</em> sesję i ustawia <code>Set-Cookie: JSESSIONID=&lt;new-id&gt;</code> na response'ie z deep linkiem. Mobilka nieświadomie dostaje ciasteczko sesji na odpowiedzi z <code>302 myapp://auth-success</code>. <code>clearContext()</code> sprawia, że <code>saveContext()</code> nie ma co zapisać i pomija tworzenie sesji.
+    </div></div>
+
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>AT w URL deep linka — implikacje bezpieczeństwa:</strong><br>
+      JWT pojawia się w <code>response.sendRedirect()</code>, co loguje go w access logach Tomcata (zależy od konfiguracji). Zalecane mitygacje: (1) ustaw krótki czas życia AT w Keycloaku (300 s = domyślnie); (2) wyłącz logowanie query string w prodzie; (3) rozważ App Links (Android) / Universal Links (iOS) z weryfikacją domeny — eliminuje intent hijacking.
+    </div></div>
+
+    <h3>Odmiana z jednorazowym kodem zamiast tokena w URL</h3>
+    <p>Bezpieczniejsza alternatywa: zamiast AT w deep linku, handler zapisuje go tymczasowo w pamięci (Redis/Caffeine) pod losowym kodem jednorazowym i przekierowuje <code>myapp://auth-success?code=XYZ</code>. Mobilka odbiera kod i wykonuje <code>POST /api/mobile/auth/exchange</code> po AT, który jest zwracany w JSON (nie w URL). Kod jest jednorazowy — po wymianie usuwany.</p>
+  </section>
+
+</main>
+</div>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a[href^="#"]');
+
+  function updateNav() {
+    let current = '';
+    const scrollY = window.scrollY;
+    sections.forEach(section => {
+      const sectionTop = section.offsetTop;
+      if (scrollY >= sectionTop - 100) {
+        current = section.getAttribute('id');
+      }
+    });
+
+    navLinks.forEach(l => {
+      l.classList.remove('active');
+      if (current && l.getAttribute('href') === `#${current}`) {
+        l.classList.add('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('load', updateNav);
+  updateNav();
+</script>
+</body>
+</html>

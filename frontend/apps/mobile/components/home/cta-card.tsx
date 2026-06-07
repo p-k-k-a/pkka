@@ -1,14 +1,14 @@
-import * as React from "react";
-import { Pressable, View } from "react-native";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import * as React from "react";
+import { Pressable } from "react-native";
 
 type CtaCardProps = {
   title: string;
   subtitle: string;
   primaryLabel: string;
-  secondaryLabel?: string;
+  secondaryLabel: string;
   onPrimary?: () => void;
   onSecondary?: () => void;
 };
@@ -35,13 +35,11 @@ function CtaCard({
           {primaryLabel}
         </Text>
       </Button>
-      {secondaryLabel ? (
-        <Pressable className="mt-4 items-center" onPress={onSecondary}>
-          <Text className="text-background/60 text-xs font-semibold tracking-widest uppercase">
-            {secondaryLabel}
-          </Text>
-        </Pressable>
-      ) : null}
+      <Pressable className="mt-4 items-center" onPress={onSecondary}>
+        <Text className="text-background/60 text-xs font-semibold tracking-widest uppercase">
+          {secondaryLabel}
+        </Text>
+      </Pressable>
     </Card>
   );
 }
