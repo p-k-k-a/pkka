@@ -39,6 +39,12 @@ services:
         condition: service_healthy
     networks:
       - iam-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/health/ready | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   mailpit:
     image: axllent/mailpit:latest
@@ -92,7 +98,7 @@ services:
       pkka-postgres:
         condition: service_healthy
       keycloak:
-        condition: service_started
+        condition: service_healthy
     networks:
       - iam-network
 

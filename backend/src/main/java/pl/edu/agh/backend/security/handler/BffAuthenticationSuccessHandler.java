@@ -18,6 +18,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import pl.edu.agh.backend.user.UserPrincipalExtractor;
+import pl.edu.agh.backend.user.UserProvisioningService;
 
 @Component
 @RequiredArgsConstructor
@@ -25,16 +27,20 @@ import org.springframework.stereotype.Component;
 public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final OAuth2AuthorizedClientService authorizedClientService;
+    private final UserProvisioningService userProvisioningService;
+    private final UserPrincipalExtractor principalExtractor;
 
-    @Value("${app.mobile.deep-link-scheme:pkka}")
+    @Value("${app.mobile.deep-link-scheme}")
     private String mobileDeepLinkScheme;
 
-    @Value("${app.web.success-url:/}")
+    @Value("${app.web.success-url}")
     private String webSuccessUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth)
             throws IOException, ServletException {
+
+        principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
         String registrationId = token.getAuthorizedClientRegistrationId();
@@ -74,7 +80,9 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
                 .append("://auth-success#at=")
                 .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
-        if (rt != null) link.append("&rt=").append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
+        if (rt != null) {
+            link.append("&rt=").append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
+        }
 
         log.debug("Mobile auth success — redirecting to deep link for user: {}", token.getName());
         res.sendRedirect(link.toString());
