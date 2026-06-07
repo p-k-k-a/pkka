@@ -8,7 +8,7 @@ type CtaCardProps = {
   title: string;
   subtitle: string;
   primaryLabel: string;
-  secondaryLabel: string;
+  secondaryLabel?: string;
   onPrimary?: () => void;
   onSecondary?: () => void;
 };
@@ -35,11 +35,13 @@ function CtaCard({
           {primaryLabel}
         </Text>
       </Button>
-      <Pressable className="mt-4 items-center" onPress={onSecondary}>
-        <Text className="text-background/60 text-xs font-semibold tracking-widest uppercase">
-          {secondaryLabel}
-        </Text>
-      </Pressable>
+      {secondaryLabel ? (
+        <Pressable className="mt-4 items-center" onPress={onSecondary}>
+          <Text className="text-background/60 text-xs font-semibold tracking-widest uppercase">
+            {secondaryLabel}
+          </Text>
+        </Pressable>
+      ) : null}
     </Card>
   );
 }

@@ -37,6 +37,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/BlogPost"
 
+  /api/events:
+    get:
+      summary: Pobiera listę wydarzeń
+      operationId: getEvents
+      responses:
+        "200":
+          description: Lista wydarzeń pobrana pomyślnie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+
 components:
   schemas:
     Author:
@@ -144,3 +158,33 @@ components:
           description: Przyjazny URL
         author:
           $ref: "#/components/schemas/Author"
+
+    Event:
+      type: object
+      required:
+        - id
+        - title
+        - date
+        - format
+        - access
+        - location
+      properties:
+        id:
+          type: string
+          description: Unikalne ID wydarzenia
+        title:
+          type: string
+          description: Tytuł wydarzenia
+          x-faker: lorem.sentence
+        date:
+          type: string
+          description: Data wydarzenia w formacie tekstowym (np. 12 grudnia 2024)
+        format:
+          type: string
+          description: Forma wydarzenia (Stacjonarnie lub Online)
+        access:
+          type: string
+          description: Poziom dostępu (Publiczne lub Zamknięte)
+        location:
+          type: string
+          description: Miejsce wydarzenia lub opis linku do transmisji
