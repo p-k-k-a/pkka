@@ -2,7 +2,6 @@ package pl.edu.agh.backend.service;
 
 import static pl.edu.agh.backend.repository.EventSpecifications.*;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -29,7 +28,6 @@ public class EventService {
     private static final String ROLE_VERIFIED_ALUMN = "ROLE_VERIFIED_ALUMN";
 
     private final EventRepository eventRepository;
-    private final Clock clock;
 
     public Page<Event> list(Authentication authentication, Collection<String> tagNames, Pageable pageable) {
         Specification<Event> spec = Specification.where(startsAfter(Instant.now()))
