@@ -1,8 +1,9 @@
 import { AuthContextType, User } from "@/types/auth";
-import { configureApi } from "@pkka/api";
+import { configureApi, refreshTokens } from "@pkka/api";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { createContext, useContext, useEffect, useState } from "react";
+import { AppState } from "react-native";
 
 export const AuthContext = createContext<null | AuthContextType>(null);
 
@@ -18,7 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
-    console.log("Decoded JWT:", decoded);
+    console.warn("login run!");
     setUser({
       sub: decoded["sub"],
       role: decoded["realm_access"]["roles"].includes("alumni") ? "alumni" : "user",
@@ -33,6 +34,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.deleteItemAsync("at");
     await SecureStore.deleteItemAsync("rt");
   };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", async (state) => {
+      if (state === "active") {
+        const AT = await SecureStore.getItemAsync("at");
+        if (AT) {
+          const expiry = jwtDecode(AT)["exp"] as number;
+          const currentTime = Math.floor(Date.now() / 1000);
+          if (expiry - currentTime < 60) {
+            try {
+              await refreshTokens();
+              console.log("Tokens refreshed on app focus");
+            } catch (err) {
+              console.error("Failed to refresh tokens on app focus:", err);
+            }
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const loginFromStorage = async () => {
