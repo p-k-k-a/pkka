@@ -34,13 +34,11 @@ public class AuthRefreshController {
 
     @PostMapping("/refresh")
     public TokenResponse refresh(@RequestBody RefreshRequest body) {
-        MultiValueMap<String, String> form =
-                MultiValueMap.fromSingleValue(
-                        Map.of(
-                                "grant_type", "refresh_token",
-                                "refresh_token", body.refreshToken(),
-                                "client_id", mobile.getClientId(),
-                                "client_secret", mobile.getClientSecret()));
+        MultiValueMap<String, String> form = MultiValueMap.fromSingleValue(Map.of(
+                "grant_type", "refresh_token",
+                "refresh_token", body.refreshToken(),
+                "client_id", mobile.getClientId(),
+                "client_secret", mobile.getClientSecret()));
 
         return restClient
                 .post()
@@ -48,32 +46,26 @@ public class AuthRefreshController {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(form)
                 .retrieve()
-                .onStatus(
-                        status -> status.is4xxClientError(),
-                        (req, res) -> {
-                            throw new ResponseStatusException(
-                                    HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
-                        })
+                .onStatus(status -> status.is4xxClientError(), (req, res) -> {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+                })
                 .body(TokenResponse.class);
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/logout")
     public void logout(@RequestBody RefreshRequest body) {
-        MultiValueMap<String, String> form =
-                MultiValueMap.fromSingleValue(
-                        Map.of(
-                                "client_id", mobile.getClientId(),
-                                "client_secret", mobile.getClientSecret(),
-                                "refresh_token", body.refreshToken()));
+        MultiValueMap<String, String> form = MultiValueMap.fromSingleValue(Map.of(
+                "client_id", mobile.getClientId(),
+                "client_secret", mobile.getClientSecret(),
+                "refresh_token", body.refreshToken()));
 
         restClient
                 .post()
-                .uri(
-                        mobile.getProviderDetails()
-                                .getConfigurationMetadata()
-                                .get("end_session_endpoint")
-                                .toString())
+                .uri(mobile.getProviderDetails()
+                        .getConfigurationMetadata()
+                        .get("end_session_endpoint")
+                        .toString())
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(form)
                 .retrieve()

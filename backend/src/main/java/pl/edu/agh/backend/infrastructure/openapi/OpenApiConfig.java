@@ -15,17 +15,11 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .info(
-                        new Info()
-                                .title("PKKA Backend API")
-                                .version("v1")
-                                .description(
-                                        "REST API for the Alumni Club platform of the AGH Faculty"
-                                                + " of Computer Science."))
-                .servers(
-                        List.of(
-                                new Server()
-                                        .url("http://localhost:8080")
-                                        .description("Local dev")));
+                .info(new Info()
+                        .title("PKKA Backend API")
+                        .version("v1")
+                        .description(
+                                "REST API for the Alumni Club platform of the AGH Faculty" + " of Computer Science."))
+                .servers(List.of(new Server().url("http://localhost:8080").description("Local dev")));
     }
 }
