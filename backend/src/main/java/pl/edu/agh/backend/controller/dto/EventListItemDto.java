@@ -1,6 +1,6 @@
 package pl.edu.agh.backend.controller.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 import pl.edu.agh.backend.domain.Event;
 import pl.edu.agh.backend.domain.EventType;
@@ -8,7 +8,7 @@ import pl.edu.agh.backend.domain.EventType;
 public record EventListItemDto(
         UUID id,
         String title,
-        LocalDateTime startsAt,
+        Instant startsAt,
         EventType type,
         String location,
         String coverImageUrl,
