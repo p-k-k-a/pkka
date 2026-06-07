@@ -1,8 +1,10 @@
 let baseUrl = "";
 let getAuthToken: () => string | null | Promise<string | null> = () => null;
 let onUnauthenticated: () => void = () => {};
-let getRefreshToken: () => Promise<string | null> = () => null;
+let getRefreshToken: () => Promise<string | null>;
 let onTokenRefreshed: (newAT: string, newRT: string) => void = () => {};
+
+let refreshingTokenPromise: Promise<string> | null = null;
 
 export function configureApi(opts: {
   baseUrl: string;
@@ -41,7 +43,9 @@ const parseBody = async <T>(res: Response): Promise<T> => {
   return (await res.text()) as T;
 };
 
-const refreshTokens = async (): Promise<string> => {
+export const refreshTokens = async (): Promise<string> => {
+  if (refreshingTokenPromise) return refreshingTokenPromise;
+
   const rt = await getRefreshToken();
 
   if (!rt) {
@@ -49,6 +53,16 @@ const refreshTokens = async (): Promise<string> => {
     throw new Error("No refresh token");
   }
 
+  refreshingTokenPromise = performTokenRefresh(rt);
+
+  try {
+    return await refreshingTokenPromise;
+  } finally {
+    refreshingTokenPromise = null;
+  }
+};
+
+const performTokenRefresh = async (rt: string): Promise<string> => {
   const res = await fetch(buildUrl("/api/public/auth/refresh"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
