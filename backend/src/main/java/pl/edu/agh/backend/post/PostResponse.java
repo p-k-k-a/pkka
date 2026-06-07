@@ -9,13 +9,7 @@ import java.util.UUID;
  * TODO: enrich with authorDisplayName after the profile issue.
  */
 public record PostResponse(
-        UUID id,
-        String slug,
-        String title,
-        String content,
-        String authorId,
-        Instant publishedAt,
-        Instant updatedAt) {
+        UUID id, String slug, String title, String content, String authorId, Instant publishedAt, Instant updatedAt) {
 
     static PostResponse from(Post post) {
         return new PostResponse(
