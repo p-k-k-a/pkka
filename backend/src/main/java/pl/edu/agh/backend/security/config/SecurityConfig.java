@@ -70,8 +70,8 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Chain 2 — handles the rest of the traffic that Chain 1 didn't intercept /**  (Web login/logout, Swagger, static
-    // paths),
+    // Chain 2 — handles the rest of the traffic that Chain 1 didn't intercept /**  (Web
+    // login/logout, Swagger, static paths),
     // direct access to discord authn flow via oauth2Login with DiscordByPassResolver
     @Bean
     @Order(2)
@@ -121,9 +121,7 @@ public class SecurityConfig {
         return converter;
     }
 
-    /**
-     *  Web (oauth2Login) — OidcUserService is an AT roles reader
-     */
+    /** Web (oauth2Login) — OidcUserService is an AT roles reader */
     private OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService(JwtDecoder atDecoder) {
         OidcUserService delegate = new OidcUserService();
         return request -> {
@@ -142,9 +140,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Extracts roles from the {@code realm_access.roles} claim.
-     * Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash -> underscore).
-     * Used by both converters (Web and Mobile).
+     * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash
+     * -> underscore). Used by both converters (Web and Mobile).
      */
     static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
         @SuppressWarnings("unchecked")
@@ -164,8 +161,8 @@ public class SecurityConfig {
     }
 
     /**
-     * CSRF predicate - does the request carry the Authorization: Bearer header?
-     * Bearer is CSRF-safe by nature (not automatically sent by the browser).
+     * CSRF predicate - does the request carry the Authorization: Bearer header? Bearer is CSRF-safe by nature (not
+     * automatically sent by the browser).
      */
     static boolean hasBearerToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -173,8 +170,8 @@ public class SecurityConfig {
     }
 
     /**
-     * Internal converter for the Resource Server - delegates to extractRealmRoles.
-     * Used by jwtAuthenticationConverter().
+     * Internal converter for the Resource Server - delegates to extractRealmRoles. Used by
+     * jwtAuthenticationConverter().
      */
     static class KeycloakJwtRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
         @Override
