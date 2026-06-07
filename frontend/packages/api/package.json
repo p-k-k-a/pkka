@@ -7,7 +7,7 @@
     "./msw": "./src/generated/api.msw.ts"
   },
   "scripts": {
-    "generate": "orval --config orval.config.ts",
+    "generate": "orval --config ./orval.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

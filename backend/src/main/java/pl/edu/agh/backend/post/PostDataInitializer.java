@@ -29,7 +29,6 @@ class PostDataInitializer implements ApplicationRunner {
         postRepository.save(buildPost(
                 author,
                 "Witajcie na platformie AGH Alumni!",
-                "Krótkie wprowadzenie do platformy Klubu Alumna wydziału informatyki AGH.",
                 """
                 ## Witajcie!
 
@@ -43,7 +42,6 @@ class PostDataInitializer implements ApplicationRunner {
         postRepository.save(buildPost(
                 author,
                 "Jak działa weryfikacja statusu alumna?",
-                "Krótki przewodnik po procesie weryfikacji i nadawania statusu alumna.",
                 """
                 ## Proces weryfikacji
 
@@ -54,7 +52,7 @@ class PostDataInitializer implements ApplicationRunner {
                 oraz materiałów archiwalnych.
                 """));
 
-        postRepository.save(buildPost(author, "Pierwsze wydarzenie Klubu Alumna — save the date", null, """
+        postRepository.save(buildPost(author, "Pierwsze wydarzenie Klubu Alumna — save the date", """
                 ## Save the date
 
                 Już wkrótce ogłosimy datę pierwszego spotkania Klubu Alumna Wydziału \
@@ -62,10 +60,9 @@ class PostDataInitializer implements ApplicationRunner {
                 """));
     }
 
-    private Post buildPost(User author, String title, String excerpt, String content) {
+    private Post buildPost(User author, String title, String content) {
         var post = new Post();
         post.setTitle(title);
-        post.setExcerpt(excerpt);
         post.setContent(content);
         post.setAuthor(author);
         post.publish();
