@@ -26,10 +26,7 @@ class PostDataInitializer implements ApplicationRunner {
             return userRepository.save(u);
         });
 
-        postRepository.save(buildPost(
-                author,
-                "Witajcie na platformie AGH Alumni!",
-                """
+        postRepository.save(buildPost(author, "Witajcie na platformie AGH Alumni!", """
                 ## Witajcie!
 
                 Platforma AGH Alumni to miejsce spotkań absolwentów Wydziału Informatyki.
@@ -39,10 +36,7 @@ class PostDataInitializer implements ApplicationRunner {
                 Zachęcamy do uzupełnienia profilu i złożenia wniosku o dołączenie do klubu.
                 """));
 
-        postRepository.save(buildPost(
-                author,
-                "Jak działa weryfikacja statusu alumna?",
-                """
+        postRepository.save(buildPost(author, "Jak działa weryfikacja statusu alumna?", """
                 ## Proces weryfikacji
 
                 Po rejestracji konta możesz złożyć wniosek o status alumna przez zakładkę \

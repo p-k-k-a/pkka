@@ -10,15 +10,10 @@ import java.util.UUID;
  * until the profile issue is completed (these details live in Keycloak, not in the app DB).
  * TODO: enrich with authorDisplayName after the profile issue.
  */
-public record PostSummaryResponse(
-        UUID id, String slug, String title, String authorId, Instant publishedAt) {
+public record PostSummaryResponse(UUID id, String slug, String title, String authorId, Instant publishedAt) {
 
     static PostSummaryResponse from(Post post) {
         return new PostSummaryResponse(
-                post.getId(),
-                post.getSlug(),
-                post.getTitle(),
-                post.getAuthor().getKeycloakId(),
-                post.getPublishedAt());
+                post.getId(), post.getSlug(), post.getTitle(), post.getAuthor().getKeycloakId(), post.getPublishedAt());
     }
 }

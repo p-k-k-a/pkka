@@ -1,10 +1,9 @@
 package pl.edu.agh.backend;
 
+import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-
-import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableJpaAuditing(dateTimeProviderRef = "auditingDateTimeProvider")
