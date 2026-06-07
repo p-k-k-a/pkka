@@ -2,7 +2,7 @@ package pl.edu.agh.backend.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "events", indexes = @Index(name = "idx_events_starts_at", columnList = "starts_at"))
 @EntityListeners(AuditingEntityListener.class)
-@SQLDelete(sql = "UPDATE events SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLDelete(sql = "UPDATE events SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND version = ?")
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
@@ -52,11 +52,11 @@ public class Event {
     @NotNull
     @Column(name = "starts_at", nullable = false)
     @ToString.Include
-    private LocalDateTime startsAt;
+    private Instant startsAt;
 
     @NotNull
     @Column(name = "ends_at", nullable = false)
-    private LocalDateTime endsAt;
+    private Instant endsAt;
 
     @Column(name = "transmission_url", length = 500)
     private String transmissionUrl;
@@ -69,7 +69,7 @@ public class Event {
     private Integer seatLimit;
 
     @Column(name = "registration_closes_at")
-    private LocalDateTime registrationClosesAt;
+    private Instant registrationClosesAt;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -90,14 +90,14 @@ public class Event {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @Version
     @Column(name = "version", nullable = false)
@@ -105,8 +105,12 @@ public class Event {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Event other)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Event other)) {
+            return false;
+        }
         return id != null && id.equals(other.id);
     }
 
