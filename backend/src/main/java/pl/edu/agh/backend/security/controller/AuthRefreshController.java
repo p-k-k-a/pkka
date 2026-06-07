@@ -32,11 +32,18 @@ public class AuthRefreshController {
             @JsonProperty("access_token") String accessToken,
             @JsonProperty("refresh_token") String refreshToken) {}
 
+    private static String requireRefreshToken(RefreshRequest body) {
+        if (body == null || body.refreshToken() == null || body.refreshToken().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing refresh token");
+        }
+        return body.refreshToken();
+    }
+
     @PostMapping("/refresh")
     public TokenResponse refresh(@RequestBody RefreshRequest body) {
         MultiValueMap<String, String> form = MultiValueMap.fromSingleValue(Map.of(
                 "grant_type", "refresh_token",
-                "refresh_token", body.refreshToken(),
+                "refresh_token", requireRefreshToken(body),
                 "client_id", mobile.getClientId(),
                 "client_secret", mobile.getClientSecret()));
 
@@ -58,7 +65,7 @@ public class AuthRefreshController {
         MultiValueMap<String, String> form = MultiValueMap.fromSingleValue(Map.of(
                 "client_id", mobile.getClientId(),
                 "client_secret", mobile.getClientSecret(),
-                "refresh_token", body.refreshToken()));
+                "refresh_token", requireRefreshToken(body)));
 
         restClient
                 .post()

@@ -6,5 +6,5 @@ export type User = {
 export type AuthContextType = {
   user: User | null;
   login: (at: string, rt: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };

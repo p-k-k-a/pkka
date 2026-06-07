@@ -80,10 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       baseUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080",
       getAuthToken: async () => await SecureStore.getItemAsync("at"),
       getRefreshToken: async () => await SecureStore.getItemAsync("rt"),
-      onUnauthenticated: () => logout(),
-      onTokenRefreshed: async (newAT, newRT) => {
-        login(newAT, newRT);
-      },
+      onUnauthenticated: logout,
+      onTokenRefreshed: login,
     });
   }, []);
 

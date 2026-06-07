@@ -1,17 +1,17 @@
 let baseUrl = "";
 let getAuthToken: () => string | null | Promise<string | null> = () => null;
-let onUnauthenticated: () => void = () => {};
-let getRefreshToken: () => Promise<string | null>;
-let onTokenRefreshed: (newAT: string, newRT: string) => void = () => {};
+let onUnauthenticated: () => Promise<void> = async () => {};
+let getRefreshToken: () => Promise<string | null> = async () => null;
+let onTokenRefreshed: (newAT: string, newRT: string) => Promise<void> = async () => {};
 
 let refreshingTokenPromise: Promise<string> | null = null;
 
 export function configureApi(opts: {
   baseUrl: string;
   getAuthToken?: () => string | null | Promise<string | null>;
-  onUnauthenticated?: () => void;
+  onUnauthenticated?: () => Promise<void>;
   getRefreshToken?: () => Promise<string | null>;
-  onTokenRefreshed?: (newAT: string, newRT: string) => void;
+  onTokenRefreshed?: (newAT: string, newRT: string) => Promise<void>;
 }) {
   baseUrl = opts.baseUrl.replace(/\/$/, "");
   if (opts.getAuthToken) getAuthToken = opts.getAuthToken;
@@ -49,7 +49,7 @@ export const refreshTokens = async (): Promise<string> => {
   const rt = await getRefreshToken();
 
   if (!rt) {
-    onUnauthenticated();
+    await onUnauthenticated();
     throw new Error("No refresh token");
   }
 
@@ -70,12 +70,12 @@ const performTokenRefresh = async (rt: string): Promise<string> => {
   });
 
   if (!res.ok) {
-    onUnauthenticated();
+    await onUnauthenticated();
     throw new Error("Refresh failed");
   }
 
   const data = (await res.json()) as { access_token: string; refresh_token: string };
-  onTokenRefreshed(data.access_token, data.refresh_token);
+  await onTokenRefreshed(data.access_token, data.refresh_token);
   return data.access_token;
 };
 
