@@ -76,7 +76,7 @@ export function AnnouncementsSection() {
                       alt={post.title ?? "Aktualność"}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-102"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                       priority
                     />
                   </div>
