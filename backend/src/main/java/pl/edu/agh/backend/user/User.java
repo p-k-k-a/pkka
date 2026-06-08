@@ -1,12 +1,14 @@
 package pl.edu.agh.backend.user;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Local application user record. Keycloak is the source of truth for identity and roles.
@@ -14,12 +16,11 @@ import lombok.Setter;
  */
 @Entity
 @Table(name = "users", indexes = @Index(name = "idx_users_keycloak_id", columnList = "keycloak_id", unique = true))
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
 public class User {
-
-    private static final ZoneId POLAND_ZONE = ZoneId.of("Europe/Warsaw");
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,19 +32,11 @@ public class User {
     @Column(name = "keycloak_id", nullable = false, unique = true, length = 36)
     private String keycloakId;
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = updatedAt = OffsetDateTime.now(POLAND_ZONE);
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = OffsetDateTime.now(POLAND_ZONE);
-    }
+    private Instant updatedAt;
 }

@@ -1,99 +1,81 @@
-import { Image } from "expo-image";
-import { Platform, StyleSheet } from "react-native";
+import { CtaCard } from "@/components/home/cta-card";
+import { Hero } from "@/components/home/hero";
+import { PostCard } from "@/components/home/post-card";
+import { SectionHeading } from "@/components/home/section-heading";
+import { Text } from "@/components/ui/text";
+import { useListPosts } from "@pkka/api";
+import { ChevronDown } from "lucide-react-native";
+import * as React from "react";
+import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 
-import { HelloWave } from "@/components/hello-wave";
-import ParallaxScrollView from "@/components/parallax-scroll-view";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Link } from "expo-router";
+const HERO = {
+  title: "Witaj w P.K.K.A",
+  body: "Platforma łącząca inżynierów i specjalistów IT Wydziału Informatyki AGH. Współpracuj, rozwijaj się i buduj przyszłość technologii.",
+};
 
-export default function HomeScreen() {
+const CTA = {
+  title: "Dołącz do naszej społeczności",
+  subtitle:
+    "Dostęp do zamkniętych wydarzeń i katalogu ekspertów. Weryfikacja tylko dla absolwentów WI AGH.",
+  primaryLabel: "Zarejestruj się",
+  secondaryLabel: "Dowiedz się więcej",
+};
+
+function ListHeader() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert("Action pressed")} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert("Share pressed")}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert("Delete pressed")}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View className="px-5 gap-10">
+      <Hero {...HERO} />
+      <CtaCard {...CTA} />
+      <SectionHeading title={"Publiczne\nAktualności"} />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
-  },
-});
+function ListFooter() {
+  return (
+    <Pressable
+      className="flex-row items-center justify-center gap-2 py-8"
+      onPress={() => {
+        console.log("nothing yet");
+      }}
+    >
+      <Text className="text-xs font-bold tracking-widest uppercase text-foreground">
+        ZOBACZ STARSZE WPISY
+      </Text>
+      <ChevronDown size={16} />
+    </Pressable>
+  );
+}
+
+export default function HomeScreen() {
+  const { data, isLoading, isError } = useListPosts({ size: 10 });
+
+  const posts = data?.data?.content ?? [];
+
+  return (
+    <FlatList
+      className="flex-1 bg-background"
+      data={posts}
+      keyExtractor={(item) => item.id ?? item.slug ?? ""}
+      renderItem={({ item }) => (
+        <View className="px-5">
+          <PostCard post={item} />
+        </View>
+      )}
+      ItemSeparatorComponent={() => <View className="h-5" />}
+      ListHeaderComponent={ListHeader}
+      ListHeaderComponentStyle={{ marginBottom: 20 }}
+      ListFooterComponent={
+        isLoading ? (
+          <ActivityIndicator className="py-8" />
+        ) : isError ? (
+          <Text className="text-muted-foreground text-sm text-center py-8">
+            Nie udało się załadować aktualności.
+          </Text>
+        ) : (
+          <ListFooter />
+        )
+      }
+    />
+  );
+}
