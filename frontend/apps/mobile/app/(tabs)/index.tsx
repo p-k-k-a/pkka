@@ -3,8 +3,7 @@ import { Hero } from "@/components/home/hero";
 import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
-import type { Announcement } from "@pkka/api";
-import { useGetAnnouncements } from "@pkka/api";
+import { useListPosts } from "@pkka/api";
 import { ChevronDown } from "lucide-react-native";
 import * as React from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
@@ -49,18 +48,18 @@ function ListFooter() {
 }
 
 export default function HomeScreen() {
-  const { data, isLoading, isError } = useGetAnnouncements();
+  const { data, isLoading, isError } = useListPosts({ page: 0, size: 20 });
 
-  const announcements = (data?.data ?? []) as Announcement[];
+  const posts = data?.data?.content ?? [];
 
   return (
     <FlatList
       className="flex-1 bg-background"
-      data={announcements}
+      data={posts}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <View className="px-5">
-          <PostCard announcement={item} />
+          <PostCard post={item} />
         </View>
       )}
       ItemSeparatorComponent={() => <View className="h-5" />}

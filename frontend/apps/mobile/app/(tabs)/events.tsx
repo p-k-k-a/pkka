@@ -1,17 +1,9 @@
 import { EventCard } from "@/components/events/event-card";
-import { EventsHeader } from "@/components/events/events-header";
 import { CtaCard } from "@/components/home/cta-card";
 import { Text } from "@/components/ui/text";
-import { useGetEvents } from "@pkka/api";
+import { useList as useEventsList } from "@pkka/api";
 import { router } from "expo-router";
 import { ActivityIndicator, FlatList, View } from "react-native";
-
-const HEADER = {
-  label: "Kalendarz wydarzeń",
-  title: "Wydarzenia",
-  intro:
-    "Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH. Dołącz do nas i buduj sieć kontaktów.",
-};
 
 const CTA = {
   title: "Chcesz brać udział w wydarzeniach zamkniętych?",
@@ -22,16 +14,27 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5">
-      <EventsHeader {...HEADER} />
+    <View className="px-5 gap-8">
+      <View>
+        <View className="gap-1">
+          <Text variant="h1" className="text-left text-4xl">
+            Wydarzenia
+          </Text>
+        </View>
+        <Text className="leading-6 text-muted-foreground">
+          Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH.
+          Dołącz do nas i buduj sieć kontaktów.
+        </Text>
+      </View>
+      <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
     </View>
   );
 }
 
 export default function EventsScreen() {
-  const { data, isLoading, isError } = useGetEvents();
+  const { data, isLoading, isError } = useEventsList({ pageable: { page: 0, size: 20 } });
 
-  const events = data?.data ?? [];
+  const events = data?.data?.content ?? [];
 
   return (
     <FlatList
@@ -55,7 +58,6 @@ export default function EventsScreen() {
               Nie udało się załadować wydarzeń.
             </Text>
           ) : null}
-          <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
         </View>
       }
     />
