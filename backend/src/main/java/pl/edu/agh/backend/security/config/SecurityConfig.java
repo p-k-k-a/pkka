@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,35 +49,22 @@ public class SecurityConfig {
 
         http.securityMatcher("/api/**")
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .csrf(
-                        csrf ->
-                                csrf.csrfTokenRepository(
-                                                CookieCsrfTokenRepository.withHttpOnlyFalse())
-                                        .csrfTokenRequestHandler(
-                                                new XorCsrfTokenRequestAttributeHandler())
-                                        .ignoringRequestMatchers(SecurityConfig::hasBearerToken))
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers("/api/public/**")
-                                        .permitAll()
-                                        .requestMatchers("/api/alumni/**")
-                                        .hasRole("VERIFIED_ALUMN")
-                                        .requestMatchers("/api/admin/**")
-                                        .hasRole("ADMIN")
-                                        .anyRequest()
-                                        .hasRole("USER"))
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
+                        .ignoringRequestMatchers(SecurityConfig::hasBearerToken))
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
+                        .permitAll()
+                        .requestMatchers("/api/alumni/**")
+                        .hasRole("VERIFIED_ALUMN")
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+                        .anyRequest()
+                        .hasRole("USER"))
                 // we as resource server validate JWT by Keycloak JWKS, if SecurityContext is filled
                 // up from session,
                 // that is skipped
-                .oauth2ResourceServer(
-                        rs ->
-                                rs.jwt(
-                                                jwt ->
-                                                        jwt.jwtAuthenticationConverter(
-                                                                jwtAuthenticationConverter))
-                                        .authenticationEntryPoint(
-                                                (req, res, ex) ->
-                                                        res.sendError(401, "Unauthorized")));
+                .oauth2ResourceServer(rs -> rs.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                        .authenticationEntryPoint((req, res, ex) -> res.sendError(401, "Unauthorized")));
 
         return http.build();
     }
@@ -98,43 +86,28 @@ public class SecurityConfig {
         oidcLogout.setPostLogoutRedirectUri("{baseUrl}/");
 
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .csrf(
-                        csrf ->
-                                csrf.csrfTokenRepository(
-                                                CookieCsrfTokenRepository.withHttpOnlyFalse())
-                                        .csrfTokenRequestHandler(
-                                                new XorCsrfTokenRequestAttributeHandler()))
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(
-                                                "/",
-                                                "/login/**",
-                                                "/error",
-                                                "/oauth2/authorization/**",
-                                                "/login/oauth2/**",
-                                                "/v3/api-docs/**",
-                                                "/v3/api-docs.yaml",
-                                                "/swagger-ui/**",
-                                                "/swagger-ui.html")
-                                        .permitAll()
-                                        .anyRequest()
-                                        .authenticated())
-                .oauth2Login(
-                        oauth2 ->
-                                oauth2.authorizationEndpoint(
-                                                ep ->
-                                                        ep.authorizationRequestResolver(
-                                                                discordBypassResolver))
-                                        .userInfoEndpoint(
-                                                ui ->
-                                                        ui.oidcUserService(
-                                                                oidcUserService(jwtDecoder)))
-                                        .successHandler(bffHandler))
-                .logout(
-                        logout ->
-                                logout.logoutSuccessHandler(oidcLogout)
-                                        .invalidateHttpSession(true)
-                                        .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
+                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))
+                .authorizeHttpRequests(auth -> auth.requestMatchers(
+                                "/",
+                                "/login/**",
+                                "/error",
+                                "/oauth2/authorization/**",
+                                "/login/oauth2/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(
+                                ep -> ep.authorizationRequestResolver(discordBypassResolver))
+                        .userInfoEndpoint(ui -> ui.oidcUserService(oidcUserService(jwtDecoder)))
+                        .successHandler(bffHandler))
+                .logout(logout -> logout.logoutSuccessHandler(oidcLogout)
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
 
         return http.build();
     }
@@ -155,23 +128,19 @@ public class SecurityConfig {
             Jwt at = atDecoder.decode(request.getAccessToken().getTokenValue());
             Set<GrantedAuthority> authorities = new HashSet<>(oidcUser.getAuthorities());
             authorities.addAll(extractRealmRoles(at.getClaims()));
-            String nameAttr =
-                    request.getClientRegistration()
-                            .getProviderDetails()
-                            .getUserInfoEndpoint()
-                            .getUserNameAttributeName();
+            String nameAttr = request.getClientRegistration()
+                    .getProviderDetails()
+                    .getUserInfoEndpoint()
+                    .getUserNameAttributeName();
 
             return new DefaultOidcUser(
-                    List.copyOf(authorities),
-                    oidcUser.getIdToken(),
-                    oidcUser.getUserInfo(),
-                    nameAttr);
+                    List.copyOf(authorities), oidcUser.getIdToken(), oidcUser.getUserInfo(), nameAttr);
         };
     }
 
     /**
-     * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" ->
-     * ROLE_VERIFIED_ALUMN (dash -> underscore). Used by both converters (Web and Mobile).
+     * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash
+     * -> underscore). Used by both converters (Web and Mobile).
      */
     static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
         @SuppressWarnings("unchecked")
@@ -185,13 +154,14 @@ public class SecurityConfig {
             return Set.of();
         }
         return roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.toUpperCase().replace("-", "_")))
+                .map(r -> new SimpleGrantedAuthority(
+                        "ROLE_" + r.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .collect(Collectors.toUnmodifiableSet());
     }
 
     /**
-     * CSRF predicate - does the request carry the Authorization: Bearer header? Bearer is CSRF-safe
-     * by nature (not automatically sent by the browser).
+     * CSRF predicate - does the request carry the Authorization: Bearer header? Bearer is CSRF-safe by nature (not
+     * automatically sent by the browser).
      */
     static boolean hasBearerToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");

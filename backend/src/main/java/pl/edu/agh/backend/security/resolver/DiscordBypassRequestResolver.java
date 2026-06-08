@@ -19,8 +19,7 @@ public class DiscordBypassRequestResolver {
         DefaultOAuth2AuthorizationRequestResolver resolver =
                 new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
 
-        resolver.setAuthorizationRequestCustomizer(
-                OAuth2AuthorizationRequestCustomizers.withPkce());
+        resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
 
         return new OAuth2AuthorizationRequestResolver() {
             @Override

@@ -9,6 +9,7 @@ repos:
       - id: check-yaml
         args: ['--allow-multiple-documents']
       - id: check-added-large-files
+        args: ['--maxkb=2048']
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: check-json

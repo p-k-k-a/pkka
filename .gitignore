@@ -3,3 +3,4 @@ thesis.yaml
 **/.idea
 
 .pnpm-store/
+**/package-lock.json
