@@ -3,17 +3,20 @@ let getAuthToken: () => string | null | Promise<string | null> = () => null;
 let onUnauthenticated: () => Promise<void> = async () => {};
 let getRefreshToken: () => Promise<string | null> = async () => null;
 let onTokenRefreshed: (newAT: string, newRT: string) => Promise<void> = async () => {};
+let useSessionAuth = false;
 
 let refreshingTokenPromise: Promise<string> | null = null;
 
 export function configureApi(opts: {
   baseUrl: string;
+  sessionAuth?: boolean;
   getAuthToken?: () => string | null | Promise<string | null>;
   onUnauthenticated?: () => Promise<void>;
   getRefreshToken?: () => Promise<string | null>;
   onTokenRefreshed?: (newAT: string, newRT: string) => Promise<void>;
 }) {
   baseUrl = opts.baseUrl.replace(/\/$/, "");
+  useSessionAuth = opts.sessionAuth ?? false;
   if (opts.getAuthToken) getAuthToken = opts.getAuthToken;
   if (opts.onUnauthenticated) onUnauthenticated = opts.onUnauthenticated;
   if (opts.getRefreshToken) getRefreshToken = opts.getRefreshToken;
@@ -104,20 +107,30 @@ const safeFetch = async (url: string, options: RequestInit): Promise<Response> =
 
 export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const fullUrl = buildUrl(url);
-  const token = await getAuthToken();
+  const token = useSessionAuth ? null : await getAuthToken();
 
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
-  let res = await safeFetch(fullUrl, { ...options, headers });
+  const fetchOptions: RequestInit = {
+    ...options,
+    headers,
+    credentials: useSessionAuth ? "include" : options.credentials,
+  };
+
+  let res = await safeFetch(fullUrl, fetchOptions);
   let body = await parseBody<unknown>(res);
 
-  if (res.status === 401) {
+  if (res.status === 401 && !useSessionAuth) {
     const newAT = await refreshTokens();
     headers.set("Authorization", `Bearer ${newAT}`);
-    res = await safeFetch(fullUrl, { ...options, headers });
+    res = await safeFetch(fullUrl, { ...fetchOptions, headers });
     body = await parseBody<unknown>(res);
+  }
+
+  if (res.status === 401 && useSessionAuth) {
+    await onUnauthenticated();
   }
 
   if (!res.ok) {
