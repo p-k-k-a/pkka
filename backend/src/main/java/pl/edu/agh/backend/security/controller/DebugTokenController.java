@@ -28,16 +28,13 @@ public class DebugTokenController {
     }
 
     @GetMapping("/debug/token")
-    public ResponseEntity<List<Map<String, Object>>> debugToken(
-            OAuth2AuthenticationToken authentication) {
+    public ResponseEntity<List<Map<String, Object>>> debugToken(OAuth2AuthenticationToken authentication) {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        OAuth2AuthorizedClient client =
-                clientService.loadAuthorizedClient(
-                        authentication.getAuthorizedClientRegistrationId(),
-                        authentication.getName());
+        OAuth2AuthorizedClient client = clientService.loadAuthorizedClient(
+                authentication.getAuthorizedClientRegistrationId(), authentication.getName());
         if (client == null || client.getAccessToken() == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
