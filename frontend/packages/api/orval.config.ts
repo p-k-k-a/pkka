@@ -7,10 +7,15 @@ import { defineConfig } from "orval";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const monorepoRoot = path.resolve(__dirname, "../..");
-const fallbackInput = path.resolve(monorepoRoot, "openapi.yaml");
+const frontendRoot = path.resolve(__dirname, "../..");
+const repoRoot = path.resolve(frontendRoot, "..");
+const fallbackInput = path.resolve(repoRoot, "backend/openapi.json");
 const raw = process.env.OPENAPI_INPUT?.trim() || fallbackInput;
-const input = /^https?:\/\//i.test(raw) ? raw : path.resolve(monorepoRoot, raw);
+const input = /^https?:\/\//i.test(raw)
+  ? raw
+  : path.isAbsolute(raw)
+    ? raw
+    : path.resolve(repoRoot, raw);
 
 export default defineConfig({
   pkka: {

@@ -139,9 +139,7 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
       </header>
 
       <div className="border-border/70 mt-8 space-y-6 border-t pt-8">
-        {post.content ? (
-          <AnnouncementContent content={post.content} />
-        ) : null}
+        {post.content ? <AnnouncementContent content={post.content} /> : null}
       </div>
 
       <footer className="mt-16 flex justify-center border-t pt-10">
