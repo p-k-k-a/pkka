@@ -5,7 +5,10 @@ spring:
     default: dev
 
   config:
-    import: optional:file:.env[.properties],optional:file:./backend/.env[.properties]
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:./backend/.env[.properties]
+      - optional:classpath:.env[.properties]
 
 # OpenAPI / Swagger
 springdoc:
