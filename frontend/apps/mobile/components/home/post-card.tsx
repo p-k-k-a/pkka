@@ -1,45 +1,43 @@
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import type { PostSummaryResponse } from "@pkka/api";
-import { type Href, Link } from "expo-router";
-import { Pressable } from "react-native";
+import type { Announcement } from "@pkka/api";
+import { Link } from "expo-router";
+import { Pressable, View } from "react-native";
 
 type PostCardProps = {
-  post: PostSummaryResponse;
+  announcement: Announcement;
 };
 
-function formatPublishedAt(publishedAt?: string) {
-  if (!publishedAt) return "Nieznana data";
-
-  const date = new Date(publishedAt);
-  if (Number.isNaN(date.getTime())) return "Nieznana data";
-
-  const dateLabel = date.toLocaleDateString("pl-PL");
-  const timeLabel = date.toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" });
-  return `${dateLabel} - ${timeLabel}`;
-}
-
-function PostCard({ post }: PostCardProps) {
-  const slug = post.slug ?? post.id ?? "";
+function PostCard({ announcement }: PostCardProps) {
+  const { title, date, time, slug, author } = announcement;
 
   return (
-    <Link href={`/blog/${slug}` as Href} asChild>
+    <Link href={{ pathname: "/blog/[slug]", params: { slug } }} asChild>
       <Pressable className="active:opacity-90">
         <Card className="border-0 bg-secondary rounded-3xl shadow-md shadow-black/10">
           <CardHeader className="gap-2">
             <Text className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
-              {formatPublishedAt(post.publishedAt)}
+              {date} - {time}
             </Text>
             <Text variant="h3" className="text-xl font-bold leading-tight">
-              {post.title}
+              {title}
             </Text>
           </CardHeader>
 
-          {post.excerpt ? (
-            <CardContent className="pb-2">
-              <Text className="text-sm leading-relaxed text-muted-foreground">{post.excerpt}</Text>
-            </CardContent>
-          ) : null}
+          <CardContent className="pb-2">
+            <View className="flex-row items-center gap-3">
+              <Avatar alt={author.name} className="size-9">
+                <AvatarImage source={{ uri: author.avatarUrl }} />
+              </Avatar>
+              <View className="flex-1">
+                <Text className="text-sm font-semibold text-foreground">{author.name}</Text>
+                <Text className="text-xs uppercase tracking-widest text-muted-foreground">
+                  {author.role}
+                </Text>
+              </View>
+            </View>
+          </CardContent>
 
           <CardFooter>
             <Text className="text-xs font-bold tracking-widest uppercase text-foreground">

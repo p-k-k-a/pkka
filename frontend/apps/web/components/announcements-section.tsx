@@ -92,12 +92,6 @@ export function AnnouncementsSection() {
                       <CardTitle className="text-foreground group-hover:text-primary text-2xl leading-tight font-extrabold transition-colors md:text-3xl">
                         {post.title}
                       </CardTitle>
-
-                      {post.excerpt ? (
-                        <p className="text-muted-foreground line-clamp-3 leading-relaxed md:line-clamp-4">
-                          {post.excerpt}
-                        </p>
-                      ) : null}
                     </div>
 
                     <div className="border-border/70 mt-6 flex items-center justify-end border-t pt-6">
@@ -128,12 +122,6 @@ export function AnnouncementsSection() {
                   <CardTitle className="text-foreground group-hover:text-primary text-xl leading-tight font-bold transition-colors">
                     {post.title}
                   </CardTitle>
-
-                  {post.excerpt ? (
-                    <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
-                      {post.excerpt}
-                    </p>
-                  ) : null}
                 </div>
 
                 <div className="border-border/70 mt-8 flex justify-end border-t pt-6">

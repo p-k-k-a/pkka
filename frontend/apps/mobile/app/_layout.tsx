@@ -11,6 +11,11 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 configureApi({ baseUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080" });
 
+if (__DEV__) {
+  // eslint-disable-next-line
+  require("../msw.setup");
+}
+
 const queryClient = new QueryClient();
 
 export default function RootLayout() {

@@ -139,19 +139,8 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
       </header>
 
       <div className="border-border/70 mt-8 space-y-6 border-t pt-8">
-        {post.excerpt ? (
-          <div className="space-y-2">
-            <h3 className="text-muted-foreground text-xs font-extrabold tracking-widest uppercase">
-              O WPISIE
-            </h3>
-            <p className="text-foreground text-lg leading-relaxed font-medium">{post.excerpt}</p>
-          </div>
-        ) : null}
-
         {post.content ? (
-          <div className="pt-4">
-            <AnnouncementContent content={post.content} />
-          </div>
+          <AnnouncementContent content={post.content} />
         ) : null}
       </div>
 
