@@ -1,13 +1,9 @@
-package pl.edu.agh.backend.controller.dto;
+package pl.edu.agh.backend.event;
 
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import pl.edu.agh.backend.domain.Audience;
-import pl.edu.agh.backend.domain.Event;
-import pl.edu.agh.backend.domain.EventType;
-import pl.edu.agh.backend.domain.Tag;
 
 public record EventDetailsDto(
         UUID id,

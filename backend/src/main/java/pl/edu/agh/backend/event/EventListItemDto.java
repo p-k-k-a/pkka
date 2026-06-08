@@ -1,9 +1,7 @@
-package pl.edu.agh.backend.controller.dto;
+package pl.edu.agh.backend.event;
 
 import java.time.Instant;
 import java.util.UUID;
-import pl.edu.agh.backend.domain.Event;
-import pl.edu.agh.backend.domain.EventType;
 
 public record EventListItemDto(
         UUID id,

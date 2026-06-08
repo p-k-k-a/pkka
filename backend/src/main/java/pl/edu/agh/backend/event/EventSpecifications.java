@@ -1,13 +1,10 @@
-package pl.edu.agh.backend.repository;
+package pl.edu.agh.backend.event;
 
 import jakarta.persistence.criteria.Join;
 import java.time.Instant;
 import java.util.Collection;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
-import pl.edu.agh.backend.domain.Audience;
-import pl.edu.agh.backend.domain.Event;
-import pl.edu.agh.backend.domain.Tag;
 
 @UtilityClass
 public class EventSpecifications {
