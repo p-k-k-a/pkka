@@ -82,7 +82,7 @@ app:
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
   web:
-    success-url: ${WEB_SUCCESS_URL:/}
+    success-url: ${WEB_SUCCESS_URL:http://localhost:3000/dashboard}
 
 # Keycloak Admin Client
 keycloak:
