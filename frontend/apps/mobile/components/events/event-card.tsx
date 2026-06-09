@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
 import { formatEventDateLong } from "@/lib/utils";
 import { EventListItemDtoType, type EventListItemDto } from "@pkka/api";
@@ -10,12 +11,6 @@ import { Pressable, View } from "react-native";
 
 type EventCardProps = {
   event: EventListItemDto;
-};
-
-const TYPE_LABELS: Record<EventListItemDtoType, string> = {
-  ONLINE: "Online",
-  IN_PERSON: "Stacjonarnie",
-  HYBRID: "Hybrydowo",
 };
 
 function EventCard({ event }: EventCardProps) {

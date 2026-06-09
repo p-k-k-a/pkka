@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
+import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
 import { formatEventDateShort, formatTimeRange } from "@/lib/utils";
 import { EventDetailsDtoType, type EventDetailsDto } from "@pkka/api";
@@ -10,12 +11,6 @@ import { ScrollView, View } from "react-native";
 
 type EventDetailViewProps = {
   event: EventDetailsDto;
-};
-
-const TYPE_LABELS: Record<EventDetailsDtoType, string> = {
-  ONLINE: "Online",
-  IN_PERSON: "Stacjonarnie",
-  HYBRID: "Hybrydowo",
 };
 
 function InfoRow({
