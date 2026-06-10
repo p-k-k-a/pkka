@@ -15,16 +15,24 @@ function eventImageSrc(imageUrl?: string) {
   return imageUrl?.startsWith("http") ? imageUrl : DEFAULT_IMAGE;
 }
 
+function EventsShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+      <h1 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
+        Wydarzenia
+      </h1>
+      {children}
+    </div>
+  );
+}
+
 export function EventsList() {
   const { data: response, isLoading, isError } = useList({ size: 20 });
   const events = response?.data?.content ?? [];
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-        <h1 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-          Wydarzenia
-        </h1>
+      <EventsShell>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton
@@ -33,47 +41,39 @@ export function EventsList() {
             />
           ))}
         </div>
-      </div>
+      </EventsShell>
     );
   }
 
   if (isError) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+      <EventsShell>
         <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
-      </div>
+      </EventsShell>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-        <h1 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-          Wydarzenia
-        </h1>
+      <EventsShell>
         <p className="text-muted-foreground">Brak nadchodzących wydarzeń.</p>
-      </div>
+      </EventsShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-      <h1 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-        Wydarzenia
-      </h1>
-
+    <EventsShell>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {events.map((event, index) => {
           const isFeatured = index === 0;
           const { dateLabel, timeLabel } = formatEventDateTime(event.startsAt);
-          const id = event.id ?? String(index);
           const seats = formatSeats(event.seatLimit, event.seatsTaken);
 
           if (isFeatured) {
             return (
               <Link
                 key={event.id}
-                href={`/events/${id}`}
+                href={`/events/${event.id}`}
                 className="group focus-visible:ring-ring flex rounded-[24px] focus-visible:ring-2 focus-visible:outline-none md:col-span-2"
               >
                 <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col overflow-hidden rounded-[24px] border p-0 shadow-sm transition-all duration-300 hover:shadow-md md:flex-row">
@@ -130,7 +130,7 @@ export function EventsList() {
           return (
             <Link
               key={event.id}
-              href={`/events/${id}`}
+              href={`/events/${event.id}`}
               className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
             >
               <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">
@@ -171,6 +171,6 @@ export function EventsList() {
           );
         })}
       </div>
-    </div>
+    </EventsShell>
   );
 }
