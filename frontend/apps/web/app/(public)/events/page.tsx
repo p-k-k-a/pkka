@@ -1,10 +1,5 @@
-import { TemporaryPage } from "@/components/temporary-page";
+import { EventsList } from "@/components/events-list";
 
 export default function EventsPage() {
-  return (
-    <TemporaryPage
-      title="Wydarzenia"
-      description="To jest tymczasowa strona wydarzeń. Tutaj będzie lista nadchodzących i archiwalnych wydarzeń PKKA."
-    />
-  );
+  return <EventsList />;
 }
