@@ -1,12 +1,23 @@
 let baseUrl = "";
 let getAuthToken: () => string | null | Promise<string | null> = () => null;
+let onUnauthenticated: () => Promise<void> = async () => {};
+let getRefreshToken: () => Promise<string | null> = async () => null;
+let onTokenRefreshed: (newAT: string, newRT: string) => Promise<void> = async () => {};
+
+let refreshingTokenPromise: Promise<string> | null = null;
 
 export function configureApi(opts: {
   baseUrl: string;
   getAuthToken?: () => string | null | Promise<string | null>;
+  onUnauthenticated?: () => Promise<void>;
+  getRefreshToken?: () => Promise<string | null>;
+  onTokenRefreshed?: (newAT: string, newRT: string) => Promise<void>;
 }) {
   baseUrl = opts.baseUrl.replace(/\/$/, "");
   if (opts.getAuthToken) getAuthToken = opts.getAuthToken;
+  if (opts.onUnauthenticated) onUnauthenticated = opts.onUnauthenticated;
+  if (opts.getRefreshToken) getRefreshToken = opts.getRefreshToken;
+  if (opts.onTokenRefreshed) onTokenRefreshed = opts.onTokenRefreshed;
 }
 
 export class ApiError extends Error {
@@ -32,6 +43,65 @@ const parseBody = async <T>(res: Response): Promise<T> => {
   return (await res.text()) as T;
 };
 
+export const refreshTokens = async (): Promise<string> => {
+  if (refreshingTokenPromise) return refreshingTokenPromise;
+
+  const rt = await getRefreshToken();
+
+  if (!rt) {
+    await onUnauthenticated();
+    throw new Error("No refresh token");
+  }
+
+  refreshingTokenPromise = performTokenRefresh(rt);
+
+  try {
+    return await refreshingTokenPromise;
+  } finally {
+    refreshingTokenPromise = null;
+  }
+};
+
+const performTokenRefresh = async (rt: string): Promise<string> => {
+  const res = await fetch(buildUrl("/api/public/auth/refresh"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken: rt }),
+  });
+
+  if (!res.ok) {
+    await onUnauthenticated();
+    throw new Error("Refresh failed");
+  }
+
+  const data = (await res.json()) as { access_token: string; refresh_token: string };
+  await onTokenRefreshed(data.access_token, data.refresh_token);
+  return data.access_token;
+};
+
+export const logoutTokens = async (): Promise<void> => {
+  const rt = await getRefreshToken();
+  if (!rt) return;
+
+  try {
+    await fetch(buildUrl("/api/public/auth/logout"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken: rt }),
+    });
+  } catch {
+    // best-effort: network failure shouldn't block the local logout that follows
+  }
+};
+
+const safeFetch = async (url: string, options: RequestInit): Promise<Response> => {
+  try {
+    return await fetch(url, options);
+  } catch (e) {
+    throw new ApiError(0, `network error: ${(e as Error).message}`, url);
+  }
+};
+
 export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const fullUrl = buildUrl(url);
   const token = await getAuthToken();
@@ -40,16 +110,18 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
   if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
-  let res: Response;
-  try {
-    res = await fetch(fullUrl, { ...options, headers });
-  } catch (e) {
-    throw new ApiError(0, `network error: ${(e as Error).message}`, fullUrl);
+  let res = await safeFetch(fullUrl, { ...options, headers });
+  let body = await parseBody<unknown>(res);
+
+  if (res.status === 401) {
+    const newAT = await refreshTokens();
+    headers.set("Authorization", `Bearer ${newAT}`);
+    res = await safeFetch(fullUrl, { ...options, headers });
+    body = await parseBody<unknown>(res);
   }
 
-  const body = await parseBody<unknown>(res);
-
-  if (!res.ok) throw new ApiError(res.status, body, fullUrl);
-
+  if (!res.ok) {
+    throw new ApiError(res.status, body, fullUrl);
+  }
   return { data: body, status: res.status, headers: res.headers } as T;
 };
