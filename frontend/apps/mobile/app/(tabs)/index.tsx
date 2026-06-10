@@ -50,7 +50,6 @@ function ListFooter() {
 
 export default function HomeScreen() {
   const { data, isLoading, isError } = useGetAnnouncements();
-
   const announcements = (data?.data ?? []) as Announcement[];
 
   return (

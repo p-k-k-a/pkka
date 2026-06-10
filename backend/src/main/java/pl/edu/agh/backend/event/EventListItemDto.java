@@ -1,17 +1,19 @@
 package pl.edu.agh.backend.event;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
 public record EventListItemDto(
-        UUID id,
-        String title,
-        Instant startsAt,
-        EventType type,
+        @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         String location,
         String coverImageUrl,
         Integer seatLimit,
-        Integer seatsTaken) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) Integer seatsTaken) {
     public static EventListItemDto from(Event e) {
         return new EventListItemDto(
                 e.getId(),
