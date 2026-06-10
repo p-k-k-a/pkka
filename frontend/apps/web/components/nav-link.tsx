@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 type NavLinkProps = {
   href: string;
   children: React.ReactNode;
-  /** Paths that should mark this link as active (defaults to href + subpaths). */
   activePaths?: string[];
 };
 
