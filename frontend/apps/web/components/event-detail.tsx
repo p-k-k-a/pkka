@@ -21,6 +21,7 @@ export function EventDetail({ id }: { id: string }) {
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
   const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;
   const isOnline = event?.type === EventDetailsDtoType.ONLINE;
+  const location = event?.location?.trim();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -110,11 +111,11 @@ export function EventDetail({ id }: { id: string }) {
               value="Link do spotkania"
               sub="Link dostępny po zalogowaniu"
             />
-          ) : event.location ? (
+          ) : location ? (
             <InfoRow
               icon={<MapPin className="size-[18px]" />}
               label="Lokalizacja"
-              value={event.location}
+              value={location}
             />
           ) : null}
 

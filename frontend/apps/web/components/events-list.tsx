@@ -35,7 +35,7 @@ function EventCardCompact({ event }: { event: EventListItemDto }) {
   const isOnline = event.type === EventListItemDtoType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
-  const showLocation = Boolean(event.location?.trim());
+  const location = event.location?.trim();
 
   return (
     <Link
@@ -50,10 +50,10 @@ function EventCardCompact({ event }: { event: EventListItemDto }) {
           <h2 className="text-foreground text-xl leading-tight font-bold">{event.title}</h2>
         </div>
 
-        {showLocation ? (
+        {location ? (
           <div className="text-muted-foreground flex items-center gap-2 text-sm">
             <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>{event.location}</span>
+            <span>{location}</span>
           </div>
         ) : null}
 
@@ -83,7 +83,7 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
   const isOnline = event.type === EventListItemDtoType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
-  const showLocation = Boolean(event.location?.trim());
+  const location = event.location?.trim();
 
   return (
     <FeaturedCard
@@ -111,10 +111,10 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
         </div>
       }
     >
-      {showLocation ? (
+      {location ? (
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
-          <span>{event.location}</span>
+          <span>{location}</span>
         </div>
       ) : null}
       {seats ? (
