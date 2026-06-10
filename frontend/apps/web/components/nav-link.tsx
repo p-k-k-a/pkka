@@ -7,13 +7,21 @@ import { cn } from "@/lib/utils";
 type NavLinkProps = {
   href: string;
   children: React.ReactNode;
-  exact?: boolean;
+  /** Paths that should mark this link as active (defaults to href + subpaths). */
+  activePaths?: string[];
 };
 
-export function NavLink({ href, children, exact = false }: NavLinkProps) {
-  const pathname = usePathname();
+function isPathActive(pathname: string, path: string) {
+  if (pathname === path) return true;
+  if (path === "/") return false;
+  return pathname.startsWith(`${path}/`);
+}
 
-  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+export function NavLink({ href, children, activePaths }: NavLinkProps) {
+  const pathname = usePathname();
+  const paths = activePaths ?? [href];
+
+  const isActive = paths.some((path) => isPathActive(pathname, path));
 
   return (
     <Link

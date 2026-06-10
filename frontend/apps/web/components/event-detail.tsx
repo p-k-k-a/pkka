@@ -53,12 +53,12 @@ function InfoRow({
 
 function HeaderBar() {
   return (
-    <div className="border-border/70 mb-6 flex items-center justify-between border-b pb-4">
+    <div className="border-border/70 mb-6 flex items-center gap-3 border-b pb-4">
       <Button
         asChild
         variant="ghost"
         size="icon"
-        className="text-muted-foreground hover:text-foreground rounded-full"
+        className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
       >
         <Link href="/events">
           <ArrowLeft className="size-5" />
@@ -68,7 +68,6 @@ function HeaderBar() {
       <h2 className="text-foreground text-sm font-bold tracking-widest uppercase">
         Szczegóły wydarzenia
       </h2>
-      <div className="w-10" aria-hidden="true" />
     </div>
   );
 }
@@ -98,10 +97,9 @@ export function EventDetail({ id }: { id: string }) {
   if (isLoading && !event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
-        <div className="mb-6 flex h-10 items-center justify-between border-b">
+        <div className="mb-6 flex h-10 items-center gap-3 border-b">
           <Skeleton className="size-8 rounded-full" />
-          <Skeleton className="h-4 w-32" />
-          <div className="w-8" />
+          <Skeleton className="h-4 w-40" />
         </div>
         <Skeleton className="mb-6 aspect-[4/3] w-full rounded-xl" />
         <Skeleton className="mb-4 h-5 w-20 rounded-full" />

@@ -1,10 +1,5 @@
-import { TemporaryPage } from "@/components/temporary-page";
+import { InfoPageContent } from "@/components/info-page-content";
 
 export default function InfoPage() {
-  return (
-    <TemporaryPage
-      title="O PKKA"
-      description="To jest tymczasowa strona informacyjna. Tutaj będą szczegóły o klubie, misji i możliwościach współpracy."
-    />
-  );
+  return <InfoPageContent />;
 }
