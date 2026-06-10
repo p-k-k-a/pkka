@@ -1,39 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, Link2, MapPin } from "lucide-react";
 import { EventListItemDto, EventListItemDtoType, useList } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeaturedCard } from "@/components/content/featured-card";
+import { SectionShell } from "@/components/content/section-shell";
+import { coverImageSrc } from "@/lib/content-images";
 import { formatEventDateLong } from "@/lib/format-event-datetime";
 import { eventTypeLabelUpper, formatSeatsCompact } from "@/lib/event-labels";
 
-const DEFAULT_IMAGE = "/hero.png";
-
-function eventImageSrc(imageUrl?: string) {
-  return imageUrl?.startsWith("http") ? imageUrl : DEFAULT_IMAGE;
-}
-
-function EventsShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
-      <div className="mb-10 space-y-3">
-        <h1 className="text-foreground text-3xl font-extrabold tracking-tight md:text-4xl">
-          Wydarzenia
-        </h1>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 function EventCardSkeleton({ featured = false }: { featured?: boolean }) {
   if (featured) {
-    return (
-      <Skeleton className="h-64 rounded-[24px] md:col-span-2 md:h-80" />
-    );
+    return <Skeleton className="h-64 rounded-[24px] md:col-span-2 md:h-80" />;
   }
 
   return (
@@ -105,63 +86,43 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
   const showLocation = Boolean(event.location?.trim());
 
   return (
-    <Link
+    <FeaturedCard
       href={`/events/${event.id}`}
-      className="group focus-visible:ring-ring flex rounded-[24px] focus-visible:ring-2 focus-visible:outline-none md:col-span-2"
+      imageSrc={coverImageSrc(event.coverImageUrl)}
+      imageAlt={event.title ?? "Wydarzenie"}
+      meta={
+        <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+          {formatEventDateLong(event.startsAt)}
+        </p>
+      }
+      title={event.title ?? ""}
+      cta={
+        <>
+          Szczegóły
+          <ArrowRight className="size-3.5" aria-hidden="true" />
+        </>
+      }
+      ctaAlign="start"
+      imageOverlay={
+        <div className="absolute top-4 left-4">
+          <Badge variant="default" className="rounded-full uppercase">
+            {eventTypeLabelUpper(event.type)}
+          </Badge>
+        </div>
+      }
     >
-      <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col overflow-hidden rounded-[24px] border p-0 shadow-sm transition-all duration-300 hover:shadow-md md:flex-row">
-        <div className="bg-muted relative aspect-[4/3] w-full shrink-0 overflow-hidden md:aspect-auto md:w-[50%]">
-          <Image
-            src={eventImageSrc(event.coverImageUrl)}
-            alt={event.title ?? "Wydarzenie"}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            priority
-          />
-          <div className="absolute top-4 left-4">
-            <Badge
-              variant="default"
-              className="rounded-full uppercase"
-            >
-              {eventTypeLabelUpper(event.type)}
-            </Badge>
-          </div>
+      {showLocation ? (
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          <span>{event.location}</span>
         </div>
-
-        <div className="flex flex-1 flex-col justify-between p-8 md:p-10">
-          <div className="space-y-4">
-            <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-              {formatEventDateLong(event.startsAt)}
-            </p>
-
-            <CardTitle className="text-foreground group-hover:text-primary text-2xl leading-tight font-extrabold transition-colors md:text-3xl">
-              {event.title}
-            </CardTitle>
-
-            {showLocation ? (
-              <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
-                <span>{event.location}</span>
-              </div>
-            ) : null}
-
-            {seats ? (
-              <Badge variant="outline" className="rounded-full uppercase">
-                {seats}
-              </Badge>
-            ) : null}
-          </div>
-
-          <div className="border-border/70 mt-6 flex items-center justify-start border-t pt-6">
-            <span className="text-foreground flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-transform group-hover:translate-x-1">
-              Szczegóły
-              <ArrowRight className="size-3.5" aria-hidden="true" />
-            </span>
-          </div>
-        </div>
-      </Card>
-    </Link>
+      ) : null}
+      {seats ? (
+        <Badge variant="outline" className="rounded-full uppercase">
+          {seats}
+        </Badge>
+      ) : null}
+    </FeaturedCard>
   );
 }
 
@@ -171,35 +132,35 @@ export function EventsList() {
 
   if (isLoading) {
     return (
-      <EventsShell>
+      <SectionShell title="Wydarzenia">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <EventCardSkeleton featured />
           {Array.from({ length: 3 }).map((_, i) => (
             <EventCardSkeleton key={i} />
           ))}
         </div>
-      </EventsShell>
+      </SectionShell>
     );
   }
 
   if (isError) {
     return (
-      <EventsShell>
+      <SectionShell title="Wydarzenia">
         <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
-      </EventsShell>
+      </SectionShell>
     );
   }
 
   if (events.length === 0) {
     return (
-      <EventsShell>
+      <SectionShell title="Wydarzenia">
         <p className="text-muted-foreground">Brak nadchodzących wydarzeń.</p>
-      </EventsShell>
+      </SectionShell>
     );
   }
 
   return (
-    <EventsShell>
+    <SectionShell title="Wydarzenia">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {events.map((event, index) =>
           index === 0 ? (
@@ -209,6 +170,6 @@ export function EventsList() {
           ),
         )}
       </div>
-    </EventsShell>
+    </SectionShell>
   );
 }

@@ -1,93 +1,25 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react";
+import { Calendar, Link2, MapPin, Users } from "lucide-react";
 import { EventDetailsDtoType, useGetById } from "@pkka/api";
 import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import {
-  formatEventDateShort,
-  formatTimeRange,
-} from "@/lib/format-event-datetime";
-import {
-  eventTypeLabelUpper,
-  formatSeatsRemaining,
-} from "@/lib/event-labels";
-
-function eventImageSrc(imageUrl?: string) {
-  return imageUrl?.startsWith("http") ? imageUrl : null;
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-  sub,
-}: {
-  icon: React.ReactNode;
-  label?: string;
-  value: string;
-  sub?: string;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
-        {icon}
-      </div>
-      <div className="min-w-0 space-y-0.5">
-        {label ? (
-          <p className="text-muted-foreground text-[10px] font-semibold tracking-widest uppercase">
-            {label}
-          </p>
-        ) : null}
-        <p className="text-foreground text-sm font-bold">{value}</p>
-        {sub ? <p className="text-muted-foreground text-xs">{sub}</p> : null}
-      </div>
-    </div>
-  );
-}
-
-function HeaderBar() {
-  return (
-    <div className="border-border/70 mb-6 flex items-center gap-3 border-b pb-4">
-      <Button
-        asChild
-        variant="ghost"
-        size="icon"
-        className="text-muted-foreground hover:text-foreground shrink-0 rounded-full"
-      >
-        <Link href="/events">
-          <ArrowLeft className="size-5" />
-          <span className="sr-only">Wróć</span>
-        </Link>
-      </Button>
-      <h2 className="text-foreground text-sm font-bold tracking-widest uppercase">
-        Szczegóły wydarzenia
-      </h2>
-    </div>
-  );
-}
-
-function BackLink({ className }: { className?: string }) {
-  return (
-    <Button asChild variant="outline" className={cn("rounded-xl font-semibold", className)}>
-      <Link href="/events">
-        <ArrowLeft className="mr-2 size-4" />
-        Wróć do wydarzeń
-      </Link>
-    </Button>
-  );
-}
+import { CoverImage } from "@/components/content/cover-image";
+import { DetailBackLink } from "@/components/content/detail-back-link";
+import { DetailHeader } from "@/components/content/detail-header";
+import { InfoRow } from "@/components/content/info-row";
+import { remoteCoverImageSrc } from "@/lib/content-images";
+import { formatEventDateShort, formatTimeRange } from "@/lib/format-event-datetime";
+import { eventTypeLabelUpper, formatSeatsRemaining } from "@/lib/event-labels";
 
 export function EventDetail({ id }: { id: string }) {
   const { data: response, isLoading, isError, isFetching } = useGetById(id);
   const event = response?.data;
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
-  const coverSrc = event ? eventImageSrc(event.coverImageUrl) : null;
+  const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;
   const isOnline = event?.type === EventDetailsDtoType.ONLINE;
 
   useEffect(() => {
@@ -116,7 +48,7 @@ export function EventDetail({ id }: { id: string }) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
         <p className="text-destructive mb-6 font-semibold">Nie udało się załadować wydarzenia.</p>
-        <BackLink />
+        <DetailBackLink href="/events" label="Wróć do wydarzeń" />
       </div>
     );
   }
@@ -130,7 +62,7 @@ export function EventDetail({ id }: { id: string }) {
             ? "Szukamy wydarzenia…"
             : "To wydarzenie nie istnieje lub nie jest już dostępne."}
         </p>
-        <BackLink />
+        <DetailBackLink href="/events" label="Wróć do wydarzeń" />
       </div>
     );
   }
@@ -138,22 +70,14 @@ export function EventDetail({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-3xl">
       <article className="px-6 py-8">
-        <HeaderBar />
+        <DetailHeader backHref="/events" title="Szczegóły wydarzenia" />
 
-        <div className="border-border bg-muted relative mb-6 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border">
-          {coverSrc ? (
-            <Image
-              src={coverSrc}
-              alt={event.title ?? "Wydarzenie"}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 768px"
-              className="object-cover"
-            />
-          ) : (
-            <ImageIcon className="text-border size-14" aria-hidden="true" />
-          )}
-        </div>
+        <CoverImage
+          src={coverSrc}
+          alt={event.title ?? "Wydarzenie"}
+          aspect="photo"
+          showPlaceholder
+        />
 
         <div className="mb-6 space-y-3">
           <Badge variant="default" className="rounded-full uppercase">
