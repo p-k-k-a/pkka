@@ -6,7 +6,7 @@ spring:
 
   config:
     import:
-      - optional:file:.env[.properties]
+      - optional:file:./.env[.properties]
       - optional:file:./backend/.env[.properties]
       - optional:classpath:.env[.properties]
 

@@ -1,5 +1,7 @@
 package pl.edu.agh.backend.post;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,7 +11,13 @@ import java.util.UUID;
  * TODO: enrich with authorDisplayName after the profile issue.
  */
 public record PostResponse(
-        UUID id, String slug, String title, String content, String authorId, Instant publishedAt, Instant updatedAt) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String content,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
     static PostResponse from(Post post) {
         return new PostResponse(

@@ -9,16 +9,24 @@ import { formatPublishedAt } from "@/lib/format-published-at";
 
 const DEFAULT_IMAGE = "/hero.png";
 
+function AnnouncementsShell({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+      <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
+        Publiczne Aktualności
+      </h2>
+      {children}
+    </section>
+  );
+}
+
 export function AnnouncementsSection() {
   const { data: response, isLoading, isError } = useListPosts({ size: 10 });
   const announcements = response?.data?.content ?? [];
 
   if (isLoading) {
     return (
-      <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-        <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-          Publiczne Aktualności
-        </h2>
+      <AnnouncementsShell>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton
@@ -27,35 +35,28 @@ export function AnnouncementsSection() {
             />
           ))}
         </div>
-      </section>
+      </AnnouncementsShell>
     );
   }
 
   if (isError) {
     return (
-      <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+      <AnnouncementsShell>
         <p className="text-destructive font-medium">Nie udało się załadować ogłoszeń.</p>
-      </section>
+      </AnnouncementsShell>
     );
   }
 
   if (announcements.length === 0) {
     return (
-      <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-        <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-          Publiczne Aktualności
-        </h2>
+      <AnnouncementsShell>
         <p className="text-muted-foreground">Brak opublikowanych wpisów.</p>
-      </section>
+      </AnnouncementsShell>
     );
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
-      <h2 className="text-foreground mb-10 text-3xl font-extrabold tracking-tight md:text-4xl">
-        Publiczne Aktualności
-      </h2>
-
+    <AnnouncementsShell>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {announcements.map((post, index) => {
           const isFeatured = index === 0;
@@ -76,7 +77,7 @@ export function AnnouncementsSection() {
                       alt={post.title ?? "Aktualność"}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-102"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                       priority
                     />
                   </div>
@@ -134,6 +135,6 @@ export function AnnouncementsSection() {
           );
         })}
       </div>
-    </section>
+    </AnnouncementsShell>
   );
 }

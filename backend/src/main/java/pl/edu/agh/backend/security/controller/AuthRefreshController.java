@@ -1,9 +1,12 @@
 package pl.edu.agh.backend.security.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.util.MultiValueMap;
@@ -20,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthRefreshController {
     private final ClientRegistration mobile;
     private final RestClient restClient = RestClient.create();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AuthRefreshController(ClientRegistrationRepository repo) {
         this.mobile = repo.findByRegistrationId("keycloak-mobile");
@@ -39,6 +43,14 @@ public class AuthRefreshController {
         return body.refreshToken();
     }
 
+    private String extractOAuthError(ClientHttpResponse response) {
+        try {
+            return objectMapper.readTree(response.getBody()).path("error").asText(null);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     @PostMapping("/refresh")
     public TokenResponse refresh(@RequestBody RefreshRequest body) {
         MultiValueMap<String, String> form = MultiValueMap.fromSingleValue(Map.of(
@@ -53,8 +65,15 @@ public class AuthRefreshController {
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(form)
                 .retrieve()
-                .onStatus(status -> status.is4xxClientError(), (req, res) -> {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+                .onStatus(status -> status.isError(), (req, res) -> {
+                    // Keycloak returns 400 invalid_grant when the refresh token is expired/revoked
+                    // (RFC 6749 §5.2) -> the user must re-authenticate. Anything else (e.g.
+                    // invalid_client from a misconfigured client secret) is our problem, not the
+                    // user's, so surface it as a 502 instead of telling them to log in again.
+                    if ("invalid_grant".equals(extractOAuthError(res))) {
+                        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
+                    }
+                    throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Token refresh failed upstream");
                 })
                 .body(TokenResponse.class);
     }
