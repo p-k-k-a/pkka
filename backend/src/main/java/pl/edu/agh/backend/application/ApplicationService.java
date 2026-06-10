@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.application;
 
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -29,7 +30,7 @@ public class ApplicationService {
         User applicant = resolveApplicant(authentication);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), OPEN)) {
-            throw new ApplicationAlreadyExistsException(applicant.getId());
+            throw new ApplicationAlreadyExistsException();
         }
 
         Application application = Application.builder()
@@ -38,20 +39,27 @@ public class ApplicationService {
                 .fieldOfStudy(request.fieldOfStudy())
                 .studyType(request.studyType())
                 .graduationYear(request.graduationYear())
+                .meetingPreference(request.meetingPreference())
+                .coCreationInterest(request.coCreationInterest())
+                .newsletterSubscription(request.newsletterSubscription())
+                .interests(request.interests())
                 .build();
+
+        Instant now = Instant.now();
+        request.consents().forEach(type -> application.addConsent(type, now));
 
         try {
             return ApplicationResponseDto.from(applicationRepository.saveAndFlush(application));
         } catch (DataIntegrityViolationException ex) {
-            throw new ApplicationAlreadyExistsException(applicant.getId());
+            throw new ApplicationAlreadyExistsException();
         }
     }
 
     @Transactional(readOnly = true)
     public ApplicationResponseDto getMine(Authentication authentication) {
         User applicant = resolveApplicant(authentication);
-        return applicationRepository.findByApplicantIdOrderByCreatedAtDesc(applicant.getId()).stream()
-                .findFirst()
+        return applicationRepository
+                .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
                 .map(ApplicationResponseDto::from)
                 .orElseThrow(ApplicationNotFoundException::new);
     }

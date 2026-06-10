@@ -3,6 +3,10 @@ package pl.edu.agh.backend.application;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -59,6 +63,32 @@ public class Application {
     @Column(name = "graduation_year", nullable = false)
     private Integer graduationYear;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "meeting_preference", length = 20)
+    private MeetingPreference meetingPreference;
+
+    @Column(name = "co_creation_interest", nullable = false)
+    @Builder.Default
+    private boolean coCreationInterest = false;
+
+    @Column(name = "newsletter_subscription", nullable = false)
+    @Builder.Default
+    private boolean newsletterSubscription = false;
+
+    @ElementCollection(targetClass = Interest.class, fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(
+            name = "application_interests",
+            joinColumns = @JoinColumn(name = "application_id"),
+            foreignKey = @ForeignKey(name = "fk_application_interests_application"))
+    @Column(name = "interest", length = 40, nullable = false)
+    @Builder.Default
+    private Set<Interest> interests = EnumSet.noneOf(Interest.class);
+
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @Builder.Default
+    private List<ApplicationConsent> consents = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_id")
     private User reviewedBy;
@@ -77,6 +107,15 @@ public class Application {
     @Version
     @Column(nullable = false)
     private Long version;
+
+    public void addConsent(ConsentType type, Instant grantedAt) {
+        ApplicationConsent consent = ApplicationConsent.builder()
+                .application(this)
+                .type(type)
+                .grantedAt(grantedAt)
+                .build();
+        this.consents.add(consent);
+    }
 
     public void approve(User reviewer) {
         ensureUnderReview();
