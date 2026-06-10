@@ -127,7 +127,7 @@ export function EventDetail({ id }: { id: string }) {
           ) : null}
         </div>
 
-        <div className="border-border mb-6 h-px bg-border" />
+        <div className="border-border bg-border mb-6 h-px" />
 
         {event.fullDescription ? (
           <section className="space-y-3">
