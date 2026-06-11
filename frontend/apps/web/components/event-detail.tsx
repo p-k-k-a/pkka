@@ -14,14 +14,19 @@ import { remoteCoverImageSrc } from "@/lib/content-images";
 import { formatEventDateShort, formatTimeRange } from "@/lib/format-event-datetime";
 import { eventTypeLabelUpper, formatSeatsRemaining } from "@/lib/event-labels";
 
-export function EventDetail({ id }: { id: string }) {
+type EventDetailProps = {
+  id: string;
+  variant?: "public" | "dashboard";
+};
+
+export function EventDetail({ id, variant = "public" }: EventDetailProps) {
+  const eventsBackHref = variant === "dashboard" ? "/dashboard/events" : "/events";
   const { data: response, isLoading, isError, isFetching } = useGetById(id);
   const event = response?.data;
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
   const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;
   const isOnline = event?.type === EventDetailsDtoType.ONLINE;
   const location = event?.location?.trim();
-
   if (isLoading && !event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
@@ -55,7 +60,7 @@ export function EventDetail({ id }: { id: string }) {
             </p>
           </>
         )}
-        <DetailBackLink href="/events" label="Wróć do wydarzeń" />
+        <DetailBackLink href={eventsBackHref} label="Wróć do wydarzeń" />
       </div>
     );
   }
@@ -63,7 +68,7 @@ export function EventDetail({ id }: { id: string }) {
   return (
     <div className="mx-auto max-w-3xl">
       <article className="px-6 py-8">
-        <DetailHeader backHref="/events" title="Szczegóły wydarzenia" />
+        <DetailHeader backHref={eventsBackHref} title="Szczegóły wydarzenia" />
 
         <CoverImage
           src={coverSrc}
@@ -101,7 +106,11 @@ export function EventDetail({ id }: { id: string }) {
             <InfoRow
               icon={<Link2 className="size-[18px]" />}
               value="Link do spotkania"
-              sub="Link dostępny po zalogowaniu"
+              sub={
+                variant === "dashboard"
+                  ? "Link do spotkania zostanie udostępniony przed wydarzeniem"
+                  : "Link dostępny po zalogowaniu"
+              }
             />
           ) : location ? (
             <InfoRow
@@ -135,12 +144,25 @@ export function EventDetail({ id }: { id: string }) {
       </article>
 
       <footer className="border-border bg-background space-y-3 border-t px-6 py-4">
-        <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
-          Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
-        </p>
-        <Button asChild size="xl" className="w-full rounded-xl font-semibold">
-          <Link href="/login">Zaloguj się, aby dołączyć</Link>
-        </Button>
+        {variant === "dashboard" ? (
+          <>
+            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
+              Rejestracja na wydarzenie wkrótce dostępna
+            </p>
+            <Button size="xl" className="w-full rounded-xl font-semibold" disabled>
+              Zapisz się na wydarzenie
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
+              Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
+            </p>
+            <Button asChild size="xl" className="w-full rounded-xl font-semibold">
+              <Link href="/login">Zaloguj się, aby dołączyć</Link>
+            </Button>
+          </>
+        )}
       </footer>
     </div>
   );
