@@ -1,7 +1,6 @@
 "use client";
 
 import { useGetPost } from "@pkka/api";
-import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
@@ -13,10 +12,6 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
   const { data: response, isLoading, isError, isFetching } = useGetPost(slug);
   const post = response?.data;
   const publication = post ? formatPublishedAt(post.publishedAt) : null;
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [slug]);
 
   if (isLoading && !post) {
     return (
@@ -33,24 +28,21 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
     );
   }
 
-  if (isError) {
+  if (isError || !post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p className="text-destructive mb-6 font-semibold">Nie udało się załadować ogłoszenia.</p>
-        <DetailBackLink href="/" label="Wróć do aktualności" />
-      </div>
-    );
-  }
-
-  if (!post) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h1 className="mb-2 text-2xl font-bold">Nie znaleziono ogłoszenia</h1>
-        <p className="text-muted-foreground mb-8">
-          {isFetching
-            ? "Szukamy ogłoszenia…"
-            : "To ogłoszenie nie istnieje lub link jest nieaktualny."}
-        </p>
+        {isError ? (
+          <p className="text-destructive mb-6 font-semibold">Nie udało się załadować ogłoszenia.</p>
+        ) : (
+          <>
+            <h1 className="mb-2 text-2xl font-bold">Nie znaleziono ogłoszenia</h1>
+            <p className="text-muted-foreground mb-8">
+              {isFetching
+                ? "Szukamy ogłoszenia…"
+                : "To ogłoszenie nie istnieje lub link jest nieaktualny."}
+            </p>
+          </>
+        )}
         <DetailBackLink href="/" label="Wróć do aktualności" />
       </div>
     );
