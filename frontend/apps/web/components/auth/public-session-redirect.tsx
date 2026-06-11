@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export function PublicSessionRedirect({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && isAuthenticated) {
       router.replace("/dashboard");
     }
-  }, [isLoading, user, router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  if (!isLoading && user) {
+  if (!isLoading && isAuthenticated) {
     return null;
   }
 

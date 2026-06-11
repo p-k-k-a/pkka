@@ -7,16 +7,25 @@ import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PublicHeaderAuth() {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, loginWithKeycloak, logout } = useAuth();
 
   return (
     <div className="flex items-center gap-3">
       <ThemeToggle />
       {isLoading ? (
         <Skeleton className="h-11 w-32 rounded-lg" />
-      ) : user ? null : (
-        <Button asChild size="xl">
-          <Link href="/login">Zaloguj się</Link>
+      ) : isAuthenticated ? (
+        <>
+          <Button asChild variant="outline" size="xl">
+            <Link href="/dashboard">Panel</Link>
+          </Button>
+          <Button variant="ghost" size="xl" onClick={logout}>
+            Wyloguj
+          </Button>
+        </>
+      ) : (
+        <Button onClick={loginWithKeycloak} size="xl">
+          Zaloguj się
         </Button>
       )}
     </div>
