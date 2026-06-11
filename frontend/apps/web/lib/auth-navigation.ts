@@ -4,7 +4,7 @@ export function markAuthNavigation(): void {
   try {
     sessionStorage.setItem(AUTH_RETURN_STORAGE_KEY, "true");
   } catch {
-    // sessionStorage unavailable (e.g. private browsing) — recovery won't run, but login still works
+    // sessionStorage unavailable np. Private browsing.
   }
 }
 

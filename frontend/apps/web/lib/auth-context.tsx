@@ -27,7 +27,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [queryClient]);
 
-  const { data: user, isPending, refetch } = useQuery({
+  const {
+    data: user,
+    isPending,
+    refetch,
+  } = useQuery({
     queryKey: getMeQueryKey(),
     queryFn: async () => {
       try {
