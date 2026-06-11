@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import pl.edu.agh.backend.application.ApplicationAlreadyExistsException;
 import pl.edu.agh.backend.application.ApplicationNotFoundException;
+import pl.edu.agh.backend.application.InvalidApplicationStateException;
 import pl.edu.agh.backend.event.EventNotFoundException;
+import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,6 +35,21 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleApplicationAlreadyExists(ApplicationAlreadyExistsException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Application already exists");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidApplicationStateException.class)
+    public ProblemDetail handleInvalidApplicationState(InvalidApplicationStateException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Invalid application state");
+        return problem;
+    }
+
+    @ExceptionHandler(KeycloakRoleAssignmentException.class)
+    public ProblemDetail handleKeycloakRoleAssignment(KeycloakRoleAssignmentException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY, "Failed to update user role in identity provider");
+        problem.setTitle("Identity provider error");
         return problem;
     }
 
