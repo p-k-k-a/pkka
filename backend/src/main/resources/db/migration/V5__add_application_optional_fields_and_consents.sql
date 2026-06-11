@@ -32,4 +32,4 @@ CREATE TABLE application_consents
     CONSTRAINT chk_application_consents_type       CHECK (type IN ('REGULATIONS_PRIVACY', 'GDPR_DATA_PROCESSING'))
 );
 
-CREATE INDEX idx_application_consents_application ON application_consents (application_id);
+-- CREATE INDEX idx_application_consents_application ON application_consents (application_id);
