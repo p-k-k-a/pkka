@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.controller;
+package pl.edu.agh.backend.event;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,9 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import pl.edu.agh.backend.controller.dto.EventDetailsDto;
-import pl.edu.agh.backend.controller.dto.EventListItemDto;
-import pl.edu.agh.backend.service.EventService;
 
 @RestController
 @RequestMapping("/api/public/events")

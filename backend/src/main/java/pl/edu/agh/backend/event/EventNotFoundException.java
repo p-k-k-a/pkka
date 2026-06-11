@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.exception;
+package pl.edu.agh.backend.event;
 
 import java.util.UUID;
 
