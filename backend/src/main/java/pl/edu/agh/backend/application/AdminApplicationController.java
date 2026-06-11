@@ -36,6 +36,14 @@ public class AdminApplicationController {
         return adminApplicationService.list(status, pageable);
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get full details of a single application")
+    @ApiResponse(responseCode = "200", description = "Application details")
+    @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
+    public AdminApplicationResponseDto get(@PathVariable UUID id) {
+        return adminApplicationService.get(id);
+    }
+
     @PostMapping("/{id}/approve")
     @Operation(summary = "Approve an application and grant the verified alumn role")
     @ApiResponse(responseCode = "200", description = "Application approved")
