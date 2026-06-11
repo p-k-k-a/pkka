@@ -36,6 +36,14 @@ public class AdminApplicationService {
                 .map(AdminApplicationResponseDto::from);
     }
 
+    @Transactional(readOnly = true)
+    public AdminApplicationResponseDto get(UUID applicationId) {
+        return applicationRepository
+                .findById(applicationId)
+                .map(AdminApplicationResponseDto::from)
+                .orElseThrow(ApplicationNotFoundException::new);
+    }
+
     @Transactional
     public ApplicationResponseDto approve(Authentication authentication, UUID applicationId) {
         User reviewer = resolveReviewer(authentication);
