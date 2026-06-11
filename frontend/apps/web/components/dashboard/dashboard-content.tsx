@@ -28,7 +28,8 @@ export function DashboardContent() {
     return null;
   }
 
-  const displayName = user.name ?? user.username ?? "?";
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+  const displayName = fullName || user.preferredUsername || "?";
   const roles = displayRoles(user.roles ?? []);
 
   return (
@@ -45,8 +46,10 @@ export function DashboardContent() {
         </div>
 
         <div className="mb-8 space-y-3">
-          {user.username && <InfoRow label="Nazwa użytkownika" value={user.username} />}
-          {user.name && <InfoRow label="Imię i nazwisko" value={user.name} />}
+          {user.preferredUsername && (
+            <InfoRow label="Nazwa użytkownika" value={user.preferredUsername} />
+          )}
+          {fullName && <InfoRow label="Imię i nazwisko" value={fullName} />}
           {user.email && <InfoRow label="Email" value={user.email} />}
           <div className="bg-muted flex items-start justify-between gap-4 rounded-lg px-4 py-3">
             <span className="text-muted-foreground text-sm font-medium">Role</span>

@@ -122,7 +122,7 @@ public class SecurityConfig {
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(new KeycloakJwtRoleConverter());
-        converter.setPrincipalClaimName("preferred_username");
+        converter.setPrincipalClaimName("sub");
         return converter;
     }
 
