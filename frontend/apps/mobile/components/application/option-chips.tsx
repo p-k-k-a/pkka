@@ -3,7 +3,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
 type OptionChipsProps = {
-  options: readonly string[];
+  options: readonly { value: string; label: string }[];
   value: string[];
   onChange: (value: string[]) => void;
 };
@@ -12,11 +12,11 @@ function OptionChips({ options, value, onChange }: OptionChipsProps) {
   return (
     <ToggleGroup type="multiple" variant="outline" value={value} onValueChange={onChange}>
       {options.map((option, index) => {
-        const selected = value.includes(option);
+        const selected = value.includes(option.value);
         return (
           <ToggleGroupItem
-            key={option}
-            value={option}
+            key={option.value}
+            value={option.value}
             isFirst={index === 0}
             isLast={index === options.length - 1}
             className={cn(
@@ -28,7 +28,7 @@ function OptionChips({ options, value, onChange }: OptionChipsProps) {
             <Text
               className={cn("text-sm font-bold", selected ? "text-background" : "text-foreground")}
             >
-              {option}
+              {option.label}
             </Text>
           </ToggleGroupItem>
         );

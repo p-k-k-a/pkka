@@ -16,9 +16,13 @@ import {
   PRIVACY_URL,
   STUDY_TYPES,
   TERMS_URL,
-  mockSubmitApplication,
-  type StudyTypeValue,
-} from "@/lib/application-mocks";
+} from "@/lib/application-constants";
+import {
+  type CreateApplicationRequestDtoFaculty,
+  type CreateApplicationRequestDtoMeetingPreferencesItem,
+  type CreateApplicationRequestDtoStudyType,
+  useCreate,
+} from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { router } from "expo-router";
@@ -41,32 +45,38 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
+  const { mutateAsync: submitApplication } = useCreate();
   const phoneInputRef = React.useRef<PhoneInput>(null);
+
   const form = useForm({
     defaultValues: {
-      phone: "",
-      faculty: null as string | null,
+      phoneNumber: "",
+      faculty: null as CreateApplicationRequestDtoFaculty | null,
       fieldOfStudy: "",
-      studyType: null as StudyTypeValue | null,
+      studyType: null as CreateApplicationRequestDtoStudyType | null,
       graduationYear: "",
       interests: [] as string[],
-      meetingFormat: [] as string[],
-      wantsToContribute: false,
-      newsletter: true,
+      meetingPreferences: [] as CreateApplicationRequestDtoMeetingPreferencesItem[],
+      coCreationInterest: false,
+      newsletterSubscription: true,
       acceptedTerms: false,
       acceptedRodo: false,
     },
     onSubmit: async ({ value }) => {
-      await mockSubmitApplication({
-        phone: value.phone.trim(),
-        faculty: value.faculty!,
-        fieldOfStudy: value.fieldOfStudy.trim(),
-        studyType: value.studyType!,
-        graduationYear: Number(value.graduationYear),
-        interests: value.interests,
-        meetingFormat: value.meetingFormat,
-        wantsToContribute: value.wantsToContribute,
-        newsletter: value.newsletter,
+      await submitApplication({
+        data: {
+          phoneNumber: value.phoneNumber.trim(),
+          faculty: value.faculty!,
+          fieldOfStudy: value.fieldOfStudy.trim(),
+          studyType: value.studyType!,
+          graduationYear: Number(value.graduationYear),
+          interests: value.interests,
+          meetingPreferences:
+            value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
+          coCreationInterest: value.coCreationInterest,
+          newsletterSubscription: value.newsletterSubscription,
+          consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
+        },
       });
       Alert.alert(
         "Wniosek wysłany",
@@ -94,17 +104,17 @@ function ApplicationForm() {
 
         <FormSection title="Dane kontaktowe">
           <form.Field
-            name="phone"
+            name="phoneNumber"
             validators={{
               onBlur: ({ value }) => {
-                if (!value.trim()) return undefined;
+                if (!value.trim()) return "Podaj numer telefonu";
                 if (!phoneInputRef.current?.isValidNumber()) return "Podaj poprawny numer telefonu";
                 return undefined;
               },
             }}
           >
             {(field) => (
-              <FormField label="Telefon kontaktowy">
+              <FormField label="Telefon kontaktowy" required>
                 <PhoneInput
                   ref={phoneInputRef}
                   initialCountry="pl"
@@ -151,9 +161,11 @@ function ApplicationForm() {
               <FormField label="Wydział" required>
                 <SelectField
                   value={field.state.value}
-                  options={FACULTIES.map((name) => ({ value: name, label: name }))}
+                  options={FACULTIES}
                   placeholder="Wybierz wydział"
-                  onChange={field.handleChange}
+                  onChange={(value) =>
+                    field.handleChange(value as CreateApplicationRequestDtoFaculty)
+                  }
                 />
                 <FieldError field={field} />
               </FormField>
@@ -192,7 +204,9 @@ function ApplicationForm() {
                   value={field.state.value}
                   options={STUDY_TYPES}
                   placeholder="Wybierz stopień"
-                  onChange={(value) => field.handleChange(value as StudyTypeValue)}
+                  onChange={(value) =>
+                    field.handleChange(value as CreateApplicationRequestDtoStudyType)
+                  }
                 />
                 <FieldError field={field} />
               </FormField>
@@ -253,19 +267,21 @@ function ApplicationForm() {
             )}
           </form.Field>
 
-          <form.Field name="meetingFormat">
+          <form.Field name="meetingPreferences">
             {(field) => (
               <FormField label="Preferowana forma spotkań">
                 <OptionChips
                   options={MEETING_FORMATS}
                   value={field.state.value}
-                  onChange={field.handleChange}
+                  onChange={(next) =>
+                    field.handleChange(next as CreateApplicationRequestDtoMeetingPreferencesItem[])
+                  }
                 />
               </FormField>
             )}
           </form.Field>
 
-          <form.Field name="wantsToContribute">
+          <form.Field name="coCreationInterest">
             {(field) => (
               <CheckboxCard
                 title="Chcę aktywnie współtworzyć klub"
@@ -276,7 +292,7 @@ function ApplicationForm() {
             )}
           </form.Field>
 
-          <form.Field name="newsletter">
+          <form.Field name="newsletterSubscription">
             {(field) => (
               <CheckboxCard
                 title="Subskrypcja newslettera"
@@ -338,7 +354,7 @@ function ApplicationForm() {
           </form.Field>
         </View>
 
-        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
           {([canSubmit, isSubmitting]) => (
             <Button
               size="lg"
