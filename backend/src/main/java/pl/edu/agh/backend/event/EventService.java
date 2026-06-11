@@ -1,6 +1,6 @@
-package pl.edu.agh.backend.service;
+package pl.edu.agh.backend.event;
 
-import static pl.edu.agh.backend.repository.EventSpecifications.*;
+import static pl.edu.agh.backend.event.EventSpecifications.*;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -15,10 +15,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import pl.edu.agh.backend.domain.Audience;
-import pl.edu.agh.backend.domain.Event;
-import pl.edu.agh.backend.exception.EventNotFoundException;
-import pl.edu.agh.backend.repository.EventRepository;
 
 @Service
 @RequiredArgsConstructor
