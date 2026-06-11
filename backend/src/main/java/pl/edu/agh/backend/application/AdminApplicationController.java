@@ -7,11 +7,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -21,6 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminApplicationController {
 
     private final AdminApplicationService adminApplicationService;
+
+    @GetMapping
+    @Operation(summary = "List applications with full details, filtered by status (newest first)")
+    public Page<AdminApplicationResponseDto> list(
+            @RequestParam(defaultValue = "UNDER_REVIEW") ApplicationStatus status,
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+        return adminApplicationService.list(status, pageable);
+    }
 
     @PostMapping("/{id}/approve")
     @Operation(summary = "Approve an application and grant the verified alumn role")

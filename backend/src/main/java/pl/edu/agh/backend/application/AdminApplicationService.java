@@ -3,6 +3,8 @@ package pl.edu.agh.backend.application;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,13 @@ public class AdminApplicationService {
 
     @Value("${keycloak.verified-alumn-role:verified-alumn}")
     private String verifiedAlumnRole;
+
+    @Transactional(readOnly = true)
+    public Page<AdminApplicationResponseDto> list(ApplicationStatus status, Pageable pageable) {
+        return applicationRepository
+                .findByStatusOrderByCreatedAtDesc(status, pageable)
+                .map(AdminApplicationResponseDto::from);
+    }
 
     @Transactional
     public ApplicationResponseDto approve(Authentication authentication, UUID applicationId) {
