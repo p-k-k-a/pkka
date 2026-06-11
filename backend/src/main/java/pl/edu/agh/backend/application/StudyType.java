@@ -4,5 +4,5 @@ public enum StudyType {
     BACHELOR,
     MASTER,
     DOCTORAL,
-    POSTGRADUATE,
+    POSTGRADUATE
 }
