@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { AnnouncementsSection } from "@/components/announcements-section";
+import { useAuth } from "@/lib/auth-context";
 
 export default function HomePage() {
+  const { loginWithKeycloak } = useAuth();
+
   return (
     <div>
       <section className="bg-muted/40 px-6 py-16 md:py-24">
@@ -23,8 +28,12 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-              <Button asChild size="xl" className="rounded-lg px-6 text-base">
-                <Link href="/register">Dołącz do nas</Link>
+              <Button
+                onClick={loginWithKeycloak}
+                size="xl"
+                className="cursor-pointer rounded-lg px-6 text-base"
+              >
+                Dołącz do nas
               </Button>
 
               <Button asChild variant="outline" size="xl" className="rounded-lg px-6 text-base">
