@@ -139,11 +139,7 @@ export function EventDetail({ id }: { id: string }) {
         <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
           Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
         </p>
-        <Button
-          size="xl"
-          className="w-full rounded-xl font-semibold"
-          onClick={loginWithKeycloak}
-        >
+        <Button size="xl" className="w-full rounded-xl font-semibold" onClick={loginWithKeycloak}>
           Zaloguj się, aby dołączyć
         </Button>
       </footer>
