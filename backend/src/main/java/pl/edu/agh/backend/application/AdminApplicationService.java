@@ -27,11 +27,6 @@ public class AdminApplicationService {
     @Value("${keycloak.verified-alumn-role:verified-alumn}")
     private String verifiedAlumnRole;
 
-    /**
-     * Approving flips the application status, assigns the verified alumn role in Keycloak,
-     * and commits the DB change in a single transaction — if the Keycloak call fails the DB
-     * rollback keeps state consistent.
-     */
     @Transactional
     public ApplicationResponseDto approve(Authentication authentication, UUID applicationId) {
         User reviewer = resolveReviewer(authentication);
