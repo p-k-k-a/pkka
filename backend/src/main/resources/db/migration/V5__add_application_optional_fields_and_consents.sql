@@ -17,7 +17,7 @@ CREATE TABLE application_interests
     CONSTRAINT chk_application_interests_interest   CHECK (interest IN ('FUTURE_TECH', 'CAREER_MENTORING', 'NETWORKING', 'SCIENTIFIC_COLLABORATION'))
 );
 
-CREATE INDEX idx_application_interests_application ON application_interests (application_id);
+-- CREATE INDEX idx_application_interests_application ON application_interests (application_id);
 
 CREATE TABLE application_consents
 (
@@ -32,4 +32,4 @@ CREATE TABLE application_consents
     CONSTRAINT chk_application_consents_type       CHECK (type IN ('REGULATIONS_PRIVACY', 'GDPR_DATA_PROCESSING'))
 );
 
-CREATE INDEX idx_application_consents_application ON application_consents (application_id);
+-- CREATE INDEX idx_application_consents_application ON application_consents (application_id);

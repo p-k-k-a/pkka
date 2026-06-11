@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.application;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,10 +40,11 @@ public class ApplicationService {
                 .fieldOfStudy(request.fieldOfStudy())
                 .studyType(request.studyType())
                 .graduationYear(request.graduationYear())
-                .meetingPreference(request.meetingPreference())
+                .meetingPreferences(new ArrayList<>(request.meetingPreferences()))
                 .coCreationInterest(request.coCreationInterest())
                 .newsletterSubscription(request.newsletterSubscription())
-                .interests(request.interests())
+                .phoneNumber(request.phoneNumber())
+                .interests(new ArrayList<>(request.interests()))
                 .build();
 
         Instant now = Instant.now();

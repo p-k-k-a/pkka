@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -23,7 +24,7 @@ public class EventController {
     @Operation(summary = "List of upcoming events (optional filtering by tags)")
     public Page<EventListItemDto> list(
             @RequestParam(required = false) Set<String> tags,
-            @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
+            @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Authentication authentication) {
         return eventService.list(authentication, tags, pageable).map(EventListItemDto::from);
     }

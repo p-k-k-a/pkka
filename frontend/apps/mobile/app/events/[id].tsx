@@ -1,6 +1,6 @@
-import { DetailHeader } from "@/components/ui/detail-header";
 import { EventDetailView } from "@/components/events/event-detail-view";
 import { Button } from "@/components/ui/button";
+import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetById } from "@pkka/api";
 import { router, useLocalSearchParams } from "expo-router";

@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,6 +12,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -43,10 +43,10 @@ public class Application {
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.UNDER_REVIEW;
 
-    @NotBlank
-    @Size(max = 200)
-    @Column(nullable = false, length = 200)
-    private String faculty;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Faculty faculty;
 
     @NotBlank
     @Size(max = 200)
@@ -63,9 +63,11 @@ public class Application {
     @Column(name = "graduation_year", nullable = false)
     private Integer graduationYear;
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
     @Enumerated(EnumType.STRING)
-    @Column(name = "meeting_preference", length = 20)
-    private MeetingPreference meetingPreference;
+    @Column(name = "meeting_preferences", nullable = false, columnDefinition = "varchar(20)[]")
+    @Builder.Default
+    private List<MeetingPreference> meetingPreferences = new ArrayList<>();
 
     @Column(name = "co_creation_interest", nullable = false)
     @Builder.Default
@@ -75,17 +77,18 @@ public class Application {
     @Builder.Default
     private boolean newsletterSubscription = false;
 
-    @ElementCollection(targetClass = Interest.class, fetch = FetchType.EAGER)
-    @Enumerated(EnumType.STRING)
-    @CollectionTable(
-            name = "application_interests",
-            joinColumns = @JoinColumn(name = "application_id"),
-            foreignKey = @ForeignKey(name = "fk_application_interests_application"))
-    @Column(name = "interest", length = 40, nullable = false)
-    @Builder.Default
-    private Set<Interest> interests = EnumSet.noneOf(Interest.class);
+    @NotBlank
+    @Size(max = 32)
+    @Pattern(regexp = "^\\+?[0-9 \\-]{7,32}$")
+    @Column(name = "phone_number", nullable = false, length = 32)
+    private String phoneNumber;
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "interests", nullable = false, columnDefinition = "varchar(100)[]")
+    @Builder.Default
+    private List<String> interests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ApplicationConsent> consents = new ArrayList<>();
 
@@ -95,6 +98,10 @@ public class Application {
 
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
+
+    @Size(max = 1000)
+    @Column(name = "rejection_reason", length = 1000)
+    private String rejectionReason;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -123,15 +130,11 @@ public class Application {
         markReviewed(reviewer);
     }
 
-    public void reject(User reviewer) {
+    public void reject(User reviewer, String reason) {
         ensureUnderReview();
         this.status = ApplicationStatus.REJECTED;
+        this.rejectionReason = reason;
         markReviewed(reviewer);
-    }
-
-    public void withdraw() {
-        ensureUnderReview();
-        this.status = ApplicationStatus.WITHDRAWN;
     }
 
     private void ensureUnderReview() {
