@@ -1,13 +1,13 @@
 import { BlogPostView } from "@/components/blog/blog-post-view";
 import { DetailHeader } from "@/components/blog/detail-header";
 import { Text } from "@/components/ui/text";
-import { useGetBlogPostBySlug } from "@pkka/api";
+import { useGetPost } from "@pkka/api";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function BlogPostScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { data, isError } = useGetBlogPostBySlug(slug ?? "", {
+  const { data, isError } = useGetPost(slug ?? "", {
     query: { enabled: !!slug },
   });
 

@@ -15,7 +15,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="flex gap-8">
-            <NavLink href="/" exact>
+            <NavLink href="/" activePaths={["/", "/announcements"]}>
               Aktualności
             </NavLink>
             <NavLink href="/events">Wydarzenia</NavLink>
