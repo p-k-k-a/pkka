@@ -1,3 +1,5 @@
 thesis.yaml
 **/.env
 **/.idea
+**/package-lock.json
+.pnpm-store/
