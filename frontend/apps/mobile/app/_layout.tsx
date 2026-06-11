@@ -9,11 +9,6 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-if (__DEV__) {
-  // eslint-disable-next-line
-  require("../msw.setup");
-}
-
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
@@ -28,6 +23,7 @@ export default function RootLayout() {
               <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="index" options={{ headerShown: false }} />
+                <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
               </Stack>
             </SafeAreaView>
             <StatusBar style="auto" />

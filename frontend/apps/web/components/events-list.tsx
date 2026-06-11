@@ -130,46 +130,30 @@ export function EventsList() {
   const { data: response, isLoading, isError } = useList({ size: 20 });
   const events = response?.data?.content ?? [];
 
-  if (isLoading) {
-    return (
-      <SectionShell title="Wydarzenia">
+  return (
+    <SectionShell title="Wydarzenia">
+      {isLoading ? (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <EventCardSkeleton featured />
           {Array.from({ length: 3 }).map((_, i) => (
             <EventCardSkeleton key={i} />
           ))}
         </div>
-      </SectionShell>
-    );
-  }
-
-  if (isError) {
-    return (
-      <SectionShell title="Wydarzenia">
+      ) : isError ? (
         <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
-      </SectionShell>
-    );
-  }
-
-  if (events.length === 0) {
-    return (
-      <SectionShell title="Wydarzenia">
+      ) : events.length === 0 ? (
         <p className="text-muted-foreground">Brak nadchodzących wydarzeń.</p>
-      </SectionShell>
-    );
-  }
-
-  return (
-    <SectionShell title="Wydarzenia">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {events.map((event, index) =>
-          index === 0 ? (
-            <EventCardFeatured key={event.id} event={event} />
-          ) : (
-            <EventCardCompact key={event.id} event={event} />
-          ),
-        )}
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {events.map((event, index) =>
+            index === 0 ? (
+              <EventCardFeatured key={event.id} event={event} />
+            ) : (
+              <EventCardCompact key={event.id} event={event} />
+            ),
+          )}
+        </div>
+      )}
     </SectionShell>
   );
 }

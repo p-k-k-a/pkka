@@ -14,9 +14,9 @@ export function AnnouncementsSection() {
   const { data: response, isLoading, isError } = useListPosts({ size: 10 });
   const announcements = response?.data?.content ?? [];
 
-  if (isLoading) {
-    return (
-      <SectionShell title="Publiczne Aktualności" as="section">
+  return (
+    <SectionShell title="Publiczne Aktualności" as="section">
+      {isLoading ? (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton
@@ -25,78 +25,62 @@ export function AnnouncementsSection() {
             />
           ))}
         </div>
-      </SectionShell>
-    );
-  }
-
-  if (isError) {
-    return (
-      <SectionShell title="Publiczne Aktualności" as="section">
+      ) : isError ? (
         <p className="text-destructive font-medium">Nie udało się załadować ogłoszeń.</p>
-      </SectionShell>
-    );
-  }
-
-  if (announcements.length === 0) {
-    return (
-      <SectionShell title="Publiczne Aktualności" as="section">
+      ) : announcements.length === 0 ? (
         <p className="text-muted-foreground">Brak opublikowanych wpisów.</p>
-      </SectionShell>
-    );
-  }
+      ) : (
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {announcements.map((post, index) => {
+            const isFeatured = index === 0;
+            const { dateLabel, timeLabel } = formatPublishedAt(post.publishedAt);
 
-  return (
-    <SectionShell title="Publiczne Aktualności" as="section">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        {announcements.map((post, index) => {
-          const isFeatured = index === 0;
-          const { dateLabel, timeLabel } = formatPublishedAt(post.publishedAt);
+            if (isFeatured) {
+              return (
+                <FeaturedCard
+                  key={post.id}
+                  href={`/announcements/${post.slug}`}
+                  imageSrc={DEFAULT_COVER_IMAGE}
+                  imageAlt={post.title ?? "Aktualność"}
+                  meta={
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
+                      <span>{dateLabel}</span>
+                      <span>•</span>
+                      <span>{timeLabel}</span>
+                    </div>
+                  }
+                  title={post.title ?? ""}
+                  cta="CZYTAJ WIĘCEJ →"
+                />
+              );
+            }
 
-          if (isFeatured) {
             return (
-              <FeaturedCard
+              <Link
                 key={post.id}
                 href={`/announcements/${post.slug}`}
-                imageSrc={DEFAULT_COVER_IMAGE}
-                imageAlt={post.title ?? "Aktualność"}
-                meta={
-                  <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
-                    <span>{dateLabel}</span>
-                    <span>•</span>
-                    <span>{timeLabel}</span>
+                className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">
+                  <div className="space-y-4">
+                    <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
+                      <span>{dateLabel}</span>
+                      <span>-</span>
+                      <span>{timeLabel}</span>
+                    </div>
+
+                    <CardTitle className="text-foreground group-hover:text-primary text-xl leading-tight font-bold transition-colors">
+                      {post.title}
+                    </CardTitle>
                   </div>
-                }
-                title={post.title ?? ""}
-                cta="CZYTAJ WIĘCEJ →"
-              />
+
+                  <CardLinkFooter className="mt-8 border-t pt-6">CZYTAJ WIĘCEJ →</CardLinkFooter>
+                </Card>
+              </Link>
             );
-          }
-
-          return (
-            <Link
-              key={post.id}
-              href={`/announcements/${post.slug}`}
-              className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
-            >
-              <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">
-                <div className="space-y-4">
-                  <div className="text-muted-foreground flex items-center gap-2 text-sm font-semibold">
-                    <span>{dateLabel}</span>
-                    <span>-</span>
-                    <span>{timeLabel}</span>
-                  </div>
-
-                  <CardTitle className="text-foreground group-hover:text-primary text-xl leading-tight font-bold transition-colors">
-                    {post.title}
-                  </CardTitle>
-                </div>
-
-                <CardLinkFooter className="mt-8 border-t pt-6">CZYTAJ WIĘCEJ →</CardLinkFooter>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      )}
     </SectionShell>
   );
 }

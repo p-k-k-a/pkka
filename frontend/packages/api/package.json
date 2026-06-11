@@ -9,7 +9,6 @@
     "generate": "orval --config ./orval.config.ts",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
   "peerDependencies": {
     "@tanstack/react-query": "^5",
     "react": ">=19"

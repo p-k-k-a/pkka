@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Calendar, Link2, MapPin, Users } from "lucide-react";
 import { EventDetailsDtoType, useGetById } from "@pkka/api";
-import { useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,10 +22,6 @@ export function EventDetail({ id }: { id: string }) {
   const isOnline = event?.type === EventDetailsDtoType.ONLINE;
   const location = event?.location?.trim();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [id]);
-
   if (isLoading && !event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
@@ -45,24 +40,21 @@ export function EventDetail({ id }: { id: string }) {
     );
   }
 
-  if (isError) {
+  if (isError || !event) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p className="text-destructive mb-6 font-semibold">Nie udało się załadować wydarzenia.</p>
-        <DetailBackLink href="/events" label="Wróć do wydarzeń" />
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h1 className="mb-2 text-2xl font-bold">Nie znaleziono wydarzenia</h1>
-        <p className="text-muted-foreground mb-8">
-          {isFetching
-            ? "Szukamy wydarzenia…"
-            : "To wydarzenie nie istnieje lub nie jest już dostępne."}
-        </p>
+        {isError ? (
+          <p className="text-destructive mb-6 font-semibold">Nie udało się załadować wydarzenia.</p>
+        ) : (
+          <>
+            <h1 className="mb-2 text-2xl font-bold">Nie znaleziono wydarzenia</h1>
+            <p className="text-muted-foreground mb-8">
+              {isFetching
+                ? "Szukamy wydarzenia…"
+                : "To wydarzenie nie istnieje lub nie jest już dostępne."}
+            </p>
+          </>
+        )}
         <DetailBackLink href="/events" label="Wróć do wydarzeń" />
       </div>
     );
