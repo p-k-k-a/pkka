@@ -22,7 +22,6 @@ export default defineConfig({
       target: "./src/generated/api.ts",
       schemas: "./src/generated/schemas",
       client: "react-query",
-      mock: true, //tu dodoałem coś zeby były mocki
       override: {
         mutator: { path: "./mutator.ts", name: "apiFetch" },
         query: { useQuery: true, useMutation: true, signal: true, usePrefetch: true },
