@@ -28,7 +28,7 @@ import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as React from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import PhoneInput from "react-native-phone-input";
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -78,11 +78,7 @@ function ApplicationForm() {
           consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
         },
       });
-      Alert.alert(
-        "Wniosek wysłany",
-        "Twój wniosek o członkostwo został przyjęty. Powiadomimy Cię, gdy zostanie rozpatrzony.",
-        [{ text: "OK", onPress: () => router.back() }],
-      );
+      router.replace("/(tabs)/login");
     },
   });
 

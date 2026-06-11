@@ -77,7 +77,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         StringBuilder link = new StringBuilder(mobileDeepLinkScheme)
-                .append(":///#at=")
+                .append(":///login#at=")
                 .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
 
         if (rt != null) {
