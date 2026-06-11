@@ -12,14 +12,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class WebCorsConfig {
 
-    private static final List<String> CORS_PATHS = List.of(
-            "/api/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/oauth2/**",
-            "/login/oauth2/**",
-            "/error",
-            "/");
+    private static final List<String> CORS_PATHS =
+            List.of("/api/**", "/v3/api-docs/**", "/swagger-ui/**", "/oauth2/**", "/login/oauth2/**", "/error", "/");
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(

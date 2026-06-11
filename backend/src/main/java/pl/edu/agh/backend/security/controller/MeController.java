@@ -24,11 +24,9 @@ public class MeController {
         }
 
         return switch (authentication) {
-            case OAuth2AuthenticationToken t when t.getPrincipal() instanceof OidcUser u -> new MeResponse(
-                    u.getPreferredUsername(),
-                    u.getFullName(),
-                    u.getEmail(),
-                    extractRoles(authentication));
+            case OAuth2AuthenticationToken t
+            when t.getPrincipal() instanceof OidcUser u ->
+                new MeResponse(u.getPreferredUsername(), u.getFullName(), u.getEmail(), extractRoles(authentication));
 
             case JwtAuthenticationToken t -> {
                 var jwt = t.getToken();
