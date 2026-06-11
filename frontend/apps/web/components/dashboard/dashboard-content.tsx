@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
+import { displayRoles } from "@/lib/role-labels";
 
 export function DashboardContent() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -29,7 +29,7 @@ export function DashboardContent() {
   }
 
   const displayName = user.name ?? user.username ?? "?";
-  const roles = user.roles ?? [];
+  const roles = displayRoles(user.roles ?? []);
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -66,10 +66,6 @@ export function DashboardContent() {
             )}
           </div>
         </div>
-
-        <Button onClick={logout} variant="outline" size="xl" className="w-full">
-          Wyloguj się
-        </Button>
       </div>
     </div>
   );

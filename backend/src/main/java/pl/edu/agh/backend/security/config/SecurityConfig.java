@@ -91,6 +91,7 @@ public class SecurityConfig {
         oidcLogout.setPostLogoutRedirectUri("{baseUrl}/");
 
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(

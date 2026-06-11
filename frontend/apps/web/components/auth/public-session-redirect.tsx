@@ -14,7 +14,7 @@ export function PublicSessionRedirect({ children }: { children: React.ReactNode 
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (!isLoading && isAuthenticated) {
+  if (isLoading || isAuthenticated) {
     return null;
   }
 

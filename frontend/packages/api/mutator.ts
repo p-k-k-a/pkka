@@ -127,6 +127,10 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${newAT}`);
     res = await safeFetch(fullUrl, { ...fetchOptions, headers });
     body = await parseBody<unknown>(res);
+
+    if (res.status === 401) {
+      await onUnauthenticated();
+    }
   }
 
   if (res.status === 401 && useSessionAuth) {

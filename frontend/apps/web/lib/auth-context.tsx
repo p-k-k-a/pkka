@@ -5,27 +5,20 @@ import { markAuthNavigation } from "@/lib/auth-navigation";
 import type { AuthContextType } from "@/types/auth";
 import { ApiError, configureApi, getMeQueryKey, me } from "@pkka/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
-
-configureApi({
-  baseUrl: apiBaseUrl,
-  sessionAuth: true,
-});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    configureApi({
-      baseUrl: apiBaseUrl,
-      sessionAuth: true,
-      onUnauthenticated: async () => {
-        queryClient.setQueryData(getMeQueryKey(), null);
-      },
-    });
-  }, [queryClient]);
+  configureApi({
+    baseUrl: apiBaseUrl,
+    sessionAuth: true,
+    onUnauthenticated: async () => {
+      queryClient.setQueryData(getMeQueryKey(), null);
+    },
+  });
 
   const {
     data: user,
@@ -71,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [user, isLoading, isAuthenticated, refreshUser, loginWithKeycloak, logout],
   );
 
-  return <AuthContext value={value}>{children}</AuthContext>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

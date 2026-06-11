@@ -4,7 +4,9 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,15 +23,24 @@ public class MeController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
-        if (authentication.getPrincipal() instanceof OidcUser oidcUser) {
-            return new MeResponse(
-                    oidcUser.getPreferredUsername(),
-                    oidcUser.getFullName(),
-                    oidcUser.getEmail(),
+        return switch (authentication) {
+            case OAuth2AuthenticationToken t when t.getPrincipal() instanceof OidcUser u -> new MeResponse(
+                    u.getPreferredUsername(),
+                    u.getFullName(),
+                    u.getEmail(),
                     extractRoles(authentication));
-        }
 
-        return new MeResponse(authentication.getName(), null, null, extractRoles(authentication));
+            case JwtAuthenticationToken t -> {
+                var jwt = t.getToken();
+                yield new MeResponse(
+                        jwt.getClaimAsString("preferred_username"),
+                        jwt.getClaimAsString("name"),
+                        jwt.getClaimAsString("email"),
+                        extractRoles(authentication));
+            }
+
+            default -> throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        };
     }
 
     private static List<String> extractRoles(Authentication authentication) {

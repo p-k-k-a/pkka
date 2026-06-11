@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
@@ -15,14 +14,9 @@ export function PublicHeaderAuth() {
       {isLoading ? (
         <Skeleton className="h-11 w-32 rounded-lg" />
       ) : isAuthenticated ? (
-        <>
-          <Button asChild variant="outline" size="xl">
-            <Link href="/dashboard">Panel</Link>
-          </Button>
-          <Button variant="ghost" size="xl" onClick={logout}>
-            Wyloguj
-          </Button>
-        </>
+        <Button variant="ghost" size="xl" onClick={logout}>
+          Wyloguj
+        </Button>
       ) : (
         <Button onClick={loginWithKeycloak} size="xl">
           Zaloguj się
