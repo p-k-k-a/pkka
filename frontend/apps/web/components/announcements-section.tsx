@@ -51,13 +51,12 @@ export function AnnouncementsSection() {
         {announcements.map((post, index) => {
           const isFeatured = index === 0;
           const { dateLabel, timeLabel } = formatPublishedAt(post.publishedAt);
-          const slug = post.slug ?? post.id ?? String(index);
 
           if (isFeatured) {
             return (
               <FeaturedCard
                 key={post.id}
-                href={`/announcements/${slug}`}
+                href={`/announcements/${post.slug}`}
                 imageSrc={DEFAULT_COVER_IMAGE}
                 imageAlt={post.title ?? "Aktualność"}
                 meta={
@@ -76,7 +75,7 @@ export function AnnouncementsSection() {
           return (
             <Link
               key={post.id}
-              href={`/announcements/${slug}`}
+              href={`/announcements/${post.slug}`}
               className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
             >
               <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">

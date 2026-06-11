@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { PublicSessionRedirect } from "@/components/auth/public-session-redirect";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { NavLink } from "@/components/nav-link";
-import { PublicHeaderAuth } from "@/components/layout/public-header-auth";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,15 +21,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <NavLink href="/events">Wydarzenia</NavLink>
           </div>
 
-          <div className="flex flex-1 items-center justify-end">
-            <PublicHeaderAuth />
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <ThemeToggle />
+            <Button asChild size="xl">
+              <Link href="/login">Zaloguj się</Link>
+            </Button>
           </div>
         </nav>
       </header>
 
-      <main className="flex-1">
-        <PublicSessionRedirect>{children}</PublicSessionRedirect>
-      </main>
+      <main className="flex-1">{children}</main>
 
       <footer className="text-muted-foreground border-t px-6 py-4 text-center text-sm">
         © 2026 Klub Alumna WI AGH

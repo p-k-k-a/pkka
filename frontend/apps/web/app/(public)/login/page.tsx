@@ -1,5 +1,10 @@
-import { LoginPageClient } from "@/components/auth/login-page-client";
+import { TemporaryPage } from "@/components/temporary-page";
 
 export default function LoginPage() {
-  return <LoginPageClient />;
+  return (
+    <TemporaryPage
+      title="Logowanie"
+      description="To jest tymczasowa strona logowania. Tutaj będzie formularz logowania do konta członka PKKA."
+    />
+  );
 }
