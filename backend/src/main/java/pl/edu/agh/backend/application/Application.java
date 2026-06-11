@@ -88,7 +88,7 @@ public class Application {
     @Builder.Default
     private List<String> interests = new ArrayList<>();
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ApplicationConsent> consents = new ArrayList<>();
 
