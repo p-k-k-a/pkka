@@ -1,4 +1,4 @@
-import { DetailHeader } from "@/components/blog/detail-header";
+import { DetailHeader } from "@/components/ui/detail-header";
 import { EventDetailView } from "@/components/events/event-detail-view";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
