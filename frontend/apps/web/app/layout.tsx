@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { authReturnRecoveryScript } from "@/lib/auth-navigation";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default function RootLayout({
             __html: `(function(){try{var stored=localStorage.getItem("theme");var system=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var theme=stored==="dark"||stored==="light"?stored:system;var root=document.documentElement;root.classList.toggle("dark",theme==="dark");root.style.colorScheme=theme;}catch(e){}})();`,
           }}
         />
+        <script dangerouslySetInnerHTML={{ __html: authReturnRecoveryScript }} />
       </head>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>

@@ -1,13 +1,15 @@
 "use client";
 
-import { configureApi } from "@pkka/api";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "@/lib/auth-context";
 import { getQueryClient } from "@/lib/query-client";
-
-configureApi({ baseUrl: "" });
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>{children}</AuthProvider>
+    </QueryClientProvider>
+  );
 }

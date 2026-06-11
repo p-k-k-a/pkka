@@ -1,14 +1,12 @@
-export type User = {
-  username: string;
-  name: string | null;
-  email: string | null;
-  roles: string[];
-};
+import type { MeResponse } from "@pkka/api";
+
+export type User = MeResponse;
 
 export type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  refreshUser: () => Promise<void>;
-  loginWithKeycloak: (idp?: "discord") => void;
+  isAuthenticated: boolean;
+  refreshUser: () => Promise<unknown>;
+  loginWithKeycloak: () => void;
   logout: () => void;
 };
