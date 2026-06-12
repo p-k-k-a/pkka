@@ -1,7 +1,9 @@
-import Link from "next/link";
+"use client";
+
 import { GraduationCap, Handshake, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/lib/auth-context";
 
 const HIGHLIGHTS = [
   {
@@ -25,6 +27,8 @@ const HIGHLIGHTS = [
 ];
 
 export function InfoPageContent() {
+  const { loginWithKeycloak } = useAuth();
+
   return (
     <div className="mx-auto max-w-4xl px-6 py-12 md:py-20">
       <header className="mb-12 space-y-6 md:mb-16">
@@ -86,8 +90,13 @@ export function InfoPageContent() {
           Wypełnij formularz rejestracyjny i zostań częścią społeczności absolwentów Wydziału
           Informatyki AGH.
         </p>
-        <Button asChild size="xl" variant="outline" className="rounded-xl font-semibold">
-          <Link href="/register">Przejdź do rejestracji</Link>
+        <Button
+          size="xl"
+          variant="outline"
+          className="rounded-xl font-semibold"
+          onClick={loginWithKeycloak}
+        >
+          Przejdź do rejestracji
         </Button>
       </section>
     </div>
