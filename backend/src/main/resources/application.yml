@@ -46,6 +46,7 @@ spring:
     # db/dev holds dev-only seed data (sample events). Never loaded on prod.
     locations: classpath:db/migration,classpath:db/dev
     baseline-on-migrate: true
+    out-of-order: true
 
   # OAuth2 / OIDC (Keycloak)
   security:
