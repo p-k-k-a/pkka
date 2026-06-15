@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Calendar, Link2, MapPin, Users } from "lucide-react";
 import { EventDetailsDtoType, useGetById } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
@@ -12,10 +13,8 @@ import { InfoRow } from "@/components/content/info-row";
 import { remoteCoverImageSrc } from "@/lib/content-images";
 import { formatEventDateShort, formatTimeRange } from "@/lib/format-event-datetime";
 import { eventTypeLabelUpper, formatSeatsRemaining } from "@/lib/event-labels";
-import { useAuth } from "@/lib/auth-context";
 
 export function EventDetail({ id }: { id: string }) {
-  const { loginWithKeycloak } = useAuth();
   const { data: response, isLoading, isError, isFetching } = useGetById(id);
   const event = response?.data;
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
@@ -139,8 +138,8 @@ export function EventDetail({ id }: { id: string }) {
         <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
           Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
         </p>
-        <Button size="xl" className="w-full rounded-xl font-semibold" onClick={loginWithKeycloak}>
-          Zaloguj się, aby dołączyć
+        <Button asChild size="xl" className="w-full rounded-xl font-semibold">
+          <Link href="/login">Zaloguj się, aby dołączyć</Link>
         </Button>
       </footer>
     </div>
