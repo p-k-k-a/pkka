@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -23,8 +25,8 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col gap-4 pt-4 sm:flex-row">
-              <Button asChild size="xl" className="rounded-lg px-6 text-base">
-                <Link href="/register">Dołącz do nas</Link>
+              <Button asChild size="xl" className="cursor-pointer rounded-lg px-6 text-base">
+                <Link href="/login">Dołącz do nas</Link>
               </Button>
 
               <Button asChild variant="outline" size="xl" className="rounded-lg px-6 text-base">
