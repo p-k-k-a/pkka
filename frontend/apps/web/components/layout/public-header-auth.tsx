@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PublicHeaderAuth() {
-  const { isAuthenticated, isLoading, loginWithKeycloak, logout } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   return (
     <div className="flex items-center gap-3">
@@ -18,8 +19,8 @@ export function PublicHeaderAuth() {
           Wyloguj
         </Button>
       ) : (
-        <Button onClick={loginWithKeycloak} size="xl">
-          Zaloguj się
+        <Button asChild size="xl">
+          <Link href="/login">Zaloguj się</Link>
         </Button>
       )}
     </div>

@@ -3,6 +3,7 @@ package pl.edu.agh.backend.security.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -60,8 +61,9 @@ public class MeController {
     private static List<String> extractRoles(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .filter(a -> a.startsWith("ROLE_"))
-                .map(a -> a.replaceFirst("^ROLE_", ""))
+                .filter(Objects::nonNull)
+                .filter(authority -> authority.startsWith("ROLE_"))
+                .map(authority -> authority.replaceFirst("^ROLE_", ""))
                 .sorted()
                 .toList();
     }

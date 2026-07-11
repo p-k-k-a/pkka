@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -33,6 +34,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 @Configuration
@@ -88,7 +90,7 @@ public class SecurityConfig {
 
         OidcClientInitiatedLogoutSuccessHandler oidcLogout =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        oidcLogout.setPostLogoutRedirectUri("{baseUrl}/");
+        oidcLogout.setPostLogoutRedirectUri("{baseUrl}/api/public/auth/post-logout");
 
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .cors(Customizer.withDefaults())
@@ -111,7 +113,9 @@ public class SecurityConfig {
                                 ep -> ep.authorizationRequestResolver(discordBypassResolver))
                         .userInfoEndpoint(ui -> ui.oidcUserService(oidcUserService(jwtDecoder)))
                         .successHandler(bffHandler))
-                .logout(logout -> logout.logoutSuccessHandler(oidcLogout)
+                .logout(logout -> logout.logoutRequestMatcher(
+                                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout"))
+                        .logoutSuccessHandler(oidcLogout)
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
 
