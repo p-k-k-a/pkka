@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/public/auth")
-public class LogoutRedirectController {
+public class WebLogoutRedirectController {
 
     private final String webLogoutRedirectUrl;
 
-    public LogoutRedirectController(@Value("${app.web.logout-redirect-url}") String webLogoutRedirectUrl) {
+    public WebLogoutRedirectController(@Value("${app.web.logout-redirect-url}") String webLogoutRedirectUrl) {
         this.webLogoutRedirectUrl = webLogoutRedirectUrl;
     }
 
