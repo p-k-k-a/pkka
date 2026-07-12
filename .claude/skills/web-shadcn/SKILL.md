@@ -7,7 +7,7 @@ description: |
   "next.js route", "server component", and on edits under
   `frontend/apps/web/app/`, `components/ui/`, or `lib/`. Mirrors the
   conventions already captured for mobile in `mobile-rnr` — read
-  `klub-alumnow-brand` first for token values and page-layout rhythm.
+  `alumni-design-system` first for token values and page-layout rhythm.
 ---
 
 # Web app — Next.js App Router + shadcn/ui
@@ -27,7 +27,7 @@ npx shadcn@latest add <component>     # e.g. button, card, accordion, dialog
 ```
 
 Lands in `components/ui/`. It already resolves to the brand tokens once
-`app/globals.css` carries the Klub Alumnów values (see `klub-alumnow-brand`
+`app/globals.css` carries the Klub Alumnów values (see `alumni-design-system`
 skill) — no manual color overrides needed on a freshly-added component.
 
 ## Path aliases
@@ -66,7 +66,7 @@ composed by the page.
   automatically with the existing dark-mode toggle (`theme-toggle.tsx` +
   the inline script in `layout.tsx`).
 - Headings: `font-heading` (Jost). Body: default `font-sans` (Montserrat)
-  once `layout.tsx` is swapped to load them (see `klub-alumnow-brand`).
+  once `layout.tsx` is swapped to load them (see `alumni-design-system`).
 - Radius utilities (`rounded-md`, `rounded-lg`) resolve off `--radius`
   (5px in this brand) — don't override with an arbitrary value.
 
