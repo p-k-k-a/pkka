@@ -9,7 +9,13 @@ public record MeResponse(
         String sub,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) String email,
+
+        @Schema(requiredMode = RequiredMode.REQUIRED, description = "Given name (Keycloak claim: given_name).")
         String firstName,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Family name / surname (Keycloak claim: family_name).")
         String lastName,
 
         @Schema(
