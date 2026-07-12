@@ -7,6 +7,10 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ["Jost"],
+        sans: ["Montserrat"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -41,11 +45,15 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // brand-specific bands (Section tone="navy"/"amber")
+        navy: "hsl(var(--navy))",
+        "brand-ink": "hsl(var(--brand-ink))",
+        "white-text": "hsl(var(--white-text))",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 1px)",
+        sm: "calc(var(--radius) - 2px)",
       },
       borderWidth: {
         hairline: hairlineWidth(),
