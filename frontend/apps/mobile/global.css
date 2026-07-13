@@ -4,55 +4,67 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 213.6 36.2% 13.5%; /* #16212F ink */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 213.6 36.2% 13.5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 63%;
-    --radius: 0.625rem;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 213.6 36.2% 13.5%;
+    --primary: 39.7 100% 48%; /* #F5A200 brand amber */
+    --primary-foreground: 0 0% 10.2%; /* #1A1A1A */
+    --secondary: 41.5 100% 97.5%; /* #FFFBF2 cream */
+    --secondary-foreground: 39 100% 28.6%; /* #925F00 */
+    --muted: 221.5 56.5% 95.5%; /* #EDF1FA surface-blue */
+    --muted-foreground: 214 29.4% 40%; /* #486284 body */
+    --accent: 207.3 84.8% 38.6%; /* #0F6AB6 accent blue */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 2.8 68.8% 51%; /* #D8342C */
+    --border: 221.5 56.5% 95.5%; /* #EDF1FA line */
+    --input: 221.5 56.5% 95.5%;
+    --ring: 216.1 96.9% 75.1%; /* #82B3FD */
+    --radius: 0.3125rem; /* 5px control radius */
+
+    /* Brand extras — reference via hsl(var(--navy)) etc if you add
+        them to tailwind.config.js colors, same pattern as `primary`. */
+    --navy: 208.7 94.7% 14.7%; /* #022749 */
+    --brand-ink: 36.2 100% 11.4%; /* #3A2300 */
+    --white-text: 221.5 56.5% 95.5%; /* #EDF1FA on dark bands */
+
+    --chart-1: 39.7 100% 48%;
+    --chart-2: 207.3 84.8% 38.6%;
+    --chart-3: 208.7 94.7% 14.7%;
+    --chart-4: 27.8 100% 83.9%;
+    --chart-5: 219.3 96.5% 88.8%;
   }
 
   .dark:root {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70.9% 59.4%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 300 0% 45%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --background: 213.3 94.7% 7.5%; /* #011125 */
+    --foreground: 221.5 56.5% 95.5%; /* #EDF1FA */
+    --card: 214.3 31.3% 26.3%; /* #2E4058 */
+    --card-foreground: 221.5 56.5% 95.5%;
+    --popover: 214.3 31.3% 26.3%;
+    --popover-foreground: 221.5 56.5% 95.5%;
+    --primary: 39.7 100% 48%; /* amber stays the same */
+    --primary-foreground: 0 0% 10.2%;
+    --secondary: 214.3 31.3% 26.3%;
+    --secondary-foreground: 221.5 56.5% 95.5%;
+    --muted: 214.3 31.3% 26.3%;
+    --muted-foreground: 220.8 62.4% 83.3%; /* #BACBEF */
+    --accent: 207.5 89.3% 52.2%; /* #188EF2 lighter blue */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 2.8 68.8% 51%;
+    --border: 214.3 31.3% 26.3%;
+    --input: 214.3 31.3% 26.3%;
+    --ring: 207.5 89.3% 52.2%;
+
+    --navy: 213.3 94.7% 7.5%;
+    --brand-ink: 36.2 100% 11.4%;
+    --white-text: 221.5 56.5% 95.5%;
+
+    --chart-1: 39.7 100% 48%;
+    --chart-2: 207.5 89.3% 52.2%;
+    --chart-3: 220.8 62.4% 83.3%;
+    --chart-4: 27.8 100% 83.9%;
+    --chart-5: 219.3 96.5% 88.8%;
   }
 }
