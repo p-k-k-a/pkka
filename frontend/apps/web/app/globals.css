@@ -1,48 +1,59 @@
 @import "tailwindcss";
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(1 0 0); /* #FFFFFF */
+  --foreground: oklch(0.244 0.031 254.8); /* #16212F ink */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.244 0.031 254.8);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --radius: 0.75rem;
+  --popover-foreground: oklch(0.244 0.031 254.8);
+  --primary: oklch(0.776 0.166 72.6); /* #F5A200 brand amber */
+  --primary-foreground: oklch(0.218 0 0); /* #1A1A1A near-black */
+  --secondary: oklch(0.989 0.013 86.8); /* #FFFBF2 cream */
+  --secondary-foreground: oklch(0.528 0.113 72.9); /* #925F00 */
+  --muted: oklch(0.958 0.013 266.7); /* #EDF1FA surface-blue */
+  --muted-foreground: oklch(0.49 0.063 255.4); /* #486284 body */
+  --accent: oklch(0.517 0.143 250.7); /* #0F6AB6 accent blue */
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.581 0.202 28.2); /* #D8342C */
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.958 0.013 266.7); /* #EDF1FA line */
+  --input: oklch(0.958 0.013 266.7);
+  --ring: oklch(0.762 0.119 258.4); /* #82B3FD */
+  --radius: 0.3125rem; /* 5px — this system's control radius */
+
+  /* Brand-specific extras (not part of the shadcn base contract, used by
+      our composed patterns — Section bands, tags). Safe to reference as
+      bg-[oklch(var(--navy))] or add to a Tailwind preset later. */
+  --navy: oklch(0.269 0.075 250.8); /* #022749 */
+  --brand-ink: oklch(0.279 0.059 72.8); /* #3A2300 */
+  --white-text: oklch(0.958 0.013 266.7); /* #EDF1FA on dark bands */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
+  --background: oklch(0.176 0.049 251.7); /* #011125 */
+  --foreground: oklch(0.958 0.013 266.7); /* #EDF1FA */
+  --card: oklch(0.367 0.048 255.8); /* #2E4058 */
+  --card-foreground: oklch(0.958 0.013 266.7);
+  --popover: oklch(0.367 0.048 255.8);
+  --popover-foreground: oklch(0.958 0.013 266.7);
+  --primary: oklch(0.776 0.166 72.6); /* amber stays the same */
+  --primary-foreground: oklch(0.218 0 0);
+  --secondary: oklch(0.367 0.048 255.8);
+  --secondary-foreground: oklch(0.958 0.013 266.7);
+  --muted: oklch(0.367 0.048 255.8);
+  --muted-foreground: oklch(0.841 0.054 265.3); /* #BACBEF */
+  --accent: oklch(0.639 0.177 251); /* #188EF2 lighter blue for dark */
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.581 0.202 28.2);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.639 0.177 251);
+
+  --navy: oklch(0.176 0.049 251.7);
+  --brand-ink: oklch(0.279 0.059 72.8);
+  --white-text: oklch(0.958 0.013 266.7);
 }
 
 @theme inline {
@@ -65,16 +76,29 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans);
+  --color-navy: var(--navy);
+  --color-brand-ink: var(--brand-ink);
+  --color-white-text: var(--white-text);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 3px);
+  --radius-xl: calc(var(--radius) + 11px);
+  --font-sans: var(--font-montserrat);
+  --font-heading: var(--font-jost);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-jost), Arial, Helvetica, sans-serif;
 }

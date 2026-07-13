@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { GraduationCap, Handshake, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -87,7 +89,7 @@ export function InfoPageContent() {
           Informatyki AGH.
         </p>
         <Button asChild size="xl" variant="outline" className="rounded-xl font-semibold">
-          <Link href="/register">Przejdź do rejestracji</Link>
+          <Link href="/login">Przejdź do rejestracji</Link>
         </Button>
       </section>
     </div>

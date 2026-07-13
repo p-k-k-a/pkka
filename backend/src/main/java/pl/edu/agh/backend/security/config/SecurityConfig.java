@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -32,6 +34,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 @Configuration
@@ -48,6 +51,7 @@ public class SecurityConfig {
         // CSRF enabled for web sessions, ignored for mobile
 
         http.securityMatcher("/api/**")
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler())
@@ -55,6 +59,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
                         .permitAll()
+                        .requestMatchers("/api/me")
+                        .authenticated()
                         .requestMatchers("/api/alumni/**")
                         .hasRole("VERIFIED_ALUMN")
                         .requestMatchers("/api/admin/**")
@@ -84,9 +90,10 @@ public class SecurityConfig {
 
         OidcClientInitiatedLogoutSuccessHandler oidcLogout =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
-        oidcLogout.setPostLogoutRedirectUri("{baseUrl}/");
+        oidcLogout.setPostLogoutRedirectUri("{baseUrl}/api/public/auth/post-logout");
 
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
@@ -106,7 +113,9 @@ public class SecurityConfig {
                                 ep -> ep.authorizationRequestResolver(discordBypassResolver))
                         .userInfoEndpoint(ui -> ui.oidcUserService(oidcUserService(jwtDecoder)))
                         .successHandler(bffHandler))
-                .logout(logout -> logout.logoutSuccessHandler(oidcLogout)
+                .logout(logout -> logout.logoutRequestMatcher(
+                                PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout"))
+                        .logoutSuccessHandler(oidcLogout)
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
 
@@ -143,7 +152,7 @@ public class SecurityConfig {
      * Extracts roles from the {@code realm_access.roles} claim. Mapping: "verified-alumn" -> ROLE_VERIFIED_ALUMN (dash
      * -> underscore). Used by both converters (Web and Mobile).
      */
-    static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
+    public static Set<GrantedAuthority> extractRealmRoles(Map<String, Object> claims) {
         @SuppressWarnings("unchecked")
         Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
         if (realmAccess == null) {

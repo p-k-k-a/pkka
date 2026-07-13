@@ -1,0 +1,96 @@
+---
+name: web-shadcn
+description: |
+  Use this skill whenever working inside `frontend/apps/web/` — adding or
+  modifying pages, shadcn/ui components, Next.js App Router routes, or
+  Tailwind styles. Trigger on "add a button", "new web page", "shadcn",
+  "next.js route", "server component", and on edits under
+  `frontend/apps/web/app/`, `components/ui/`, or `lib/`. Mirrors the
+  conventions already captured for mobile in `mobile-rnr` — read
+  `alumni-design-system` first for token values and page-layout rhythm.
+---
+
+# Web app — Next.js App Router + shadcn/ui
+
+Operating manual for `frontend/apps/web/`. Stack: Next.js (App Router, RSC
+on), Tailwind v4 (`@theme inline`, no separate `tailwind.config` — see
+`app/globals.css`), shadcn/ui (style `radix-nova`, base color neutral,
+`components.json` already configured), lucide-react icons, TanStack Query.
+
+## Adding a shadcn component
+
+**Prefer the CLI** — `components.json` is already set up:
+
+```bash
+cd frontend/apps/web
+npx shadcn@latest add <component>     # e.g. button, card, accordion, dialog
+```
+
+Lands in `components/ui/`. It already resolves to the brand tokens once
+`app/globals.css` carries the Klub Alumnów values (see `alumni-design-system`
+skill) — no manual color overrides needed on a freshly-added component.
+
+## Path aliases
+
+| Alias             | Resolves to       |
+| ----------------- | ----------------- |
+| `@/*`             | app root          |
+| `@/components`    | `./components`    |
+| `@/components/ui` | `./components/ui` |
+| `@/lib`           | `./lib`           |
+| `@/hooks`         | `./hooks`         |
+
+## Screen composition — route files stay thin
+
+Mirrors the mobile app's convention. `app/**/page.tsx` files are thin:
+route params, data fetching (generated `@pkka/api` hooks via TanStack
+Query), and loading/error branching. The actual markup lives in a
+presentational component under `components/` — see the existing
+`announcements-section.tsx`, `events-list.tsx`, `event-detail.tsx`,
+`info-page-content.tsx` for the pattern: one component per content type,
+composed by the page.
+
+- If a page's inline JSX grows past a simple wrapper, extract it into
+  `components/<feature>-<thing>.tsx`.
+- Favor many small, single-purpose components over one large page file.
+
+## Styling rules
+
+- **Tailwind utility classes only** — no CSS modules, no styled-components.
+  Use `cn()` from `lib/utils.ts` (clsx + tailwind-merge) whenever a
+  component accepts a `className` override, so conflicting utilities
+  resolve correctly instead of both landing in the class string.
+- **Never hand-write hex/px colors.** Use the token classes:
+  `bg-primary text-primary-foreground`, `bg-navy text-white-text`,
+  `text-foreground`, `text-muted-foreground`, `border-border`. These flip
+  automatically with the existing dark-mode toggle (`theme-toggle.tsx` +
+  the inline script in `layout.tsx`).
+- Headings: `font-heading` (Jost). Body: default `font-sans` (Montserrat)
+  once `layout.tsx` is swapped to load them (see `alumni-design-system`).
+- Radius utilities (`rounded-md`, `rounded-lg`) resolve off `--radius`
+  (5px in this brand) — don't override with an arbitrary value.
+
+## Icons
+
+`lucide-react`, named imports:
+
+```tsx
+import { Calendar, MapPin } from "lucide-react";
+<Calendar className="size-5 text-muted-foreground" />;
+```
+
+## Data layer
+
+`@pkka/api` (Orval-generated, typed from the backend OpenAPI spec) +
+`@tanstack/react-query`. `lib/query-client.ts` already wires the client;
+wrap new data-bound routes the same way `events-list.tsx` /
+`announcements-section.tsx` do — fetch in a client component with a
+generated hook, branch on loading/error, render the presentational piece.
+
+## Gotchas
+
+- Don't bypass `cn()` — you lose tailwind-merge's conflict resolution.
+- Don't add a component's colors by hand — fix `globals.css` tokens
+  instead so every consumer of that token updates together.
+- Don't introduce a font outside Jost/Montserrat/Geist Mono (code blocks).
+- Keep comments to non-obvious "why", matching the repo-wide convention.
