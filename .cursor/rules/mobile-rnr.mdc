@@ -1,0 +1,257 @@
+---
+description: "Use this skill whenever the user is working inside `frontend/apps/mobile/` — adding or modifying screens, react-native-reusables (RNR / shadcn-style) UI components, expo-router routes, theme tokens, or NativeWind styles. Trigger on phrases like 'add a button', 'new mobile screen', 'shadcn', 'rnr', 'react-native-reusables', 'nativewind', 'tab navigation', 'tailwind in react native', and on any edits under `frontend/apps/mobile/app/`, `components/ui/`, or `lib/`. Captures this project's `cn()` / `cva` / `Slot` conventions, the dual theming system (CSS vars for Tailwind + JS `THEME` for React Navigation), and the expo-router patterns so component scaffolds and screen changes match the existing style on the first try instead of re-discovering the stack from scratch."
+globs: frontend/apps/mobile/**
+alwaysApply: false
+---
+
+<!-- Generated from .claude/skills/mobile-rnr/SKILL.md by scripts/sync-cursor-rules.sh. Do not edit directly. -->
+
+# Mobile app — React Native Reusables + Expo Router
+
+This skill is the operating manual for `frontend/apps/mobile/`. The codebase
+is early-stage but its conventions are already set: shadcn-style UI under
+`components/ui/`, NativeWind for styling, `@rn-primitives/*` for
+accessibility, CVA for variants, and a deliberate two-layer theme. Match these
+patterns rather than improvising — they're what makes future RNR components
+drop in cleanly.
+
+## Stack at a glance
+
+- **Expo SDK 54** with New Architecture, React Compiler, and typed routes all
+  enabled (see `frontend/apps/mobile/app.json`).
+- **expo-router 6** — file-based routing under `app/`.
+- **NativeWind 4** — Tailwind classes on React Native. Config in
+  `tailwind.config.js`, CSS vars in `global.css`, Metro/Babel wired in
+  `metro.config.js` and `babel.config.js`.
+- **React Native Reusables (RNR)** via the shadcn CLI — config in
+  `components.json` (style `new-york`, aliases pre-set). Components land in
+  `components/ui/`.
+- **`@rn-primitives/*`** — headless, accessible primitives (`slot`, `portal`,
+  `accordion`). Always prefer these over plain `react-native` components when
+  building reusable UI.
+- **CVA** (`class-variance-authority`) + **`clsx`** + **`tailwind-merge`** —
+  variant management. The `cn()` helper at `lib/utils.ts` is the only correct
+  way to combine classes.
+- **lucide-react-native** — icons. Named imports, `color` + `size` props.
+- **@tanstack/react-query** — installed, not yet wired. Mount the
+  `QueryClientProvider` in `app/_layout.tsx` when the first network screen
+  arrives.
+- **`@pkka/api`** (workspace package) — Orval-generated OpenAPI clients. This
+  is where data fetching hooks live.
+
+## Path aliases (use these — don't reach with `../../`)
+
+From `tsconfig.json` and `components.json`:
+
+| Alias | Resolves to |
+| --- | --- |
+| `@/*` | repo root of the mobile app |
+| `@/components` | `./components` |
+| `@/components/ui` | `./components/ui` |
+| `@/lib` | `./lib` |
+| `@/lib/utils` | `./lib/utils` (exports `cn`) |
+| `@/hooks` | `./hooks` |
+
+## The `cn` + `cva` pattern — read this once
+
+Every UI component in `components/ui/` follows the same shape. The canonical
+example is `components/ui/text.tsx`. Mirror it:
+
+```tsx
+import { Slot } from '@rn-primitives/slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Platform, Text as RNText } from 'react-native';
+import { cn } from '@/lib/utils';
+
+const textVariants = cva(
+  cn('text-foreground text-base', Platform.select({ web: 'select-text' })),
+  {
+    variants: {
+      variant: {
+        default: '',
+        h1: 'text-4xl font-extrabold tracking-tight',
+        // ...
+      },
+    },
+    defaultVariants: { variant: 'default' },
+  }
+);
+
+type TextProps = React.ComponentPropsWithoutRef<typeof RNText> &
+  VariantProps<typeof textVariants> & { asChild?: boolean };
+
+export function Text({ className, variant, asChild, ...props }: TextProps) {
+  const Comp = asChild ? Slot : RNText;
+  return <Comp className={cn(textVariants({ variant }), className)} {...props} />;
+}
+```
+
+Why each piece matters:
+
+- **`cn()`** runs `clsx` then `tailwind-merge`. Without it, conflicting
+  Tailwind classes (e.g. caller passes `p-4` over a component's `p-2`) won't
+  resolve correctly — both end up in the className string and the last one
+  loses to specificity rules, not order.
+- **`cva`** is just a typed factory for "given these variant props, return
+  the right class string." Keep base classes outside the variants map.
+- **`Slot`** + `asChild` lets callers swap the rendered element while keeping
+  styles — the same pattern Radix and shadcn use on the web.
+- **`Platform.select({ web: '...' })`** inside `cn()` is the canonical way to
+  add web-only classes (e.g. `select-text`, `cursor-pointer`).
+- **`TextClassContext` pattern** (see `components/ui/text.tsx`) — a React
+  context exposing a className that children merge in. Use this when a parent
+  needs to set typography for descendants (e.g. a `<Button>` setting text
+  color/size for its label).
+
+## Adding a new RNR component
+
+**Prefer the CLI.** `components.json` is already configured:
+
+```bash
+cd frontend/apps/mobile
+npx shadcn@latest add <component>     # e.g. button, card, input, dialog
+```
+
+Outputs land in `components/ui/`. The CLI knows about RNR's React Native
+variants — it picks the right primitives and Tailwind classes for mobile.
+
+**If hand-writing**, copy `components/ui/text.tsx` as the template:
+
+1. Import the matching `@rn-primitives/*` primitive if one exists; otherwise
+   the plain `react-native` component.
+2. Define `xxxVariants = cva(...)` with sensible `defaultVariants`.
+3. Compose via `cn(xxxVariants({ ... }), className)` so callers can override.
+4. Expose `asChild` via `<Slot>` whenever it's reasonable to render-as.
+5. For components that contain text (Button, Card, Alert), set up an
+   `XxxTextContext` so the inner `<Text>` picks up the right variant.
+
+**Theme tokens come from Tailwind classes**, not raw colors:
+`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`,
+`bg-primary text-primary-foreground`, etc. These resolve via CSS variables
+in `global.css`, which means light/dark mode switching is free.
+
+## Theming — two layers, know which to reach for
+
+This codebase has **two parallel theme representations**. Picking the right
+one matters:
+
+1. **Tailwind / NativeWind classes** — use for anything you can style with
+   `className`. Tokens like `bg-primary`, `text-muted-foreground` resolve via
+   the CSS vars in `global.css`, so they automatically follow light/dark
+   mode. This is the default for ~95% of styling.
+
+2. **`useTheme()` from `@react-navigation/native`** — use for native chrome
+   that can't take a className: tab bar tint colors, header colors, status
+   bar. Returns `{ colors: { primary, card, border, text, background, notification } }`.
+   The provider in `app/_layout.tsx` injects `NAV_THEME` from `lib/theme.ts`.
+
+3. **`THEME` object at `lib/theme.ts`** — the raw HSL token map
+   (`THEME.light` / `THEME.dark`). Only reach for this when you can't use
+   Tailwind classes *and* `useTheme()` is awkward (e.g. computing a derived
+   color in a non-component module). Rare.
+
+**Dark mode is currently hard-coded** to `light` at `app/_layout.tsx`. To
+enable: swap to `useColorScheme()` from `react-native`, then toggle the
+`.dark` class on the root via NativeWind's `colorScheme` API so the CSS
+variables flip.
+
+## Expo Router conventions
+
+- Any file under `app/` is a route. `app/foo.tsx` → `/foo`,
+  `app/bar/baz.tsx` → `/bar/baz`.
+- **Route groups** are folders wrapped in parens — `app/(tabs)/index.tsx`
+  routes to `/`, *not* `/tabs/index`. The group only exists to share a
+  layout.
+- **Layouts** are `_layout.tsx` files. The root `app/_layout.tsx` is a Stack;
+  `app/(tabs)/_layout.tsx` is the bottom Tabs.
+- **Don't collide on `/`.** This app uses `app/index.tsx` as a
+  `<Redirect href="/(tabs)" />` so the redirect runs before the tab bar
+  mounts. If you add a real screen at `/`, remove the redirect and move the
+  tab root.
+- **Typed routes are on** (`experiments.typedRoutes: true` in `app.json`).
+  `<Link href="/events" />` and `router.push('/events')` are both
+  type-checked — invalid paths fail at build time, which is great but means
+  any new route needs a fresh `expo` run for types to refresh.
+- **Navigation: prefer `<Link>` over `router.push`.** If a press does
+  *nothing but navigate*, use `<Link href={...} asChild>` around the
+  pressable element — it gets real `<a>` semantics on web and the correct
+  link a11y role for free. A bare `Pressable` whose only job was to call
+  `router.push` is dead weight: drop it and let `<Link>` be the press
+  target. Keep `router.push` only when navigation is a *side-effect of
+  logic* — after an `await`, a form submit, or a conditional. To make a
+  non-pressable container (a `Card`/`View`) tappable, wrap it as
+  `<Link asChild><Pressable>…</Pressable></Link>` since a `View` can't
+  receive `onPress`.
+
+## Screen composition — route files stay thin
+
+Route files under `app/` should be **thin containers**: route params, data
+fetching (the generated `@pkka/api` hooks), and loading/error branching. The
+actual layout/markup belongs in a presentational component under
+`components/<feature>/` — mirroring `components/home/` (`hero`, `post-card`,
+`cta-card`, `section-heading`) and `components/blog/` (`detail-header`,
+`blog-post-view`).
+
+- A screen that has grown a big presentational function inside it should
+  extract that function into `components/<feature>/<name>.tsx`. Example:
+  `app/blog/[slug].tsx` keeps only `useGetBlogPostBySlug` + state handling;
+  the markup lives in `components/blog/blog-post-view.tsx`.
+- **Keep components small and single-purpose.** If a component file is
+  getting long or doing several unrelated things, split it. Favour many
+  focused components over one large one — it matches the existing
+  `components/` layout and keeps each file easy to scan.
+
+## Icons
+
+`lucide-react-native`. Named imports only; tree-shaking depends on it:
+
+```tsx
+import { Home, Calendar, LogIn } from 'lucide-react-native';
+
+<Home color={color} size={size} />   // inside tabBarIcon, etc.
+```
+
+The `tabBarIcon` render prop already provides `color` and `size` — don't
+hard-code them.
+
+## Data layer (when you get there)
+
+`@tanstack/react-query` is installed but no `QueryClientProvider` is mounted
+yet. When the first network-bound screen lands:
+
+1. Create the client at module top of `app/_layout.tsx` (`new QueryClient()`).
+2. Wrap the `<Stack>` in `<QueryClientProvider>`.
+3. Import generated hooks from `@pkka/api` — that workspace package owns the
+   Orval-generated OpenAPI client (see commits `0c7600c`, `bdbf3a5`).
+
+## Key file map
+
+```
+app/_layout.tsx              root Stack + ThemeProvider + PortalHost
+app/index.tsx                redirect to (tabs)
+app/(tabs)/_layout.tsx       bottom Tabs, uses useTheme() for native colors
+app/(tabs)/{index,events,login}.tsx   tab screens
+components/ui/text.tsx       canonical RNR pattern reference — read this first
+lib/utils.ts                 cn() helper (clsx + tailwind-merge)
+lib/theme.ts                 THEME (raw tokens) + NAV_THEME (React Navigation)
+global.css                   CSS vars for light + dark
+tailwind.config.js           token → CSS var bindings + animations
+components.json              shadcn CLI config (aliases, style: new-york)
+app.json                     New Arch, typed routes, React Compiler flags
+metro.config.js              NativeWind Metro plugin wiring
+babel.config.js              NativeWind Babel plugin + jsxImportSource
+```
+
+## Gotchas
+
+- **Don't hand-write hex colors.** Use Tailwind tokens (preferred) or
+  `useTheme().colors`. Hex values bypass the theme system and break dark mode.
+- **Don't bypass `cn()`.** A bare template-string className loses
+  `tailwind-merge`'s conflict resolution — class overrides silently fail.
+- **Don't import from `react-native` when an `@rn-primitives/*` primitive
+  exists.** You lose the accessibility wiring (`role`, `aria-*`, focus
+  management) that the primitives bake in.
+- **Don't put both `app/index.tsx` and `app/(tabs)/index.tsx` as real
+  screens** — they collide on `/`. The redirect pattern is the resolution.
+- **Don't add comments restating what good identifiers already say.** The
+  project follows the repo-wide convention of comments-only-for-non-obvious-why.

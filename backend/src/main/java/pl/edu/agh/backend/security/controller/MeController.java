@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.security.controller;
 
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -44,6 +45,7 @@ public class MeController {
     private static List<String> extractRoles(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .filter(Objects::nonNull)
                 .filter(authority -> authority.startsWith("ROLE_"))
                 .map(authority -> authority.replaceFirst("^ROLE_", ""))
                 .sorted()

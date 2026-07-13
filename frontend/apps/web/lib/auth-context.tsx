@@ -1,6 +1,12 @@
 "use client";
 
-import { apiBaseUrl, backendLogoutUrl, keycloakLoginUrl } from "@/lib/api-config";
+import {
+  apiBaseUrl,
+  backendLogoutUrl,
+  discordLoginUrl,
+  keycloakLoginUrl,
+  registerUrl,
+} from "@/lib/api-config";
 import { markAuthNavigation } from "@/lib/auth-navigation";
 import type { AuthContextType } from "@/types/auth";
 import { ApiError, configureApi, getMeQueryKey, me } from "@pkka/api";
@@ -43,13 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(() => refetch(), [refetch]);
 
-  const loginWithKeycloak = useCallback(() => {
+  const startAuthFlow = useCallback((destination: string) => {
     markAuthNavigation();
-    window.location.href = keycloakLoginUrl();
+    window.location.assign(destination);
   }, []);
 
+  const loginWithKeycloak = useCallback(() => startAuthFlow(keycloakLoginUrl()), [startAuthFlow]);
+
+  const loginWithDiscord = useCallback(() => startAuthFlow(discordLoginUrl()), [startAuthFlow]);
+
+  const register = useCallback(() => startAuthFlow(registerUrl()), [startAuthFlow]);
+
   const logout = useCallback(() => {
-    window.location.href = backendLogoutUrl();
+    window.location.assign(backendLogoutUrl());
   }, []);
 
   const value = useMemo(
@@ -59,9 +71,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated,
       refreshUser,
       loginWithKeycloak,
+      loginWithDiscord,
+      register,
       logout,
     }),
-    [user, isLoading, isAuthenticated, refreshUser, loginWithKeycloak, logout],
+    [
+      user,
+      isLoading,
+      isAuthenticated,
+      refreshUser,
+      loginWithKeycloak,
+      loginWithDiscord,
+      register,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
