@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { authReturnRecoveryScript } from "@/lib/auth-navigation";
 import "./globals.css";
@@ -31,12 +32,18 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var stored=localStorage.getItem("theme");var system=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";var theme=stored==="dark"||stored==="light"?stored:system;var root=document.documentElement;root.classList.toggle("dark",theme==="dark");root.style.colorScheme=theme;}catch(e){}})();`,
           }}
         />
-        <script dangerouslySetInnerHTML={{ __html: authReturnRecoveryScript }} />
+        <Script
+          id="auth-return-recovery"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: authReturnRecoveryScript }}
+        />
       </head>
       <body className="flex min-h-full flex-col">
         <Providers>{children}</Providers>
