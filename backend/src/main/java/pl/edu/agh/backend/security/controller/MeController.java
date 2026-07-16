@@ -1,5 +1,7 @@
 package pl.edu.agh.backend.security.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
@@ -16,9 +18,15 @@ import pl.edu.agh.backend.security.controller.dto.MeResponse;
 
 @RestController
 @RequestMapping("/api/me")
+@Tag(name = "Me", description = "Current user identity and roles")
 public class MeController {
 
     @GetMapping
+    @Operation(summary = "Current user info", description = """
+                    Returns identity claims and realm roles for the currently authenticated user.
+                    Works for both web (OIDC session) and mobile (Bearer JWT) flows.
+                    Roles are returned without the ROLE_ prefix.
+                    """)
     public MeResponse me(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -27,14 +35,22 @@ public class MeController {
         return switch (authentication) {
             case OAuth2AuthenticationToken t
             when t.getPrincipal() instanceof OidcUser u ->
-                new MeResponse(u.getPreferredUsername(), u.getFullName(), u.getEmail(), extractRoles(authentication));
+                new MeResponse(
+                        u.getSubject(),
+                        u.getEmail(),
+                        u.getGivenName(),
+                        u.getFamilyName(),
+                        u.getPreferredUsername(),
+                        extractRoles(authentication));
 
             case JwtAuthenticationToken t -> {
                 var jwt = t.getToken();
                 yield new MeResponse(
-                        jwt.getClaimAsString("preferred_username"),
-                        jwt.getClaimAsString("name"),
+                        jwt.getSubject(),
                         jwt.getClaimAsString("email"),
+                        jwt.getClaimAsString("given_name"),
+                        jwt.getClaimAsString("family_name"),
+                        jwt.getClaimAsString("preferred_username"),
                         extractRoles(authentication));
             }
 

@@ -1,10 +1,13 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 
 type Theme = "light" | "dark";
+const THEME_QUERY = "(prefers-color-scheme: dark)";
+const THEME_STORAGE_KEY = "theme";
+const THEME_CHANGE_EVENT = "themechange";
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
@@ -12,23 +15,40 @@ function applyTheme(theme: Theme) {
   root.style.colorScheme = theme;
 }
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "light";
-    const stored = window.localStorage.getItem("theme");
-    if (stored === "dark" || stored === "light") return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+function getSystemTheme(): Theme {
+  return window.matchMedia(THEME_QUERY).matches ? "dark" : "light";
+}
 
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+function getSnapshot(): Theme {
+  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  return stored === "dark" || stored === "light" ? stored : getSystemTheme();
+}
+
+function getServerSnapshot(): Theme {
+  return "light";
+}
+
+function subscribe(callback: () => void) {
+  const media = window.matchMedia(THEME_QUERY);
+  media.addEventListener("change", callback);
+  window.addEventListener("storage", callback);
+  window.addEventListener(THEME_CHANGE_EVENT, callback);
+
+  return () => {
+    media.removeEventListener("change", callback);
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(THEME_CHANGE_EVENT, callback);
+  };
+}
+
+export function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const toggleTheme = () => {
     const nextTheme: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
     applyTheme(nextTheme);
-    window.localStorage.setItem("theme", nextTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   };
 
   return (

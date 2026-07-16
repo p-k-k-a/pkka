@@ -46,6 +46,7 @@ spring:
     # db/dev holds dev-only seed data (sample events). Never loaded on prod.
     locations: classpath:db/migration,classpath:db/dev
     baseline-on-migrate: true
+    out-of-order: true
 
   # OAuth2 / OIDC (Keycloak)
   security:
@@ -174,8 +175,8 @@ app:
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
   web:
-    success-url: ${WEB_SUCCESS_URL:/}
-    logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL:/}
+    success-url: ${WEB_SUCCESS_URL}
+    logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS}
 
 # Keycloak Admin Client
