@@ -36,7 +36,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
           <Skeleton className="h-4 w-40" />
         </div>
         <Skeleton className="mb-6 aspect-[4/3] w-full rounded-xl" />
-        <Skeleton className="mb-4 h-5 w-20 rounded-full" />
+        <Skeleton className="mb-4 h-5 w-20 rounded-lg" />
         <Skeleton className="mb-6 h-10 w-full max-w-xl" />
         <div className="space-y-4">
           <Skeleton className="h-12 w-full rounded-md" />
@@ -79,7 +79,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
         />
 
         <div className="mb-6 space-y-3">
-          <Badge variant="default" className="rounded-full uppercase">
+          <Badge variant="default" className="rounded-lg uppercase">
             {eventTypeLabelUpper(event.type)}
           </Badge>
           <h1 className="text-foreground text-3xl leading-tight font-extrabold tracking-tight">

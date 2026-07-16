@@ -10,8 +10,11 @@ export function DashboardHeader() {
   const { logout } = useAuth();
 
   return (
-    <header className="border-border/80 bg-background/95 sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b px-6 backdrop-blur">
-      <Link href="/dashboard" className="text-foreground text-3xl font-extrabold tracking-tighter">
+    <header className="bg-muted z-50 flex h-16 shrink-0 items-center justify-between px-4 md:px-10">
+      <Link
+        href="/dashboard"
+        className="font-heading text-foreground text-[23px] font-semibold tracking-tight md:text-[28px]"
+      >
         PKKA
       </Link>
 

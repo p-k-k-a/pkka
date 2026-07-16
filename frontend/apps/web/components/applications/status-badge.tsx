@@ -10,7 +10,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <Badge variant={STATUS_VARIANT[status] ?? "secondary"} className="rounded-full uppercase">
+    <Badge variant={STATUS_VARIANT[status] ?? "secondary"} className="rounded-lg uppercase">
       {statusLabel(status)}
     </Badge>
   );

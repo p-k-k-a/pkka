@@ -32,8 +32,8 @@ function EventCardSkeleton({ featured = false }: { featured?: boolean }) {
       <Skeleton className="h-4 w-1/2" />
       <Skeleton className="h-4 w-24" />
       <div className="flex gap-2 pt-1">
-        <Skeleton className="h-5 w-24 rounded-full" />
-        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-24 rounded-lg" />
+        <Skeleton className="h-5 w-20 rounded-lg" />
       </div>
     </Card>
   );
@@ -79,11 +79,11 @@ function EventCardCompact({
         </div>
 
         <div className="mt-auto flex flex-wrap gap-2">
-          <Badge variant="default" className="rounded-full uppercase">
+          <Badge variant="default" className="rounded-lg uppercase">
             {eventTypeLabelUpper(event.type)}
           </Badge>
           {seats ? (
-            <Badge variant="outline" className="rounded-full uppercase">
+            <Badge variant="outline" className="rounded-lg uppercase">
               {seats}
             </Badge>
           ) : null}
@@ -125,7 +125,7 @@ function EventCardFeatured({
       ctaAlign="start"
       imageOverlay={
         <div className="absolute top-4 left-4">
-          <Badge variant="default" className="rounded-full uppercase">
+          <Badge variant="default" className="rounded-lg uppercase">
             {eventTypeLabelUpper(event.type)}
           </Badge>
         </div>
@@ -138,7 +138,7 @@ function EventCardFeatured({
         </div>
       ) : null}
       {seats ? (
-        <Badge variant="outline" className="rounded-full uppercase">
+        <Badge variant="outline" className="rounded-lg uppercase">
           {seats}
         </Badge>
       ) : null}

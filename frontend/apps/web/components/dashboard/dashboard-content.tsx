@@ -58,7 +58,7 @@ export function DashboardContent() {
                 {roles.map((role) => (
                   <span
                     key={role}
-                    className="bg-secondary text-secondary-foreground inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    className="bg-secondary text-secondary-foreground inline-block rounded-lg px-2.5 py-0.5 text-xs font-medium"
                   >
                     {role}
                   </span>
