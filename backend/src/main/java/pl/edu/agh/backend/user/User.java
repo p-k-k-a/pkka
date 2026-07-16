@@ -12,7 +12,7 @@ import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import pl.edu.agh.backend.domain.Tag;
+import pl.edu.agh.backend.event.Tag;
 
 /**
  * Local application user record. Keycloak is the source of truth for identity and roles.
