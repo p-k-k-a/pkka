@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Inbox, Megaphone, ShieldCheck } from "lucide-react";
+import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin, isVerifiedAlumn } from "@/lib/roles";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SidebarItem = {
@@ -48,13 +49,28 @@ const adminItems: SidebarItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const admin = isAdmin(user?.roles);
+  const verifiedByRole = isVerifiedAlumn(user?.roles);
 
-  const items = isAdmin(user?.roles) ? adminItems : userItems;
+  const { data: applicationResponse } = useGetMine({
+    query: {
+      enabled: isAuthenticated && !admin && !verifiedByRole,
+      retry: false,
+    },
+  });
+
+  const verifiedByApplication =
+    applicationResponse?.data?.status === ApplicationResponseDtoStatus.APPROVED;
+  const hideVerification = verifiedByRole || verifiedByApplication;
+
+  const items = admin
+    ? adminItems
+    : userItems.filter((item) => item.href !== "/dashboard/verification" || !hideVerification);
 
   return (
-    <aside className="border-border bg-muted/30 w-56 shrink-0 border-r">
-      <nav className="flex flex-col gap-1 p-4">
+    <aside className="bg-muted sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto">
+      <nav className="font-heading flex flex-col gap-1 p-4">
         {isLoading ? (
           <>
             <Skeleton className="h-10 w-full rounded-lg" />
@@ -73,7 +89,7 @@ export function DashboardSidebar() {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-background text-foreground"
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >

@@ -59,7 +59,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
       },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 409) {
-          setFormError("Wniosek został już złożony i oczekuje na rozpatrzenie.");
+          setFormError(
+            "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego.",
+          );
         } else {
           setFormError("Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.");
         }

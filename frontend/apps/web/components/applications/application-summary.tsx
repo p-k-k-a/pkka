@@ -28,7 +28,13 @@ function formatDateTime(value?: string) {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-export function ApplicationSummary({ application }: { application: ApplicationResponseDto }) {
+export function ApplicationSummary({
+  application,
+  hideRejectionReason = false,
+}: {
+  application: ApplicationResponseDto;
+  hideRejectionReason?: boolean;
+}) {
   const interests = application.interests ?? [];
   const meetingPreferences = application.meetingPreferences ?? [];
   const consents = application.consents ?? [];
@@ -72,7 +78,7 @@ export function ApplicationSummary({ application }: { application: ApplicationRe
       {application.reviewedAt ? (
         <SummaryRow label="Data rozpatrzenia" value={formatDateTime(application.reviewedAt)} />
       ) : null}
-      {application.rejectionReason ? (
+      {!hideRejectionReason && application.rejectionReason ? (
         <SummaryRow label="Powód odrzucenia" value={application.rejectionReason} />
       ) : null}
     </div>
