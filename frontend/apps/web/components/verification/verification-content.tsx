@@ -57,12 +57,6 @@ export function VerificationContent() {
     }
   }, [admin, isAuthenticated, isLoading, isVerified, router]);
 
-  useEffect(() => {
-    if (!isRejected) {
-      setIsReapplying(false);
-    }
-  }, [isRejected]);
-
   if (isLoading || !isAuthenticated || admin || isVerified) {
     return (
       <SectionShell title="Zweryfikuj się" as="section">
@@ -74,9 +68,10 @@ export function VerificationContent() {
   const apiError = error as unknown as ApiError | null;
   const notFound = isError && apiError?.status === 404;
 
-  const showRejectedSummary = Boolean(application && isRejected && !isReapplying);
+  const reapplying = isRejected && isReapplying;
+  const showRejectedSummary = Boolean(application && isRejected && !reapplying);
   const showSubmittedSummary = Boolean(application && !isRejected);
-  const showForm = !application || (isRejected && isReapplying);
+  const showForm = !application || reapplying;
 
   return (
     <SectionShell
