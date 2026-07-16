@@ -262,7 +262,12 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
 
         {formError ? <p className="text-destructive text-sm font-medium">{formError}</p> : null}
 
-        <Button type="submit" size="xl" className="w-full rounded-xl font-semibold" disabled={isPending}>
+        <Button
+          type="submit"
+          size="xl"
+          className="w-full rounded-xl font-semibold"
+          disabled={isPending}
+        >
           {isPending ? "Wysyłanie…" : "Wyślij wniosek"}
         </Button>
       </form>

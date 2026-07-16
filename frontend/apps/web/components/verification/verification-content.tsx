@@ -96,7 +96,9 @@ export function VerificationContent() {
             {showRejectedSummary && application ? (
               <Card className="gap-5 p-6 md:p-8">
                 <div className="flex items-center justify-between gap-4">
-                  <h2 className="font-heading text-foreground text-lg font-semibold">Twój wniosek</h2>
+                  <h2 className="font-heading text-foreground text-lg font-semibold">
+                    Twój wniosek
+                  </h2>
                   <StatusBadge status={application.status} />
                 </div>
 
@@ -133,7 +135,9 @@ export function VerificationContent() {
             {showSubmittedSummary && application ? (
               <Card className="gap-5 p-6 md:p-8">
                 <div className="flex items-center justify-between gap-4">
-                  <h2 className="font-heading text-foreground text-lg font-semibold">Twój wniosek</h2>
+                  <h2 className="font-heading text-foreground text-lg font-semibold">
+                    Twój wniosek
+                  </h2>
                   <StatusBadge status={application.status} />
                 </div>
                 <p className="text-muted-foreground text-sm">

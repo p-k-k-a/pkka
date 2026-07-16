@@ -44,7 +44,12 @@ export function LoginOptions() {
         <div className="bg-border h-px flex-1" />
       </div>
 
-      <Button variant="secondary" size="xl" className="w-full gap-2 font-semibold" onClick={register}>
+      <Button
+        variant="secondary"
+        size="xl"
+        className="w-full gap-2 font-semibold"
+        onClick={register}
+      >
         Zarejestruj się
         <ArrowRight data-icon="inline-end" />
       </Button>

@@ -27,7 +27,9 @@ export function SectionShell({
             {title}
           </h2>
           {description ? (
-            <p className="text-muted-foreground max-w-3xl text-base leading-relaxed">{description}</p>
+            <p className="text-muted-foreground max-w-3xl text-base leading-relaxed">
+              {description}
+            </p>
           ) : null}
         </div>
         {children}

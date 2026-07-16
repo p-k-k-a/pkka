@@ -85,8 +85,9 @@ export function ApplicationsList() {
                         {application.fieldOfStudy}
                       </h2>
                       <p className="text-muted-foreground text-sm">
-                        {facultyLabel(application.faculty)} · {studyTypeLabel(application.studyType)}{" "}
-                        · Rocznik {application.graduationYear}
+                        {facultyLabel(application.faculty)} ·{" "}
+                        {studyTypeLabel(application.studyType)} · Rocznik{" "}
+                        {application.graduationYear}
                       </p>
                     </div>
                     <StatusBadge status={application.status} />
