@@ -94,6 +94,7 @@ keycloak:
   realm: ${KEYCLOAK_REALM:pkka}
   client-id: pkka-web
   client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET:change-me}
+  verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}
 
 # Discord
 discord:
@@ -184,6 +185,7 @@ keycloak:
   realm: ${KEYCLOAK_REALM}
   client-id: pkka-web
   client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
+  verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}
 
 discord:
   guild-id: ${DISCORD_GUILD_ID}
