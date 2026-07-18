@@ -10,12 +10,21 @@ import { SectionShell } from "@/components/content/section-shell";
 import { DEFAULT_COVER_IMAGE } from "@/lib/content-images";
 import { formatPublishedAt } from "@/lib/format-published-at";
 
-export function AnnouncementsSection() {
+type AnnouncementsSectionProps = {
+  title?: string;
+  announcementBasePath?: string;
+};
+
+export function AnnouncementsSection({
+  title = "Publiczne Aktualności",
+  announcementBasePath = "/announcements",
+}: AnnouncementsSectionProps) {
   const { data: response, isLoading, isError } = useListPosts({ size: 10 });
   const announcements = response?.data?.content ?? [];
+  const announcementHref = (slug: string) => `${announcementBasePath}/${slug}`;
 
   return (
-    <SectionShell title="Publiczne Aktualności" as="section">
+    <SectionShell title={title} as="section">
       {isLoading ? (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -39,7 +48,7 @@ export function AnnouncementsSection() {
               return (
                 <FeaturedCard
                   key={post.id}
-                  href={`/announcements/${post.slug}`}
+                  href={announcementHref(post.slug ?? "")}
                   imageSrc={DEFAULT_COVER_IMAGE}
                   imageAlt={post.title ?? "Aktualność"}
                   meta={
@@ -58,7 +67,7 @@ export function AnnouncementsSection() {
             return (
               <Link
                 key={post.id}
-                href={`/announcements/${post.slug}`}
+                href={announcementHref(post.slug ?? "")}
                 className="group focus-visible:ring-ring flex h-full rounded-[24px] focus-visible:ring-2 focus-visible:outline-none"
               >
                 <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col justify-between rounded-[24px] border p-8 shadow-sm transition-all duration-300 hover:shadow-md">

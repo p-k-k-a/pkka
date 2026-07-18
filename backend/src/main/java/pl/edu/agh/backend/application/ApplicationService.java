@@ -19,7 +19,8 @@ import pl.edu.agh.backend.user.UserRepository;
 @RequiredArgsConstructor
 public class ApplicationService {
 
-    private static final List<ApplicationStatus> OPEN = List.of(ApplicationStatus.UNDER_REVIEW);
+    private static final List<ApplicationStatus> BLOCKING_STATUSES =
+            List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED);
 
     private final ApplicationRepository applicationRepository;
     private final UserRepository userRepository;
@@ -30,7 +31,7 @@ public class ApplicationService {
     public ApplicationResponseDto create(Authentication authentication, CreateApplicationRequestDto request) {
         User applicant = resolveApplicant(authentication);
 
-        if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), OPEN)) {
+        if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
         }
 

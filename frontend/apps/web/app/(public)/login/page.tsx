@@ -2,8 +2,8 @@ import { LoginOptions } from "@/components/auth/login-options";
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 items-center justify-center px-6 py-16 md:py-24">
+    <section className="bg-muted flex flex-1 items-center justify-center px-4 py-10 md:px-10 md:py-20">
       <LoginOptions />
-    </div>
+    </section>
   );
 }

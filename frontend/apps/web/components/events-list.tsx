@@ -12,6 +12,14 @@ import { coverImageSrc } from "@/lib/content-images";
 import { formatEventDateLong } from "@/lib/format-event-datetime";
 import { eventTypeLabelUpper, formatSeatsCompact } from "@/lib/event-labels";
 
+type EventsListProps = {
+  variant?: "public" | "dashboard";
+};
+
+function eventHref(id: string, variant: EventsListProps["variant"]) {
+  return variant === "dashboard" ? `/dashboard/events/${id}` : `/events/${id}`;
+}
+
 function EventCardSkeleton({ featured = false }: { featured?: boolean }) {
   if (featured) {
     return <Skeleton className="h-64 rounded-[24px] md:col-span-2 md:h-80" />;
@@ -24,14 +32,20 @@ function EventCardSkeleton({ featured = false }: { featured?: boolean }) {
       <Skeleton className="h-4 w-1/2" />
       <Skeleton className="h-4 w-24" />
       <div className="flex gap-2 pt-1">
-        <Skeleton className="h-5 w-24 rounded-full" />
-        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-24 rounded-lg" />
+        <Skeleton className="h-5 w-20 rounded-lg" />
       </div>
     </Card>
   );
 }
 
-function EventCardCompact({ event }: { event: EventListItemDto }) {
+function EventCardCompact({
+  event,
+  variant,
+}: {
+  event: EventListItemDto;
+  variant: EventsListProps["variant"];
+}) {
   const isOnline = event.type === EventListItemDtoType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
@@ -39,7 +53,7 @@ function EventCardCompact({ event }: { event: EventListItemDto }) {
 
   return (
     <Link
-      href={`/events/${event.id}`}
+      href={eventHref(event.id, variant)}
       className="group focus-visible:ring-ring flex h-full rounded-3xl focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="bg-muted flex h-full w-full flex-col gap-3 border-0 p-5 shadow-none transition-opacity group-hover:opacity-90">
@@ -65,11 +79,11 @@ function EventCardCompact({ event }: { event: EventListItemDto }) {
         </div>
 
         <div className="mt-auto flex flex-wrap gap-2">
-          <Badge variant="default" className="rounded-full uppercase">
+          <Badge variant="default" className="rounded-lg uppercase">
             {eventTypeLabelUpper(event.type)}
           </Badge>
           {seats ? (
-            <Badge variant="outline" className="rounded-full uppercase">
+            <Badge variant="outline" className="rounded-lg uppercase">
               {seats}
             </Badge>
           ) : null}
@@ -79,7 +93,13 @@ function EventCardCompact({ event }: { event: EventListItemDto }) {
   );
 }
 
-function EventCardFeatured({ event }: { event: EventListItemDto }) {
+function EventCardFeatured({
+  event,
+  variant,
+}: {
+  event: EventListItemDto;
+  variant: EventsListProps["variant"];
+}) {
   const isOnline = event.type === EventListItemDtoType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
@@ -87,7 +107,7 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
 
   return (
     <FeaturedCard
-      href={`/events/${event.id}`}
+      href={eventHref(event.id, variant)}
       imageSrc={coverImageSrc(event.coverImageUrl)}
       imageAlt={event.title ?? "Wydarzenie"}
       meta={
@@ -105,7 +125,7 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
       ctaAlign="start"
       imageOverlay={
         <div className="absolute top-4 left-4">
-          <Badge variant="default" className="rounded-full uppercase">
+          <Badge variant="default" className="rounded-lg uppercase">
             {eventTypeLabelUpper(event.type)}
           </Badge>
         </div>
@@ -118,7 +138,7 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
         </div>
       ) : null}
       {seats ? (
-        <Badge variant="outline" className="rounded-full uppercase">
+        <Badge variant="outline" className="rounded-lg uppercase">
           {seats}
         </Badge>
       ) : null}
@@ -126,7 +146,7 @@ function EventCardFeatured({ event }: { event: EventListItemDto }) {
   );
 }
 
-export function EventsList() {
+export function EventsList({ variant = "public" }: EventsListProps) {
   const { data: response, isLoading, isError } = useList({ size: 20 });
   const events = response?.data?.content ?? [];
 
@@ -147,9 +167,9 @@ export function EventsList() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {events.map((event, index) =>
             index === 0 ? (
-              <EventCardFeatured key={event.id} event={event} />
+              <EventCardFeatured key={event.id} event={event} variant={variant} />
             ) : (
-              <EventCardCompact key={event.id} event={event} />
+              <EventCardCompact key={event.id} event={event} variant={variant} />
             ),
           )}
         </div>

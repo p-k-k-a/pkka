@@ -1,24 +1,12 @@
 package pl.edu.agh.backend.application;
 
 public enum Faculty {
-    WILGZ("Wydział Inżynierii Lądowej i Gospodarki Zasobami"),
-    WIMIIP("Wydział Inżynierii Metali i Informatyki Przemysłowej"),
-    WEAIIB("Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej"),
-    WIET("Wydział Informatyki, Elektroniki i Telekomunikacji"),
-    WIMIR("Wydział Inżynierii Mechanicznej i Robotyki"),
-    WGGIOS("Wydział Geologii, Geofizyki i Ochrony Środowiska"),
-    WGGIIS("Wydział Geodezji Górniczej i Inżynierii Środowiska"),
-    WIMIC("Wydział Inżynierii Materiałowej i Ceramiki"),
-    WO("Wydział Odlewnictwa"),
-    WMN("Wydział Metali Nieżelaznych"),
-    WWNIG("Wydział Wiertnictwa, Nafty i Gazu"),
-    WZ("Wydział Zarządzania"),
-    WEIP("Wydział Energetyki i Paliw"),
-    WFIIS("Wydział Fizyki i Informatyki Stosowanej"),
-    WMS("Wydział Matematyki Stosowanej"),
-    WH("Wydział Humanistyczny"),
-    WI("Wydział Informatyki"),
-    WTK("Wydział Technologii Kosmicznych");
+    WE("Wydział Elektromechaniczny (1952-1957)"),
+    WEGH("Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)"),
+    WEAIE("Wydział Elektrotechniki, Automatyki i Elektroniki (1975-1998)"),
+    WEAIIE("Wydział Elektrotechniki, Automatyki, Informatyki i Elektroniki (1998-2011)"),
+    WIET("Wydział Informatyki, Elektroniki i Telekomunikacji (2012-2023)"),
+    WI("Wydział Informatyki (2023-obecnie)");
 
     private final String displayName;
 

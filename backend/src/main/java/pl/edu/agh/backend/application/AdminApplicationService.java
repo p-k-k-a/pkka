@@ -2,7 +2,7 @@ package pl.edu.agh.backend.application;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleService;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserPrincipalExtractor;
 import pl.edu.agh.backend.user.UserProvisioningService;
@@ -24,10 +23,7 @@ public class AdminApplicationService {
     private final UserRepository userRepository;
     private final UserPrincipalExtractor principalExtractor;
     private final UserProvisioningService userProvisioningService;
-    private final KeycloakRoleService keycloakRoleService;
-
-    @Value("${keycloak.verified-alumn-role:verified-alumn}")
-    private String verifiedAlumnRole;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<AdminApplicationResponseDto> list(ApplicationStatus status, Pageable pageable) {
@@ -51,7 +47,8 @@ public class AdminApplicationService {
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
         application.approve(reviewer);
-        keycloakRoleService.addRealmRole(application.getApplicant().getKeycloakId(), verifiedAlumnRole);
+        eventPublisher.publishEvent(
+                new ApplicationApprovedEvent(application.getApplicant().getKeycloakId()));
 
         return ApplicationResponseDto.from(applicationRepository.saveAndFlush(application));
     }
