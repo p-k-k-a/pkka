@@ -34,11 +34,7 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-export function VerificationForm({
-  onSubmitted,
-}: {
-  onSubmitted?: () => void | Promise<void>;
-}) {
+export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | Promise<void> }) {
   const [faculty, setFaculty] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [studyType, setStudyType] = useState("");
