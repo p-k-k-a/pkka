@@ -23,7 +23,7 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 gap-10">
+    <View className="px-5 pt-8 gap-10">
       <Hero {...HERO} />
       <CtaCard {...CTA} />
       <SectionHeading title={"Publiczne\nAktualności"} />

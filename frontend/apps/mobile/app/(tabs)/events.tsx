@@ -14,7 +14,7 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 gap-8">
+    <View className="px-5 pt-8 gap-8">
       <View>
         <View className="gap-1">
           <Text variant="h1" className="text-left text-4xl">

@@ -1,8 +1,10 @@
-import { DiscordIcon } from "@/components/auth/discord-icon";
+import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
+import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { useProfile } from "@/lib/profile-context";
 import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -131,6 +133,7 @@ function ApplicationStatusView({
 
 export function UserPanel() {
   const { logout } = useAuth();
+  const { profile } = useProfile();
   const { colors } = useTheme();
   const { data, isLoading, isError, refetch } = useGetMine();
   const [refreshing, setRefreshing] = React.useState(false);
@@ -164,6 +167,8 @@ export function UserPanel() {
         <ActivityIndicator />
       ) : isError || !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
+      ) : knownStatus === "APPROVED" ? (
+        <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />
       ) : (
         <ApplicationStatusView
           status={knownStatus}

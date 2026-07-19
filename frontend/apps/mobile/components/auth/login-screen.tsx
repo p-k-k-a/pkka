@@ -1,4 +1,4 @@
-import { DiscordIcon } from "@/components/auth/discord-icon";
+import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
