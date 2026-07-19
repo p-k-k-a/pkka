@@ -55,7 +55,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               Dowiedz się więcej
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
-            <p className="text-white-text/70">© 2026 Klub Alumna WI AGH</p>
+            <p className="text-white-text/70">© 2026 Klub Alumnów WI AGH</p>
           </div>
         </div>
       </footer>

@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   ApplicationResponseDtoConsentsItem,
-  getGetMineQueryKey,
   useCreate,
   type CreateApplicationRequestDto,
   type CreateApplicationRequestDtoConsentsItem,
@@ -36,9 +34,11 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) {
-  const queryClient = useQueryClient();
-
+export function VerificationForm({
+  onSubmitted,
+}: {
+  onSubmitted?: () => void | Promise<void>;
+}) {
   const [faculty, setFaculty] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [studyType, setStudyType] = useState("");
@@ -54,8 +54,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
   const { mutate, isPending } = useCreate<ApiError>({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMineQueryKey() });
-        onSubmitted?.();
+        void onSubmitted?.();
       },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 409) {
@@ -69,6 +68,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
     },
   });
 
+  const currentYear = new Date().getFullYear();
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
@@ -78,11 +79,21 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
       return;
     }
 
+    const parsedGraduationYear = Number.parseInt(graduationYear, 10);
+    if (
+      !Number.isInteger(parsedGraduationYear) ||
+      parsedGraduationYear < 1919 ||
+      parsedGraduationYear > currentYear
+    ) {
+      setFormError(`Podaj prawidłowy rok ukończenia (1919–${currentYear}).`);
+      return;
+    }
+
     const payload: CreateApplicationRequestDto = {
       faculty: faculty as CreateApplicationRequestDtoFaculty,
       fieldOfStudy: fieldOfStudy.trim(),
       studyType: studyType as CreateApplicationRequestDtoStudyType,
-      graduationYear: Number(graduationYear),
+      graduationYear: parsedGraduationYear,
       phoneNumber: phoneNumber.trim(),
       interests: interests
         .split(",")
@@ -96,8 +107,6 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
 
     mutate({ data: payload });
   }
-
-  const currentYear = new Date().getFullYear();
 
   return (
     <Card className="gap-0 p-0">
@@ -169,6 +178,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
               required
               min={1919}
               max={currentYear}
+              step={1}
               placeholder="np. 2022"
               value={graduationYear}
               onChange={(event) => setGraduationYear(event.target.value)}

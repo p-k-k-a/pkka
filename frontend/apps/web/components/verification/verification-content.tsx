@@ -3,14 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import {
-  ApiError,
-  ApplicationResponseDtoStatus,
-  useGetMine,
-  type ApplicationResponseDto,
-} from "@pkka/api";
-import { useAuth } from "@/lib/auth-context";
-import { isAdmin, isVerifiedAlumn } from "@/lib/roles";
+import { ApiError } from "@pkka/api";
+import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,33 +15,21 @@ import { VerificationForm } from "@/components/verification/verification-form";
 
 export function VerificationContent() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const admin = isAdmin(user?.roles);
-  const verifiedByRole = isVerifiedAlumn(user?.roles);
-  const canQuery = isAuthenticated && !admin && !verifiedByRole;
-  const [isReapplying, setIsReapplying] = useState(false);
-
   const {
-    data,
+    admin,
+    application,
+    isAuthLoading,
+    isVerified,
+    isRejected,
     isLoading: isApplicationLoading,
     isError,
     error,
     refetch,
-  } = useGetMine({
-    query: { enabled: canQuery, retry: false },
-  });
-
-  const application = data?.data as ApplicationResponseDto | undefined;
-  const verifiedByApplication = application?.status === ApplicationResponseDtoStatus.APPROVED;
-  const isVerified = verifiedByRole || verifiedByApplication;
-  const isRejected = application?.status === ApplicationResponseDtoStatus.REJECTED;
+  } = useVerificationStatus();
+  const [isReapplying, setIsReapplying] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated) {
-      router.replace("/");
-      return;
-    }
+    if (isAuthLoading) return;
     if (admin) {
       router.replace("/dashboard/applications");
       return;
@@ -55,9 +37,9 @@ export function VerificationContent() {
     if (isVerified) {
       router.replace("/dashboard");
     }
-  }, [admin, isAuthenticated, isLoading, isVerified, router]);
+  }, [admin, isAuthLoading, isVerified, router]);
 
-  if (isLoading || !isAuthenticated || admin || isVerified) {
+  if (isAuthLoading || admin || isVerified) {
     return (
       <SectionShell title="Zweryfikuj się" as="section">
         <Skeleton className="h-96 w-full max-w-2xl rounded-2xl" />
@@ -76,7 +58,7 @@ export function VerificationContent() {
   return (
     <SectionShell
       title="Zweryfikuj się"
-      description="Wypełnij wniosek, aby potwierdzić status absolwenta WI AGH i uzyskać dostęp do pełnej oferty Klubu Alumna."
+      description="Wypełnij wniosek, aby potwierdzić status absolwenta WI AGH i uzyskać dostęp do pełnej oferty Klubu Alumnów."
       as="section"
     >
       <div className="max-w-2xl">
@@ -151,8 +133,8 @@ export function VerificationContent() {
                 ) : null}
                 <VerificationForm
                   onSubmitted={async () => {
-                    setIsReapplying(false);
                     await refetch();
+                    setIsReapplying(false);
                   }}
                 />
               </div>

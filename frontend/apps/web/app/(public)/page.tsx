@@ -21,7 +21,7 @@ export default function HomePage() {
             </h1>
 
             <p className="text-muted-foreground max-w-lg text-base leading-relaxed md:text-lg">
-              Oficjalny portal Klubu Alumna Wydziału Informatyki AGH. Buduj sieć kontaktów, wracaj
+              Oficjalny portal Klubu Alumnów Wydziału Informatyki AGH. Buduj sieć kontaktów, wracaj
               do wspomnień i bądź na bieżąco z życiem wydziału.
             </p>
 
