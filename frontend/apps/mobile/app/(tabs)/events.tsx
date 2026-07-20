@@ -32,7 +32,7 @@ function ListHeader() {
 }
 
 export default function EventsScreen() {
-  const { data, isLoading, isError } = useEventsList({ pageable: { page: 0, size: 20 } });
+  const { data, isLoading, isError } = useEventsList({ page: 0, size: 20 });
 
   const events = data?.data?.content ?? [];
 

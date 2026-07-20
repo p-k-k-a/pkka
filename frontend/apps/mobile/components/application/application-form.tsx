@@ -18,6 +18,7 @@ import {
   TERMS_URL,
 } from "@/lib/application-constants";
 import {
+  ApiError,
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
   type CreateApplicationRequestDtoStudyType,
@@ -47,6 +48,7 @@ function ApplicationForm() {
   const { colors } = useTheme();
   const { mutateAsync: submitApplication } = useCreate();
   const phoneInputRef = React.useRef<PhoneInput>(null);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {
@@ -63,21 +65,31 @@ function ApplicationForm() {
       acceptedRodo: false,
     },
     onSubmit: async ({ value }) => {
-      await submitApplication({
-        data: {
-          phoneNumber: value.phoneNumber.trim(),
-          faculty: value.faculty!,
-          fieldOfStudy: value.fieldOfStudy.trim(),
-          studyType: value.studyType!,
-          graduationYear: Number(value.graduationYear),
-          interests: value.interests,
-          meetingPreferences:
-            value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
-          coCreationInterest: value.coCreationInterest,
-          newsletterSubscription: value.newsletterSubscription,
-          consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
-        },
-      });
+      setSubmitError(null);
+      try {
+        await submitApplication({
+          data: {
+            phoneNumber: value.phoneNumber.trim(),
+            faculty: value.faculty!,
+            fieldOfStudy: value.fieldOfStudy.trim(),
+            studyType: value.studyType!,
+            graduationYear: Number(value.graduationYear),
+            interests: value.interests,
+            meetingPreferences:
+              value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
+            coCreationInterest: value.coCreationInterest,
+            newsletterSubscription: value.newsletterSubscription,
+            consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
+          },
+        });
+      } catch (error) {
+        setSubmitError(
+          error instanceof ApiError && error.status === 409
+            ? "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego."
+            : "Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.",
+        );
+        return;
+      }
       router.replace("/(tabs)/login");
     },
   });
@@ -182,6 +194,7 @@ function ApplicationForm() {
                   onBlur={field.handleBlur}
                   placeholder="np. Informatyka"
                   autoCapitalize="sentences"
+                  maxLength={200}
                 />
                 <FieldError field={field} />
               </FormField>
@@ -349,6 +362,10 @@ function ApplicationForm() {
             )}
           </form.Field>
         </View>
+
+        {submitError ? (
+          <Text className="text-destructive text-center text-sm font-semibold">{submitError}</Text>
+        ) : null}
 
         <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
           {([canSubmit, isSubmitting]) => (
