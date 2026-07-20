@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { List1Status, useList1 } from "@pkka/api";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
@@ -14,30 +15,30 @@ import { isAdmin } from "@/lib/roles";
 import { facultyLabel, studyTypeLabel } from "@/lib/application-labels";
 import { formatPublishedAt } from "@/lib/format-published-at";
 
+const PAGE_SIZE = 20;
+
 export function ApplicationsList() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated) {
-      router.replace("/");
-    } else if (!admin) {
+    if (!isLoading && !admin) {
       router.replace("/dashboard");
     }
-  }, [admin, isAuthenticated, isLoading, router]);
+  }, [admin, isLoading, router]);
 
   const {
     data: response,
     isLoading: isListLoading,
     isError,
   } = useList1(
-    { status: List1Status.UNDER_REVIEW, size: 50 },
-    { query: { enabled: isAuthenticated && admin } },
+    { status: List1Status.UNDER_REVIEW, page, size: PAGE_SIZE },
+    { query: { enabled: admin } },
   );
 
-  if (isLoading || !isAuthenticated || !admin) {
+  if (isLoading || !admin) {
     return (
       <SectionShell title="Wnioski" as="section">
         <Skeleton className="h-40 w-full max-w-3xl rounded-2xl" />
@@ -45,7 +46,11 @@ export function ApplicationsList() {
     );
   }
 
-  const applications = response?.data?.content ?? [];
+  const pageData = response?.data;
+  const applications = pageData?.content ?? [];
+  const totalElements = pageData?.totalElements ?? 0;
+  const totalPages = pageData?.totalPages ?? 0;
+  const currentPage = pageData?.number ?? page;
 
   return (
     <SectionShell
@@ -65,6 +70,13 @@ export function ApplicationsList() {
         <p className="text-muted-foreground">Brak nierozpatrzonych wniosków.</p>
       ) : (
         <div className="space-y-4">
+          {totalElements > applications.length ? (
+            <p className="text-muted-foreground text-sm">
+              Wyświetlono {applications.length} z {totalElements} wniosków
+              {totalPages > 1 ? ` · strona ${currentPage + 1} z ${totalPages}` : ""}.
+            </p>
+          ) : null}
+
           {applications.map((item) => {
             const { application } = item;
             const { dateLabel } = formatPublishedAt(application.createdAt);
@@ -100,6 +112,31 @@ export function ApplicationsList() {
               </Link>
             );
           })}
+
+          {totalPages > 1 ? (
+            <div className="flex items-center justify-between gap-4 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={currentPage <= 0}
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+              >
+                <ArrowLeft data-icon="inline-start" />
+                Poprzednia
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={currentPage >= totalPages - 1}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Następna
+                <ArrowRight data-icon="inline-end" />
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
     </SectionShell>
