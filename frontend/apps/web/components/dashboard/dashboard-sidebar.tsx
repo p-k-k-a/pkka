@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Inbox, Megaphone, ShieldCheck } from "lucide-react";
-import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
-import { isAdmin, isVerifiedAlumn } from "@/lib/roles";
+import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SidebarItem = {
@@ -49,29 +47,16 @@ const adminItems: SidebarItem[] = [
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { user, isLoading, isAuthenticated } = useAuth();
-  const admin = isAdmin(user?.roles);
-  const verifiedByRole = isVerifiedAlumn(user?.roles);
-
-  const { data: applicationResponse } = useGetMine({
-    query: {
-      enabled: isAuthenticated && !admin && !verifiedByRole,
-      retry: false,
-    },
-  });
-
-  const verifiedByApplication =
-    applicationResponse?.data?.status === ApplicationResponseDtoStatus.APPROVED;
-  const hideVerification = verifiedByRole || verifiedByApplication;
+  const { admin, isAuthLoading, isVerified } = useVerificationStatus();
 
   const items = admin
     ? adminItems
-    : userItems.filter((item) => item.href !== "/dashboard/verification" || !hideVerification);
+    : userItems.filter((item) => item.href !== "/dashboard/verification" || !isVerified);
 
   return (
     <aside className="bg-muted sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto">
       <nav className="font-heading flex flex-col gap-1 p-4">
-        {isLoading ? (
+        {isAuthLoading ? (
           <>
             <Skeleton className="h-10 w-full rounded-lg" />
             <Skeleton className="h-10 w-full rounded-lg" />
