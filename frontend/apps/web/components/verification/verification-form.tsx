@@ -216,7 +216,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
                 <Checkbox
                   id={`meeting-${option.value}`}
                   checked={meetingPreferences.includes(option.value)}
-                  onCheckedChange={() => setMeetingPreferences((prev) => toggle(prev, option.value))}
+                  onCheckedChange={() =>
+                    setMeetingPreferences((prev) => toggle(prev, option.value))
+                  }
                 />
                 {option.label}
               </Label>

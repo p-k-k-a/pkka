@@ -52,10 +52,7 @@ export function ApplicationSummary({
         label="Chęć współtworzenia klubu"
         value={application.coCreationInterest ? "Tak" : "Nie"}
       />
-      <SummaryRow
-        label="Newsletter"
-        value={application.newsletterSubscription ? "Tak" : "Nie"}
-      />
+      <SummaryRow label="Newsletter" value={application.newsletterSubscription ? "Tak" : "Nie"} />
       <SummaryRow
         label="Zgody"
         value={
