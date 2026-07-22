@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { List1Status, useList1 } from "@pkka/api";
+import { ListAdminApplicationsStatus, useListAdminApplications } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,8 +33,8 @@ export function ApplicationsList() {
     data: response,
     isLoading: isListLoading,
     isError,
-  } = useList1(
-    { status: List1Status.UNDER_REVIEW, page, size: PAGE_SIZE },
+  } = useListAdminApplications(
+    { status: ListAdminApplicationsStatus.UNDER_REVIEW, page, size: PAGE_SIZE },
     { query: { enabled: admin } },
   );
 
