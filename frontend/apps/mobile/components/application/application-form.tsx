@@ -22,7 +22,7 @@ import {
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
   type CreateApplicationRequestDtoStudyType,
-  useCreate,
+  useCreateApplication,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
@@ -46,7 +46,7 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
-  const { mutateAsync: submitApplication } = useCreate();
+  const { mutateAsync: submitApplication } = useCreateApplication();
   const phoneInputRef = React.useRef<PhoneInput>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 

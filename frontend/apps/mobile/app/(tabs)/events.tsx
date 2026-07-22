@@ -1,7 +1,7 @@
 import { EventCard } from "@/components/events/event-card";
 import { CtaCard } from "@/components/home/cta-card";
 import { Text } from "@/components/ui/text";
-import { useList as useEventsList } from "@pkka/api";
+import { useListEvents as useEventsList } from "@pkka/api";
 import { router } from "expo-router";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
