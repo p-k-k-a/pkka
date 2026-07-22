@@ -30,7 +30,7 @@ public class AdminApplicationController {
 
     @GetMapping
     @Operation(summary = "List applications with full details, filtered by status (newest first)")
-    public Page<AdminApplicationResponseDto> list(
+    public Page<AdminApplicationResponseDto> listAdminApplications(
             @RequestParam(defaultValue = "UNDER_REVIEW") ApplicationStatus status,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return adminApplicationService.list(status, pageable);
@@ -40,7 +40,7 @@ public class AdminApplicationController {
     @Operation(summary = "Get full details of a single application")
     @ApiResponse(responseCode = "200", description = "Application details")
     @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
-    public AdminApplicationResponseDto get(@PathVariable UUID id) {
+    public AdminApplicationResponseDto getAdminApplication(@PathVariable UUID id) {
         return adminApplicationService.get(id);
     }
 

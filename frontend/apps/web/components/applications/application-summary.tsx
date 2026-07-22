@@ -5,7 +5,7 @@ import {
   studyTypeLabel,
   consentLabel,
 } from "@/lib/application-labels";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { formatDateTime } from "@/lib/format-date-time";
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -16,16 +16,6 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
       </span>
     </div>
   );
-}
-
-function yesNo(value: boolean) {
-  return value ? "Tak" : "Nie";
-}
-
-function formatDateTime(value?: string) {
-  if (!value) return "—";
-  const { dateLabel, timeLabel } = formatPublishedAt(value);
-  return `${dateLabel}, ${timeLabel}`;
 }
 
 export function ApplicationSummary({
@@ -58,8 +48,14 @@ export function ApplicationSummary({
             : "—"
         }
       />
-      <SummaryRow label="Chęć współtworzenia klubu" value={yesNo(application.coCreationInterest)} />
-      <SummaryRow label="Newsletter" value={yesNo(application.newsletterSubscription)} />
+      <SummaryRow
+        label="Chęć współtworzenia klubu"
+        value={application.coCreationInterest ? "Tak" : "Nie"}
+      />
+      <SummaryRow
+        label="Newsletter"
+        value={application.newsletterSubscription ? "Tak" : "Nie"}
+      />
       <SummaryRow
         label="Zgody"
         value={
