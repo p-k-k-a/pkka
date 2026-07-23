@@ -46,7 +46,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
   const isOnline = type === EventDetailsDtoType.ONLINE;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
-  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken! : null;
+  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken : null;
 
   return (
     <ScrollView
@@ -69,14 +69,14 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
         <View className="gap-3">
           <Badge variant="default" className="self-start">
-            <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
+            <Text>{TYPE_LABELS[type].toUpperCase()}</Text>
           </Badge>
           <Text variant="h1" className="text-left text-3xl leading-tight">
             {title}
           </Text>
-          {(tags ?? []).length > 0 ? (
+          {tags.length > 0 ? (
             <View className="flex-row flex-wrap gap-x-3 gap-y-1">
-              {(tags ?? []).map((tag) => (
+              {tags.map((tag) => (
                 <Text key={tag} className="text-sm text-muted-foreground">
                   #{tag}
                 </Text>

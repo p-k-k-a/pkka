@@ -65,15 +65,9 @@ function NoApplicationView({ colors }: { colors: ReturnType<typeof useTheme>["co
       </View>
 
       <View className="gap-3 mt-2">
-        <Button
-          size="lg"
-          className="w-full"
-          onPress={() => {
-            console.log("[todo] discord verification not yet implemented");
-          }}
-        >
+        <Button size="lg" className="w-full" disabled>
           <DiscordIcon size={18} color={colors.background} />
-          <Text className="font-bold">Zweryfikuj przez Discord</Text>
+          <Text className="font-bold">Zweryfikuj przez Discord (wkrótce)</Text>
         </Button>
 
         <Button size="lg" className="w-full" onPress={() => router.push("/application")}>

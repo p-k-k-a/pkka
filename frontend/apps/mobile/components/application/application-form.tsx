@@ -19,10 +19,11 @@ import {
 } from "@/lib/application-constants";
 import {
   ApiError,
+  CreateApplicationRequestDtoConsentsItem,
+  useCreateApplication,
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
   type CreateApplicationRequestDtoStudyType,
-  useCreateApplication,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
@@ -66,20 +67,32 @@ function ApplicationForm() {
     },
     onSubmit: async ({ value }) => {
       setSubmitError(null);
+
+      const consents: CreateApplicationRequestDtoConsentsItem[] = [];
+      if (value.acceptedTerms)
+        consents.push(CreateApplicationRequestDtoConsentsItem.REGULATIONS_PRIVACY);
+      if (value.acceptedRodo)
+        consents.push(CreateApplicationRequestDtoConsentsItem.GDPR_DATA_PROCESSING);
+
+      if (!value.faculty || !value.studyType || consents.length < 2) {
+        setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
+        return;
+      }
+
       try {
         await submitApplication({
           data: {
             phoneNumber: value.phoneNumber.trim(),
-            faculty: value.faculty!,
+            faculty: value.faculty,
             fieldOfStudy: value.fieldOfStudy.trim(),
-            studyType: value.studyType!,
+            studyType: value.studyType,
             graduationYear: Number(value.graduationYear),
             interests: value.interests,
             meetingPreferences:
               value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
             coCreationInterest: value.coCreationInterest,
             newsletterSubscription: value.newsletterSubscription,
-            consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
+            consents,
           },
         });
       } catch (error) {

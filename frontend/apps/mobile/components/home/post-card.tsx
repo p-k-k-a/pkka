@@ -32,7 +32,7 @@ export function PostCard({ post }: PostCardProps) {
   );
 
   return (
-    <Link href={{ pathname: "/blog/[slug]", params: { slug: slug! } }} asChild>
+    <Link href={{ pathname: "/blog/[slug]", params: { slug } }} asChild>
       <Pressable className="active:opacity-90">{card}</Pressable>
     </Link>
   );

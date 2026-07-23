@@ -45,11 +45,11 @@ function EventCard({ event }: EventCardProps) {
 
       <View className="flex-row gap-2">
         <Badge variant="default">
-          <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
+          <Text>{TYPE_LABELS[type].toUpperCase()}</Text>
         </Badge>
         {typeof seatLimit === "number" ? (
           <Badge variant="outline">
-            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
+            <Text>{`${seatsTaken}/${seatLimit} MIEJSC`}</Text>
           </Badge>
         ) : null}
       </View>
@@ -57,7 +57,7 @@ function EventCard({ event }: EventCardProps) {
   );
 
   return (
-    <Link href={{ pathname: "/events/[id]", params: { id: id! } }} asChild>
+    <Link href={{ pathname: "/events/[id]", params: { id } }} asChild>
       <Pressable className="active:opacity-90">{card}</Pressable>
     </Link>
   );
