@@ -11,4 +11,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     @EntityGraph(attributePaths = "tags")
     Optional<User> findWithTagsByKeycloakId(String keycloakId);
+
+    @EntityGraph(attributePaths = "tags")
+    Optional<User> findWithTagsById(UUID id);
 }

@@ -33,6 +33,8 @@ public class ProfileService {
     @Transactional
     public ProfileResponse updateProfile(String keycloakId, UpdateProfileRequest request) {
         User user = loadWithTags(keycloakId);
+        user.setBio(request.bio());
+        user.setDiscordUsername(request.discordUsername());
         user.setCurrentPosition(request.currentPosition());
         user.setCompany(request.company());
         user.setLinkedinUrl(request.linkedinUrl());
