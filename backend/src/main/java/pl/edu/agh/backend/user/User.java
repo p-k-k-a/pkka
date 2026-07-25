@@ -42,11 +42,23 @@ public class User {
     @Column(name = "last_name", length = 255)
     private String lastName;
 
+    @Column(name = "email", length = 255)
+    private String email;
+
     @Column(name = "bio", columnDefinition = "text")
     private String bio;
 
-    @Column(name = "discord_username", length = 100)
-    private String discordUsername;
+    @Column(name = "discord_id", length = 32)
+    private String discordId;
+
+    @Column(name = "show_name", nullable = false)
+    private boolean showName = true;
+
+    @Column(name = "show_email", nullable = false)
+    private boolean showEmail = true;
+
+    @Column(name = "show_discord", nullable = false)
+    private boolean showDiscord = true;
 
     @Column(name = "current_position", length = 255)
     private String currentPosition;

@@ -57,7 +57,7 @@ spring:
             provider: keycloak
             client-id: pkka-web
             client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET:change-me}
-            scope: openid, profile
+            scope: openid, profile, email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-authentication-method: client_secret_basic
@@ -66,7 +66,7 @@ spring:
             provider: keycloak
             client-id: pkka-mobile
             client-secret: ${KEYCLOAK_MOBILE_CLIENT_SECRET:change-me}
-            scope: openid, profile
+            scope: openid, profile, email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-authentication-method: client_secret_basic
@@ -148,7 +148,7 @@ spring:
             provider: keycloak
             client-id: pkka-web
             client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
-            scope: openid, profile
+            scope: openid, profile, email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-authentication-method: client_secret_basic
@@ -157,7 +157,7 @@ spring:
             provider: keycloak
             client-id: pkka-mobile
             client-secret: ${KEYCLOAK_MOBILE_CLIENT_SECRET}
-            scope: openid, profile
+            scope: openid, profile, email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-authentication-method: client_secret_basic

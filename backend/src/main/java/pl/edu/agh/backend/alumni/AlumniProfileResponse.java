@@ -5,36 +5,56 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
 
-@Schema(description = "Public alumni profile visible to verified alumni")
+@Schema(
+        description =
+                "Public alumni profile visible to verified alumni; fields hidden by the owner's visibility settings are null")
 public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
         String lastName,
-        String bio,
-        String discordUsername,
+        String email,
         String currentPosition,
         String company,
+        String bio,
+
+        @Schema(description = "Discord snowflake for deep links; null when not linked or hidden")
+        String discordId,
+
         String linkedinUrl,
         String githubUrl,
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags) {
+        Integer graduationYear,
+        String fieldOfStudy,
+        @Schema(description = "Year the alumn was approved") Integer alumnSince,
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags,
+        @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static AlumniProfileResponse from(User user) {
+    public static AlumniProfileResponse from(User user, AlumnEducation education) {
+        boolean showName = user.isShowName();
+        boolean showEmail = user.isShowEmail();
+        boolean showDiscord = user.isShowDiscord();
         return new AlumniProfileResponse(
                 user.getId(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getBio(),
-                user.getDiscordUsername(),
+                showName ? user.getFirstName() : null,
+                showName ? user.getLastName() : null,
+                showEmail ? user.getEmail() : null,
                 user.getCurrentPosition(),
                 user.getCompany(),
+                user.getBio(),
+                showDiscord ? user.getDiscordId() : null,
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
+                education.graduationYear(),
+                education.fieldOfStudy(),
+                education.alumnSince(),
                 user.getTags().stream()
                         .map(TagResponse::from)
                         .sorted(Comparator.comparing(TagResponse::name))
-                        .toList());
+                        .toList(),
+                new ProfileVisibility(showName, showEmail, showDiscord));
     }
 }

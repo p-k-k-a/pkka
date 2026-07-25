@@ -15,10 +15,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
 import pl.edu.agh.backend.user.UserProvisioningService;
 
 @Component
@@ -28,7 +28,6 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserProvisioningService userProvisioningService;
-    private final UserPrincipalExtractor principalExtractor;
 
     @Value("${app.mobile.deep-link-scheme}")
     private String mobileDeepLinkScheme;
@@ -40,7 +39,10 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse res, Authentication auth)
             throws IOException, ServletException {
 
-        principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
+        if (auth.getPrincipal() instanceof OidcUser oidc) {
+            userProvisioningService.syncIdentityFromClaims(
+                    oidc.getSubject(), oidc.getGivenName(), oidc.getFamilyName(), oidc.getEmail());
+        }
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
         String registrationId = token.getAuthorizedClientRegistrationId();

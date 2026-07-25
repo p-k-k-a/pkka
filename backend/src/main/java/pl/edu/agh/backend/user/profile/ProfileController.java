@@ -38,7 +38,7 @@ public class ProfileController {
     @PatchMapping
     @Operation(
             summary = "Update own profile",
-            description = "Partial update: null or omitted fields clear the stored value")
+            description = "Partial update: null/omitted fields are left unchanged; a blank string clears the value")
     public ProfileResponse updateMyProfile(
             Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(keycloakId(authentication), request);
