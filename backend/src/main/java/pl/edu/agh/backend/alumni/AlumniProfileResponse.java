@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.user.profile.dto;
+package pl.edu.agh.backend.alumni;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
@@ -8,15 +8,11 @@ import java.util.UUID;
 import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.User;
 
-public record ProfileResponse(
+@Schema(description = "Public alumni profile visible to verified alumni")
+public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
-
-        @Schema(description = "Synced from Keycloak; not editable here")
         String firstName,
-
-        @Schema(description = "Synced from Keycloak; not editable here")
         String lastName,
-
         String bio,
         String discordUsername,
         String currentPosition,
@@ -25,8 +21,8 @@ public record ProfileResponse(
         String githubUrl,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags) {
 
-    public static ProfileResponse from(User user) {
-        return new ProfileResponse(
+    public static AlumniProfileResponse from(User user) {
+        return new AlumniProfileResponse(
                 user.getId(),
                 user.getFirstName(),
                 user.getLastName(),
