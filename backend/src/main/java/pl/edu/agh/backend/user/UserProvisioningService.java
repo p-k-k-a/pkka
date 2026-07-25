@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.user;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,47 +16,47 @@ public class UserProvisioningService {
     private final UserRepository userRepository;
     private final KeycloakUserService keycloakUserService;
 
+    /**
+     * Ensures a local user row exists for the given Keycloak subject. No external calls — safe to
+     * call on hot request paths that only need the row to satisfy foreign keys.
+     */
     @Transactional
-    public void provisionIfAbsent(UserPrincipalExtractor.UserPrincipalInfo info) {
-        var userOpt = userRepository.findByKeycloakId(info.keycloakId());
-        if (userOpt.isPresent()) {
-            var existingUser = userOpt.get();
-            syncNames(existingUser, info.keycloakId());
-            log.debug(
-                    "User provisioning check completed keycloakId={} userId={}",
-                    info.keycloakId(),
-                    existingUser.getId());
-            return;
+    public User provisionIfAbsent(UserPrincipalExtractor.UserPrincipalInfo info) {
+        return userRepository.findByKeycloakId(info.keycloakId()).orElseGet(() -> createUser(info.keycloakId()));
+    }
+
+    /**
+     * Refreshes identity from the ID token at login. First/last name and e-mail are OIDC claims, so
+     * no admin call is needed. The Discord snowflake is not a claim; it is fetched from Keycloak only
+     * while still missing (a linked account never changes it).
+     */
+    @Transactional
+    public void syncIdentityFromClaims(String keycloakId, String firstName, String lastName, String email) {
+        User user = userRepository.findByKeycloakId(keycloakId).orElseGet(() -> createUser(keycloakId));
+
+        if (firstName != null && !Objects.equals(user.getFirstName(), firstName)) {
+            user.setFirstName(firstName);
         }
-
-        try {
-            log.info("Provisioning new user keycloakId={}", info.keycloakId());
-
-            var createdUser = new User();
-            createdUser.setKeycloakId(info.keycloakId());
-            syncNames(createdUser, info.keycloakId());
-            var savedUser = userRepository.save(createdUser);
-            log.debug(
-                    "User provisioning check completed keycloakId={} userId={}", info.keycloakId(), savedUser.getId());
-        } catch (DataIntegrityViolationException ex) {
-            // Another concurrent request created the user; re-load and continue.
-            var existingUser =
-                    userRepository.findByKeycloakId(info.keycloakId()).orElseThrow(() -> ex);
-            log.debug(
-                    "User provisioning check completed keycloakId={} userId={}",
-                    info.keycloakId(),
-                    existingUser.getId());
+        if (lastName != null && !Objects.equals(user.getLastName(), lastName)) {
+            user.setLastName(lastName);
+        }
+        if (email != null && !Objects.equals(user.getEmail(), email)) {
+            user.setEmail(email);
+        }
+        if (user.getDiscordId() == null) {
+            keycloakUserService.fetchDiscordId(keycloakId).ifPresent(user::setDiscordId);
         }
     }
 
-    private void syncNames(User user, String keycloakId) {
-        keycloakUserService.fetchIdentity(keycloakId).ifPresent(identity -> {
-            if (identity.firstName() != null) {
-                user.setFirstName(identity.firstName());
-            }
-            if (identity.lastName() != null) {
-                user.setLastName(identity.lastName());
-            }
-        });
+    private User createUser(String keycloakId) {
+        try {
+            log.info("Provisioning new user keycloakId={}", keycloakId);
+            User user = new User();
+            user.setKeycloakId(keycloakId);
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            // Another concurrent request created the user; re-load and continue.
+            return userRepository.findByKeycloakId(keycloakId).orElseThrow(() -> ex);
+        }
     }
 }
