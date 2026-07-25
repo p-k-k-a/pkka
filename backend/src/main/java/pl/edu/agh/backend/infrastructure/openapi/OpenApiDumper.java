@@ -40,7 +40,12 @@ public class OpenApiDumper implements ApplicationListener<ApplicationReadyEvent>
                 return;
             }
 
-            Files.writeString(DUMP_PATH, response.body());
+            String body = response.body();
+            if (!body.endsWith("\n")) {
+                body += "\n";
+            }
+
+            Files.writeString(DUMP_PATH, body);
             log.info("OpenAPI spec written to {}", DUMP_PATH.toAbsolutePath());
         } catch (Exception e) {
             if (e instanceof InterruptedException) Thread.currentThread().interrupt();
