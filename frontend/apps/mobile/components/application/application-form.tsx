@@ -29,7 +29,7 @@ import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import * as React from "react";
+import { useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
 import PhoneInput from "react-native-phone-input";
 
@@ -48,8 +48,8 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 function ApplicationForm() {
   const { colors } = useTheme();
   const { mutateAsync: submitApplication } = useCreateApplication();
-  const phoneInputRef = React.useRef<PhoneInput>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const phoneInputRef = useRef<PhoneInput>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {

@@ -7,7 +7,7 @@ import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
 import { ClipboardList, LogOut } from "lucide-react-native";
-import * as React from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 type StatusConfig = {
@@ -127,7 +127,7 @@ export function UserPanel() {
   const { logout } = useAuth();
   const { colors } = useTheme();
   const { data, isLoading, isError, refetch } = useGetMine();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const application = data?.data;
   const status = application?.status;
@@ -138,7 +138,7 @@ export function UserPanel() {
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 
-  const onRefresh = React.useCallback(async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetch();
     setRefreshing(false);
