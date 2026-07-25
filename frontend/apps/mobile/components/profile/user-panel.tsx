@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
+import {
+  ApiError,
+  ApplicationResponseDtoStatus,
+  useGetMine,
+  type GetMineQueryResult,
+} from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
-import { ClipboardList, LogOut } from "lucide-react-native";
+import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
@@ -79,6 +84,39 @@ function NoApplicationView({ colors }: { colors: ReturnType<typeof useTheme>["co
   );
 }
 
+function StatusUnavailableView({
+  colors,
+  onRetry,
+}: {
+  colors: ReturnType<typeof useTheme>["colors"];
+  onRetry: () => void;
+}) {
+  return (
+    <View className="gap-5">
+      <View className="self-start flex-row items-center gap-2 rounded-full border border-muted-foreground px-3 py-1.5">
+        <View className="bg-muted-foreground size-2 rounded-full" />
+        <Text className="text-muted-foreground text-xs font-semibold">Status: Nieznany</Text>
+      </View>
+
+      <View className="gap-2">
+        <Text className="text-foreground text-3xl font-extrabold tracking-tight leading-9">
+          Nie udało się wczytać statusu
+        </Text>
+        <Text className="text-muted-foreground text-sm leading-6">
+          Sprawdź połączenie z internetem.
+        </Text>
+      </View>
+
+      <View className="gap-3 mt-2">
+        <Button size="lg" className="w-full" onPress={onRetry}>
+          <RotateCcw size={18} color={colors.background} />
+          <Text className="font-bold">Spróbuj ponownie</Text>
+        </Button>
+      </View>
+    </View>
+  );
+}
+
 function ApplicationStatusView({
   status,
   rejectionReason,
@@ -126,11 +164,13 @@ function ApplicationStatusView({
 export function UserPanel() {
   const { logout } = useAuth();
   const { colors } = useTheme();
-  const { data, isLoading, isError, refetch } = useGetMine();
+  const { data, isLoading, isError, error, refetch } = useGetMine<GetMineQueryResult, ApiError>();
   const [refreshing, setRefreshing] = useState(false);
 
   const application = data?.data;
   const status = application?.status;
+  const hasNoApplication = isError && error instanceof ApiError && error.status === 404;
+  const isUnavailable = isError && !hasNoApplication;
   const knownStatus =
     status === ApplicationResponseDtoStatus.UNDER_REVIEW ||
     status === ApplicationResponseDtoStatus.APPROVED ||
@@ -156,7 +196,9 @@ export function UserPanel() {
 
       {isLoading && !refreshing ? (
         <ActivityIndicator />
-      ) : isError || !application || !knownStatus ? (
+      ) : isUnavailable ? (
+        <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
+      ) : !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
       ) : (
         <ApplicationStatusView

@@ -20,6 +20,7 @@ import {
 import {
   ApiError,
   CreateApplicationRequestDtoConsentsItem,
+  getGetMineQueryKey,
   useCreateApplication,
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
@@ -27,6 +28,7 @@ import {
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useRef, useState } from "react";
@@ -47,6 +49,7 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
+  const queryClient = useQueryClient();
   const { mutateAsync: submitApplication } = useCreateApplication();
   const phoneInputRef = useRef<PhoneInput>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -61,7 +64,7 @@ function ApplicationForm() {
       interests: [] as string[],
       meetingPreferences: [] as CreateApplicationRequestDtoMeetingPreferencesItem[],
       coCreationInterest: false,
-      newsletterSubscription: true,
+      newsletterSubscription: false,
       acceptedTerms: false,
       acceptedRodo: false,
     },
@@ -103,6 +106,8 @@ function ApplicationForm() {
         );
         return;
       }
+
+      await queryClient.invalidateQueries({ queryKey: getGetMineQueryKey() });
       router.replace("/(tabs)/login");
     },
   });
