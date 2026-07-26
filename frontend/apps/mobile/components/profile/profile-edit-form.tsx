@@ -5,22 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { useProfile } from "@/lib/profile-context";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
+  getGetMyProfileQueryKey,
   getGetMyTagsQueryKey,
+  useGetMyProfile,
   useGetMyTags,
   useListTags,
+  useUpdateMyProfile,
   useUpdateMyTags,
+  type ProfileResponse,
 } from "@pkka/api";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 function FieldError({ field }: { field: AnyFieldApi }) {
@@ -71,7 +74,7 @@ function IdentityRow({
           </Text>
         </Pressable>
       </View>
-      {value !== undefined ? (
+      {value ? (
         <View
           className={cn(
             "border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
@@ -85,13 +88,13 @@ function IdentityRow({
   );
 }
 
-function ProfileEditForm() {
-  const { profile, updateProfile } = useProfile();
+function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const queryClient = useQueryClient();
 
   const availableTagsQuery = useListTags();
   const myTagsQuery = useGetMyTags();
   const updateMyTags = useUpdateMyTags();
+  const updateMyProfile = useUpdateMyProfile();
 
   const availableTags = availableTagsQuery.data?.data ?? [];
   const tagsLoading = availableTagsQuery.isPending || myTagsQuery.isPending;
@@ -130,19 +133,28 @@ function ProfileEditForm() {
         }
       }
 
-      const trimmed = (v: string) => (v.trim() ? v.trim() : undefined);
-      updateProfile({
-        currentPosition: trimmed(value.currentPosition),
-        company: trimmed(value.company),
-        bio: trimmed(value.bio),
-        linkedinUrl: trimmed(value.linkedinUrl),
-        githubUrl: trimmed(value.githubUrl),
-        visibility: {
-          name: value.showName,
-          email: value.showEmail,
-          discord: value.showDiscord,
-        },
-      });
+      const trimmed = (v: string) => v.trim();
+      try {
+        await updateMyProfile.mutateAsync({
+          data: {
+            currentPosition: trimmed(value.currentPosition),
+            company: trimmed(value.company),
+            bio: trimmed(value.bio),
+            linkedinUrl: trimmed(value.linkedinUrl),
+            githubUrl: trimmed(value.githubUrl),
+            visibility: {
+              name: value.showName,
+              email: value.showEmail,
+              discord: value.showDiscord,
+            },
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+      } catch {
+        setSubmitError("Nie udało się zapisać profilu. Spróbuj ponownie.");
+        return;
+      }
+
       router.back();
     },
   });
@@ -180,7 +192,7 @@ function ProfileEditForm() {
           {(field) => (
             <IdentityRow
               label="Imię i nazwisko"
-              value={`${profile.firstName} ${profile.lastName}`}
+              value={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
               field={field}
             />
           )}
@@ -316,4 +328,28 @@ function ProfileEditForm() {
   );
 }
 
-export { ProfileEditForm };
+// The form seeds default values from the profile, so it can only mount once loaded.
+export function ProfileEditForm() {
+  const { data, isPending, isError } = useGetMyProfile();
+  const profile = data?.data;
+
+  if (isPending) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background px-5">
+        <Text className="text-muted-foreground text-center text-sm leading-6">
+          Nie udało się wczytać profilu. Wróć i spróbuj ponownie.
+        </Text>
+      </View>
+    );
+  }
+
+  return <ProfileForm profile={profile} />;
+}

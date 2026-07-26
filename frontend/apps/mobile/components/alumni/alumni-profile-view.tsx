@@ -3,13 +3,13 @@ import { ProfileHero } from "@/components/alumni/profile-hero";
 import { ProfileSectionCard } from "@/components/alumni/profile-section-card";
 import { SkillChips } from "@/components/alumni/skill-chips";
 import { Text } from "@/components/ui/text";
-import type { AlumnProfile } from "@/lib/alumni-mock";
+import type { ProfileResponse } from "@pkka/api";
 import { THEME } from "@/lib/theme";
 import { Pencil } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type AlumniProfileViewProps = {
-  profile: AlumnProfile;
+  profile: ProfileResponse;
   onEdit: () => void;
 };
 

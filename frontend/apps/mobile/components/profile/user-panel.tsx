@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { useProfile } from "@/lib/profile-context";
-import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
+import {
+  ApplicationResponseDtoStatus,
+  useGetMine,
+  useGetMyProfile,
+  type ProfileResponse,
+} from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
 import { ClipboardList, LogOut } from "lucide-react-native";
@@ -131,9 +135,28 @@ function ApplicationStatusView({
   );
 }
 
+function AlumniProfileSection({
+  profile,
+  isPending,
+  isError,
+}: {
+  profile: ProfileResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+}) {
+  if (isPending) return <ActivityIndicator />;
+  if (isError || !profile) {
+    return (
+      <Text className="text-muted-foreground text-sm leading-6">
+        Nie udało się wczytać profilu. Pociągnij w dół, aby odświeżyć.
+      </Text>
+    );
+  }
+  return <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />;
+}
+
 export function UserPanel() {
   const { logout } = useAuth();
-  const { profile } = useProfile();
   const { colors } = useTheme();
   const { data, isLoading, isError, refetch } = useGetMine();
   const [refreshing, setRefreshing] = React.useState(false);
@@ -147,11 +170,19 @@ export function UserPanel() {
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 
+  const {
+    data: profileData,
+    // isLoading, not isPending: a disabled query stays "pending" forever.
+    isLoading: profilePending,
+    isError: profileError,
+    refetch: refetchProfile,
+  } = useGetMyProfile({ query: { enabled: knownStatus === "APPROVED" } });
+
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchProfile()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, refetchProfile]);
 
   return (
     <ScrollView
@@ -168,7 +199,11 @@ export function UserPanel() {
       ) : isError || !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
       ) : knownStatus === "APPROVED" ? (
-        <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />
+        <AlumniProfileSection
+          profile={profileData?.data}
+          isPending={profilePending && !refreshing}
+          isError={profileError}
+        />
       ) : (
         <ApplicationStatusView
           status={knownStatus}
