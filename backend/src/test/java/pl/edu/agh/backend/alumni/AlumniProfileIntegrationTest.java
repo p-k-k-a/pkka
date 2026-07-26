@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -261,11 +262,12 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
-    void syncIdentityFromClaimsStoresNamesEmailAndFetchesDiscordId() {
+    void syncIdentityAtLoginStoresNamesEmailAndFetchesDiscordId() {
         String keycloakId = UUID.randomUUID().toString();
         when(keycloakUserService.fetchDiscordId(keycloakId)).thenReturn(Optional.of("222333444555666777"));
 
-        userProvisioningService.syncIdentityFromClaims(keycloakId, "Anna", "Nowak", "anna.nowak@example.com");
+        userProvisioningService.syncIdentityAtLogin(
+                new UserPrincipalInfo(keycloakId, "Anna", "Nowak", "anna.nowak@example.com"));
 
         User provisioned = userRepository.findByKeycloakId(keycloakId).orElseThrow();
         assertThat(provisioned.getFirstName()).isEqualTo("Anna");
@@ -275,15 +277,71 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
-    void syncIdentityFromClaimsUpdatesChangedNameAndSkipsDiscordWhenPresent() {
+    void syncIdentityAtLoginUpdatesChangedNameAndSkipsDiscordWhenPresent() {
         // alumn already has a discordId, so the federated lookup must be skipped; null claims keep stored values
-        userProvisioningService.syncIdentityFromClaims(alumn.getKeycloakId(), "Janusz", null, null);
+        userProvisioningService.syncIdentityAtLogin(new UserPrincipalInfo(alumn.getKeycloakId(), "Janusz", null, null));
 
         User synced = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(synced.getFirstName()).isEqualTo("Janusz");
         assertThat(synced.getLastName()).isEqualTo("Kowalski");
         assertThat(synced.getEmail()).isEqualTo("jan.kowalski@example.com");
         verify(keycloakUserService, never()).fetchDiscordId(any());
+    }
+
+    @Test
+    void getMyProfileSyncsIdentityFromKeycloakForBearerRequests() throws Exception {
+        // Mobile-only session: the access token carries no identity claims (by design),
+        // so first/last name and e-mail must be fetched from Keycloak.
+        String keycloakId = UUID.randomUUID().toString();
+        when(keycloakUserService.fetchIdentity(keycloakId))
+                .thenReturn(Optional.of(new KeycloakUserService.UserIdentity("Pablo", "Nowak", "pablo@gmail.com")));
+        when(keycloakUserService.fetchDiscordId(keycloakId)).thenReturn(Optional.of("999888777666555444"));
+
+        mockMvc.perform(get("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(keycloakId))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Pablo"))
+                .andExpect(jsonPath("$.lastName").value("Nowak"))
+                .andExpect(jsonPath("$.email").value("pablo@gmail.com"))
+                .andExpect(jsonPath("$.discordId").value("999888777666555444"));
+
+        User synced = userRepository.findByKeycloakId(keycloakId).orElseThrow();
+        assertThat(synced.getEmail()).isEqualTo("pablo@gmail.com");
+    }
+
+    @Test
+    void remoteLookupIsThrottledBetweenBearerRequests() throws Exception {
+        String keycloakId = UUID.randomUUID().toString();
+        when(keycloakUserService.fetchIdentity(keycloakId)).thenReturn(Optional.empty());
+        when(keycloakUserService.fetchDiscordId(keycloakId)).thenReturn(Optional.empty());
+
+        for (int i = 0; i < 2; i++) {
+            mockMvc.perform(get("/api/profiles/me")
+                            .with(jwt().jwt(jwt -> jwt.subject(keycloakId))
+                                    .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                    .andExpect(status().isOk());
+        }
+
+        verify(keycloakUserService, times(1)).fetchIdentity(keycloakId);
+        verify(keycloakUserService, times(1)).fetchDiscordId(keycloakId);
+    }
+
+    @Test
+    void loginSyncSuppressesImmediateRemoteRefresh() throws Exception {
+        String keycloakId = UUID.randomUUID().toString();
+        when(keycloakUserService.fetchDiscordId(keycloakId)).thenReturn(Optional.of("111222333444555666"));
+
+        userProvisioningService.syncIdentityAtLogin(
+                new UserPrincipalInfo(keycloakId, "Anna", "Nowak", "anna.nowak@example.com"));
+
+        mockMvc.perform(get("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(keycloakId))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("anna.nowak@example.com"));
+
+        verify(keycloakUserService, never()).fetchIdentity(keycloakId);
     }
 
     @Test

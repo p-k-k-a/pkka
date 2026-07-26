@@ -19,16 +19,20 @@ import {
 } from "@/lib/application-constants";
 import {
   ApiError,
+  CreateApplicationRequestDtoConsentsItem,
+  getGetMineQueryKey,
+  useCreateApplication,
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
   type CreateApplicationRequestDtoStudyType,
-  useCreateApplication,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as React from "react";
+import { useRef, useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import PhoneInput from "react-native-phone-input";
@@ -47,9 +51,10 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
+  const queryClient = useQueryClient();
   const { mutateAsync: submitApplication } = useCreateApplication();
-  const phoneInputRef = React.useRef<PhoneInput>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const phoneInputRef = useRef<PhoneInput>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {
@@ -61,26 +66,38 @@ function ApplicationForm() {
       interests: [] as string[],
       meetingPreferences: [] as CreateApplicationRequestDtoMeetingPreferencesItem[],
       coCreationInterest: false,
-      newsletterSubscription: true,
+      newsletterSubscription: false,
       acceptedTerms: false,
       acceptedRodo: false,
     },
     onSubmit: async ({ value }) => {
       setSubmitError(null);
+
+      const consents: CreateApplicationRequestDtoConsentsItem[] = [];
+      if (value.acceptedTerms)
+        consents.push(CreateApplicationRequestDtoConsentsItem.REGULATIONS_PRIVACY);
+      if (value.acceptedRodo)
+        consents.push(CreateApplicationRequestDtoConsentsItem.GDPR_DATA_PROCESSING);
+
+      if (!value.faculty || !value.studyType || consents.length < 2) {
+        setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
+        return;
+      }
+
       try {
         await submitApplication({
           data: {
             phoneNumber: value.phoneNumber.trim(),
-            faculty: value.faculty!,
+            faculty: value.faculty,
             fieldOfStudy: value.fieldOfStudy.trim(),
-            studyType: value.studyType!,
+            studyType: value.studyType,
             graduationYear: Number(value.graduationYear),
             interests: value.interests,
             meetingPreferences:
               value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
             coCreationInterest: value.coCreationInterest,
             newsletterSubscription: value.newsletterSubscription,
-            consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
+            consents,
           },
         });
       } catch (error) {
@@ -91,6 +108,8 @@ function ApplicationForm() {
         );
         return;
       }
+
+      await queryClient.invalidateQueries({ queryKey: getGetMineQueryKey() });
       router.replace("/(tabs)/login");
     },
   });

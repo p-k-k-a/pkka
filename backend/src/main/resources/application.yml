@@ -87,6 +87,8 @@ app:
     success-url: ${WEB_SUCCESS_URL:http://localhost:3000/dashboard}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL:http://localhost:3000/}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  identity:
+    refresh-interval: ${IDENTITY_REFRESH_INTERVAL:10m}
 
 # Keycloak Admin Client
 keycloak:
@@ -178,6 +180,8 @@ app:
     success-url: ${WEB_SUCCESS_URL}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS}
+  identity:
+    refresh-interval: ${IDENTITY_REFRESH_INTERVAL:10m}
 
 # Keycloak Admin Client
 keycloak:

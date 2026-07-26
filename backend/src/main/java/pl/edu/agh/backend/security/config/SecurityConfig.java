@@ -32,11 +32,14 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
+import pl.edu.agh.backend.user.UserPrincipalExtractor;
+import pl.edu.agh.backend.user.UserProvisioningService;
 
 @Configuration
 @EnableWebSecurity
@@ -46,7 +49,10 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(
-            HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) {
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            UserPrincipalExtractor principalExtractor,
+            UserProvisioningService userProvisioningService) {
 
         // session read when it exists (web), not created for mobile
         // CSRF enabled for web sessions, ignored for mobile
@@ -59,6 +65,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
                         .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
+                .addFilterAfter(
+                        new UserIdentityRefreshFilter(principalExtractor, userProvisioningService),
+                        AuthorizationFilter.class)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
                         .permitAll()
                         .requestMatchers("/api/me")
