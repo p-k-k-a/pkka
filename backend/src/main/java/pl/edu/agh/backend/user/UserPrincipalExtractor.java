@@ -13,18 +13,14 @@ public class UserPrincipalExtractor {
     public Optional<UserPrincipalInfo> extract(Authentication authentication) {
         return switch (authentication) {
             case OAuth2AuthenticationToken t
-            when t.getPrincipal() instanceof OidcUser u ->
-                Optional.of(new UserPrincipalInfo(u.getSubject(), u.getGivenName(), u.getFamilyName(), u.getEmail()));
-            case JwtAuthenticationToken t ->
-                Optional.of(new UserPrincipalInfo(t.getToken().getSubject()));
+            when t.getPrincipal() instanceof OidcUser u -> Optional.of(new UserPrincipalInfo(u.getSubject()));
+            case JwtAuthenticationToken t -> {
+                var jwt = t.getToken();
+                yield Optional.of(new UserPrincipalInfo(jwt.getSubject()));
+            }
             default -> Optional.empty();
         };
     }
 
-    public record UserPrincipalInfo(String keycloakId, String firstName, String lastName, String email) {
-
-        public UserPrincipalInfo(String keycloakId) {
-            this(keycloakId, null, null, null);
-        }
-    }
+    public record UserPrincipalInfo(String keycloakId) {}
 }
