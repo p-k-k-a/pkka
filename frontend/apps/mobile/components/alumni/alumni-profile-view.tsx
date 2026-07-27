@@ -10,23 +10,26 @@ import { Pressable, View } from "react-native";
 
 type AlumniProfileViewProps = {
   profile: AlumnProfile;
-  onEdit: () => void;
+  // Omitted on the read-only directory detail view — hides the edit affordance.
+  onEdit?: () => void;
 };
 
 export function AlumniProfileView({ profile, onEdit }: AlumniProfileViewProps) {
   return (
     <View className="gap-6">
-      <Pressable
-        onPress={onEdit}
-        role="button"
-        accessibilityLabel="Edytuj profil"
-        className="border-border active:bg-muted flex-row items-center gap-2 self-start rounded-full border px-3 py-1.5"
-      >
-        <Pencil size={14} color={THEME.light.foreground} />
-        <Text className="text-foreground text-xs font-semibold uppercase tracking-wider">
-          Edytuj profil
-        </Text>
-      </Pressable>
+      {onEdit ? (
+        <Pressable
+          onPress={onEdit}
+          role="button"
+          accessibilityLabel="Edytuj profil"
+          className="border-border active:bg-muted flex-row items-center gap-2 self-start rounded-full border px-3 py-1.5"
+        >
+          <Pencil size={14} color={THEME.light.foreground} />
+          <Text className="text-foreground text-xs font-semibold uppercase tracking-wider">
+            Edytuj profil
+          </Text>
+        </Pressable>
+      ) : null}
 
       <ProfileHero profile={profile} />
       <ContactActions profile={profile} />

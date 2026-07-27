@@ -2,6 +2,7 @@ import "@/global.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProfileProvider } from "@/lib/profile-context";
 import { NAV_THEME } from "@/lib/theme";
+import { BottomSheetProvider } from "@swmansion/react-native-bottom-sheet";
 import { ApiError } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
@@ -37,17 +38,20 @@ export default function RootLayout() {
           <ThemeProvider value={NAV_THEME[colorScheme]}>
             <AuthProvider>
               <ProfileProvider>
-                <SafeAreaView className="flex-1 bg-background">
-                  <Stack>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
-                    <Stack.Screen name="application" options={{ headerShown: false }} />
-                    <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
-                  </Stack>
-                </SafeAreaView>
-                <StatusBar style="auto" />
-                <PortalHost />
+                <BottomSheetProvider>
+                  <SafeAreaView className="flex-1 bg-background">
+                    <Stack>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen name="index" options={{ headerShown: false }} />
+                      <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
+                      <Stack.Screen name="application" options={{ headerShown: false }} />
+                      <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
+                      <Stack.Screen name="alumni/[id]" options={{ headerShown: false }} />
+                    </Stack>
+                  </SafeAreaView>
+                  <StatusBar style="auto" />
+                  <PortalHost />
+                </BottomSheetProvider>
               </ProfileProvider>
             </AuthProvider>
           </ThemeProvider>
