@@ -27,7 +27,7 @@ public class ApplicationController {
             responseCode = "409",
             description = "The user already has an application under review",
             content = @Content)
-    public ApplicationResponseDto create(
+    public ApplicationResponseDto createApplication(
             @Valid @RequestBody CreateApplicationRequestDto request, Authentication authentication) {
         return applicationService.create(authentication, request);
     }

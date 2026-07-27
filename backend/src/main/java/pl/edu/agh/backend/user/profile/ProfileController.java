@@ -14,7 +14,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.controller.dto.TagResponse;
+import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.UserPrincipalExtractor;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;

@@ -39,6 +39,22 @@ const buildUrl = (path: string): string => {
   return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 };
 
+const CSRF_COOKIE_NAME = "XSRF-TOKEN";
+const CSRF_HEADER_NAME = "X-XSRF-TOKEN";
+const CSRF_SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "TRACE"]);
+
+const readCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`));
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]!);
+  } catch {
+    return match[1]!;
+  }
+};
+
 const parseBody = async <T>(res: Response): Promise<T> => {
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("content-type") ?? "";
@@ -112,6 +128,12 @@ export const apiFetch = async <T>(url: string, options: RequestInit = {}): Promi
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
   if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+
+  const method = (options.method ?? "GET").toUpperCase();
+  if (useSessionAuth && !CSRF_SAFE_METHODS.has(method) && !headers.has(CSRF_HEADER_NAME)) {
+    const csrfToken = readCookie(CSRF_COOKIE_NAME);
+    if (csrfToken) headers.set(CSRF_HEADER_NAME, csrfToken);
+  }
 
   const fetchOptions: RequestInit = {
     ...options,

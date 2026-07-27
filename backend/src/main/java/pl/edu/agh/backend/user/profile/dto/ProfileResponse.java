@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import pl.edu.agh.backend.controller.dto.TagResponse;
+import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.User;
 
 public record ProfileResponse(

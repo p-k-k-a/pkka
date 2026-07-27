@@ -13,14 +13,17 @@ export function PublicHeaderAuth() {
     <div className="flex items-center gap-3">
       <ThemeToggle />
       {isLoading ? (
-        <Skeleton className="h-11 w-32 rounded-lg" />
+        <Skeleton className="h-[34px] w-28 rounded-lg" />
       ) : isAuthenticated ? (
-        <Button variant="ghost" size="xl" onClick={logout}>
+        <Button variant="ghost" size="sm" onClick={logout}>
           Wyloguj
         </Button>
       ) : (
-        <Button asChild size="xl">
-          <Link href="/login">Zaloguj się</Link>
+        <Button asChild size="sm" className="gap-1.5">
+          <Link href="/login">
+            Zaloguj się
+            <span aria-hidden="true">→</span>
+          </Link>
         </Button>
       )}
     </div>

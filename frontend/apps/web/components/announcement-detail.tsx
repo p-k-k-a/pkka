@@ -8,7 +8,12 @@ import { DetailHeader } from "@/components/content/detail-header";
 import { ProseContent } from "@/components/content/prose-content";
 import { formatPublishedAt } from "@/lib/format-published-at";
 
-export function AnnouncementDetail({ slug }: { slug: string }) {
+type AnnouncementDetailProps = {
+  slug: string;
+  backHref?: string;
+};
+
+export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailProps) {
   const { data: response, isLoading, isError, isFetching } = useGetPost(slug);
   const post = response?.data;
   const publication = post ? formatPublishedAt(post.publishedAt) : null;
@@ -43,14 +48,14 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
             </p>
           </>
         )}
-        <DetailBackLink href="/" label="Wróć do aktualności" />
+        <DetailBackLink href={backHref} label="Wróć do aktualności" />
       </div>
     );
   }
 
   return (
     <article className="mx-auto max-w-3xl px-6 py-10 md:py-14">
-      <DetailHeader backHref="/" title="Szczegóły wpisu" />
+      <DetailHeader backHref={backHref} title="Szczegóły wpisu" />
 
       <CoverImage alt={post.title ?? "Aktualność"} />
 
@@ -71,7 +76,7 @@ export function AnnouncementDetail({ slug }: { slug: string }) {
       </div>
 
       <footer className="mt-16 flex justify-center border-t pt-10">
-        <DetailBackLink href="/" label="Wróć do aktualności" />
+        <DetailBackLink href={backHref} label="Wróć do aktualności" />
       </footer>
     </article>
   );

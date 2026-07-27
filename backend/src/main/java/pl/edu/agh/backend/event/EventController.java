@@ -22,7 +22,7 @@ public class EventController {
 
     @GetMapping
     @Operation(summary = "List of upcoming events (optional filtering by tags)")
-    public Page<EventListItemDto> list(
+    public Page<EventListItemDto> listEvents(
             @RequestParam(required = false) Set<String> tags,
             @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Authentication authentication) {
@@ -31,7 +31,7 @@ public class EventController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Details of a single event")
-    public EventDetailsDto getById(@PathVariable UUID id, Authentication authentication) {
+    public EventDetailsDto getEventById(@PathVariable UUID id, Authentication authentication) {
         return EventDetailsDto.from(eventService.findById(id, authentication));
     }
 }

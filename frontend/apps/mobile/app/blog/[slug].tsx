@@ -1,5 +1,5 @@
 import { BlogPostView } from "@/components/blog/blog-post-view";
-import { DetailHeader } from "@/components/blog/detail-header";
+import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetPost } from "@pkka/api";
 import { router, Stack, useLocalSearchParams } from "expo-router";
