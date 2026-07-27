@@ -1,15 +1,19 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
-import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { useProfile } from "@/lib/profile-context";
-import { ApplicationResponseDtoStatus, useGetMine } from "@pkka/api";
+import {
+  ApplicationResponseDtoStatus,
+  ProfileResponse,
+  useGetMine,
+  useGetMyProfile,
+} from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
-import { ClipboardList, LogOut } from "lucide-react-native";
-import * as React from "react";
+import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 type StatusConfig = {
@@ -67,20 +71,47 @@ function NoApplicationView({ colors }: { colors: ReturnType<typeof useTheme>["co
       </View>
 
       <View className="gap-3 mt-2">
-        <Button
-          size="lg"
-          className="w-full"
-          onPress={() => {
-            console.log("[todo] discord verification not yet implemented");
-          }}
-        >
+        <Button size="lg" className="w-full" disabled>
           <DiscordIcon size={18} color={colors.background} />
-          <Text className="font-bold">Zweryfikuj przez Discord</Text>
+          <Text className="font-bold">Zweryfikuj przez Discord (wkrótce)</Text>
         </Button>
 
         <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
           <ClipboardList size={18} color={colors.background} />
           <Text className="font-bold">Złóż wniosek ręcznie</Text>
+        </Button>
+      </View>
+    </View>
+  );
+}
+
+function StatusUnavailableView({
+  colors,
+  onRetry,
+}: {
+  colors: ReturnType<typeof useTheme>["colors"];
+  onRetry: () => void;
+}) {
+  return (
+    <View className="gap-5">
+      <View className="self-start flex-row items-center gap-2 rounded-full border border-muted-foreground px-3 py-1.5">
+        <View className="bg-muted-foreground size-2 rounded-full" />
+        <Text className="text-muted-foreground text-xs font-semibold">Status: Nieznany</Text>
+      </View>
+
+      <View className="gap-2">
+        <Text className="text-foreground text-3xl font-extrabold tracking-tight leading-9">
+          Nie udało się wczytać statusu
+        </Text>
+        <Text className="text-muted-foreground text-sm leading-6">
+          Sprawdź połączenie z internetem.
+        </Text>
+      </View>
+
+      <View className="gap-3 mt-2">
+        <Button size="lg" className="w-full" onPress={onRetry}>
+          <RotateCcw size={18} color={colors.background} />
+          <Text className="font-bold">Spróbuj ponownie</Text>
         </Button>
       </View>
     </View>
@@ -131,12 +162,31 @@ function ApplicationStatusView({
   );
 }
 
+function AlumniProfileSection({
+  profile,
+  isPending,
+  isError,
+}: {
+  profile: ProfileResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+}) {
+  if (isPending) return <ActivityIndicator />;
+  if (isError || !profile) {
+    return (
+      <Text className="text-muted-foreground text-sm leading-6">
+        Nie udało się wczytać profilu. Pociągnij w dół, aby odświeżyć.
+      </Text>
+    );
+  }
+  return <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />;
+}
+
 export function UserPanel() {
   const { logout } = useAuth();
-  const { profile } = useProfile();
   const { colors } = useTheme();
   const { data, isLoading, isError, refetch } = useGetMine();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const application = data?.data;
   const status = application?.status;
@@ -147,11 +197,19 @@ export function UserPanel() {
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 
-  const onRefresh = React.useCallback(async () => {
+  const {
+    data: profileData,
+    // isLoading, not isPending: a disabled query stays "pending" forever.
+    isLoading: profilePending,
+    isError: profileError,
+    refetch: refetchProfile,
+  } = useGetMyProfile({ query: { enabled: knownStatus === "APPROVED" } });
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchProfile()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, refetchProfile]);
 
   return (
     <ScrollView
@@ -168,7 +226,11 @@ export function UserPanel() {
       ) : isError || !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
       ) : knownStatus === "APPROVED" ? (
-        <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />
+        <AlumniProfileSection
+          profile={profileData?.data}
+          isPending={profilePending && !refreshing}
+          isError={profileError}
+        />
       ) : (
         <ApplicationStatusView
           status={knownStatus}

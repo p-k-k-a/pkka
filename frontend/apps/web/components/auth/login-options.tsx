@@ -15,7 +15,7 @@ export function LoginOptions() {
           Zaloguj się
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
-          Dołącz do społeczności Klubu Alumna Wydziału Informatyki AGH.
+          Dołącz do społeczności Klubu Alumnów Wydziału Informatyki AGH.
         </p>
       </div>
 

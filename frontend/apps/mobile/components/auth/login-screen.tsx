@@ -1,5 +1,5 @@
-import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Button } from "@/components/ui/button";
+import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import * as WebBrowser from "expo-web-browser";
@@ -14,8 +14,13 @@ const REDIRECT_URI = "pkka://";
 export function LoginScreen() {
   const { login } = useAuth();
 
-  async function loginWithKeycloak() {
-    const result = await WebBrowser.openAuthSessionAsync(KEYCLOAK_URL, REDIRECT_URI);
+  async function loginWith(authorizationUrl: string) {
+    if (!authorizationUrl) {
+      console.warn("Missing authorization URL — check EXPO_PUBLIC_* env vars");
+      return;
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, REDIRECT_URI);
     if (result.type !== "success" || !result.url) return;
 
     const fragment = result.url.split("#")[1] ?? "";
@@ -42,7 +47,7 @@ export function LoginScreen() {
 
         <View className="h-8" />
 
-        <Button size="lg" className="w-full" onPress={loginWithKeycloak}>
+        <Button size="lg" className="w-full" onPress={() => loginWith(KEYCLOAK_URL)}>
           <Text>Zaloguj się przez SSO</Text>
         </Button>
 
@@ -58,7 +63,7 @@ export function LoginScreen() {
           variant="outline"
           size="lg"
           className="w-full"
-          onPress={() => WebBrowser.openBrowserAsync(DISCORD_URL)}
+          onPress={() => loginWith(DISCORD_URL)}
         >
           <DiscordIcon size={20} color="#000" />
           <Text>Kontynuuj przez Discord</Text>
@@ -66,7 +71,7 @@ export function LoginScreen() {
 
         <View className="mt-7 flex-row items-center justify-center">
           <Text variant="muted">Nie masz konta? </Text>
-          <Button variant="link" onPress={loginWithKeycloak}>
+          <Button variant="link" onPress={() => loginWith(KEYCLOAK_URL)}>
             <Text className="font-bold text-foreground">Zarejestruj się</Text>
           </Button>
         </View>

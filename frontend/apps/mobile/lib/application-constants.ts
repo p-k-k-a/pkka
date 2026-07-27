@@ -1,39 +1,46 @@
 import {
-  type CreateApplicationRequestDtoFaculty,
-  type CreateApplicationRequestDtoMeetingPreferencesItem,
-  type CreateApplicationRequestDtoStudyType,
+  CreateApplicationRequestDtoFaculty,
+  CreateApplicationRequestDtoMeetingPreferencesItem,
+  CreateApplicationRequestDtoStudyType,
 } from "@pkka/api";
 
-export const FACULTIES: { value: CreateApplicationRequestDtoFaculty; label: string }[] = [
-  { value: "WILGZ", label: "Wydział Inżynierii Lądowej i Gospodarki Zasobami" },
-  { value: "WIMIIP", label: "Wydział Inżynierii Metali i Informatyki Przemysłowej" },
-  {
-    value: "WEAIIB",
-    label: "Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej",
-  },
-  { value: "WIET", label: "Wydział Informatyki, Elektroniki i Telekomunikacji" },
-  { value: "WIMIR", label: "Wydział Inżynierii Mechanicznej i Robotyki" },
-  { value: "WGGIOS", label: "Wydział Geologii, Geofizyki i Ochrony Środowiska" },
-  { value: "WGGIIS", label: "Wydział Geodezji Górniczej i Inżynierii Środowiska" },
-  { value: "WIMIC", label: "Wydział Inżynierii Materiałowej i Ceramiki" },
-  { value: "WO", label: "Wydział Odlewnictwa" },
-  { value: "WMN", label: "Wydział Metali Nieżelaznych" },
-  { value: "WWNIG", label: "Wydział Wiertnictwa, Nafty i Gazu" },
-  { value: "WZ", label: "Wydział Zarządzania" },
-  { value: "WEIP", label: "Wydział Energetyki i Paliw" },
-  { value: "WFIIS", label: "Wydział Fizyki i Informatyki Stosowanej" },
-  { value: "WMS", label: "Wydział Matematyki Stosowanej" },
-  { value: "WH", label: "Wydział Humanistyczny" },
-  { value: "WI", label: "Wydział Informatyki" },
-  { value: "WTK", label: "Wydział Technologii Kosmicznych" },
-];
+type Option<T extends string> = { value: T; label: string };
 
-export const STUDY_TYPES: { value: CreateApplicationRequestDtoStudyType; label: string }[] = [
-  { value: "BACHELOR", label: "Studia licencjackie / inżynierskie" },
-  { value: "MASTER", label: "Studia magisterskie" },
-  { value: "DOCTORAL", label: "Studia doktoranckie" },
-  { value: "POSTGRADUATE", label: "Studia podyplomowe" },
-];
+const FACULTY_LABELS: Record<CreateApplicationRequestDtoFaculty, string> = {
+  WE: "Wydział Elektromechaniczny (1952-1957)",
+  WEGH: "Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)",
+  WEAIE: "Wydział Elektrotechniki, Automatyki i Elektroniki (1975-1998)",
+  WEAIIE: "Wydział Elektrotechniki, Automatyki, Informatyki i Elektroniki (1998-2011)",
+  WIET: "Wydział Informatyki, Elektroniki i Telekomunikacji (2012-2023)",
+  WI: "Wydział Informatyki (2023-obecnie)",
+};
+
+const STUDY_TYPE_LABELS: Record<CreateApplicationRequestDtoStudyType, string> = {
+  BACHELOR: "Studia I stopnia (inżynierskie / licencjackie)",
+  MASTER: "Studia II stopnia (magisterskie)",
+  DOCTORAL: "Studia doktoranckie",
+  POSTGRADUATE: "Studia podyplomowe",
+};
+
+const MEETING_FORMAT_LABELS: Record<CreateApplicationRequestDtoMeetingPreferencesItem, string> = {
+  ONLINE: "Online",
+  IN_PERSON_KRAKOW: "Stacjonarnie (Kraków)",
+  HYBRID: "Hybrydowo",
+};
+
+export const FACULTIES: Option<CreateApplicationRequestDtoFaculty>[] = Object.values(
+  CreateApplicationRequestDtoFaculty,
+).map((value) => ({ value, label: FACULTY_LABELS[value] }));
+
+export const STUDY_TYPES: Option<CreateApplicationRequestDtoStudyType>[] = Object.values(
+  CreateApplicationRequestDtoStudyType,
+).map((value) => ({ value, label: STUDY_TYPE_LABELS[value] }));
+
+export const MEETING_FORMATS: Option<CreateApplicationRequestDtoMeetingPreferencesItem>[] =
+  Object.values(CreateApplicationRequestDtoMeetingPreferencesItem).map((value) => ({
+    value,
+    label: MEETING_FORMAT_LABELS[value],
+  }));
 
 export const INTEREST_AREAS = [
   "Technologie przyszłości i przełomowe innowacje",
@@ -43,15 +50,6 @@ export const INTEREST_AREAS = [
   "Wsparcie dla Wydziału i studentów",
   "Relacje i wspólnota",
 ] as const;
-
-export const MEETING_FORMATS: {
-  value: CreateApplicationRequestDtoMeetingPreferencesItem;
-  label: string;
-}[] = [
-  { value: "ONLINE", label: "Online" },
-  { value: "IN_PERSON_KRAKOW", label: "Na żywo (Kraków)" },
-  { value: "HYBRID", label: "Hybrydowo" },
-];
 
 export const TERMS_URL = "https://example.com/regulamin";
 export const PRIVACY_URL = "https://example.com/polityka-prywatnosci";

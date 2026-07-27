@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
-  getGetQueryKey,
-  getList1QueryKey,
+  getGetAdminApplicationQueryKey,
+  getListAdminApplicationsQueryKey,
   useApprove,
-  useGet,
+  useGetAdminApplication,
   useReject,
 } from "@pkka/api";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ const APPLICATIONS_PATH = "/dashboard/applications";
 export function ApplicationDetail({ id }: { id: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
 
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -36,23 +36,20 @@ export function ApplicationDetail({ id }: { id: string }) {
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isLoading) return;
-    if (!isAuthenticated) {
-      router.replace("/");
-    } else if (!admin) {
+    if (!isLoading && !admin) {
       router.replace("/dashboard");
     }
-  }, [admin, isAuthenticated, isLoading, router]);
+  }, [admin, isLoading, router]);
 
   const {
     data: response,
     isLoading: isDetailLoading,
     isError,
-  } = useGet(id, { query: { enabled: isAuthenticated && admin } });
+  } = useGetAdminApplication(id, { query: { enabled: admin } });
 
   const invalidateAndReturn = () => {
-    queryClient.invalidateQueries({ queryKey: getList1QueryKey() });
-    queryClient.invalidateQueries({ queryKey: getGetQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getListAdminApplicationsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetAdminApplicationQueryKey(id) });
     router.push(APPLICATIONS_PATH);
   };
 
@@ -69,18 +66,9 @@ export function ApplicationDetail({ id }: { id: string }) {
 
   const isMutating = approveMutation.isPending || rejectMutation.isPending;
 
-  if (isLoading || !isAuthenticated || !admin) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <Skeleton className="mb-6 h-10 w-48" />
-        <Skeleton className="h-96 w-full rounded-2xl" />
-      </div>
-    );
-  }
-
   const item = response?.data;
 
-  if (isDetailLoading) {
+  if (isLoading || !admin || isDetailLoading) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-8">
         <Skeleton className="mb-6 h-10 w-48" />

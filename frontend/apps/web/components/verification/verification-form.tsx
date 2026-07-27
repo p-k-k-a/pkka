@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   ApplicationResponseDtoConsentsItem,
-  getGetMineQueryKey,
-  useCreate,
+  useCreateApplication,
   type CreateApplicationRequestDto,
   type CreateApplicationRequestDtoConsentsItem,
   type CreateApplicationRequestDtoFaculty,
@@ -36,9 +34,7 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
-export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) {
-  const queryClient = useQueryClient();
-
+export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | Promise<void> }) {
   const [faculty, setFaculty] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [studyType, setStudyType] = useState("");
@@ -51,11 +47,10 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
   const [consents, setConsents] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { mutate, isPending } = useCreate<ApiError>({
+  const { mutate, isPending } = useCreateApplication<ApiError>({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetMineQueryKey() });
-        onSubmitted?.();
+        void onSubmitted?.();
       },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 409) {
@@ -69,6 +64,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
     },
   });
 
+  const currentYear = new Date().getFullYear();
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
@@ -78,11 +75,21 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
       return;
     }
 
+    const parsedGraduationYear = Number.parseInt(graduationYear, 10);
+    if (
+      !Number.isInteger(parsedGraduationYear) ||
+      parsedGraduationYear < 1919 ||
+      parsedGraduationYear > currentYear
+    ) {
+      setFormError(`Podaj prawidłowy rok ukończenia (1919–${currentYear}).`);
+      return;
+    }
+
     const payload: CreateApplicationRequestDto = {
       faculty: faculty as CreateApplicationRequestDtoFaculty,
       fieldOfStudy: fieldOfStudy.trim(),
       studyType: studyType as CreateApplicationRequestDtoStudyType,
-      graduationYear: Number(graduationYear),
+      graduationYear: parsedGraduationYear,
       phoneNumber: phoneNumber.trim(),
       interests: interests
         .split(",")
@@ -96,8 +103,6 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
 
     mutate({ data: payload });
   }
-
-  const currentYear = new Date().getFullYear();
 
   return (
     <Card className="gap-0 p-0">
@@ -169,6 +174,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
               required
               min={1919}
               max={currentYear}
+              step={1}
               placeholder="np. 2022"
               value={graduationYear}
               onChange={(event) => setGraduationYear(event.target.value)}
@@ -210,7 +216,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
                 <Checkbox
                   id={`meeting-${option.value}`}
                   checked={meetingPreferences.includes(option.value)}
-                  onChange={() => setMeetingPreferences((prev) => toggle(prev, option.value))}
+                  onCheckedChange={() =>
+                    setMeetingPreferences((prev) => toggle(prev, option.value))
+                  }
                 />
                 {option.label}
               </Label>
@@ -223,7 +231,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
             <Checkbox
               id="coCreationInterest"
               checked={coCreationInterest}
-              onChange={(event) => setCoCreationInterest(event.target.checked)}
+              onCheckedChange={(checked) => setCoCreationInterest(checked === true)}
             />
             Chcę aktywnie współtworzyć działania klubu
           </Label>
@@ -231,7 +239,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
             <Checkbox
               id="newsletterSubscription"
               checked={newsletterSubscription}
-              onChange={(event) => setNewsletterSubscription(event.target.checked)}
+              onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
             />
             Chcę zapisać się do newslettera
           </Label>
@@ -252,7 +260,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void }) 
                   id={`consent-${option.value}`}
                   className="mt-0.5"
                   checked={consents.includes(option.value)}
-                  onChange={() => setConsents((prev) => toggle(prev, option.value))}
+                  onCheckedChange={() => setConsents((prev) => toggle(prev, option.value))}
                 />
                 {option.label}
               </Label>

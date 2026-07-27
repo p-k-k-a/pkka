@@ -1,15 +1,15 @@
 import { Text } from "@/components/ui/text";
-import type { AlumnProfile } from "@/lib/alumni-mock";
+import type { ProfileResponse } from "@pkka/api";
 import { THEME } from "@/lib/theme";
 import { UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
-  profile: AlumnProfile;
+  profile: ProfileResponse;
 };
 
 export function ProfileHero({ profile }: ProfileHeroProps) {
-  const name = `${profile.firstName} ${profile.lastName}`;
+  const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
 
   return (
     <View className="gap-6">
@@ -18,14 +18,16 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
       </View>
 
       <View className="gap-1">
-        {profile.visibility.name ? (
+        {profile.visibility.name && name ? (
           <Text variant="h1" className="text-left font-heading leading-tight">
             {name}
           </Text>
         ) : null}
-        <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Alumn od {profile.alumnSince}
-        </Text>
+        {profile.alumnSince ? (
+          <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Alumn od {profile.alumnSince}
+          </Text>
+        ) : null}
         {profile.currentPosition || profile.company ? (
           <Text className="text-lg text-muted-foreground">
             {profile.currentPosition}

@@ -21,8 +21,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PKKA - Klub Alumna WI AGH",
-  description: "Platforma Klubu Alumna Wydziału Informatyki AGH",
+  title: "PKKA - Klub Alumnów WI AGH",
+  description: "Platforma Klubu Alumnów Wydziału Informatyki AGH",
 };
 
 export default function RootLayout({

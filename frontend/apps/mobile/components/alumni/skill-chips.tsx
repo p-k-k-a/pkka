@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import type { AlumnTag } from "@/lib/alumni-mock";
+import type { TagResponse } from "@pkka/api";
 import { View } from "react-native";
 
 type SkillChipsProps = {
-  tags: AlumnTag[];
+  tags: TagResponse[];
 };
 
 export function SkillChips({ tags }: SkillChipsProps) {

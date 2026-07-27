@@ -2,13 +2,13 @@ import { EventDetailView } from "@/components/events/event-detail-view";
 import { Button } from "@/components/ui/button";
 import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
-import { useGetById } from "@pkka/api";
+import { useGetEventById } from "@pkka/api";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, isError, isPending } = useGetById(id ?? "", {
+  const { data, isError, isPending } = useGetEventById(id ?? "", {
     query: { enabled: !!id },
   });
 

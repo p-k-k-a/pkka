@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import pl.edu.agh.backend.alumni.AlumniNotFoundException;
 import pl.edu.agh.backend.application.ApplicationAlreadyExistsException;
 import pl.edu.agh.backend.application.ApplicationNotFoundException;
 import pl.edu.agh.backend.application.InvalidApplicationStateException;
@@ -16,6 +17,13 @@ import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentExceptio
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AlumniNotFoundException.class)
+    public ProblemDetail handleAlumniNotFound(AlumniNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Alumni not found");
+        return problem;
+    }
 
     @ExceptionHandler(EventNotFoundException.class)
     public ProblemDetail handleEventNotFound(EventNotFoundException ex) {

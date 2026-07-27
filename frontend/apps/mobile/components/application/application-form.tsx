@@ -18,16 +18,21 @@ import {
   TERMS_URL,
 } from "@/lib/application-constants";
 import {
+  ApiError,
+  CreateApplicationRequestDtoConsentsItem,
+  getGetMineQueryKey,
+  useCreateApplication,
   type CreateApplicationRequestDtoFaculty,
   type CreateApplicationRequestDtoMeetingPreferencesItem,
   type CreateApplicationRequestDtoStudyType,
-  useCreate,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as React from "react";
+import { useRef, useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import PhoneInput from "react-native-phone-input";
@@ -46,8 +51,10 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
-  const { mutateAsync: submitApplication } = useCreate();
-  const phoneInputRef = React.useRef<PhoneInput>(null);
+  const queryClient = useQueryClient();
+  const { mutateAsync: submitApplication } = useCreateApplication();
+  const phoneInputRef = useRef<PhoneInput>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: {
@@ -59,26 +66,50 @@ function ApplicationForm() {
       interests: [] as string[],
       meetingPreferences: [] as CreateApplicationRequestDtoMeetingPreferencesItem[],
       coCreationInterest: false,
-      newsletterSubscription: true,
+      newsletterSubscription: false,
       acceptedTerms: false,
       acceptedRodo: false,
     },
     onSubmit: async ({ value }) => {
-      await submitApplication({
-        data: {
-          phoneNumber: value.phoneNumber.trim(),
-          faculty: value.faculty!,
-          fieldOfStudy: value.fieldOfStudy.trim(),
-          studyType: value.studyType!,
-          graduationYear: Number(value.graduationYear),
-          interests: value.interests,
-          meetingPreferences:
-            value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
-          coCreationInterest: value.coCreationInterest,
-          newsletterSubscription: value.newsletterSubscription,
-          consents: ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"],
-        },
-      });
+      setSubmitError(null);
+
+      const consents: CreateApplicationRequestDtoConsentsItem[] = [];
+      if (value.acceptedTerms)
+        consents.push(CreateApplicationRequestDtoConsentsItem.REGULATIONS_PRIVACY);
+      if (value.acceptedRodo)
+        consents.push(CreateApplicationRequestDtoConsentsItem.GDPR_DATA_PROCESSING);
+
+      if (!value.faculty || !value.studyType || consents.length < 2) {
+        setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
+        return;
+      }
+
+      try {
+        await submitApplication({
+          data: {
+            phoneNumber: value.phoneNumber.trim(),
+            faculty: value.faculty,
+            fieldOfStudy: value.fieldOfStudy.trim(),
+            studyType: value.studyType,
+            graduationYear: Number(value.graduationYear),
+            interests: value.interests,
+            meetingPreferences:
+              value.meetingPreferences.length > 0 ? value.meetingPreferences : undefined,
+            coCreationInterest: value.coCreationInterest,
+            newsletterSubscription: value.newsletterSubscription,
+            consents,
+          },
+        });
+      } catch (error) {
+        setSubmitError(
+          error instanceof ApiError && error.status === 409
+            ? "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego."
+            : "Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.",
+        );
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: getGetMineQueryKey() });
       router.replace("/(tabs)/login");
     },
   });
@@ -180,6 +211,7 @@ function ApplicationForm() {
                 onBlur={field.handleBlur}
                 placeholder="np. Informatyka"
                 autoCapitalize="sentences"
+                maxLength={200}
               />
               <FieldError field={field} />
             </FormField>
@@ -347,6 +379,10 @@ function ApplicationForm() {
           )}
         </form.Field>
       </View>
+
+      {submitError ? (
+        <Text className="text-destructive text-center text-sm font-semibold">{submitError}</Text>
+      ) : null}
 
       <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
         {([canSubmit, isSubmitting]) => (

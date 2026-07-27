@@ -1,16 +1,29 @@
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
+import { TagPicker } from "@/components/profile/tag-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { useProfile } from "@/lib/profile-context";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import {
+  ApiError,
+  getGetMyProfileQueryKey,
+  getGetMyTagsQueryKey,
+  useGetMyProfile,
+  useGetMyTags,
+  useListTags,
+  useUpdateMyProfile,
+  useUpdateMyTags,
+  type ProfileResponse,
+} from "@pkka/api";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
-import { Pressable, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 function FieldError({ field }: { field: AnyFieldApi }) {
@@ -61,7 +74,7 @@ function IdentityRow({
           </Text>
         </Pressable>
       </View>
-      {value !== undefined ? (
+      {value ? (
         <View
           className={cn(
             "border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
@@ -75,8 +88,22 @@ function IdentityRow({
   );
 }
 
-function ProfileEditForm() {
-  const { profile, updateProfile } = useProfile();
+function ProfileForm({ profile }: { profile: ProfileResponse }) {
+  const queryClient = useQueryClient();
+
+  const availableTagsQuery = useListTags();
+  const myTagsQuery = useGetMyTags();
+  const updateMyTags = useUpdateMyTags();
+  const updateMyProfile = useUpdateMyProfile();
+
+  const availableTags = availableTagsQuery.data?.data ?? [];
+  const tagsLoading = availableTagsQuery.isPending || myTagsQuery.isPending;
+  const tagsError = availableTagsQuery.isError || myTagsQuery.isError;
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  // Read at submit time via a ref so the (possibly memoized) onSubmit closure
+  // never saves an empty set before the current tags have loaded.
+  const seededTagsRef = useRef(false);
 
   const form = useForm({
     defaultValues: {
@@ -88,24 +115,56 @@ function ProfileEditForm() {
       showName: profile.visibility.name,
       showEmail: profile.visibility.email,
       showDiscord: profile.visibility.discord,
+      tagIds: [] as string[],
     },
     onSubmit: async ({ value }) => {
-      const trimmed = (v: string) => (v.trim() ? v.trim() : undefined);
-      updateProfile({
-        currentPosition: trimmed(value.currentPosition),
-        company: trimmed(value.company),
-        bio: trimmed(value.bio),
-        linkedinUrl: trimmed(value.linkedinUrl),
-        githubUrl: trimmed(value.githubUrl),
-        visibility: {
-          name: value.showName,
-          email: value.showEmail,
-          discord: value.showDiscord,
-        },
-      });
+      setSubmitError(null);
+      if (seededTagsRef.current) {
+        try {
+          await updateMyTags.mutateAsync({ data: { tagIds: value.tagIds } });
+          queryClient.invalidateQueries({ queryKey: getGetMyTagsQueryKey() });
+        } catch (saveException) {
+          setSubmitError(
+            saveException instanceof ApiError && saveException.status === 400
+              ? "Któraś z wybranych umiejętności jest nieaktualna. Odśwież i spróbuj ponownie."
+              : "Nie udało się zapisać umiejętności. Spróbuj ponownie.",
+          );
+          return;
+        }
+      }
+
+      const trimmed = (v: string) => v.trim();
+      try {
+        await updateMyProfile.mutateAsync({
+          data: {
+            currentPosition: trimmed(value.currentPosition),
+            company: trimmed(value.company),
+            bio: trimmed(value.bio),
+            linkedinUrl: trimmed(value.linkedinUrl),
+            githubUrl: trimmed(value.githubUrl),
+            visibility: {
+              name: value.showName,
+              email: value.showEmail,
+              discord: value.showDiscord,
+            },
+          },
+        });
+        queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
+      } catch {
+        setSubmitError("Nie udało się zapisać profilu. Spróbuj ponownie.");
+        return;
+      }
+
       router.back();
     },
   });
+
+  // Seed the picker with the user's saved tags once they load
+  useEffect(() => {
+    if (seededTagsRef.current || !myTagsQuery.isSuccess) return;
+    form.setFieldValue("tagIds", myTagsQuery.data?.data?.map((tag) => tag.id) ?? []);
+    seededTagsRef.current = true;
+  }, [myTagsQuery.isSuccess, myTagsQuery.data, form]);
 
   return (
     <KeyboardAwareScrollView
@@ -133,7 +192,7 @@ function ProfileEditForm() {
           {(field) => (
             <IdentityRow
               label="Imię i nazwisko"
-              value={`${profile.firstName} ${profile.lastName}`}
+              value={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
               field={field}
             />
           )}
@@ -196,6 +255,23 @@ function ProfileEditForm() {
         </form.Field>
       </FormSection>
 
+      <FormSection
+        title="Umiejętności"
+        description="Wybierz technologie i obszary, w których się specjalizujesz."
+      >
+        <form.Field name="tagIds">
+          {(field) => (
+            <TagPicker
+              options={availableTags}
+              value={field.state.value}
+              onChange={field.handleChange}
+              loading={tagsLoading}
+              error={tagsError}
+            />
+          )}
+        </form.Field>
+      </FormSection>
+
       <FormSection title="Linki" description="Puste pola nie pojawią się na Twoim profilu.">
         <form.Field name="linkedinUrl">
           {(field) => (
@@ -230,6 +306,10 @@ function ProfileEditForm() {
         </form.Field>
       </FormSection>
 
+      {submitError ? (
+        <Text className="text-destructive text-center text-sm font-semibold">{submitError}</Text>
+      ) : null}
+
       <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting] as const}>
         {([canSubmit, isSubmitting]) => (
           <Button
@@ -248,4 +328,28 @@ function ProfileEditForm() {
   );
 }
 
-export { ProfileEditForm };
+// The form seeds default values from the profile, so it can only mount once loaded.
+export function ProfileEditForm() {
+  const { data, isPending, isError } = useGetMyProfile();
+  const profile = data?.data;
+
+  if (isPending) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError || !profile) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background px-5">
+        <Text className="text-muted-foreground text-center text-sm leading-6">
+          Nie udało się wczytać profilu. Wróć i spróbuj ponownie.
+        </Text>
+      </View>
+    );
+  }
+
+  return <ProfileForm profile={profile} />;
+}
