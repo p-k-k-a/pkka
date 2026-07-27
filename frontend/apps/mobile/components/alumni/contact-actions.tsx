@@ -2,6 +2,13 @@ import { Button } from "@/components/ui/button";
 import { DiscordIcon, GithubIcon, LinkedinIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import type { ProfileResponse } from "@pkka/api";
+import {
+  isDiscordId,
+  isHttpsUrl,
+  openDiscordUser,
+  openEmail,
+  openWithFallback,
+} from "@/lib/contact";
 import { THEME } from "@/lib/theme";
 import { Mail } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -9,40 +16,6 @@ import { Pressable, View } from "react-native";
 type ContactActionsProps = {
   profile: ProfileResponse;
 };
-
-// Profile URLs are user-supplied server data. Never hand a non-https value to
-// Linking.openURL, or a malicious profile could launch arbitrary schemes
-// (tel:, third-party app deep links) on the viewer's device.
-const isHttpsUrl = (url: string) => /^https:\/\//i.test(url);
-const isDiscordId = (id: string) => /^[0-9]{5,32}$/.test(id);
-
-async function openWithFallback(appUrl: string, webUrl: string) {
-  try {
-    await Linking.openURL(appUrl);
-  } catch {
-    // the user doesn't have app installed
-    try {
-      await WebBrowser.openBrowserAsync(webUrl);
-    } catch {
-      // e.g. a browser sheet is already presenting - nothing sensible to do
-    }
-  }
-}
-
-async function openEmail(email: string) {
-  try {
-    await Linking.openURL(`mailto:${email}`);
-  } catch {
-    Alert.alert("Adres e-mail", email);
-  }
-}
-
-async function openDiscord(discordId: string) {
-  await openWithFallback(
-    `discord://-/users/${discordId}`,
-    `https://discord.com/users/${discordId}`,
-  );
-}
 
 function ExternalLink({ label, url, icon }: { label: string; url: string; icon: React.ReactNode }) {
   return (
@@ -79,7 +52,7 @@ export function ContactActions({ profile }: ContactActionsProps) {
       {hasButtons ? (
         <View className="gap-3">
           {discordId ? (
-            <Button size="lg" className="w-full" onPress={() => openDiscord(discordId)}>
+            <Button size="lg" className="w-full" onPress={() => openDiscordUser(discordId)}>
               <DiscordIcon size={18} color={THEME.light.primaryForeground} />
               <Text className="font-bold">Kontakt przez Discord</Text>
             </Button>

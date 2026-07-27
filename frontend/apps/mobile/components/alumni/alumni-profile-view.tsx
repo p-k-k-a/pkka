@@ -10,7 +10,9 @@ import { Pressable, View } from "react-native";
 
 type AlumniProfileViewProps = {
   profile: ProfileResponse;
-  onEdit: () => void;
+  // Absent in the alumni directory, where the viewer looks at someone else's
+  // profile — the body already renders the edit affordance conditionally.
+  onEdit?: () => void;
 };
 
 export function AlumniProfileView({ profile, onEdit }: AlumniProfileViewProps) {

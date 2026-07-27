@@ -36,17 +36,20 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider value={NAV_THEME[colorScheme]}>
             <AuthProvider>
-              <SafeAreaView className="flex-1 bg-background">
-                <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="index" options={{ headerShown: false }} />
-                  <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
-                  <Stack.Screen name="application" options={{ headerShown: false }} />
-                  <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
-                </Stack>
-              </SafeAreaView>
-              <StatusBar style="auto" />
-              <PortalHost />
+              <BottomSheetProvider>
+                <SafeAreaView className="flex-1 bg-background">
+                  <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="index" options={{ headerShown: false }} />
+                    <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
+                    <Stack.Screen name="application" options={{ headerShown: false }} />
+                    <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
+                    <Stack.Screen name="alumni/[id]" options={{ headerShown: false }} />
+                  </Stack>
+                </SafeAreaView>
+                <StatusBar style="auto" />
+                <PortalHost />
+              </BottomSheetProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryClientProvider>
