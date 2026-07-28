@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.application;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,4 +20,10 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Page<Application> findByStatusOrderByCreatedAtDesc(ApplicationStatus status, Pageable pageable);
 
     boolean existsByApplicantIdAndStatusIn(UUID applicantId, List<ApplicationStatus> statuses);
+
+    /**
+     * Batch lookup used by the alumni directory to attach education facts (graduation year) to a whole
+     * page of users in one query, instead of one query per row.
+     */
+    List<Application> findByApplicantIdInAndStatus(Collection<UUID> applicantIds, ApplicationStatus status);
 }
