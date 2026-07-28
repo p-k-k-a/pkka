@@ -12,6 +12,9 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     Optional<Application> findFirstByApplicantIdOrderByCreatedAtDesc(UUID applicantId);
 
+    Optional<Application> findFirstByApplicantIdAndStatusOrderByReviewedAtDesc(
+            UUID applicantId, ApplicationStatus status);
+
     @EntityGraph(attributePaths = "applicant")
     Page<Application> findByStatusOrderByCreatedAtDesc(ApplicationStatus status, Pageable pageable);
 
