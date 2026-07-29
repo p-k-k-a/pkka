@@ -12,7 +12,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
-public record CreateApplicationRequestDto(
+public record CreateApplicationRequest(
         @Schema(description = "AGH faculty code", example = "WI", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull
         Faculty faculty,
 
@@ -58,7 +58,7 @@ public record CreateApplicationRequestDto(
         @NotEmpty
         Set<ConsentType> consents) {
 
-    public CreateApplicationRequestDto {
+    public CreateApplicationRequest {
         interests = interests == null || interests.isEmpty() ? new HashSet<>() : new HashSet<>(interests);
         meetingPreferences = meetingPreferences == null || meetingPreferences.isEmpty()
                 ? EnumSet.noneOf(MeetingPreference.class)

@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.alumni;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -138,6 +139,18 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
+    void returns404ForUserWithoutApprovedApplication() throws Exception {
+        User regularUser = new User();
+        regularUser.setKeycloakId(UUID.randomUUID().toString());
+        regularUser.setFirstName("Anna");
+        regularUser.setLastName("Nowak");
+        regularUser = userRepository.save(regularUser);
+
+        mockMvc.perform(get("/api/alumni/{id}", regularUser.getId()).with(verifiedAlumn()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void rejectsUnverifiedUser() throws Exception {
         mockMvc.perform(get("/api/alumni/{id}", alumn.getId())
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
@@ -153,10 +166,10 @@ class AlumniProfileIntegrationTest {
 
         mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").doesNotExist())
-                .andExpect(jsonPath("$.lastName").doesNotExist())
-                .andExpect(jsonPath("$.email").doesNotExist())
-                .andExpect(jsonPath("$.discordId").doesNotExist())
+                .andExpect(jsonPath("$.firstName").value(nullValue()))
+                .andExpect(jsonPath("$.lastName").value(nullValue()))
+                .andExpect(jsonPath("$.email").value(nullValue()))
+                .andExpect(jsonPath("$.discordId").value(nullValue()))
                 // non-hideable fields stay visible
                 .andExpect(jsonPath("$.bio").value("Absolwent WI, backend developer."))
                 .andExpect(jsonPath("$.company").value("ACME"))
@@ -224,7 +237,7 @@ class AlumniProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"company\": \"\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.company").doesNotExist());
+                .andExpect(jsonPath("$.company").value(nullValue()));
 
         User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(updated.getCompany()).isNull();
