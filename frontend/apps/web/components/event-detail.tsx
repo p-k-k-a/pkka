@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, Link2, MapPin, Users } from "lucide-react";
-import { EventDetailsDtoType, useGetById } from "@pkka/api";
+import { EventDetailsDtoType, useGetEventById } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +22,7 @@ type EventDetailProps = {
 export function EventDetail({ id, variant = "public" }: EventDetailProps) {
   const eventsBackHref = variant === "dashboard" ? "/dashboard/events" : "/events";
   const { loginWithKeycloak } = useAuth();
-  const { data: response, isLoading, isError, isFetching } = useGetById(id);
+  const { data: response, isLoading, isError, isFetching } = useGetEventById(id);
   const event = response?.data;
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
   const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;

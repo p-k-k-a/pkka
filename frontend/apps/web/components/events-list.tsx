@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Link2, MapPin } from "lucide-react";
-import { EventListItemDto, EventListItemDtoType, useList } from "@pkka/api";
+import { EventListItemDto, EventListItemDtoType, useListEvents } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -147,7 +147,7 @@ function EventCardFeatured({
 }
 
 export function EventsList({ variant = "public" }: EventsListProps) {
-  const { data: response, isLoading, isError } = useList({ size: 20 });
+  const { data: response, isLoading, isError } = useListEvents({ size: 20 });
   const events = response?.data?.content ?? [];
 
   return (

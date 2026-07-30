@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   ApiError,
   ApplicationResponseDtoConsentsItem,
-  useCreate,
+  useCreateApplication,
   type CreateApplicationRequestDto,
   type CreateApplicationRequestDtoConsentsItem,
   type CreateApplicationRequestDtoFaculty,
@@ -47,7 +47,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
   const [consents, setConsents] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { mutate, isPending } = useCreate<ApiError>({
+  const { mutate, isPending } = useCreateApplication<ApiError>({
     mutation: {
       onSuccess: () => {
         void onSubmitted?.();
@@ -216,7 +216,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
                 <Checkbox
                   id={`meeting-${option.value}`}
                   checked={meetingPreferences.includes(option.value)}
-                  onChange={() => setMeetingPreferences((prev) => toggle(prev, option.value))}
+                  onCheckedChange={() =>
+                    setMeetingPreferences((prev) => toggle(prev, option.value))
+                  }
                 />
                 {option.label}
               </Label>
@@ -229,7 +231,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
             <Checkbox
               id="coCreationInterest"
               checked={coCreationInterest}
-              onChange={(event) => setCoCreationInterest(event.target.checked)}
+              onCheckedChange={(checked) => setCoCreationInterest(checked === true)}
             />
             Chcę aktywnie współtworzyć działania klubu
           </Label>
@@ -237,7 +239,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
             <Checkbox
               id="newsletterSubscription"
               checked={newsletterSubscription}
-              onChange={(event) => setNewsletterSubscription(event.target.checked)}
+              onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
             />
             Chcę zapisać się do newslettera
           </Label>
@@ -258,7 +260,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
                   id={`consent-${option.value}`}
                   className="mt-0.5"
                   checked={consents.includes(option.value)}
-                  onChange={() => setConsents((prev) => toggle(prev, option.value))}
+                  onCheckedChange={() => setConsents((prev) => toggle(prev, option.value))}
                 />
                 {option.label}
               </Label>

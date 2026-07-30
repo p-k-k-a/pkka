@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
-  getGetQueryKey,
-  getList1QueryKey,
+  getGetAdminApplicationQueryKey,
+  getListAdminApplicationsQueryKey,
   useApprove,
-  useGet,
+  useGetAdminApplication,
   useReject,
 } from "@pkka/api";
 import { Button } from "@/components/ui/button";
@@ -45,11 +45,11 @@ export function ApplicationDetail({ id }: { id: string }) {
     data: response,
     isLoading: isDetailLoading,
     isError,
-  } = useGet(id, { query: { enabled: admin } });
+  } = useGetAdminApplication(id, { query: { enabled: admin } });
 
   const invalidateAndReturn = () => {
-    queryClient.invalidateQueries({ queryKey: getList1QueryKey() });
-    queryClient.invalidateQueries({ queryKey: getGetQueryKey(id) });
+    queryClient.invalidateQueries({ queryKey: getListAdminApplicationsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetAdminApplicationQueryKey(id) });
     router.push(APPLICATIONS_PATH);
   };
 
