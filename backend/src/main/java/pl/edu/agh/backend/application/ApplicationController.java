@@ -27,8 +27,8 @@ public class ApplicationController {
             responseCode = "409",
             description = "The user already has an application under review",
             content = @Content)
-    public ApplicationResponseDto createApplication(
-            @Valid @RequestBody CreateApplicationRequestDto request, Authentication authentication) {
+    public ApplicationResponse createApplication(
+            @Valid @RequestBody CreateApplicationRequest request, Authentication authentication) {
         return applicationService.create(authentication, request);
     }
 
@@ -36,7 +36,7 @@ public class ApplicationController {
     @Operation(summary = "Get the current user's application")
     @ApiResponse(responseCode = "200", description = "The user's most recent application")
     @ApiResponse(responseCode = "404", description = "The user has no application", content = @Content)
-    public ApplicationResponseDto getMine(Authentication authentication) {
+    public ApplicationResponse getMine(Authentication authentication) {
         return applicationService.getMine(authentication);
     }
 }
