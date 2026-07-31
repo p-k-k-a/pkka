@@ -22,7 +22,7 @@ public class AlumniService {
         User user = userRepository.findWithTagsById(id).orElseThrow(() -> new AlumniNotFoundException(id));
         AlumnEducation education = AlumnEducation.from(applicationRepository
                 .findFirstByApplicantIdAndStatusOrderByReviewedAtDesc(id, ApplicationStatus.APPROVED)
-                .orElse(null));
+                .orElseThrow(() -> new AlumniNotFoundException(id)));
         return AlumniProfileResponse.from(user, education);
     }
 }

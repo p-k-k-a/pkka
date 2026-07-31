@@ -26,22 +26,22 @@ public class AdminApplicationService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
-    public Page<AdminApplicationResponseDto> list(ApplicationStatus status, Pageable pageable) {
+    public Page<AdminApplicationResponse> list(ApplicationStatus status, Pageable pageable) {
         return applicationRepository
                 .findByStatusOrderByCreatedAtDesc(status, pageable)
-                .map(AdminApplicationResponseDto::from);
+                .map(AdminApplicationResponse::from);
     }
 
     @Transactional(readOnly = true)
-    public AdminApplicationResponseDto get(UUID applicationId) {
+    public AdminApplicationResponse get(UUID applicationId) {
         return applicationRepository
                 .findById(applicationId)
-                .map(AdminApplicationResponseDto::from)
+                .map(AdminApplicationResponse::from)
                 .orElseThrow(ApplicationNotFoundException::new);
     }
 
     @Transactional
-    public ApplicationResponseDto approve(Authentication authentication, UUID applicationId) {
+    public ApplicationResponse approve(Authentication authentication, UUID applicationId) {
         User reviewer = resolveReviewer(authentication);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
@@ -50,17 +50,17 @@ public class AdminApplicationService {
         eventPublisher.publishEvent(
                 new ApplicationApprovedEvent(application.getApplicant().getKeycloakId()));
 
-        return ApplicationResponseDto.from(applicationRepository.saveAndFlush(application));
+        return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
     }
 
     @Transactional
-    public ApplicationResponseDto reject(Authentication authentication, UUID applicationId, String reason) {
+    public ApplicationResponse reject(Authentication authentication, UUID applicationId, String reason) {
         User reviewer = resolveReviewer(authentication);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
         application.reject(reviewer, reason);
-        return ApplicationResponseDto.from(applicationRepository.saveAndFlush(application));
+        return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
     }
 
     private User resolveReviewer(Authentication authentication) {

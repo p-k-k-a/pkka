@@ -22,7 +22,9 @@ public class UserProvisioningService {
      */
     @Transactional
     public User provisionIfAbsent(UserPrincipalExtractor.UserPrincipalInfo info) {
-        return userRepository.findByKeycloakId(info.keycloakId()).orElseGet(() -> createUser(info.keycloakId()));
+        User user = userRepository.findByKeycloakId(info.keycloakId()).orElseGet(() -> createUser(info.keycloakId()));
+        log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), user.getId());
+        return user;
     }
 
     /**

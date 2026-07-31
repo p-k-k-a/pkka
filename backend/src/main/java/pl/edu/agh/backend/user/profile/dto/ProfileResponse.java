@@ -2,6 +2,7 @@ package pl.edu.agh.backend.user.profile.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -37,8 +38,8 @@ public record ProfileResponse(
         @Schema(description = "From the approved application; not editable here")
         String fieldOfStudy,
 
-        @Schema(description = "Year the application was approved; not editable here")
-        Integer alumnSince,
+        @Schema(description = "Date the application was approved; not editable here")
+        LocalDate alumnSince,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
