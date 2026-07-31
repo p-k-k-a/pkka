@@ -10,6 +10,7 @@ type ProfileHeroProps = {
 
 export function ProfileHero({ profile }: ProfileHeroProps) {
   const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+  const alumnSinceDate = profile.alumnSince?.split("-").reverse().join(".");
 
   return (
     <View className="gap-6">
@@ -23,9 +24,9 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
             {name}
           </Text>
         ) : null}
-        {profile.alumnSince ? (
+        {alumnSinceDate ? (
           <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Alumn od {profile.alumnSince}
+            Alumn od {alumnSinceDate}
           </Text>
         ) : null}
         {profile.currentPosition || profile.company ? (

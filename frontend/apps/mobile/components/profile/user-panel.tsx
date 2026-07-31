@@ -4,12 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import {
-  ApplicationResponseDtoStatus,
-  ProfileResponse,
-  useGetMine,
-  useGetMyProfile,
-} from "@pkka/api";
+import { ApplicationResponseStatus, ProfileResponse, useGetMine, useGetMyProfile } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
 import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
@@ -191,9 +186,9 @@ export function UserPanel() {
   const application = data?.data;
   const status = application?.status;
   const knownStatus =
-    status === ApplicationResponseDtoStatus.UNDER_REVIEW ||
-    status === ApplicationResponseDtoStatus.APPROVED ||
-    status === ApplicationResponseDtoStatus.REJECTED
+    status === ApplicationResponseStatus.UNDER_REVIEW ||
+    status === ApplicationResponseStatus.APPROVED ||
+    status === ApplicationResponseStatus.REJECTED
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 
