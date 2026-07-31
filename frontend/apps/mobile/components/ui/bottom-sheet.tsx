@@ -1,13 +1,20 @@
 import { THEME } from "@/lib/theme";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
-import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type BottomSheetProps = {
   visible: boolean;
   onClose: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
+  /**
+   * Open at a fixed fraction of the window height with the content scrollable,
+   * instead of sizing to the content. Use when the content can grow past the
+   * screen or changes height while open — the native `content` detent
+   * under-measures such content and leaves the bottom of it unreachable.
+   */
+  heightFraction?: number;
 };
 
 // Stable references — detents/opacities are read on every render.
@@ -18,17 +25,25 @@ const SCRIM_OPACITIES = [0, 0.4];
 // index 0 = closed, index 1 = open at content height. Built on react-native's
 // native sheet infra (not reanimated), so it works on New Arch + reanimated 4
 // where @gorhom/bottom-sheet's animation worklets silently no-op.
-export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ visible, onClose, children, heightFraction }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const [index, setIndex] = React.useState(visible ? 1 : 0);
+  const { height } = useWindowDimensions();
+  const [index, setIndex] = useState(visible ? 1 : 0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIndex(visible ? 1 : 0);
   }, [visible]);
 
+  // Detents are points, not fractions, so derive the fixed one from the window.
+  // Memoized because the native sheet re-reads detents on every render.
+  const detents = useMemo(
+    () => (heightFraction ? [0, Math.round(height * heightFraction)] : DETENTS),
+    [heightFraction, height],
+  );
+
   return (
     <ModalBottomSheet
-      detents={DETENTS}
+      detents={detents}
       index={index}
       onIndexChange={(next) => {
         setIndex(next);
@@ -49,7 +64,13 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         />
       }
     >
-      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 24 }}>
+      <View
+        style={
+          heightFraction
+            ? { flex: 1, paddingTop: 12 }
+            : { paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 24 }
+        }
+      >
         <View
           style={{
             alignSelf: "center",
@@ -61,7 +82,18 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
             marginBottom: 16,
           }}
         />
-        {children}
+        {heightFraction ? (
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          children
+        )}
       </View>
     </ModalBottomSheet>
   );

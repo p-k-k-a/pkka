@@ -18,27 +18,34 @@ import {
 } from "@/lib/alumni-directory";
 import { THEME } from "@/lib/theme";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
-import * as React from "react";
-import { ActivityIndicator, FlatList, View } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, RefreshControl, View } from "react-native";
 
 type ActiveSheet = "filter" | "sort" | null;
 
 export function AlumniDirectory() {
-  const { alumni, isLoading, isError } = useAlumniDirectory();
-  const [query, setQuery] = React.useState("");
-  const [filters, setFilters] = React.useState<AlumniFilters>(EMPTY_FILTERS);
-  const [sort, setSort] = React.useState<SortOption>(DEFAULT_SORT);
-  const [sheet, setSheet] = React.useState<ActiveSheet>(null);
+  const { alumni, isLoading, isError, refetch } = useAlumniDirectory();
+  const [query, setQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_FILTERS);
+  const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);
+  const [sheet, setSheet] = useState<ActiveSheet>(null);
 
-  const skills = React.useMemo(() => uniqueSkills(alumni), [alumni]);
-  const companies = React.useMemo(() => uniqueCompanies(alumni), [alumni]);
+  const skills = useMemo(() => uniqueSkills(alumni), [alumni]);
+  const companies = useMemo(() => uniqueCompanies(alumni), [alumni]);
 
-  const results = React.useMemo(
+  const results = useMemo(
     () => sortAlumni(filterAlumni(alumni, query, filters), sort),
     [alumni, query, filters, sort],
   );
 
   const activeCount = countActiveFilters(filters);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
   return (
     <View className="bg-background flex-1">
@@ -103,6 +110,7 @@ export function AlumniDirectory() {
         ItemSeparatorComponent={() => <View className="h-4" />}
         contentContainerStyle={{ paddingBottom: 48, paddingTop: 4 }}
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View className="px-5 py-16">
             {isLoading ? (

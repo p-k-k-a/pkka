@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/lib/alumni-mock";
-import { messageAlumn } from "@/lib/contact";
 import { THEME } from "@/lib/theme";
 import { router } from "expo-router";
 import { UserRound } from "lucide-react-native";
@@ -38,21 +37,9 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
         </View>
       </View>
 
-      <View className="flex-row gap-3">
-        <Button
-          className="flex-1"
-          onPress={() => router.push({ pathname: "/alumni/[id]", params: { id: alumn.id } })}
-        >
-          <Text className="font-semibold">Zobacz profil</Text>
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1 active:bg-muted"
-          onPress={() => messageAlumn(alumn)}
-        >
-          <Text className="font-semibold group-active:text-foreground">Wiadomość</Text>
-        </Button>
-      </View>
+      <Button onPress={() => router.push({ pathname: "/alumni/[id]", params: { id: alumn.id } })}>
+        <Text className="font-semibold">Zobacz profil</Text>
+      </Button>
     </Card>
   );
 }

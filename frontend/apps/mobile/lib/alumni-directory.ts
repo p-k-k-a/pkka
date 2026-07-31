@@ -28,10 +28,20 @@ export const EMPTY_FILTERS: AlumniFilters = {
   companies: [],
 };
 
+// Stable identity so callers can memoize on it, as a real query hook allows.
+const noopRefetch = async () => {};
+
 // Mock stand-in for a real GET /api/profiles list endpoint. Keeps the same
-// { data, isLoading, isError } shape so the swap to a generated hook is local.
+// { data, isLoading, isError, refetch } shape so the swap to a generated hook is
+// local — `refetch` resolves immediately here because the mock is static, but
+// pull-to-refresh is already wired to it.
 export function useAlumniDirectory() {
-  return { alumni: MOCK_ALUMNI_DIRECTORY, isLoading: false, isError: false };
+  return {
+    alumni: MOCK_ALUMNI_DIRECTORY,
+    isLoading: false,
+    isError: false,
+    refetch: noopRefetch,
+  };
 }
 
 export function getAlumnById(id: string): AlumnProfile | undefined {

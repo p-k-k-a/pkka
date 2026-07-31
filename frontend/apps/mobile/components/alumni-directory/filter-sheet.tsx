@@ -1,11 +1,10 @@
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { RangeSlider } from "@/components/ui/range-slider";
+import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
 import { EMPTY_FILTERS, YEAR_MAX, YEAR_MIN, type AlumniFilters } from "@/lib/alumni-directory";
-import { cn } from "@/lib/utils";
-import * as React from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
 type FilterSheetProps = {
@@ -17,36 +16,15 @@ type FilterSheetProps = {
   onApply: (filters: AlumniFilters) => void;
 };
 
-function FilterChip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      role="checkbox"
-      accessibilityState={{ checked: selected }}
-      className={cn(
-        "rounded-md border px-4 py-2",
-        selected ? "border-foreground bg-foreground" : "border-border bg-background",
-      )}
-    >
-      <Text className={cn("text-sm font-medium", selected ? "text-background" : "text-foreground")}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+// Skills and companies are identified by name, so the option id is the name.
+const toOptions = (names: string[]): SelectOption[] =>
+  names.map((name) => ({ id: name, label: name }));
 
-const toggle = (list: string[], item: string) =>
-  list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+// Shorter than the picker's own default: the dropdown scrolls inside the sheet's
+// scroll view, and a tall one would swallow most of the sheet on open.
+const SHEET_LIST_MAX_HEIGHT = 216;
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children }: { children: ReactNode }) {
   return (
     <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest">
       {children}
@@ -62,26 +40,27 @@ export function FilterSheet({
   onClose,
   onApply,
 }: FilterSheetProps) {
-  const [draft, setDraft] = React.useState<AlumniFilters>(value);
-  const [companyQuery, setCompanyQuery] = React.useState("");
+  const [draft, setDraft] = useState<AlumniFilters>(value);
+  // The sheet keeps its children mounted while closed, so the pickers would
+  // otherwise reopen still holding the previous search text and expanded list.
+  // Bumping this on each open remounts them with fresh internal state.
+  const [openCount, setOpenCount] = useState(0);
 
   // Seed the draft from the applied filters only on open — depending on `value`
   // too would wipe an in-progress edit if the parent re-created it mid-edit.
-  React.useEffect(() => {
+  useEffect(() => {
     if (visible) {
       setDraft(value);
-      setCompanyQuery("");
+      setOpenCount((n) => n + 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
-  const visibleCompanies = React.useMemo(
-    () => companies.filter((c) => c.toLowerCase().includes(companyQuery.trim().toLowerCase())),
-    [companies, companyQuery],
-  );
+  const skillOptions = useMemo(() => toOptions(skills), [skills]);
+  const companyOptions = useMemo(() => toOptions(companies), [companies]);
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
+    <BottomSheet visible={visible} onClose={onClose} heightFraction={0.85}>
       <Text variant="h3" className="text-2xl font-bold">
         Filtruj
       </Text>
@@ -106,45 +85,42 @@ export function FilterSheet({
         </View>
       </View>
 
-      {skills.length > 0 ? (
+      {skillOptions.length > 0 ? (
         <View className="mt-6 gap-3">
           <Eyebrow>Umiejętności</Eyebrow>
-          <View className="flex-row flex-wrap gap-2">
-            {skills.map((skill) => (
-              <FilterChip
-                key={skill}
-                label={skill}
-                selected={draft.skills.includes(skill)}
-                onPress={() => setDraft((d) => ({ ...d, skills: toggle(d.skills, skill) }))}
-              />
-            ))}
-          </View>
+          <SearchMultiSelect
+            key={openCount}
+            options={skillOptions}
+            value={draft.skills}
+            onChange={(next) =>
+              setDraft((d) => ({
+                ...d,
+                skills: typeof next === "function" ? next(d.skills) : next,
+              }))
+            }
+            placeholder="Wyszukaj umiejętności..."
+            listMaxHeight={SHEET_LIST_MAX_HEIGHT}
+            uppercaseChips
+          />
         </View>
       ) : null}
 
-      {companies.length > 0 ? (
+      {companyOptions.length > 0 ? (
         <View className="mt-6 gap-3">
           <Eyebrow>Firma</Eyebrow>
-          <Input
-            value={companyQuery}
-            onChangeText={setCompanyQuery}
-            placeholder="Szukaj firmy..."
-            autoCapitalize="none"
+          <SearchMultiSelect
+            key={openCount}
+            options={companyOptions}
+            value={draft.companies}
+            onChange={(next) =>
+              setDraft((d) => ({
+                ...d,
+                companies: typeof next === "function" ? next(d.companies) : next,
+              }))
+            }
+            placeholder="Wyszukaj firmy..."
+            listMaxHeight={SHEET_LIST_MAX_HEIGHT}
           />
-          {visibleCompanies.length > 0 ? (
-            <View className="flex-row flex-wrap gap-2">
-              {visibleCompanies.map((company) => (
-                <FilterChip
-                  key={company}
-                  label={company}
-                  selected={draft.companies.includes(company)}
-                  onPress={() =>
-                    setDraft((d) => ({ ...d, companies: toggle(d.companies, company) }))
-                  }
-                />
-              ))}
-            </View>
-          ) : null}
         </View>
       ) : null}
 
@@ -152,13 +128,7 @@ export function FilterSheet({
         <Button size="lg" onPress={() => onApply(draft)}>
           <Text className="font-bold">Zastosuj filtry</Text>
         </Button>
-        <Pressable
-          onPress={() => {
-            setDraft(EMPTY_FILTERS);
-            setCompanyQuery("");
-          }}
-          className="items-center py-1"
-        >
+        <Pressable onPress={() => setDraft(EMPTY_FILTERS)} className="items-center py-1">
           <Text className="text-muted-foreground text-sm font-semibold">Wyczyść wszystko</Text>
         </Pressable>
       </View>
