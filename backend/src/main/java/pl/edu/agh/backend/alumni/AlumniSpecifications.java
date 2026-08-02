@@ -34,22 +34,4 @@ class AlumniSpecifications {
             return cb.exists(approvedApplication);
         };
     }
-
-    /** Matches alumni whose approved application has the given graduation year; {@code null} means "don't filter". */
-    Specification<User> hasGraduationYear(Integer graduationYear) {
-        return (root, query, cb) -> {
-            if (graduationYear == null) {
-                return null;
-            }
-            Subquery<Long> approvedApplication = query.subquery(Long.class);
-            var application = approvedApplication.from(Application.class);
-            approvedApplication
-                    .select(cb.literal(1L))
-                    .where(
-                            cb.equal(application.get("applicant"), root),
-                            cb.equal(application.get("status"), ApplicationStatus.APPROVED),
-                            cb.equal(application.get("graduationYear"), graduationYear));
-            return cb.exists(approvedApplication);
-        };
-    }
 }

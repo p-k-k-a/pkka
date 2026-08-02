@@ -30,7 +30,7 @@ public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
 
-    public static AlumniListItemResponse from(User user, Integer graduationYear) {
+    public static AlumniListItemResponse from(User user) {
         boolean showName = user.isShowName();
         return new AlumniListItemResponse(
                 user.getId(),
@@ -40,7 +40,7 @@ public record AlumniListItemResponse(
                 user.getCompany(),
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
-                graduationYear,
+                user.getGraduationYear(),
                 user.isWillingToMentor(),
                 user.getTags().stream()
                         .map(UserTagResponse::from)
