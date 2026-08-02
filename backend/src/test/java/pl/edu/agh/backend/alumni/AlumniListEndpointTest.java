@@ -1,14 +1,19 @@
 package pl.edu.agh.backend.alumni;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -326,6 +331,38 @@ class AlumniListEndpointTest {
                         .with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void pagingThroughTiedSortValues_coversEveryAlumnusExactlyOnce() throws Exception {
+        String marker = "TiedSortTestCo-" + UUID.randomUUID();
+        int total = 9;
+        int pageSize = 3;
+        for (int i = 0; i < total; i++) {
+            newUser(UUID.randomUUID().toString(), "Engineer", marker, DEFAULT_GRADUATION_YEAR);
+        }
+        flushAndClearSession();
+
+        Set<String> seen = new HashSet<>();
+        for (int page = 0; page < total / pageSize; page++) {
+            String body = mockMvc.perform(get("/api/alumni")
+                            .param("q", marker)
+                            .param("sort", "graduationYear,asc")
+                            .param("page", String.valueOf(page))
+                            .param("size", String.valueOf(pageSize))
+                            .with(verifiedAlumn()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content.length()").value(pageSize))
+                    .andReturn()
+                    .getResponse()
+                    .getContentAsString();
+
+            for (Object id : JsonPath.<List<Object>>read(body, "$.content[*].id")) {
+                assertTrue(seen.add(id.toString()), "alumnus " + id + " appeared on more than one page");
+            }
+        }
+
+        assertEquals(total, seen.size(), "paging did not cover every alumnus exactly once");
     }
 
     @Test

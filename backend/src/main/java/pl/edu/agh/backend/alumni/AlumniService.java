@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,9 +73,17 @@ public class AlumniService {
     }
 
     private Pageable capPageSize(Pageable pageable) {
-        if (pageable.getPageSize() <= MAX_PAGE_SIZE) {
-            return pageable;
-        }
-        return PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
+        int pageSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(pageable.getPageNumber(), pageSize, withStableTiebreaker(pageable.getSort()));
+    }
+
+    /**
+     * Appends {@code id} to the requested sort. Every sortable field here has duplicates — many alumni share a
+     * graduation year, and hidden names leave {@code lastName} null — and SQL does not guarantee a stable order
+     * for tied rows between one OFFSET and the next, so a client paging through the directory could otherwise
+     * see the same alumnus twice and never see another.
+     */
+    private Sort withStableTiebreaker(Sort sort) {
+        return sort.getOrderFor("id") == null ? sort.and(Sort.by("id")) : sort;
     }
 }
