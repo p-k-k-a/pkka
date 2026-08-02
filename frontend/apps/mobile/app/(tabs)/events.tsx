@@ -1,7 +1,7 @@
 import { EventCard } from "@/components/events/event-card";
 import { CtaCard } from "@/components/home/cta-card";
 import { Text } from "@/components/ui/text";
-import { useListEvents as useEventsList } from "@pkka/api";
+import { useListEvents } from "@pkka/api";
 import { router } from "expo-router";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
@@ -14,7 +14,7 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 gap-8">
+    <View className="px-5 pt-8 gap-8">
       <View>
         <View className="gap-1">
           <Text variant="h1" className="text-left text-4xl">
@@ -32,7 +32,7 @@ function ListHeader() {
 }
 
 export default function EventsScreen() {
-  const { data, isLoading, isError } = useEventsList({ page: 0, size: 20 });
+  const { data, isLoading, isError } = useListEvents({ page: 0, size: 20 });
 
   const events = data?.data?.content ?? [];
 
@@ -40,7 +40,7 @@ export default function EventsScreen() {
     <FlatList
       className="flex-1 bg-background"
       data={events}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id!}
       renderItem={({ item }) => (
         <View className="px-5">
           <EventCard event={item} />
