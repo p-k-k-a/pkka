@@ -4,7 +4,13 @@ import { Separator } from "@/components/ui/separator";
 import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { ApplicationResponseStatus, ProfileResponse, useGetMine, useGetMyProfile } from "@pkka/api";
+import {
+  ApiError,
+  ApplicationResponseStatus,
+  ProfileResponse,
+  useGetMine,
+  useGetMyProfile,
+} from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
 import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
@@ -180,8 +186,15 @@ function AlumniProfileSection({
 export function UserPanel() {
   const { logout } = useAuth();
   const { colors } = useTheme();
-  const { data, isLoading, isError, refetch } = useGetMine();
+  const { data, isLoading, isError, error, refetch } = useGetMine();
   const [refreshing, setRefreshing] = useState(false);
+
+  // GET /api/applications/me answers 404 when the user simply hasn't applied yet; every
+  // other failure is a load error and must not be dressed up as "not verified". The cast
+  // is needed because that 404 carries no schema, so the hook types its error as `void`.
+  const loadError = error as unknown;
+  const missingApplication = loadError instanceof ApiError && loadError.status === 404;
+  const loadFailed = isError && !missingApplication;
 
   const application = data?.data;
   const status = application?.status;
@@ -218,7 +231,9 @@ export function UserPanel() {
 
       {isLoading && !refreshing ? (
         <ActivityIndicator />
-      ) : isError || !application || !knownStatus ? (
+      ) : loadFailed ? (
+        <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
+      ) : !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
       ) : knownStatus === "APPROVED" ? (
         <AlumniProfileSection

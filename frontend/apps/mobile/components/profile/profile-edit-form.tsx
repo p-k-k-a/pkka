@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
+import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@/lib/profile-links";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +26,25 @@ import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+
+const FIELD_LABELS: Record<string, string> = {
+  bio: "O mnie",
+  currentPosition: "Stanowisko",
+  company: "Firma",
+  linkedinUrl: "LinkedIn",
+  githubUrl: "GitHub",
+};
+
+// The client validates the same rules, so a 400 means the two drifted apart — name the
+// offending fields instead of leaving the user to guess.
+function validationMessage(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 400) return null;
+  const errors = (error.body as { errors?: Record<string, string> } | null)?.errors;
+  const fields = Object.keys(errors ?? {})
+    .map((field) => FIELD_LABELS[field] ?? field)
+    .join(", ");
+  return fields ? `Popraw pola: ${fields}.` : null;
+}
 
 function FieldError({ field }: { field: AnyFieldApi }) {
   if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
@@ -140,8 +160,8 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             currentPosition: trimmed(value.currentPosition),
             company: trimmed(value.company),
             bio: trimmed(value.bio),
-            linkedinUrl: trimmed(value.linkedinUrl),
-            githubUrl: trimmed(value.githubUrl),
+            linkedinUrl: canonicalizeProfileUrl(value.linkedinUrl),
+            githubUrl: canonicalizeProfileUrl(value.githubUrl),
             visibility: {
               name: value.showName,
               email: value.showEmail,
@@ -150,8 +170,10 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           },
         });
         queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
-      } catch {
-        setSubmitError("Nie udało się zapisać profilu. Spróbuj ponownie.");
+      } catch (saveException) {
+        setSubmitError(
+          validationMessage(saveException) ?? "Nie udało się zapisać profilu. Spróbuj ponownie.",
+        );
         return;
       }
 
@@ -273,7 +295,10 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       </FormSection>
 
       <FormSection title="Linki" description="Puste pola nie pojawią się na Twoim profilu.">
-        <form.Field name="linkedinUrl">
+        <form.Field
+          name="linkedinUrl"
+          validators={{ onBlur: ({ value }) => linkedinUrlError(value) }}
+        >
           {(field) => (
             <FormField label="LinkedIn">
               <Input
@@ -289,7 +314,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           )}
         </form.Field>
 
-        <form.Field name="githubUrl">
+        <form.Field name="githubUrl" validators={{ onBlur: ({ value }) => githubUrlError(value) }}>
           {(field) => (
             <FormField label="GitHub">
               <Input
