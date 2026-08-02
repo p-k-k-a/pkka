@@ -26,6 +26,22 @@ public class UserSpecifications {
         };
     }
 
+    /** Matches users whose graduation year is within the given inclusive bounds; each bound is optional. */
+    public Specification<User> graduationYearBetween(Integer from, Integer to) {
+        return (root, query, cb) -> {
+            if (from == null && to == null) {
+                return null;
+            }
+            if (from == null) {
+                return cb.lessThanOrEqualTo(root.get("graduationYear"), to);
+            }
+            if (to == null) {
+                return cb.greaterThanOrEqualTo(root.get("graduationYear"), from);
+            }
+            return cb.between(root.get("graduationYear"), from, to);
+        };
+    }
+
     /** Matches users whose {@code willingToMentor} flag equals the given value; {@code null} means "don't filter". */
     public Specification<User> isMentor(Boolean mentor) {
         return (root, query, cb) -> {

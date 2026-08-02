@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,14 +103,14 @@ class AlumniListEndpointTest {
     private void approveApplication(User applicant, int graduationYear) {
         Application application = Application.builder()
                 .applicant(applicant)
-                .status(ApplicationStatus.APPROVED)
+                .status(ApplicationStatus.UNDER_REVIEW)
                 .faculty(Faculty.WI)
                 .fieldOfStudy("Informatyka")
                 .studyType(StudyType.MASTER)
                 .graduationYear(graduationYear)
                 .phoneNumber("+48123456789")
-                .reviewedAt(Instant.now())
                 .build();
+        application.approve(applicant);
         applicationRepository.save(application);
     }
 
@@ -275,57 +274,107 @@ class AlumniListEndpointTest {
     }
 
     @Test
-    void filterByGraduationYear_matchesOnlyThatYear() throws Exception {
+    void filterByGraduationYearRange_matchesOnlyYearsWithinBounds() throws Exception {
         String marker = "GradYearTestCo-" + UUID.randomUUID();
+        User classOf2015 = newUser(UUID.randomUUID().toString(), "Engineer", marker, 2015);
         User classOf2019 = newUser(UUID.randomUUID().toString(), "Engineer", marker, 2019);
         User classOf2021 = newUser(UUID.randomUUID().toString(), "Engineer", marker, 2021);
         flushAndClearSession();
 
         mockMvc.perform(get("/api/alumni")
                         .param("q", marker)
-                        .param("graduationYear", "2019")
+                        .param("graduationYearFrom", "2019")
+                        .param("graduationYearTo", "2021")
+                        .with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", marker)
+                        .param("graduationYearFrom", "2019")
+                        .param("graduationYearTo", "2019")
                         .with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(classOf2019.getId().toString()))
                 .andExpect(jsonPath("$.content[0].graduationYear").value(2019));
 
-        // omitted graduationYear param: both match
-        mockMvc.perform(get("/api/alumni").param("q", marker).with(verifiedAlumn()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(2));
-
         mockMvc.perform(get("/api/alumni")
                         .param("q", marker)
-                        .param("graduationYear", "1999")
-                        .with(verifiedAlumn()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(0));
-
-        mockMvc.perform(get("/api/alumni")
-                        .param("q", marker)
-                        .param("graduationYear", "2021")
+                        .param("graduationYearFrom", "2020")
                         .with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(classOf2021.getId().toString()))
-                .andExpect(jsonPath("$.content[0].graduationYear").value(2021));
+                .andExpect(jsonPath("$.content[0].id").value(classOf2021.getId().toString()));
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", marker)
+                        .param("graduationYearTo", "2016")
+                        .with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(classOf2015.getId().toString()));
+
+        mockMvc.perform(get("/api/alumni").param("q", marker).with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", marker)
+                        .param("graduationYearFrom", "1990")
+                        .param("graduationYearTo", "1999")
+                        .with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void sortByGraduationYear_ordersByTheDenormalizedUserColumn() throws Exception {
+        String marker = "GradSortTestCo-" + UUID.randomUUID();
+        newUser(UUID.randomUUID().toString(), "Engineer", marker, 2019);
+        newUser(UUID.randomUUID().toString(), "Engineer", marker, 2012);
+        newUser(UUID.randomUUID().toString(), "Engineer", marker, 2024);
+        flushAndClearSession();
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", marker)
+                        .param("sort", "graduationYear,asc")
+                        .with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].graduationYear").value(2012))
+                .andExpect(jsonPath("$.content[1].graduationYear").value(2019))
+                .andExpect(jsonPath("$.content[2].graduationYear").value(2024));
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", marker)
+                        .param("sort", "graduationYear,desc")
+                        .with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].graduationYear").value(2024))
+                .andExpect(jsonPath("$.content[1].graduationYear").value(2019))
+                .andExpect(jsonPath("$.content[2].graduationYear").value(2012));
     }
 
     @Test
     void freeTextSearch_matchesPositionCompanyAndTagName() throws Exception {
-        User backend = newUser(UUID.randomUUID().toString(), "Backend Engineer", "Acme Corp");
-        newUser(UUID.randomUUID().toString(), "Designer", "Other Co");
+        String marker = "FreeTextTest-" + UUID.randomUUID();
+        User positionMatch = newUser(UUID.randomUUID().toString(), "Backend Engineer " + marker, "Irrelevant Co");
+        User companyMatch = newUser(UUID.randomUUID().toString(), "Designer", "Acme " + marker + " Corp");
         flushAndClearSession();
 
-        mockMvc.perform(get("/api/alumni").param("q", "backend").with(verifiedAlumn()))
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", "backend engineer " + marker)
+                        .with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(backend.getId().toString()));
+                .andExpect(
+                        jsonPath("$.content[0].id").value(positionMatch.getId().toString()));
 
-        mockMvc.perform(get("/api/alumni").param("q", "ACME").with(verifiedAlumn()))
+        mockMvc.perform(get("/api/alumni").param("q", "ACME " + marker).with(verifiedAlumn()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(
+                        jsonPath("$.content[0].id").value(companyMatch.getId().toString()));
     }
 
     @Test

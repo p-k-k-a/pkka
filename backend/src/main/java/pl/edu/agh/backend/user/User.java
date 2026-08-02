@@ -74,6 +74,9 @@ public class User {
     @Column(name = "willing_to_mentor", nullable = false)
     private boolean willingToMentor = false;
 
+    @Column(name = "graduation_year")
+    private Integer graduationYear;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_tags",

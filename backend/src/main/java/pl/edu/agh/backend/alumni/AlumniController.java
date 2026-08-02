@@ -36,19 +36,23 @@ public class AlumniController {
                     (case-insensitively, substring) against first/last name (unless the alumnus hides their name),
                     current position, company and assigned skill tag names. `tagIds` matches alumni who have at
                     least one of the given skill tags (OR semantics). `mentor=true`/`mentor=false` restricts to
-                    alumni who are/aren't willing to mentor. `graduationYear` restricts to alumni who graduated in
-                    that exact year. All filters are combined with AND.
+                    alumni who are/aren't willing to mentor. `graduationYearFrom`/`graduationYearTo` bound the
+                    graduation year inclusively, and either may be given on its own to leave that end open.
+                    All filters are combined with AND.
                     Unknown tag IDs simply match no one instead of returning an error, since this is a search
                     filter rather than a write operation.
+                    Sortable fields are columns of the alumnus' own record: `lastName`, `firstName`,
+                    `graduationYear`, `createdAt`.
                     """)
-    public Page<AlumniListItemResponse> list(
+    public Page<AlumniListItemResponse> listAlumni(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Set<UUID> tagIds,
             @RequestParam(required = false) Boolean mentor,
-            @RequestParam(required = false) Integer graduationYear,
+            @RequestParam(required = false) Integer graduationYearFrom,
+            @RequestParam(required = false) Integer graduationYearTo,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
                     Pageable pageable) {
-        return alumniService.search(q, tagIds, mentor, graduationYear, pageable);
+        return alumniService.search(q, tagIds, mentor, graduationYearFrom, graduationYearTo, pageable);
     }
 
     @GetMapping("/{id}")
