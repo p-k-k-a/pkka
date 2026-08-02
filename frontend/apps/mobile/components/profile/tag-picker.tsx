@@ -1,12 +1,12 @@
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
-import type { TagResponse } from "@pkka/api";
+import type { UserTagResponse } from "@pkka/api";
 import { useMemo } from "react";
 
 const MAX_TAGS = 20;
 
 type TagPickerProps = {
-  options: TagResponse[];
+  options: UserTagResponse[];
   value: string[];
   onChange: (ids: string[] | ((prev: string[]) => string[])) => void;
   loading?: boolean;

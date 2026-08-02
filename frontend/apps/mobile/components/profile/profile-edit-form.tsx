@@ -13,7 +13,7 @@ import {
   getGetMyTagsQueryKey,
   useGetMyProfile,
   useGetMyTags,
-  useListTags,
+  useListUserTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
@@ -91,7 +91,7 @@ function IdentityRow({
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const queryClient = useQueryClient();
 
-  const availableTagsQuery = useListTags();
+  const availableTagsQuery = useListUserTags();
   const myTagsQuery = useGetMyTags();
   const updateMyTags = useUpdateMyTags();
   const updateMyProfile = useUpdateMyProfile();

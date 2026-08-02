@@ -2,18 +2,18 @@ import { SkillChips } from "@/components/alumni/skill-chips";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import type { AlumnProfile } from "@/lib/alumni-mock";
 import { THEME } from "@/lib/theme";
+import type { AlumniListItemResponse } from "@pkka/api";
 import { router } from "expo-router";
 import { UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
 type AlumniCardProps = {
-  alumn: AlumnProfile;
+  alumn: AlumniListItemResponse;
 };
 
 export function AlumniCard({ alumn }: AlumniCardProps) {
-  const name = `${alumn.firstName} ${alumn.lastName}`;
+  const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ");
   const hasSubtitle = !!(alumn.currentPosition || alumn.company);
 
   return (
@@ -25,6 +25,11 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
         <View className="flex-1 gap-1.5">
           <View className="gap-0.5">
             <Text className="text-foreground text-base font-bold leading-tight">{name}</Text>
+            {alumn.graduationYear ? (
+              <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest">
+                Rocznik {alumn.graduationYear}
+              </Text>
+            ) : null}
             {hasSubtitle ? (
               <Text className="text-muted-foreground text-sm">
                 {alumn.currentPosition}

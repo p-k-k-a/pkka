@@ -1,11 +1,11 @@
 import { Text } from "@/components/ui/text";
-import type { ProfileResponse } from "@pkka/api";
+import type { AlumnProfile } from "@/lib/alumni-profile";
 import { THEME } from "@/lib/theme";
 import { UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
-  profile: ProfileResponse;
+  profile: AlumnProfile;
 };
 
 export function ProfileHero({ profile }: ProfileHeroProps) {

@@ -1,4 +1,4 @@
-import type { AlumnProfile } from "@/lib/alumni-mock";
+import type { AlumnProfile } from "@/lib/alumni-profile";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { Alert } from "react-native";

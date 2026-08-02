@@ -8,36 +8,26 @@ import {
   countActiveFilters,
   DEFAULT_SORT,
   EMPTY_FILTERS,
-  filterAlumni,
-  sortAlumni,
-  uniqueCompanies,
-  uniqueSkills,
   useAlumniDirectory,
   type AlumniFilters,
   type SortOption,
 } from "@/lib/alumni-directory";
 import { THEME } from "@/lib/theme";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, View } from "react-native";
 
 type ActiveSheet = "filter" | "sort" | null;
 
 export function AlumniDirectory() {
-  const { alumni, isLoading, isError, refetch } = useAlumniDirectory();
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<AlumniFilters>(EMPTY_FILTERS);
   const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);
   const [sheet, setSheet] = useState<ActiveSheet>(null);
 
-  const skills = useMemo(() => uniqueSkills(alumni), [alumni]);
-  const companies = useMemo(() => uniqueCompanies(alumni), [alumni]);
-
-  const results = useMemo(
-    () => sortAlumni(filterAlumni(alumni, query, filters), sort),
-    [alumni, query, filters, sort],
-  );
+  const { alumni, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useAlumniDirectory({ query, filters, sort });
 
   const activeCount = countActiveFilters(filters);
 
@@ -46,6 +36,12 @@ export function AlumniDirectory() {
     await refetch();
     setRefreshing(false);
   }, [refetch]);
+
+  const onEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <View className="bg-background flex-1">
@@ -100,7 +96,7 @@ export function AlumniDirectory() {
 
       <FlatList
         className="flex-1"
-        data={results}
+        data={alumni}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="px-5">
@@ -111,6 +107,15 @@ export function AlumniDirectory() {
         contentContainerStyle={{ paddingBottom: 48, paddingTop: 4 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View className="py-6">
+              <ActivityIndicator />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View className="px-5 py-16">
             {isLoading ? (
@@ -129,8 +134,6 @@ export function AlumniDirectory() {
       <FilterSheet
         visible={sheet === "filter"}
         value={filters}
-        skills={skills}
-        companies={companies}
         onClose={() => setSheet(null)}
         onApply={(next) => {
           setFilters(next);

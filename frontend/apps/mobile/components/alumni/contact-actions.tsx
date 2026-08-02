@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { DiscordIcon, GithubIcon, LinkedinIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
-import type { ProfileResponse } from "@pkka/api";
+import type { AlumnProfile } from "@/lib/alumni-profile";
 import {
   isDiscordId,
   isHttpsUrl,
@@ -14,7 +14,7 @@ import { Mail } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type ContactActionsProps = {
-  profile: ProfileResponse;
+  profile: AlumnProfile;
 };
 
 function ExternalLink({ label, url, icon }: { label: string; url: string; icon: React.ReactNode }) {

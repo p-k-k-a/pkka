@@ -1,121 +1,112 @@
-import { MOCK_ALUMNI_DIRECTORY, type AlumnProfile } from "@/lib/alumni-mock";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import {
+  useListAlumniInfinite,
+  type AlumniListItemResponse,
+  type ListAlumniParams,
+} from "@pkka/api";
+import { useMemo } from "react";
 
 export const YEAR_MIN = 1970;
-// Derived from the current year so the default upper bound never silently hides
-// recent graduates once real data replaces the mock.
 export const YEAR_MAX = new Date().getFullYear();
 
-export type SortOption = "name-asc" | "grad-desc" | "grad-asc" | "recent";
+const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
+
+export type SortOption = "name-asc" | "name-desc" | "grad-desc" | "grad-asc";
 
 export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "name-asc", label: "Nazwisko (A-Z)" },
+  { value: "name-desc", label: "Nazwisko (Z-A)" },
   { value: "grad-desc", label: "Rok ukończenia (Najnowsze)" },
   { value: "grad-asc", label: "Rok ukończenia (Najstarsze)" },
-  { value: "recent", label: "Ostatnio aktywni" },
 ];
+
+// Spring Data `sort` values; the properties are columns of `users`, so both
+// lastName and graduationYear are sortable server-side.
+const SORT_PARAM: Record<SortOption, string> = {
+  "name-asc": "lastName,asc",
+  "name-desc": "lastName,desc",
+  "grad-desc": "graduationYear,desc",
+  "grad-asc": "graduationYear,asc",
+};
 
 export const DEFAULT_SORT: SortOption = "name-asc";
 
 export type AlumniFilters = {
   yearRange: [number, number];
-  skills: string[];
-  companies: string[];
+  tagIds: string[];
+  mentorOnly: boolean;
 };
 
 export const EMPTY_FILTERS: AlumniFilters = {
   yearRange: [YEAR_MIN, YEAR_MAX],
-  skills: [],
-  companies: [],
+  tagIds: [],
+  mentorOnly: false,
 };
 
-// Stable identity so callers can memoize on it, as a real query hook allows.
-const noopRefetch = async () => {};
+export function buildAlumniParams(
+  query: string,
+  filters: AlumniFilters,
+  sort: SortOption,
+): ListAlumniParams {
+  const trimmedQuery = query.trim();
+  const [lowYear, highYear] = filters.yearRange;
 
-// Mock stand-in for a real GET /api/profiles list endpoint. Keeps the same
-// { data, isLoading, isError, refetch } shape so the swap to a generated hook is
-// local — `refetch` resolves immediately here because the mock is static, but
-// pull-to-refresh is already wired to it.
-export function useAlumniDirectory() {
   return {
-    alumni: MOCK_ALUMNI_DIRECTORY,
-    isLoading: false,
-    isError: false,
-    refetch: noopRefetch,
+    size: PAGE_SIZE,
+    sort: [SORT_PARAM[sort]],
+    ...(trimmedQuery ? { q: trimmedQuery } : {}),
+    ...(filters.tagIds.length > 0 ? { tagIds: filters.tagIds } : {}),
+    ...(filters.mentorOnly ? { mentor: true } : {}),
+    // Omitted when a bound still sits at the slider's extreme, so an untouched
+    // slider does not exclude alumni whose year falls outside [YEAR_MIN, YEAR_MAX].
+    ...(lowYear > YEAR_MIN ? { graduationYearFrom: lowYear } : {}),
+    ...(highYear < YEAR_MAX ? { graduationYearTo: highYear } : {}),
   };
 }
 
-export function getAlumnById(id: string): AlumnProfile | undefined {
-  return MOCK_ALUMNI_DIRECTORY.find((a) => a.id === id);
-}
+type UseAlumniDirectoryArgs = {
+  query: string;
+  filters: AlumniFilters;
+  sort: SortOption;
+};
 
-export function uniqueSkills(alumni: AlumnProfile[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const a of alumni) {
-    for (const tag of a.tags) {
-      if (!seen.has(tag.name)) {
-        seen.add(tag.name);
-        out.push(tag.name);
-      }
-    }
-  }
-  return out.sort((a, b) => a.localeCompare(b, "pl"));
-}
+export function useAlumniDirectory({ query, filters, sort }: UseAlumniDirectoryArgs) {
+  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const params = buildAlumniParams(debouncedQuery, filters, sort);
 
-export function uniqueCompanies(alumni: AlumnProfile[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const a of alumni) {
-    if (a.company && !seen.has(a.company)) {
-      seen.add(a.company);
-      out.push(a.company);
-    }
-  }
-  return out.sort((a, b) => a.localeCompare(b, "pl"));
-}
-
-export function filterAlumni(
-  alumni: AlumnProfile[],
-  query: string,
-  filters: AlumniFilters,
-): AlumnProfile[] {
-  const q = query.trim().toLowerCase();
-  const [lowYear, highYear] = filters.yearRange;
-
-  return alumni.filter((a) => {
-    const name = `${a.firstName} ${a.lastName}`.toLowerCase();
-    const company = (a.company ?? "").toLowerCase();
-    const matchesQuery = !q || name.includes(q) || company.includes(q);
-    const matchesYear = a.graduationYear >= lowYear && a.graduationYear <= highYear;
-    const matchesSkills =
-      filters.skills.length === 0 || a.tags.some((tag) => filters.skills.includes(tag.name));
-    const matchesCompany =
-      filters.companies.length === 0 ||
-      (a.company != null && filters.companies.includes(a.company));
-    return matchesQuery && matchesYear && matchesSkills && matchesCompany;
+  const result = useListAlumniInfinite(params, {
+    query: {
+      initialPageParam: 0,
+      getNextPageParam: (lastPage) => {
+        const page = lastPage.data;
+        const next = (page.number ?? 0) + 1;
+        // Every field of Spring's Page wrapper is optional in the generated type,
+        // so an absent totalPages must stop paging rather than loop forever.
+        return next < (page.totalPages ?? 0) ? next : undefined;
+      },
+    },
   });
+
+  const alumni = useMemo<AlumniListItemResponse[]>(
+    () => result.data?.pages.flatMap((page) => page.data.content ?? []) ?? [],
+    [result.data],
+  );
+
+  return {
+    alumni,
+    isLoading: result.isPending,
+    isError: result.isError,
+    refetch: result.refetch,
+    fetchNextPage: result.fetchNextPage,
+    hasNextPage: result.hasNextPage,
+    isFetchingNextPage: result.isFetchingNextPage,
+  };
 }
 
-export function sortAlumni(alumni: AlumnProfile[], sort: SortOption): AlumnProfile[] {
-  const copy = [...alumni];
-  switch (sort) {
-    case "name-asc":
-      return copy.sort((a, b) =>
-        `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, "pl"),
-      );
-    case "grad-desc":
-      return copy.sort((a, b) => b.graduationYear - a.graduationYear);
-    case "grad-asc":
-      return copy.sort((a, b) => a.graduationYear - b.graduationYear);
-    case "recent":
-      return copy.sort((a, b) => (b.lastActiveAt ?? 0) - (a.lastActiveAt ?? 0));
-  }
-}
-
-// Number of active filter groups, for the badge on the "Filtruj" button. The
-// year range counts as one whenever it deviates from the full span.
 export function countActiveFilters(filters: AlumniFilters): number {
-  let count = filters.skills.length + filters.companies.length;
+  let count = filters.tagIds.length;
+  if (filters.mentorOnly) count += 1;
   if (filters.yearRange[0] !== YEAR_MIN || filters.yearRange[1] !== YEAR_MAX) count += 1;
   return count;
 }
