@@ -443,24 +443,27 @@ class AlumniListEndpointTest {
     }
 
     @Test
-    void freeTextSearch_doesNotMatchNameHiddenByOwner() throws Exception {
+    void alumniHidingTheirName_areExcludedFromTheDirectory() throws Exception {
         String marker = UUID.randomUUID().toString().substring(0, 8);
         User hidden = newUser(UUID.randomUUID().toString(), "Engineer-" + marker, "Acme");
         hidden.setFirstName("Zdzisław" + marker);
         hidden.setShowName(false);
         userRepository.save(hidden);
+        User listed = newUser(UUID.randomUUID().toString(), "Engineer-" + marker, "Acme");
+        listed.setFirstName("Jan" + marker);
+        userRepository.save(listed);
         flushAndClearSession();
 
         mockMvc.perform(get("/api/alumni").param("q", "Zdzisław" + marker).with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
-        // still findable by a non-hidden field (position) — and the list view must null out the hidden name
+        // Not reachable by a non-hidden field either: hiding the name opts out of the listing entirely,
+        // so only the alumnus who shows their name comes back.
         mockMvc.perform(get("/api/alumni").param("q", "Engineer-" + marker).with(verifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].id").value(hidden.getId().toString()))
-                .andExpect(jsonPath("$.content[0].firstName").value(org.hamcrest.Matchers.nullValue()));
+                .andExpect(jsonPath("$.content[0].id").value(listed.getId().toString()));
     }
 
     @Test
