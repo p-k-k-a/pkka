@@ -12,7 +12,6 @@ import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import pl.edu.agh.backend.event.Tag;
 
 /**
  * Local application user record. Keycloak is the source of truth for identity and roles.
@@ -72,13 +71,16 @@ public class User {
     @Column(name = "github_url", length = 500)
     private String githubUrl;
 
+    @Column(name = "willing_to_mentor", nullable = false)
+    private boolean willingToMentor = false;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_tags",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @BatchSize(size = 30)
-    private Set<Tag> tags = new HashSet<>();
+    private Set<UserTag> tags = new HashSet<>();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

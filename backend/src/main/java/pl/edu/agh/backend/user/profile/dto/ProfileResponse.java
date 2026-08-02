@@ -6,8 +6,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import pl.edu.agh.backend.application.AlumnEducation;
-import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserTagResponse;
 
 public record ProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
@@ -40,7 +40,8 @@ public record ProfileResponse(
         @Schema(description = "Year the application was approved; not editable here")
         Integer alumnSince,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags,
+        @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
     public static ProfileResponse from(User user, AlumnEducation education) {
@@ -58,9 +59,10 @@ public record ProfileResponse(
                 education.graduationYear(),
                 education.fieldOfStudy(),
                 education.alumnSince(),
+                user.isWillingToMentor(),
                 user.getTags().stream()
-                        .map(TagResponse::from)
-                        .sorted(Comparator.comparing(TagResponse::name))
+                        .map(UserTagResponse::from)
+                        .sorted(Comparator.comparing(UserTagResponse::name))
                         .toList(),
                 new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
     }

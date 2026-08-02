@@ -25,6 +25,9 @@ public record UpdateProfileRequest(
         @Schema(example = "https://github.com/jankowalski")
         String githubUrl,
 
+        @Schema(description = "Willingness to mentor other alumni; null leaves it unchanged")
+        Boolean willingToMentor,
+
         @Valid
         @Schema(
                 description =

@@ -40,12 +40,12 @@ import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
-import pl.edu.agh.backend.event.TagRepository;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserPrincipalExtractor.UserPrincipalInfo;
 import pl.edu.agh.backend.user.UserProvisioningService;
 import pl.edu.agh.backend.user.UserRepository;
+import pl.edu.agh.backend.user.UserTagRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -65,7 +65,7 @@ class AlumniProfileIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private TagRepository tagRepository;
+    private UserTagRepository userTagRepository;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -91,7 +91,8 @@ class AlumniProfileIntegrationTest {
         alumn.setCompany("ACME");
         alumn.setLinkedinUrl("https://linkedin.com/in/jankowalski");
         alumn.setGithubUrl("https://github.com/jankowalski");
-        alumn.getTags().add(tagRepository.findAll().getFirst());
+        alumn.setWillingToMentor(true);
+        alumn.getTags().add(userTagRepository.findAll().getFirst());
         alumn = userRepository.save(alumn);
 
         // Education facts come from the applicant's approved application.
@@ -125,6 +126,7 @@ class AlumniProfileIntegrationTest {
                 .andExpect(jsonPath("$.graduationYear").value(2020))
                 .andExpect(jsonPath("$.fieldOfStudy").value("Informatyka"))
                 .andExpect(jsonPath("$.alumnSince").value(2021))
+                .andExpect(jsonPath("$.willingToMentor").value(true))
                 .andExpect(jsonPath("$.tags.length()").value(1))
                 .andExpect(jsonPath("$.visibility.name").value(true))
                 .andExpect(jsonPath("$.visibility.email").value(true))
@@ -134,6 +136,18 @@ class AlumniProfileIntegrationTest {
     @Test
     void returns404ForUnknownAlumniId() throws Exception {
         mockMvc.perform(get("/api/alumni/{id}", UUID.randomUUID()).with(verifiedAlumn()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void returns404ForUserWithoutApprovedApplication() throws Exception {
+        // A bare user row with no approved application (e.g. still under review, or rejected) is not a
+        // verified alumnus and must not be reachable via the public alumni profile endpoint either.
+        User unverified = new User();
+        unverified.setKeycloakId(UUID.randomUUID().toString());
+        unverified = userRepository.save(unverified);
+
+        mockMvc.perform(get("/api/alumni/{id}", unverified.getId()).with(verifiedAlumn()))
                 .andExpect(status().isNotFound());
     }
 
@@ -186,6 +200,8 @@ class AlumniProfileIntegrationTest {
                 .andExpect(jsonPath("$.bio").value("Nowy opis"))
                 .andExpect(jsonPath("$.currentPosition").value("Staff Engineer"))
                 .andExpect(jsonPath("$.firstName").value("Jan"))
+                // omitted field: partial update must leave it unchanged (set to true in setUp)
+                .andExpect(jsonPath("$.willingToMentor").value(true))
                 // education facts surface on the own-profile view too
                 .andExpect(jsonPath("$.graduationYear").value(2020))
                 .andExpect(jsonPath("$.fieldOfStudy").value("Informatyka"))
@@ -194,6 +210,21 @@ class AlumniProfileIntegrationTest {
         User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(updated.getBio()).isEqualTo("Nowy opis");
         assertThat(updated.getCurrentPosition()).isEqualTo("Staff Engineer");
+    }
+
+    @Test
+    void updatesWillingToMentorViaProfileEndpoint() throws Exception {
+        mockMvc.perform(patch("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"willingToMentor\": false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.willingToMentor").value(false));
+
+        User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
+        assertThat(updated.isWillingToMentor()).isFalse();
     }
 
     @Test
