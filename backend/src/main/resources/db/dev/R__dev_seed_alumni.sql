@@ -1,6 +1,6 @@
 -- Dev seed: 30 verified alumni (users + APPROVED applications) so the alumni directory is testable.
--- 30 rows span two pages at the default size of 20; graduation years 2008-2024; mixed mentor flags
--- and shared companies; two alumni with show_name = false; one with no position, company or tags.
+-- Graduation years 2008-2024, mixed mentor flags and shared companies. Two rows set show_name = false
+-- and so must NOT appear in the directory, leaving 28 listed - still two pages at the default size of 20.
 
 CREATE TEMP TABLE seed_alumni (
     n           INT PRIMARY KEY,

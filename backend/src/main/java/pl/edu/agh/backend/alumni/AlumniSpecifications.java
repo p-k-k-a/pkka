@@ -34,4 +34,13 @@ class AlumniSpecifications {
             return cb.exists(approvedApplication);
         };
     }
+
+    /**
+     * Restricts to alumni who show their name. An entry nobody can identify is not useful to browse, so
+     * hiding the name opts out of the directory listing entirely rather than appearing as a nameless card.
+     * Applied unconditionally, like {@link #isApprovedAlumnus()}.
+     */
+    Specification<User> hasVisibleName() {
+        return (root, query, cb) -> cb.isTrue(root.get("showName"));
+    }
 }

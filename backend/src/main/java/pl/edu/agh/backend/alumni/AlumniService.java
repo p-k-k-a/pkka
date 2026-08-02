@@ -47,7 +47,8 @@ public class AlumniService {
                 .and(UserSpecifications.graduationYearBetween(graduationYearFrom, graduationYearTo))
                 // The directory only ever shows genuine (approved) alumni, never every row of `users`
                 // (which also covers pending/rejected applicants and staff who merely logged in once).
-                .and(AlumniSpecifications.isApprovedAlumnus());
+                .and(AlumniSpecifications.isApprovedAlumnus())
+                .and(AlumniSpecifications.hasVisibleName());
 
         Page<User> page = userRepository.findAll(spec, capPageSize(pageable));
 
