@@ -569,7 +569,7 @@ networks:
 │       - wyciąga AT + RT z OAuth2AuthorizedClient
 │       - usuwa OAuth2AuthorizedClient z serwisu
 │       - invaliduje sesję tymczasową
-│       - 302 → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+│       - 302 → myapp:///login#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
 │
 ▼
 <span class="box">Mobilka</span>
@@ -1181,21 +1181,31 @@ dependencies {
     implementation <span class="str">'org.springframework.boot:spring-boot-starter-security'</span>
     implementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc'</span>
     implementation <span class="str">'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'</span>
-    implementation <span class="str">'org.springframework.boot:spring-boot-starter-oauth2-client'</span>
-    implementation <span class="str">'org.springframework.boot:spring-boot-starter-thymeleaf'</span>
-    implementation <span class="str">"org.keycloak:keycloak-admin-client:26.0.8"</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-security-oauth2-client'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'</span>
+    implementation <span class="str">'org.keycloak:keycloak-admin-client:26.0.8'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-data-jpa'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-starter-validation'</span>
+    implementation <span class="str">'org.springframework.boot:spring-boot-flyway'</span>
+    implementation <span class="str">'org.flywaydb:flyway-database-postgresql'</span>
+    runtimeOnly <span class="str">'org.postgresql:postgresql'</span>
 
     compileOnly <span class="str">'org.projectlombok:lombok'</span>
     annotationProcessor <span class="str">'org.projectlombok:lombok'</span>
-    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-security-test'</span>
-    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc-test'</span>
     testCompileOnly <span class="str">'org.projectlombok:lombok'</span>
-    testRuntimeOnly <span class="str">'org.junit.platform:junit-platform-launcher'</span>
     testAnnotationProcessor <span class="str">'org.projectlombok:lombok'</span>
+
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-test'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-webmvc-test'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-security-test'</span>
+    testImplementation <span class="str">'org.springframework.boot:spring-boot-starter-testcontainers'</span>
+    testImplementation platform(<span class="str">'org.testcontainers:testcontainers-bom:1.21.4'</span>)
+    testImplementation <span class="str">'org.testcontainers:postgresql'</span>
+    testImplementation <span class="str">'org.testcontainers:junit-jupiter'</span>
+    testRuntimeOnly <span class="str">'org.junit.platform:junit-platform-launcher'</span>
 
     errorprone <span class="str">'com.google.errorprone:error_prone_core:2.49.0'</span>
 }
-
 tasks.named(<span class="str">'test'</span>) {
     useJUnitPlatform()
 }
@@ -1213,12 +1223,15 @@ tasks.withType(JavaCompile).configureEach {
 spotless {
     java {
         target <span class="str">'src/**/*.java'</span>
-        googleJavaFormat(<span class="str">'1.35.0'</span>).aosp().reflowLongStrings()
+        palantirJavaFormat(<span class="str">'2.91.0'</span>)
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
     }
 }</code></pre>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      Względem wcześniejszej wersji: OAuth2 Client i Resource Server rozbite na dwie jawne zależności (<code>-security-oauth2-client</code>, <code>-security-oauth2-resource-server</code>) zamiast jednej ogólnej; doszła persystencja — <code>spring-boot-starter-data-jpa</code>, <code>spring-boot-starter-validation</code>, Flyway (<code>spring-boot-flyway</code> + <code>flyway-database-postgresql</code>) i sterownik <code>postgresql</code> — oraz Testcontainers do testów integracyjnych na prawdziwej bazie. Formatter Spotlessa to obecnie <code>palantirJavaFormat</code>, nie <code>googleJavaFormat</code>. Zależność <code>spring-boot-starter-thymeleaf</code> nie jest już potrzebna — nie ma własnych widoków server-side poza domyślną stroną błędu.
+    </div></div>
   </section>
 
   <!-- APPLICATION.YML -->
@@ -1228,9 +1241,9 @@ spotless {
       <h2 style="margin:0;border:none;">application.yml</h2>
     </div>
 
-    <p>Plik podzielony na trzy sekcje: wspólna konfiguracja bazowa, profil <code>dev</code> (localhost, Swagger włączony, debug logging) i profil <code>prod</code> (wyłączony Swagger, zmienne środowiskowe obowiązkowe, WARN logging). Aktywacja profilu przez <code>-Dspring.profiles.active=prod</code> lub zmienną środowiskową <code>SPRING_PROFILES_ACTIVE=prod</code>.</p>
+    <p>Plik podzielony na trzy sekcje: wspólna konfiguracja bazowa, profil <code>dev</code> (localhost, Swagger włączony, debug logging, seed danych deweloperskich) i profil <code>prod</code> (wyłączony Swagger, zmienne środowiskowe obowiązkowe, WARN logging). Aktywacja profilu przez <code>-Dspring.profiles.active=prod</code> lub zmienną środowiskową <code>SPRING_PROFILES_ACTIVE=prod</code>.</p>
 
-    <p>Zmiany względem poprzedniej wersji: nazwy rejestracji zmienione na <code>keycloak-web</code> i <code>keycloak-mobile</code> (jawne, zamiast <code>keycloak</code> i <code>pkka-mobile</code>); oba używają <code>client_secret_basic</code>; redirect URI jawne (<code>{baseUrl}/login/oauth2/code/{registrationId}</code>); usunięte zdublowane bloki <code>keycloak-web:</code>/<code>keycloak-mobile:</code> z profilu prod — Admin Client używa jednego bloku <code>keycloak:</code> z credentialami <code>pkka-web</code>. Dodano <code>resourceserver.jwt</code> dla walidacji Bearer JWT.</p>
+    <p>Zmiany względem poprzedniej wersji: nazwy rejestracji <code>keycloak-web</code>/<code>keycloak-mobile</code>, redirect URI generyczne (<code>{baseUrl}/login/oauth2/code/{registrationId}</code>); doszła konfiguracja bazy danych i Flyway (<code>spring.datasource</code>, <code>spring.jpa</code>, <code>spring.flyway</code> — na <code>dev</code> dodatkowa lokalizacja <code>classpath:db/dev</code> z danymi seedowymi, na <code>prod</code> tylko <code>classpath:db/migration</code>); sekcja <code>app.web</code> rozszerzona o <code>logout-redirect-url</code> i <code>cors-allowed-origins</code>; doszedł <code>keycloak.verified-alumn-role</code> (nazwa roli Keycloaka mapowanej na <code>VERIFIED_ALUMN</code>, konfigurowalna zamiast zahardkodowanej).</p>
 
     <pre><code>spring:
   application:
@@ -1239,7 +1252,10 @@ spotless {
     default: dev
 
   config:
-    import: optional:file:.env[.properties],optional:file:./backend/.env[.properties]
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:./backend/.env[.properties]
+      - optional:classpath:.env[.properties]
 
 <span class="cm"># OpenAPI / Swagger</span>
 springdoc:
@@ -1261,28 +1277,45 @@ spring:
     activate:
       on-profile: dev
 
+  datasource:
+    url: <span class="prop">${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/pkka}</span>
+    username: <span class="prop">${SPRING_DATASOURCE_USERNAME:pkka}</span>
+    password: <span class="prop">${SPRING_DATASOURCE_PASSWORD:pkka}</span>
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: <span class="kw">true</span>
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: <span class="kw">true</span>
+    <span class="cm"># db/dev holds dev-only seed data (sample events). Never loaded on prod.</span>
+    locations: classpath:db/migration,classpath:db/dev
+    baseline-on-migrate: <span class="kw">true</span>
+    out-of-order: <span class="kw">true</span>
+
+  <span class="cm"># OAuth2 / OIDC (Keycloak)</span>
   security:
     oauth2:
       client:
         registration:
-          <span class="cm"># [1] Ścieżka Web — sesja Spring + JSESSIONID</span>
           keycloak-web:
             provider: keycloak
             client-id: pkka-web
             client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
             client-authentication-method: client_secret_basic
 
-          <span class="cm"># [2] Ścieżka Mobile — deep link + Bearer JWT</span>
           keycloak-mobile:
             provider: keycloak
             client-id: pkka-mobile
             client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET:change-me}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
             client-authentication-method: client_secret_basic
 
         provider:
@@ -1296,12 +1329,14 @@ spring:
         jwt:
           issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/pkka}</span>
 
-<span class="cm"># OpenAPI — włączone na dev</span>
-springdoc:
-  api-docs:
-    enabled: <span class="kw">true</span>
-  swagger-ui:
-    enabled: <span class="kw">true</span>
+<span class="cm"># App</span>
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL:http://localhost:3000/dashboard}</span>
+    logout-redirect-url: <span class="prop">${WEB_LOGOUT_REDIRECT_URL:http://localhost:3000/}</span>
+    cors-allowed-origins: <span class="prop">${WEB_CORS_ALLOWED_ORIGINS:http://localhost:3000}</span>
 
 <span class="cm"># Keycloak Admin Client — używa service account pkka-web (manage-users)</span>
 <span class="cm"># Uwaga: client-id to pkka-web, ten sam co rejestracja keycloak-web.</span>
@@ -1313,27 +1348,28 @@ keycloak:
   realm: <span class="prop">${KEYCLOAK_REALM:pkka}</span>
   client-id: pkka-web
   client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET:change-me}</span>
+  verified-alumn-role: <span class="prop">${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}</span>
 
 <span class="cm"># Discord</span>
 discord:
   guild-id: <span class="prop">${DISCORD_GUILD_ID:change-me}</span>
 
-<span class="cm"># App</span>
-app:
-  mobile:
-    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
-  web:
-    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
-
 <span class="cm"># Server</span>
 server:
   port: <span class="num">8080</span>
+
+<span class="cm"># OpenAPI — enabled on dev</span>
+springdoc:
+  api-docs:
+    enabled: <span class="kw">true</span>
+  swagger-ui:
+    enabled: <span class="kw">true</span>
 
 <span class="cm"># Logging</span>
 logging:
   level:
     root: INFO
-    pl.edu.agh.pkka: DEBUG
+    pl.edu.agh.backend: DEBUG
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
 
@@ -1343,6 +1379,20 @@ spring:
   config:
     activate:
       on-profile: prod
+
+  datasource:
+    url: <span class="prop">${SPRING_DATASOURCE_URL}</span>
+    username: <span class="prop">${SPRING_DATASOURCE_USERNAME}</span>
+    password: <span class="prop">${SPRING_DATASOURCE_PASSWORD}</span>
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  flyway:
+    enabled: <span class="kw">true</span>
+    locations: classpath:db/migration
 
   security:
     oauth2:
@@ -1354,7 +1404,7 @@ spring:
             client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-web"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
             client-authentication-method: client_secret_basic
 
           keycloak-mobile:
@@ -1363,7 +1413,7 @@ spring:
             client-secret: <span class="prop">${KEYCLOAK_MOBILE_CLIENT_SECRET}</span>
             scope: openid, profile, email
             authorization-grant-type: authorization_code
-            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/keycloak-mobile"</span>
+            redirect-uri: <span class="str">"{baseUrl}/login/oauth2/code/{registrationId}"</span>
             client-authentication-method: client_secret_basic
 
         provider:
@@ -1375,11 +1425,13 @@ spring:
         jwt:
           issuer-uri: <span class="prop">${KEYCLOAK_ISSUER_URI}</span>
 
-springdoc:
-  api-docs:
-    enabled: <span class="kw">false</span>
-  swagger-ui:
-    enabled: <span class="kw">false</span>
+app:
+  mobile:
+    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME}</span>
+  web:
+    success-url: <span class="prop">${WEB_SUCCESS_URL}</span>
+    logout-redirect-url: <span class="prop">${WEB_LOGOUT_REDIRECT_URL}</span>
+    cors-allowed-origins: <span class="prop">${WEB_CORS_ALLOWED_ORIGINS}</span>
 
 <span class="cm"># Keycloak Admin Client (prod) — jeden blok, service account pkka-web</span>
 keycloak:
@@ -1387,15 +1439,16 @@ keycloak:
   realm: <span class="prop">${KEYCLOAK_REALM}</span>
   client-id: pkka-web
   client-secret: <span class="prop">${KEYCLOAK_WEB_CLIENT_SECRET}</span>
+  verified-alumn-role: <span class="prop">${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}</span>
 
 discord:
   guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
 
-app:
-  mobile:
-    deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME}</span>
-  web:
-    success-url: <span class="prop">${WEB_SUCCESS_URL:/}</span>
+springdoc:
+  api-docs:
+    enabled: <span class="kw">false</span>
+  swagger-ui:
+    enabled: <span class="kw">false</span>
 
 server:
   port: <span class="prop">${PORT:8080}</span>
@@ -1406,7 +1459,7 @@ server:
 logging:
   level:
     root: WARN
-    pl.edu.agh.pkka: INFO</code></pre>
+    pl.edu.agh.backend: INFO</code></pre>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>Dlaczego <code>client-id</code> pojawia się w dwóch miejscach?</strong><br>
@@ -1415,7 +1468,7 @@ logging:
       Oba punkty odnoszą się do tego samego klienta Keycloaka (<code>pkka-web</code>), bo ma on włączone jednocześnie <strong>Standard Flow</strong> (user login) i <strong>Service Accounts</strong> (admin API). Użycie tych samych credentials upraszcza konfigurację — zamiast utrzymywać osobny klient tylko do admina, <code>pkka-web</code> pełni obie role.
     </div></div>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars. Na <code>prod</code> brak wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>DISCORD_GUILD_ID</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars (poza uruchomioną bazą, patrz <code>docker-compose.yml</code>). Na <code>prod</code> większość nie ma wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>SPRING_DATASOURCE_URL</code>, <code>SPRING_DATASOURCE_USERNAME</code>, <code>SPRING_DATASOURCE_PASSWORD</code>, <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>DISCORD_GUILD_ID</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>, <code>WEB_SUCCESS_URL</code>, <code>WEB_LOGOUT_REDIRECT_URL</code>, <code>WEB_CORS_ALLOWED_ORIGINS</code>. <code>KEYCLOAK_VERIFIED_ALUMN_ROLE</code> ma domyślną wartość (<code>verified-alumn</code>) nawet na prod — trzeba go nadpisać tylko jeśli rola w realmie nazywa się inaczej.</div></div>
   </section>
   <!-- KEYCLOAK ADMIN API -->
   <section id="admin-api">
@@ -1832,7 +1885,7 @@ errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</cod
 │   │
 │   └─ Tokeny zostają w sesji Spring (OAuth2AuthorizedClient)
 │      Przeglądarka otrzymuje JSESSIONID
-│      Redirect → app.web.success-url (domyślnie "/")
+│      Redirect → app.web.success-url (domyślnie "http://localhost:3000/dashboard" na dev)
 │
 └─ registrationId == "keycloak-mobile"
     │
@@ -1840,7 +1893,7 @@ errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</cod
        SecurityContextHolder.clearContext()
        Usuń OAuth2AuthorizedClient z serwisu
        Invaliduj sesję HTTP (była tymczasowa dla state/nonce)
-       Redirect → myapp://auth-success#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
+       Redirect → myapp:///login#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
        Mobilka: zapisz w Keychain / EncryptedSharedPreferences</div>
 
     <h3>Kolejne żądania API (/api/**)</h3>
@@ -1912,13 +1965,17 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         JwtAuthenticationConverter jwtAuthenticationConverter) {
     http
         .securityMatcher(<span class="str">"/api/**"</span>)
+        .cors(Customizer.withDefaults())
         .sessionManagement(s -&gt; s.sessionCreationPolicy(IF_REQUIRED))
         .csrf(csrf -&gt; csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler())
-            .ignoringRequestMatchers(SecurityConfig::hasBearerToken))  <span class="cm">// Bearer jest CSRF-safe z natury</span>
+            .csrfTokenRequestHandler(<span class="kw">new</span> SpaCsrfTokenRequestHandler())
+            .ignoringRequestMatchers(SecurityConfig::hasBearerToken)  <span class="cm">// Bearer jest CSRF-safe z natury</span>
+            .ignoringRequestMatchers(<span class="str">"/api/public/auth/refresh"</span>, <span class="str">"/api/public/auth/logout"</span>))
+        .addFilterAfter(<span class="kw">new</span> CsrfCookieFilter(), CsrfFilter.<span class="kw">class</span>)
         .authorizeHttpRequests(auth -&gt; auth
             .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
+            .requestMatchers(<span class="str">"/api/me"</span>).authenticated()
             .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
             .requestMatchers(<span class="str">"/api/admin/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
             .anyRequest().hasRole(<span class="str">"USER"</span>))
@@ -1928,23 +1985,62 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
     <span class="kw">return</span> http.build();
 }</code></pre>
 
+    <h3>SpaCsrfTokenRequestHandler i CsrfCookieFilter — po co dwie dodatkowe klasy?</h3>
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Token CSRF w Spring Security 6+ jest "deferred".</strong> <code>CsrfFilter</code> nie generuje wartości tokena od razu na każdym requeście — zamiast tego przygotowuje uchwyt (<code>DeferredCsrfToken</code>) dostępny jako atrybut requestu, a token faktycznie liczy się/odczytuje dopiero gdy ktoś wywoła na nim <code>getToken()</code>. To optymalizacja (nie każdy request potrzebuje CSRF), ale ma efekt uboczny: jeśli nic nie wywoła <code>getToken()</code>, <code>CookieCsrfTokenRepository</code> nigdy nie doda nagłówka <code>Set-Cookie: XSRF-TOKEN</code> do odpowiedzi — a SPA nie ma skąd wziąć tokena do odesłania przy kolejnym POST/PATCH/DELETE.
+    </div></div>
+    <pre><code><span class="cm">// CsrfCookieFilter.java — wymusza materializację tokena (i tym samym cookie) na każdym requeście</span>
+<span class="kw">final class</span> CsrfCookieFilter <span class="kw">extends</span> OncePerRequestFilter {
+    <span class="kw">@Override protected void</span> doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain filterChain) <span class="kw">throws</span> ServletException, IOException {
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.<span class="kw">class</span>.getName());
+        <span class="kw">if</span> (csrfToken != <span class="kw">null</span>) {
+            csrfToken.getToken();  <span class="cm">// samo odczytanie wartości wyzwala zapis cookie przez CookieCsrfTokenRepository</span>
+        }
+        filterChain.doFilter(request, response);
+    }
+}
+
+<span class="cm">// SpaCsrfTokenRequestHandler.java — dostarczanie tokena SPA przez header, formularzom przez XOR</span>
+<span class="kw">final class</span> SpaCsrfTokenRequestHandler <span class="kw">extends</span> CsrfTokenRequestAttributeHandler {
+    <span class="kw">private final</span> CsrfTokenRequestHandler delegate = <span class="kw">new</span> XorCsrfTokenRequestAttributeHandler();
+
+    <span class="kw">@Override public void</span> handle(HttpServletRequest request, HttpServletResponse response,
+            Supplier&lt;CsrfToken&gt; csrfToken) {
+        <span class="kw">this</span>.delegate.handle(request, response, csrfToken);  <span class="cm">// zachowuje BREACH protection (XOR)</span>
+    }
+
+    <span class="kw">@Override public</span> String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+        <span class="kw">if</span> (StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()))) {
+            <span class="kw">return super</span>.resolveCsrfTokenValue(request, csrfToken);  <span class="cm">// SPA: header X-XSRF-TOKEN, wartość surowa z cookie</span>
+        }
+        <span class="kw">return this</span>.delegate.resolveCsrfTokenValue(request, csrfToken);  <span class="cm">// formularz: parametr, przez XOR</span>
+    }
+}</code></pre>
+    <div class="callout success"><div class="callout-icon"></div><div>
+      <strong><code>handle()</code></strong> odpowiada za wystawienie/przygotowanie tokena przy renderowaniu odpowiedzi i deleguje do XOR handlera, żeby zachować standardowe zachowanie Springa (ochrona przed atakami typu BREACH). <strong><code>resolveCsrfTokenValue()</code></strong> odpowiada za odnalezienie tokena przy <em>walidacji</em> przychodzącego requestu — dla SPA bierze go wprost z nagłówka <code>X-XSRF-TOKEN</code> (tam ląduje surowa wartość odczytana z cookie <code>XSRF-TOKEN</code>), a dla klasycznych submitów formularzy nadal korzysta z mechanizmu XOR.<br><br>
+      <strong>Dlaczego <code>withHttpOnlyFalse()</code>?</strong> Wyłącznie dlatego, że SPA musi móc <em>odczytać</em> ciasteczko <code>XSRF-TOKEN</code> z JavaScriptu, żeby odesłać jego wartość w nagłówku <code>X-XSRF-TOKEN</code>. To nie osłabia bezpieczeństwa sesji — ciasteczko sesyjne (<code>JSESSIONID</code>) pozostaje <code>HttpOnly</code> i nigdy nie jest czytane przez JS.<br><br>
+      <strong>Finalny przepływ:</strong> Web z sesją dostaje cookie <code>XSRF-TOKEN</code> (zmaterializowane przez <code>CsrfCookieFilter</code>), frontend odsyła jego wartość w headerze <code>X-XSRF-TOKEN</code> przy kolejnych zapisujących requestach, Spring to weryfikuje. Mobile/API z Bearer JWT wysyła tylko <code>Authorization</code> — CSRF jest dla niego całkowicie pomijany (<code>ignoringRequestMatchers</code>), bo nie ma tam żadnego automatycznie wysyłanego credentiala, który dałoby się nadużyć.
+    </div></div>
+
     <h3>Chain 2 — oauth2Login (inicjacja logowania Web + Mobile)</h3>
     <pre><code><span class="kw">@Bean @Order</span>(<span class="num">2</span>)
-<span class="kw">public</span> SecurityFilterChain webChain(HttpSecurity http,
-        ClientRegistrationRepository repo,
+<span class="kw">public</span> SecurityFilterChain webSecurityFilterChain(HttpSecurity http,
+        ClientRegistrationRepository clientRegistrationRepository,
         OAuth2AuthorizationRequestResolver discordBypassResolver,
         BffAuthenticationSuccessHandler bffHandler,
-        JwtDecoder jwtDecoder) <span class="kw">throws</span> Exception {   <span class="cm">// JwtDecoder — do oidcUserService</span>
+        JwtDecoder jwtDecoder) {   <span class="cm">// JwtDecoder — do oidcUserService</span>
 
     OidcClientInitiatedLogoutSuccessHandler oidcLogout =
-        <span class="kw">new</span> OidcClientInitiatedLogoutSuccessHandler(repo);
-    oidcLogout.setPostLogoutRedirectUri(<span class="str">"{baseUrl}/"</span>);
+        <span class="kw">new</span> OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
+    oidcLogout.setPostLogoutRedirectUri(<span class="str">"{baseUrl}/api/public/auth/post-logout"</span>);
 
     http
         .sessionManagement(s -&gt; s.sessionCreationPolicy(IF_REQUIRED))
+        .cors(Customizer.withDefaults())
         .csrf(csrf -&gt; csrf
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler()))
+            .csrfTokenRequestHandler(<span class="kw">new</span> XorCsrfTokenRequestAttributeHandler()))  <span class="cm">// tu zwykły XOR — nie ma SPA po tej stronie</span>
         .authorizeHttpRequests(auth -&gt; auth
             .requestMatchers(<span class="str">"/"</span>, <span class="str">"/login/**"</span>, <span class="str">"/error"</span>,
                 <span class="str">"/oauth2/authorization/**"</span>, <span class="str">"/login/oauth2/**"</span>,
@@ -1958,6 +2054,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
                 .oidcUserService(oidcUserService(jwtDecoder)))  <span class="cm">// czyta role z AT</span>
             .successHandler(bffHandler))
         .logout(logout -&gt; logout
+            .logoutRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, <span class="str">"/logout"</span>))
             .logoutSuccessHandler(oidcLogout)
             .invalidateHttpSession(<span class="kw">true</span>)
             .deleteCookies(<span class="str">"JSESSIONID"</span>, <span class="str">"XSRF-TOKEN"</span>));
@@ -1970,7 +2067,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 <span class="kw">public</span> JwtAuthenticationConverter jwtAuthenticationConverter() {
     <span class="kw">var</span> conv = <span class="kw">new</span> JwtAuthenticationConverter();
     conv.setJwtGrantedAuthoritiesConverter(<span class="kw">new</span> KeycloakJwtRoleConverter());
-    conv.setPrincipalClaimName(<span class="str">"preferred_username"</span>);
+    conv.setPrincipalClaimName(<span class="str">"sub"</span>);  <span class="cm">// Bearer: authentication.getName() == Keycloak user UUID</span>
     <span class="kw">return</span> conv;
 }
 
@@ -2047,6 +2144,11 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
       Sesja jest <em>tymczasowo wymagana</em> przez samo Spring Security podczas OAuth2 code flow: gdy mobilka uderza w <code>/oauth2/authorization/keycloak-mobile</code>, Spring musi gdzieś zapisać <code>state</code>, <code>nonce</code> i <code>code_verifier</code>, żeby zwalidować callback. Używa do tego sesji HTTP. Po udanej wymianie code → token, BffHandler ma dostęp do tokenów i czyści sesję. Bez poniższego kroku z <code>SecurityContextHolder.clearContext()</code> Spring tworzy <em>nową</em> sesję — szczegóły niżej.
     </div></div>
 
+    <div class="callout info"><div class="callout-icon"></div><div>
+      <strong>Provisioning vs. sync — dlaczego <code>onAuthenticationSuccess</code> nie woła <code>UserPrincipalExtractor</code>?</strong><br>
+      Ten handler uruchamia się tylko na ścieżce <code>oauth2Login</code> (logowanie przez Keycloak — Web i Mobile), gdzie principal to zawsze <code>OidcUser</code> z pełnym ID tokenem. Zamiast płytkiego "utwórz wiersz jeśli go nie ma" (<code>provisionIfAbsent</code>, używanego np. w <code>ProfileController</code> dla requestów Bearer, gdzie mamy tylko <code>sub</code>), przy logowaniu robimy pełną <code>syncIdentityFromClaims</code> — odświeżamy imię/nazwisko/e-mail z claimów OIDC i, jeśli brakuje, dociągamy Discord snowflake z Keycloak Admin API.
+    </div></div>
+
     <h3>Schemat działania</h3>
     <pre><code><span class="kw">@Component @RequiredArgsConstructor @Slf4j</span>
 <span class="kw">public class</span> BffAuthenticationSuccessHandler
@@ -2054,7 +2156,6 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
     <span class="kw">private final</span> OAuth2AuthorizedClientService authorizedClientService;
     <span class="kw">private final</span> UserProvisioningService userProvisioningService;
-    <span class="kw">private final</span> UserPrincipalExtractor principalExtractor;
 
     <span class="kw">@Value</span>(<span class="str">"${app.mobile.deep-link-scheme}"</span>)
     <span class="kw">private</span> String mobileDeepLinkScheme;
@@ -2066,7 +2167,10 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
     <span class="kw">public void</span> onAuthenticationSuccess(HttpServletRequest req,
             HttpServletResponse res, Authentication auth) <span class="kw">throws</span> IOException, ServletException {
 
-        principalExtractor.extract(auth).ifPresent(userProvisioningService::provisionIfAbsent);
+        <span class="kw">if</span> (auth.getPrincipal() <span class="kw">instanceof</span> OidcUser oidc) {
+            userProvisioningService.syncIdentityFromClaims(
+                oidc.getSubject(), oidc.getGivenName(), oidc.getFamilyName(), oidc.getEmail());
+        }
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
         String registrationId = token.getAuthorizedClientRegistrationId();
@@ -2113,7 +2217,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
         <span class="cm">// 5. Deep link z AT + RT</span>
         StringBuilder link = <span class="kw">new</span> StringBuilder(mobileDeepLinkScheme)
-            .append(<span class="str">"://auth-success#at="</span>)
+            .append(<span class="str">":///login#at="</span>)
             .append(URLEncoder.encode(at, StandardCharsets.UTF_8));
         <span class="kw">if</span> (rt != <span class="kw">null</span>) link.append(<span class="str">"&amp;rt="</span>)
             .append(URLEncoder.encode(rt, StandardCharsets.UTF_8));
