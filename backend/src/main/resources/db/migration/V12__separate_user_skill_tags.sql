@@ -30,6 +30,17 @@ WHERE id IN (
     'cccc0015-cccc-cccc-cccc-cccccccccccc'
 );
 
+-- While the catalog was shared, tag assignments were validated against the whole `tags` table, so
+-- user_tags may legally reference event-category tags ("workshop", ...) and event_tags may reference
+-- skill tags. Those cross-domain links are meaningless after the split and must go explicitly:
+-- otherwise the FK repoint below fails on such user_tags rows, and the final DELETE FROM tags would
+-- silently cascade into event_tags (its FK is ON DELETE CASCADE) instead of being a conscious cleanup.
+DELETE FROM user_tags
+WHERE tag_id NOT IN (SELECT id FROM user_skill_tags);
+
+DELETE FROM event_tags
+WHERE tag_id IN (SELECT id FROM user_skill_tags);
+
 -- Repoint user_tags.tag_id from the shared `tags` catalog to the new user-only catalog.
 ALTER TABLE user_tags DROP CONSTRAINT user_tags_tag_id_fkey;
 ALTER TABLE user_tags
