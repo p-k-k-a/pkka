@@ -3,7 +3,7 @@ package pl.edu.agh.backend.application;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 
-public record RejectApplicationRequestDto(
+public record RejectApplicationRequest(
         @Schema(
                 description = "Optional reason shown to the applicant",
                 example = "Brak udokumentowanego ukończenia studiów",

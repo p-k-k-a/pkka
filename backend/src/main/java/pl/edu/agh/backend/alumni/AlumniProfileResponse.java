@@ -2,6 +2,7 @@ package pl.edu.agh.backend.alumni;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +30,7 @@ public record AlumniProfileResponse(
         String githubUrl,
         Integer graduationYear,
         String fieldOfStudy,
-        @Schema(description = "Year the alumn was approved") Integer alumnSince,
+        @Schema(description = "Date the alumn was approved") LocalDate alumnSince,
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {

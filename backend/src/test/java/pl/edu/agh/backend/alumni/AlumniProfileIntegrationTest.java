@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.alumni;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -125,7 +126,7 @@ class AlumniProfileIntegrationTest {
                 .andExpect(jsonPath("$.githubUrl").value("https://github.com/jankowalski"))
                 .andExpect(jsonPath("$.graduationYear").value(2020))
                 .andExpect(jsonPath("$.fieldOfStudy").value("Informatyka"))
-                .andExpect(jsonPath("$.alumnSince").value(2021))
+                .andExpect(jsonPath("$.alumnSince").value("2021-06-15"))
                 .andExpect(jsonPath("$.willingToMentor").value(true))
                 .andExpect(jsonPath("$.tags.length()").value(1))
                 .andExpect(jsonPath("$.visibility.name").value(true))
@@ -167,10 +168,10 @@ class AlumniProfileIntegrationTest {
 
         mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").doesNotExist())
-                .andExpect(jsonPath("$.lastName").doesNotExist())
-                .andExpect(jsonPath("$.email").doesNotExist())
-                .andExpect(jsonPath("$.discordId").doesNotExist())
+                .andExpect(jsonPath("$.firstName").value(nullValue()))
+                .andExpect(jsonPath("$.lastName").value(nullValue()))
+                .andExpect(jsonPath("$.email").value(nullValue()))
+                .andExpect(jsonPath("$.discordId").value(nullValue()))
                 // non-hideable fields stay visible
                 .andExpect(jsonPath("$.bio").value("Absolwent WI, backend developer."))
                 .andExpect(jsonPath("$.company").value("ACME"))
@@ -205,7 +206,7 @@ class AlumniProfileIntegrationTest {
                 // education facts surface on the own-profile view too
                 .andExpect(jsonPath("$.graduationYear").value(2020))
                 .andExpect(jsonPath("$.fieldOfStudy").value("Informatyka"))
-                .andExpect(jsonPath("$.alumnSince").value(2021));
+                .andExpect(jsonPath("$.alumnSince").value("2021-06-15"));
 
         User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(updated.getBio()).isEqualTo("Nowy opis");
@@ -255,7 +256,7 @@ class AlumniProfileIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"company\": \"\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.company").doesNotExist());
+                .andExpect(jsonPath("$.company").value(nullValue()));
 
         User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(updated.getCompany()).isNull();
