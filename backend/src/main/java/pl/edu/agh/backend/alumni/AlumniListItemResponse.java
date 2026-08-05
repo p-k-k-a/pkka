@@ -10,11 +10,12 @@ import pl.edu.agh.backend.user.UserTagResponse;
 
 /**
  * Alumni directory list item — a lighter view than {@link AlumniProfileResponse}, meant for browsing many
- * alumni at once. Fields hidden by the owner's visibility settings (currently just the name) are null,
- * same as on the single-profile view; {@code email}/{@code bio}/{@code discordId} are intentionally left
- * off the list (only shown on the single-profile view) to limit what is broadcast in bulk.
+ * alumni at once. {@code email}/{@code bio}/{@code discordId} are intentionally left off the list (only
+ * shown on the single-profile view) to limit what is broadcast in bulk. Names are always present: alumni
+ * who hide their name are excluded from the directory entirely ({@link AlumniSpecifications#hasVisibleName()})
+ * rather than listed as nameless cards.
  */
-@Schema(description = "Alumni directory list item; fields hidden by the owner's visibility settings are null")
+@Schema(description = "Alumni directory list item; alumni who hide their name are excluded from the directory entirely")
 public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
