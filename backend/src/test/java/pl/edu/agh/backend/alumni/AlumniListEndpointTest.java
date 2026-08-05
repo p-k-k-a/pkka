@@ -518,6 +518,23 @@ class AlumniListEndpointTest {
     }
 
     @Test
+    void sortByUnknownProperty_isRejectedAsBadRequest() throws Exception {
+        // Without the whitelist this would surface as an unhandled PropertyReferenceException — a 500
+        // for what is simply a client-side typo.
+        mockMvc.perform(get("/api/alumni").param("sort", "definitelyNotAColumn").with(verifiedAlumn()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void sortByUndocumentedEntityProperty_isRejectedAsBadRequest() throws Exception {
+        // `email` is a real column of `users`, but not a documented sort key. Allowing it would let a
+        // client order the directory by a field the owner may have hidden and infer its value from the
+        // resulting page order, so it must be rejected the same way as an unknown property.
+        mockMvc.perform(get("/api/alumni").param("sort", "email").with(verifiedAlumn()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void negativePage_isTreatedAsFirstPageRatherThanErroring() throws Exception {
         // Spring's Pageable resolver clamps a negative page index to 0 rather than rejecting the
         // request; asserting that behaviour explicitly so a future Spring upgrade that changes it

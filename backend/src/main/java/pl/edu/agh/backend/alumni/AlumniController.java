@@ -42,8 +42,15 @@ public class AlumniController {
                     Unknown tag IDs simply match no one instead of returning an error, since this is a search
                     filter rather than a write operation.
                     Sortable fields are columns of the alumnus' own record: `lastName`, `firstName`,
-                    `graduationYear`, `createdAt`.
+                    `graduationYear`, `createdAt`. Requesting any other sort property is rejected with 400.
                     """)
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Unsupported sort property",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
     public Page<AlumniListItemResponse> listAlumni(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Set<UUID> tagIds,

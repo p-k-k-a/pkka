@@ -8,8 +8,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.application.Application;
 import pl.edu.agh.backend.application.ApplicationRepository;
@@ -31,6 +33,16 @@ public class AlumniService {
      */
     static final int MAX_PAGE_SIZE = 100;
 
+    /**
+     * Sort properties accepted from the client: the documented directory columns plus {@code id} (the
+     * tiebreaker, harmless to request explicitly). Anything else is rejected with a 400 — an unknown
+     * name would otherwise surface as a 500 from deep inside Spring Data (PropertyReferenceException),
+     * and entity properties outside this list (e.g. {@code email}) would let clients order the
+     * directory by fields the owner may have hidden and infer their values from the resulting order.
+     */
+    static final Set<String> ALLOWED_SORT_PROPERTIES =
+            Set.of("lastName", "firstName", "graduationYear", "createdAt", "id");
+
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
 
@@ -41,16 +53,17 @@ public class AlumniService {
             Integer graduationYearFrom,
             Integer graduationYearTo,
             Pageable pageable) {
-        Specification<User> spec = Specification.where(UserSpecifications.matchesQuery(query))
-                .and(UserSpecifications.hasAnyTagId(tagIds))
-                .and(UserSpecifications.isMentor(mentor))
-                .and(UserSpecifications.graduationYearBetween(graduationYearFrom, graduationYearTo))
+        Specification<User> spec = Specification.allOf(
+                UserSpecifications.matchesQuery(query),
+                UserSpecifications.hasAnyTagId(tagIds),
+                UserSpecifications.isMentor(mentor),
+                UserSpecifications.graduationYearBetween(graduationYearFrom, graduationYearTo),
                 // The directory only ever shows genuine (approved) alumni, never every row of `users`
                 // (which also covers pending/rejected applicants and staff who merely logged in once).
-                .and(AlumniSpecifications.isApprovedAlumnus())
-                .and(AlumniSpecifications.hasVisibleName());
+                AlumniSpecifications.isApprovedAlumnus(),
+                AlumniSpecifications.hasVisibleName());
 
-        Page<User> page = userRepository.findAll(spec, capPageSize(pageable));
+        Page<User> page = userRepository.findAll(spec, sanitizePageable(pageable));
 
         // Mapped here, while the transaction (and Hibernate session) is still open: `from()` reads
         // user.getTags(), a LAZY collection. It is intentionally *not* eagerly fetched in the query above
@@ -73,7 +86,13 @@ public class AlumniService {
         return AlumniProfileResponse.from(user, AlumnEducation.from(approvedApplication));
     }
 
-    private Pageable capPageSize(Pageable pageable) {
+    private Pageable sanitizePageable(Pageable pageable) {
+        for (Sort.Order order : pageable.getSort()) {
+            if (!ALLOWED_SORT_PROPERTIES.contains(order.getProperty())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Unsupported sort property: " + order.getProperty());
+            }
+        }
         int pageSize = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
         return PageRequest.of(pageable.getPageNumber(), pageSize, withStableTiebreaker(pageable.getSort()));
     }
