@@ -1,12 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import type { ProfileResponse } from "@pkka/api";
+import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import { THEME } from "@/lib/theme";
 import { HeartHandshake, UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
-  profile: ProfileResponse;
+  profile: AlumnProfile;
 };
 
 export function ProfileHero({ profile }: ProfileHeroProps) {
