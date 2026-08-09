@@ -12,6 +12,9 @@ public record UpdateProfileRequest(
         @Size(max = 500) String linkedinUrl,
         @Size(max = 500) String githubUrl,
 
+        @Schema(description = "Willingness to mentor other alumni; null leaves it unchanged")
+        Boolean willingToMentor,
+
         @Valid
         @Schema(
                 description =

@@ -127,6 +127,7 @@ public class Application {
     public void approve(User reviewer) {
         ensureUnderReview();
         this.status = ApplicationStatus.APPROVED;
+        this.applicant.setGraduationYear(this.graduationYear);
         markReviewed(reviewer);
     }
 
