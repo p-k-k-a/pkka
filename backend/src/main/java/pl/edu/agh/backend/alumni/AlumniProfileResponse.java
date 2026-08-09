@@ -7,8 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import pl.edu.agh.backend.application.AlumnEducation;
-import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
 
 @Schema(
@@ -31,7 +31,8 @@ public record AlumniProfileResponse(
         Integer graduationYear,
         String fieldOfStudy,
         @Schema(description = "Date the alumn was approved") LocalDate alumnSince,
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<TagResponse> tags,
+        @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
     public static AlumniProfileResponse from(User user, AlumnEducation education) {
@@ -52,9 +53,10 @@ public record AlumniProfileResponse(
                 education.graduationYear(),
                 education.fieldOfStudy(),
                 education.alumnSince(),
+                user.isWillingToMentor(),
                 user.getTags().stream()
-                        .map(TagResponse::from)
-                        .sorted(Comparator.comparing(TagResponse::name))
+                        .map(UserTagResponse::from)
+                        .sorted(Comparator.comparing(UserTagResponse::name))
                         .toList(),
                 new ProfileVisibility(showName, showEmail, showDiscord));
     }
