@@ -1,6 +1,7 @@
 import { EventCard } from "@/components/events/event-card";
 import { CtaCard } from "@/components/home/cta-card";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { useListEvents as useEventsList } from "@pkka/api";
 import { router } from "expo-router";
 import { ActivityIndicator, FlatList, View } from "react-native";
@@ -13,6 +14,8 @@ const CTA = {
 };
 
 function ListHeader() {
+  const { user } = useAuth();
+
   return (
     <View className="px-5 gap-8">
       <View>
@@ -26,7 +29,7 @@ function ListHeader() {
           Dołącz do nas i buduj sieć kontaktów.
         </Text>
       </View>
-      <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
+      {!user && <CtaCard {...CTA} onPrimary={() => router.push("/login")} />}
     </View>
   );
 }
