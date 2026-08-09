@@ -19,12 +19,12 @@ import {
 } from "@/lib/application-constants";
 import {
   ApiError,
-  CreateApplicationRequestDtoConsentsItem,
+  CreateApplicationRequestConsentsItem,
   getGetMineQueryKey,
   useCreateApplication,
-  type CreateApplicationRequestDtoFaculty,
-  type CreateApplicationRequestDtoMeetingPreferencesItem,
-  type CreateApplicationRequestDtoStudyType,
+  type CreateApplicationRequestFaculty,
+  type CreateApplicationRequestMeetingPreferencesItem,
+  type CreateApplicationRequestStudyType,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
@@ -57,12 +57,12 @@ function ApplicationForm() {
   const form = useForm({
     defaultValues: {
       phoneNumber: "",
-      faculty: null as CreateApplicationRequestDtoFaculty | null,
+      faculty: null as CreateApplicationRequestFaculty | null,
       fieldOfStudy: "",
-      studyType: null as CreateApplicationRequestDtoStudyType | null,
+      studyType: null as CreateApplicationRequestStudyType | null,
       graduationYear: "",
       interests: [] as string[],
-      meetingPreferences: [] as CreateApplicationRequestDtoMeetingPreferencesItem[],
+      meetingPreferences: [] as CreateApplicationRequestMeetingPreferencesItem[],
       coCreationInterest: false,
       newsletterSubscription: false,
       acceptedTerms: false,
@@ -71,11 +71,11 @@ function ApplicationForm() {
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
-      const consents: CreateApplicationRequestDtoConsentsItem[] = [];
+      const consents: CreateApplicationRequestConsentsItem[] = [];
       if (value.acceptedTerms)
-        consents.push(CreateApplicationRequestDtoConsentsItem.REGULATIONS_PRIVACY);
+        consents.push(CreateApplicationRequestConsentsItem.REGULATIONS_PRIVACY);
       if (value.acceptedRodo)
-        consents.push(CreateApplicationRequestDtoConsentsItem.GDPR_DATA_PROCESSING);
+        consents.push(CreateApplicationRequestConsentsItem.GDPR_DATA_PROCESSING);
 
       if (!value.faculty || !value.studyType || consents.length < 2) {
         setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
@@ -189,9 +189,7 @@ function ApplicationForm() {
                   value={field.state.value}
                   options={FACULTIES}
                   placeholder="Wybierz wydział"
-                  onChange={(value) =>
-                    field.handleChange(value as CreateApplicationRequestDtoFaculty)
-                  }
+                  onChange={(value) => field.handleChange(value as CreateApplicationRequestFaculty)}
                 />
                 <FieldError field={field} />
               </FormField>
@@ -232,7 +230,7 @@ function ApplicationForm() {
                   options={STUDY_TYPES}
                   placeholder="Wybierz stopień"
                   onChange={(value) =>
-                    field.handleChange(value as CreateApplicationRequestDtoStudyType)
+                    field.handleChange(value as CreateApplicationRequestStudyType)
                   }
                 />
                 <FieldError field={field} />
@@ -301,7 +299,7 @@ function ApplicationForm() {
                   options={MEETING_FORMATS}
                   value={field.state.value}
                   onChange={(next) =>
-                    field.handleChange(next as CreateApplicationRequestDtoMeetingPreferencesItem[])
+                    field.handleChange(next as CreateApplicationRequestMeetingPreferencesItem[])
                   }
                 />
               </FormField>

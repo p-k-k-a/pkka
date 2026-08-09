@@ -5,7 +5,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
-  ApplicationResponseDtoStatus,
+  ApplicationResponseStatus,
   useGetMine,
   type GetMineQueryResult,
 } from "@pkka/api";
@@ -172,9 +172,9 @@ export function UserPanel() {
   const hasNoApplication = isError && error instanceof ApiError && error.status === 404;
   const isUnavailable = isError && !hasNoApplication;
   const knownStatus =
-    status === ApplicationResponseDtoStatus.UNDER_REVIEW ||
-    status === ApplicationResponseDtoStatus.APPROVED ||
-    status === ApplicationResponseDtoStatus.REJECTED
+    status === ApplicationResponseStatus.UNDER_REVIEW ||
+    status === ApplicationResponseStatus.APPROVED ||
+    status === ApplicationResponseStatus.REJECTED
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 

@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/hero";
 import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { useListPosts } from "@pkka/api";
 import { ChevronDown } from "lucide-react-native";
 import * as React from "react";
@@ -22,10 +23,12 @@ const CTA = {
 };
 
 function ListHeader() {
+  const { user } = useAuth();
+
   return (
     <View className="px-5 gap-10">
       <Hero {...HERO} />
-      <CtaCard {...CTA} />
+      {!user && <CtaCard {...CTA} />}
       <SectionHeading title={"Publiczne\nAktualności"} />
     </View>
   );
