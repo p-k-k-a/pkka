@@ -41,7 +41,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Aplikacja potrzebuje dostępu do Twojego kalendarza."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
