@@ -12,7 +12,9 @@ final class SlugUtils {
      * "Welcome to AGH Alumni!" -> "welcome-to-agh-alumni"
      */
     static String toSlug(String input) {
-        return Normalizer.normalize(input, Normalizer.Form.NFD)
+        // NFD does not decompose the stroked "ł", so it must be mapped by hand
+        // or titles like "Koło naukowe" would collapse to "koo-naukowe".
+        return Normalizer.normalize(input.replace('ł', 'l').replace('Ł', 'L'), Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")
