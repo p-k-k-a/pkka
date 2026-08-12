@@ -17,7 +17,10 @@ export function VisibilitySummary({ visibility, discordConnected }: VisibilitySu
   return (
     <ul className="divide-border divide-y">
       {rows.map((row) => (
-        <li key={row.label} className="flex items-center justify-between gap-4 py-2 first:pt-0 last:pb-0">
+        <li
+          key={row.label}
+          className="flex items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
+        >
           <span className="text-muted-foreground text-[13px]">{row.label}</span>
           {row.available ? (
             <span

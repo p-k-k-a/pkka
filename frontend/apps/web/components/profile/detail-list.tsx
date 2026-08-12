@@ -1,6 +1,12 @@
 import { cn } from "@/lib/utils";
 
-export function DetailList({ className, children }: { className?: string; children: React.ReactNode }) {
+export function DetailList({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return <dl className={cn("divide-border divide-y", className)}>{children}</dl>;
 }
 

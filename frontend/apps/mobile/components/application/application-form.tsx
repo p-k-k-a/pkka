@@ -189,9 +189,7 @@ function ApplicationForm() {
                   value={field.state.value}
                   options={FACULTIES}
                   placeholder="Wybierz wydział"
-                  onChange={(value) =>
-                    field.handleChange(value as CreateApplicationRequestFaculty)
-                  }
+                  onChange={(value) => field.handleChange(value as CreateApplicationRequestFaculty)}
                 />
                 <FieldError field={field} />
               </FormField>
