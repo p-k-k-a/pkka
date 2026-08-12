@@ -14,8 +14,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.event.TagResponse;
 import pl.edu.agh.backend.user.UserPrincipalExtractor;
+import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
@@ -38,7 +38,7 @@ public class ProfileController {
     @PatchMapping
     @Operation(
             summary = "Update own profile",
-            description = "Partial update: null or omitted fields clear the stored value")
+            description = "Partial update: null/omitted fields are left unchanged; a blank string clears the value")
     public ProfileResponse updateMyProfile(
             Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(keycloakId(authentication), request);
@@ -46,7 +46,7 @@ public class ProfileController {
 
     @GetMapping("/tags")
     @Operation(summary = "Get own assigned tags")
-    public List<TagResponse> getMyTags(Authentication authentication) {
+    public List<UserTagResponse> getMyTags(Authentication authentication) {
         return profileService.getTags(keycloakId(authentication));
     }
 
@@ -59,7 +59,7 @@ public class ProfileController {
                 description = "One or more tag IDs do not exist",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public List<TagResponse> updateMyTags(
+    public List<UserTagResponse> updateMyTags(
             Authentication authentication, @Valid @RequestBody UpdateTagsRequest request) {
         return profileService.updateTags(keycloakId(authentication), request.tagIds());
     }

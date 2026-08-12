@@ -28,7 +28,7 @@ public class ApplicationService {
     private final UserProvisioningService userProvisioningService;
 
     @Transactional
-    public ApplicationResponseDto create(Authentication authentication, CreateApplicationRequestDto request) {
+    public ApplicationResponse create(Authentication authentication, CreateApplicationRequest request) {
         User applicant = resolveApplicant(authentication);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
@@ -52,18 +52,18 @@ public class ApplicationService {
         request.consents().forEach(type -> application.addConsent(type, now));
 
         try {
-            return ApplicationResponseDto.from(applicationRepository.saveAndFlush(application));
+            return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
         } catch (DataIntegrityViolationException ex) {
             throw new ApplicationAlreadyExistsException();
         }
     }
 
     @Transactional(readOnly = true)
-    public ApplicationResponseDto getMine(Authentication authentication) {
+    public ApplicationResponse getMine(Authentication authentication) {
         User applicant = resolveApplicant(authentication);
         return applicationRepository
                 .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
-                .map(ApplicationResponseDto::from)
+                .map(ApplicationResponse::from)
                 .orElseThrow(ApplicationNotFoundException::new);
     }
 

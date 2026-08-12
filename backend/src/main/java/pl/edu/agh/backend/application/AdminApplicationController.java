@@ -30,7 +30,7 @@ public class AdminApplicationController {
 
     @GetMapping
     @Operation(summary = "List applications with full details, filtered by status (newest first)")
-    public Page<AdminApplicationResponseDto> listAdminApplications(
+    public Page<AdminApplicationResponse> listAdminApplications(
             @RequestParam(defaultValue = "UNDER_REVIEW") ApplicationStatus status,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return adminApplicationService.list(status, pageable);
@@ -40,7 +40,7 @@ public class AdminApplicationController {
     @Operation(summary = "Get full details of a single application")
     @ApiResponse(responseCode = "200", description = "Application details")
     @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
-    public AdminApplicationResponseDto getAdminApplication(@PathVariable UUID id) {
+    public AdminApplicationResponse getAdminApplication(@PathVariable UUID id) {
         return adminApplicationService.get(id);
     }
 
@@ -49,7 +49,7 @@ public class AdminApplicationController {
     @ApiResponse(responseCode = "200", description = "Application approved")
     @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
     @ApiResponse(responseCode = "409", description = "Application is not under review", content = @Content)
-    public ApplicationResponseDto approve(@PathVariable UUID id, Authentication authentication) {
+    public ApplicationResponse approve(@PathVariable UUID id, Authentication authentication) {
         return adminApplicationService.approve(authentication, id);
     }
 
@@ -58,9 +58,9 @@ public class AdminApplicationController {
     @ApiResponse(responseCode = "200", description = "Application rejected")
     @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
     @ApiResponse(responseCode = "409", description = "Application is not under review", content = @Content)
-    public ApplicationResponseDto reject(
+    public ApplicationResponse reject(
             @PathVariable UUID id,
-            @Valid @RequestBody(required = false) RejectApplicationRequestDto request,
+            @Valid @RequestBody(required = false) RejectApplicationRequest request,
             Authentication authentication) {
         String reason = request == null ? null : request.reason();
         return adminApplicationService.reject(authentication, id, reason);

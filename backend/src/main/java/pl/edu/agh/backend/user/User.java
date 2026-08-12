@@ -12,7 +12,6 @@ import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import pl.edu.agh.backend.event.Tag;
 
 /**
  * Local application user record. Keycloak is the source of truth for identity and roles.
@@ -36,6 +35,30 @@ public class User {
     @Column(name = "keycloak_id", nullable = false, unique = true, length = 36)
     private String keycloakId;
 
+    @Column(name = "first_name", length = 255)
+    private String firstName;
+
+    @Column(name = "last_name", length = 255)
+    private String lastName;
+
+    @Column(name = "email", length = 255)
+    private String email;
+
+    @Column(name = "bio", columnDefinition = "text")
+    private String bio;
+
+    @Column(name = "discord_id", length = 32)
+    private String discordId;
+
+    @Column(name = "show_name", nullable = false)
+    private boolean showName = true;
+
+    @Column(name = "show_email", nullable = false)
+    private boolean showEmail = true;
+
+    @Column(name = "show_discord", nullable = false)
+    private boolean showDiscord = true;
+
     @Column(name = "current_position", length = 255)
     private String currentPosition;
 
@@ -48,13 +71,19 @@ public class User {
     @Column(name = "github_url", length = 500)
     private String githubUrl;
 
+    @Column(name = "willing_to_mentor", nullable = false)
+    private boolean willingToMentor = false;
+
+    @Column(name = "graduation_year")
+    private Integer graduationYear;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_tags",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @BatchSize(size = 30)
-    private Set<Tag> tags = new HashSet<>();
+    private Set<UserTag> tags = new HashSet<>();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

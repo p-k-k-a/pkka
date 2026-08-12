@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public record ApplicationResponseDto(
+public record ApplicationResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ApplicationStatus status,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Faculty faculty,
@@ -33,7 +33,7 @@ public record ApplicationResponseDto(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static ApplicationResponseDto from(Application a) {
+    static ApplicationResponse from(Application a) {
         Set<String> interests = a.getInterests() == null ? new HashSet<>() : new HashSet<>(a.getInterests());
         Set<MeetingPreference> meetingPreferences =
                 a.getMeetingPreferences() == null || a.getMeetingPreferences().isEmpty()
@@ -45,7 +45,7 @@ public record ApplicationResponseDto(
                         .map(ApplicationConsent::getType)
                         .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConsentType.class)));
 
-        return new ApplicationResponseDto(
+        return new ApplicationResponse(
                 a.getId(),
                 a.getStatus(),
                 a.getFaculty(),
