@@ -4,6 +4,7 @@ import { TagPicker } from "@/components/profile/tag-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@/lib/profile-links";
 import { THEME } from "@/lib/theme";
@@ -108,6 +109,24 @@ function IdentityRow({
   );
 }
 
+function MentoringRow({ field }: { field: AnyFieldApi }) {
+  const willing = field.state.value as boolean;
+  const title = "Jestem otwarty na mentoring";
+  return (
+    <View className="border-input bg-muted/40 flex-row items-center gap-4 rounded-md border p-4">
+      <View className="flex-1 gap-1">
+        <Label className="text-foreground text-xs font-bold uppercase tracking-wider">
+          {title}
+        </Label>
+        <Text className="text-muted-foreground text-sm leading-5">
+          Inni alumni zobaczą, że chętnie pomagasz, i będą mogli filtrować katalog po mentorach.
+        </Text>
+      </View>
+      <Switch checked={willing} onCheckedChange={field.handleChange} accessibilityLabel={title} />
+    </View>
+  );
+}
+
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const queryClient = useQueryClient();
 
@@ -132,6 +151,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bio: profile.bio ?? "",
       linkedinUrl: profile.linkedinUrl ?? "",
       githubUrl: profile.githubUrl ?? "",
+      willingToMentor: profile.willingToMentor,
       showName: profile.visibility.name,
       showEmail: profile.visibility.email,
       showDiscord: profile.visibility.discord,
@@ -162,6 +182,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             bio: trimmed(value.bio),
             linkedinUrl: canonicalizeProfileUrl(value.linkedinUrl),
             githubUrl: canonicalizeProfileUrl(value.githubUrl),
+            willingToMentor: value.willingToMentor,
             visibility: {
               name: value.showName,
               email: value.showEmail,
@@ -275,6 +296,8 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             </FormField>
           )}
         </form.Field>
+
+        <form.Field name="willingToMentor">{(field) => <MentoringRow field={field} />}</form.Field>
       </FormSection>
 
       <FormSection
