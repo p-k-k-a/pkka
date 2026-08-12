@@ -1,6 +1,6 @@
 "use client";
 
-import { ApplicationResponseDtoStatus, useGetMine, type ApplicationResponseDto } from "@pkka/api";
+import { ApplicationResponseStatus, useGetMine, type ApplicationResponse } from "@pkka/api";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin, isVerifiedAlumn } from "@/lib/roles";
 
@@ -16,8 +16,8 @@ export function useVerificationStatus() {
     },
   });
 
-  const application = query.data?.data as ApplicationResponseDto | undefined;
-  const verifiedByApplication = application?.status === ApplicationResponseDtoStatus.APPROVED;
+  const application = query.data?.data as ApplicationResponse | undefined;
+  const verifiedByApplication = application?.status === ApplicationResponseStatus.APPROVED;
 
   return {
     ...query,
@@ -27,6 +27,6 @@ export function useVerificationStatus() {
     admin,
     application,
     isVerified: verifiedByRole || verifiedByApplication,
-    isRejected: application?.status === ApplicationResponseDtoStatus.REJECTED,
+    isRejected: application?.status === ApplicationResponseStatus.REJECTED,
   };
 }
