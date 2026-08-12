@@ -34,6 +34,10 @@ public class Post {
     @Column(nullable = false, length = 300)
     private String title;
 
+    /** Short teaser shown on list cards and banners. */
+    @Column(nullable = false, length = 500)
+    private String excerpt = "";
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

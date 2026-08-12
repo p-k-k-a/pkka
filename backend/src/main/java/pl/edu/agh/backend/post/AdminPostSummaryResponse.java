@@ -5,30 +5,26 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * DTO for a single post — includes content.
- *
- * TODO: enrich with authorDisplayName after the profile issue.
- */
-public record PostResponse(
+/** Admin list item — no content, but exposes status and drafts. */
+public record AdminPostSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) String excerpt,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String content,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
+        Instant publishedAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static PostResponse from(Post post) {
-        return new PostResponse(
+    static AdminPostSummaryResponse from(Post post) {
+        return new AdminPostSummaryResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
                 post.getExcerpt(),
-                post.getContent(),
-                post.getAuthor().getKeycloakId(),
+                post.getStatus(),
                 post.getPublishedAt(),
+                post.getCreatedAt(),
                 post.getUpdatedAt());
     }
 }

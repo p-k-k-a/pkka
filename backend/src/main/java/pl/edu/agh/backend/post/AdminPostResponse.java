@@ -5,28 +5,30 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * DTO for a list of posts — without the content field.
- *
- * authorId is the author's Keycloak ID. First/last name are not available
- * until the profile issue is completed (these details live in Keycloak, not in the app DB).
- * TODO: enrich with authorDisplayName after the profile issue.
- */
-public record PostSummaryResponse(
+/** Admin view of a post — includes drafts, status and content. */
+public record AdminPostResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) String excerpt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String content,
+        @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
         @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt) {
+        Instant publishedAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static PostSummaryResponse from(Post post) {
-        return new PostSummaryResponse(
+    static AdminPostResponse from(Post post) {
+        return new AdminPostResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
                 post.getExcerpt(),
+                post.getContent(),
+                post.getStatus(),
                 post.getAuthor().getKeycloakId(),
-                post.getPublishedAt());
+                post.getPublishedAt(),
+                post.getCreatedAt(),
+                post.getUpdatedAt());
     }
 }

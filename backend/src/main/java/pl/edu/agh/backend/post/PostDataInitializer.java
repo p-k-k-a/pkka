@@ -26,7 +26,11 @@ class PostDataInitializer implements ApplicationRunner {
             return userRepository.save(u);
         });
 
-        postRepository.save(buildPost(author, "Witajcie na platformie AGH Alumni!", """
+        postRepository.save(buildPost(
+                author,
+                "Witajcie na platformie AGH Alumni!",
+                "Platforma AGH Alumni to miejsce spotkań absolwentów Wydziału Informatyki.",
+                """
                 ## Witajcie!
 
                 Platforma AGH Alumni to miejsce spotkań absolwentów Wydziału Informatyki.
@@ -36,7 +40,11 @@ class PostDataInitializer implements ApplicationRunner {
                 Zachęcamy do uzupełnienia profilu i złożenia wniosku o dołączenie do klubu.
                 """));
 
-        postRepository.save(buildPost(author, "Jak działa weryfikacja statusu alumna?", """
+        postRepository.save(buildPost(
+                author,
+                "Jak działa weryfikacja statusu alumna?",
+                "Jak złożyć wniosek o status alumna i co daje pozytywna weryfikacja.",
+                """
                 ## Proces weryfikacji
 
                 Po rejestracji konta możesz złożyć wniosek o status alumna przez zakładkę \
@@ -46,7 +54,11 @@ class PostDataInitializer implements ApplicationRunner {
                 oraz materiałów archiwalnych.
                 """));
 
-        postRepository.save(buildPost(author, "Pierwsze wydarzenie Klubu Alumna — save the date", """
+        postRepository.save(buildPost(
+                author,
+                "Pierwsze wydarzenie Klubu Alumna — save the date",
+                "Już wkrótce ogłosimy datę pierwszego spotkania Klubu Alumna WI AGH.",
+                """
                 ## Save the date
 
                 Już wkrótce ogłosimy datę pierwszego spotkania Klubu Alumna Wydziału \
@@ -54,9 +66,10 @@ class PostDataInitializer implements ApplicationRunner {
                 """));
     }
 
-    private Post buildPost(User author, String title, String content) {
+    private Post buildPost(User author, String title, String excerpt, String content) {
         var post = new Post();
         post.setTitle(title);
+        post.setExcerpt(excerpt);
         post.setContent(content);
         post.setAuthor(author);
         post.publish();
