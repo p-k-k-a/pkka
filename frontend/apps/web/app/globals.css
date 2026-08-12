@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* radix-nova components (tabs, separator) style orientation via these variants. */
+@custom-variant data-horizontal (&[data-orientation="horizontal"]);
+@custom-variant data-vertical (&[data-orientation="vertical"]);
+
 :root {
   --background: oklch(1 0 0); /* #FFFFFF */
   --foreground: oklch(0.244 0.031 254.8); /* #16212F ink */
