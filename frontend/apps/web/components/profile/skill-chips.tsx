@@ -1,8 +1,8 @@
-import type { TagResponse } from "@pkka/api";
+import type { UserTagResponse } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 
 type SkillChipsProps = {
-  tags: TagResponse[];
+  tags: UserTagResponse[];
 };
 
 export function SkillChips({ tags }: SkillChipsProps) {

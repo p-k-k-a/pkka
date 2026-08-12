@@ -2,66 +2,38 @@ import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DiscordIcon } from "@/components/auth/discord-icon";
 import { GithubIcon, LinkedinIcon } from "@/components/profile/social-icons";
-import { isHttpsUrl } from "@/lib/profile-mock";
+import type { ProfileContacts } from "@/lib/profile-contacts";
 
-type ContactActionsProps = {
-  email?: string;
-  showEmail: boolean;
-  discordId?: string;
-  showDiscord: boolean;
-  linkedinUrl?: string;
-  githubUrl?: string;
-};
+export function ContactActions({ contacts }: { contacts: ProfileContacts }) {
+  const { email, discordUrl, linkedinUrl, githubUrl } = contacts;
 
-const isDiscordId = (id: string) => /^[0-9]{5,32}$/.test(id);
-
-export function ContactActions({
-  email,
-  showEmail,
-  discordId,
-  showDiscord,
-  linkedinUrl,
-  githubUrl,
-}: ContactActionsProps) {
-  const safeLinkedin = linkedinUrl && isHttpsUrl(linkedinUrl) ? linkedinUrl : null;
-  const safeGithub = githubUrl && isHttpsUrl(githubUrl) ? githubUrl : null;
-  const safeDiscord = showDiscord && discordId && isDiscordId(discordId) ? discordId : null;
-  const canEmail = showEmail && !!email;
-
-  if (!canEmail && !safeDiscord && !safeLinkedin && !safeGithub) return null;
+  if (!contacts.hasAny) return null;
 
   return (
-    <div className="flex flex-col gap-5">
-      {safeDiscord || canEmail ? (
-        <div className="flex flex-col gap-3">
-          {safeDiscord ? (
-            <Button asChild size="xl" className="w-full font-bold">
-              <a
-                href={`https://discord.com/users/${safeDiscord}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <DiscordIcon className="size-5" />
-                Kontakt przez Discord
-              </a>
-            </Button>
-          ) : null}
-          {canEmail ? (
-            <Button asChild size="xl" variant="secondary" className="w-full font-bold">
-              <a href={`mailto:${email}`}>
-                <Mail data-icon="inline-start" />
-                Kontakt przez E-mail
-              </a>
-            </Button>
-          ) : null}
-        </div>
+    <div className="flex flex-col gap-4">
+      {discordUrl ? (
+        <Button asChild size="xl" className="w-full font-bold">
+          <a href={discordUrl} target="_blank" rel="noopener noreferrer">
+            <DiscordIcon className="size-5" />
+            Kontakt przez Discord
+          </a>
+        </Button>
       ) : null}
 
-      {safeLinkedin || safeGithub ? (
+      {email ? (
+        <Button asChild size="xl" variant="secondary" className="w-full font-bold">
+          <a href={`mailto:${email}`}>
+            <Mail data-icon="inline-start" />
+            {email}
+          </a>
+        </Button>
+      ) : null}
+
+      {linkedinUrl || githubUrl ? (
         <div className="flex flex-wrap gap-6">
-          {safeLinkedin ? (
+          {linkedinUrl ? (
             <a
-              href={safeLinkedin}
+              href={linkedinUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent inline-flex items-center gap-1.5 text-sm font-semibold tracking-widest uppercase underline"
@@ -70,9 +42,9 @@ export function ContactActions({
               LinkedIn
             </a>
           ) : null}
-          {safeGithub ? (
+          {githubUrl ? (
             <a
-              href={safeGithub}
+              href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent inline-flex items-center gap-1.5 text-sm font-semibold tracking-widest uppercase underline"
