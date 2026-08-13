@@ -63,6 +63,8 @@ class AdminApplicationServiceTest {
         assertThat(response.status()).isEqualTo(ApplicationStatus.APPROVED);
         assertThat(applicant.getGraduationYear()).isEqualTo(2020);
 
+        verify(userProvisioningService).provisionIfAbsent(any());
+
         ArgumentCaptor<ApplicationApprovedEvent> eventCaptor = ArgumentCaptor.forClass(ApplicationApprovedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().applicantKeycloakId()).isEqualTo("applicant-kc");
