@@ -1,9 +1,8 @@
 package pl.edu.agh.backend.security;
 
 import lombok.experimental.UtilityClass;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 
+/** Realm role names as Keycloak issues them, without the {@code ROLE_} authority prefix. */
 @UtilityClass
 public class Roles {
 
@@ -14,13 +13,4 @@ public class Roles {
     public static final String ADMIN = "ADMIN";
 
     public static final String ROLE_PREFIX = "ROLE_";
-
-    public boolean has(Authentication authentication, String role) {
-        String authority = ROLE_PREFIX + role;
-        return authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .anyMatch(authority::equals);
-    }
 }

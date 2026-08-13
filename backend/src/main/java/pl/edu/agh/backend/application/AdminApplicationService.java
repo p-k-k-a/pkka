@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -35,8 +35,8 @@ public class AdminApplicationService {
     }
 
     @Transactional
-    public ApplicationResponse approve(Authentication authentication, UUID applicationId) {
-        User reviewer = currentUserService.require(authentication);
+    public ApplicationResponse approve(Caller caller, UUID applicationId) {
+        User reviewer = currentUserService.require(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
@@ -48,8 +48,8 @@ public class AdminApplicationService {
     }
 
     @Transactional
-    public ApplicationResponse reject(Authentication authentication, UUID applicationId, String reason) {
-        User reviewer = currentUserService.require(authentication);
+    public ApplicationResponse reject(Caller caller, UUID applicationId, String reason) {
+        User reviewer = currentUserService.require(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 

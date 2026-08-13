@@ -3,7 +3,7 @@ package pl.edu.agh.backend.event;
 import java.util.EnumSet;
 import java.util.Set;
 import lombok.experimental.UtilityClass;
-import org.springframework.security.core.Authentication;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 
 /**
@@ -14,13 +14,13 @@ import pl.edu.agh.backend.security.Roles;
 public class EventVisibility {
 
     /** The audiences the caller belongs to. {@code SPECIFIC_GROUP} is nobody's until groups exist. */
-    public Set<Audience> audiencesOf(Authentication authentication) {
-        return Roles.has(authentication, Roles.VERIFIED_ALUMN)
+    public Set<Audience> audiencesOf(Caller caller) {
+        return caller.hasRole(Roles.VERIFIED_ALUMN)
                 ? EnumSet.of(Audience.PUBLIC, Audience.ALL_ALUMNI)
                 : EnumSet.of(Audience.PUBLIC);
     }
 
-    public boolean isVisibleTo(Event event, Authentication authentication) {
-        return audiencesOf(authentication).contains(event.getAudience());
+    public boolean isVisibleTo(Event event, Caller caller) {
+        return audiencesOf(caller).contains(event.getAudience());
     }
 }

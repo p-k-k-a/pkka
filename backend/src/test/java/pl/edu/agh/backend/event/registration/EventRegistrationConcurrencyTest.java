@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -21,12 +22,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -34,6 +31,8 @@ import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventRepository;
 import pl.edu.agh.backend.event.EventType;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
@@ -89,12 +88,12 @@ class EventRegistrationConcurrencyTest {
                 .audience(Audience.PUBLIC)
                 .build());
 
-        List<Authentication> authentications = new ArrayList<>();
+        List<Caller> callers = new ArrayList<>();
         for (int i = 0; i < CONTENDERS; i++) {
             User user = new User();
             user.setKeycloakId(UUID.randomUUID().toString());
             contenders.add(userRepository.save(user));
-            authentications.add(verifiedAlumn(user.getKeycloakId()));
+            callers.add(verifiedAlumn(user.getKeycloakId()));
         }
 
         // One latch for all of them, so the sign-ups actually overlap instead of trickling in.
@@ -102,11 +101,11 @@ class EventRegistrationConcurrencyTest {
         ExecutorService pool = Executors.newFixedThreadPool(CONTENDERS);
         try {
             List<Future<Boolean>> attempts = new ArrayList<>();
-            for (Authentication authentication : authentications) {
+            for (Caller caller : callers) {
                 attempts.add(pool.submit(() -> {
                     startLine.await();
                     try {
-                        eventRegistrationService.register(event.getId(), authentication);
+                        eventRegistrationService.register(event.getId(), caller);
                         return true;
                     } catch (EventRegistrationConflictException ex) {
                         assertThat(ex.getReason()).isEqualTo(EventRegistrationConflictException.Reason.NO_SEATS_LEFT);
@@ -131,12 +130,8 @@ class EventRegistrationConcurrencyTest {
         }
     }
 
-    private static Authentication verifiedAlumn(String keycloakId) {
-        Jwt jwt = Jwt.withTokenValue("test-token")
-                .header("alg", "none")
-                .subject(keycloakId)
-                .build();
-        return new JwtAuthenticationToken(jwt, List.of(new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN")));
+    private static Caller verifiedAlumn(String keycloakId) {
+        return new Caller(keycloakId, Set.of(Roles.VERIFIED_ALUMN));
     }
 
     @TestConfiguration

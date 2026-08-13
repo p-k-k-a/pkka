@@ -10,9 +10,9 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.backend.event.registration.dto.EventRegistrationResponse;
+import pl.edu.agh.backend.security.Caller;
 
 /** The caller's own registration — one per (event, user). The full list is an admin view, elsewhere. */
 @RestController
@@ -49,8 +49,8 @@ public class EventRegistrationController {
                 description = "Already registered, registration closed, or no seats left",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public EventRegistrationResponse register(@PathVariable UUID eventId, Authentication authentication) {
-        return eventRegistrationService.register(eventId, authentication);
+    public EventRegistrationResponse register(@PathVariable UUID eventId, Caller caller) {
+        return eventRegistrationService.register(eventId, caller);
     }
 
     @DeleteMapping
@@ -65,7 +65,7 @@ public class EventRegistrationController {
                 description = "No such event, or the user is not registered for it",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public void unregister(@PathVariable UUID eventId, Authentication authentication) {
-        eventRegistrationService.unregister(eventId, authentication);
+    public void unregister(@PathVariable UUID eventId, Caller caller) {
+        eventRegistrationService.unregister(eventId, caller);
     }
 }

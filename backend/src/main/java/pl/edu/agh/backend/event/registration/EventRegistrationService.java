@@ -5,12 +5,12 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventService;
 import pl.edu.agh.backend.event.registration.dto.EventRegistrationResponse;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -30,9 +30,9 @@ public class EventRegistrationService {
      * backstop for the duplicate check below.
      */
     @Transactional
-    public EventRegistrationResponse register(UUID eventId, Authentication authentication) {
-        User user = currentUserService.require(authentication);
-        Event event = eventService.findVisibleForUpdate(eventId, authentication);
+    public EventRegistrationResponse register(UUID eventId, Caller caller) {
+        User user = currentUserService.require(caller);
+        Event event = eventService.findVisibleForUpdate(eventId, caller);
 
         if (isRegistrationClosed(event)) {
             throw EventRegistrationConflictException.registrationClosed(eventId);
@@ -63,9 +63,9 @@ public class EventRegistrationService {
      * keeping someone in a seat they no longer want helps nobody.
      */
     @Transactional
-    public void unregister(UUID eventId, Authentication authentication) {
-        User user = currentUserService.require(authentication);
-        Event event = eventService.findVisible(eventId, authentication);
+    public void unregister(UUID eventId, Caller caller) {
+        User user = currentUserService.require(caller);
+        Event event = eventService.findVisible(eventId, caller);
 
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())

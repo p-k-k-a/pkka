@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -22,8 +22,8 @@ public class ApplicationService {
     private final CurrentUserService currentUserService;
 
     @Transactional
-    public ApplicationResponse create(Authentication authentication, CreateApplicationRequest request) {
-        User applicant = currentUserService.require(authentication);
+    public ApplicationResponse create(Caller caller, CreateApplicationRequest request) {
+        User applicant = currentUserService.require(caller);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
@@ -53,8 +53,8 @@ public class ApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public ApplicationResponse getMine(Authentication authentication) {
-        User applicant = currentUserService.require(authentication);
+    public ApplicationResponse getMine(Caller caller) {
+        User applicant = currentUserService.require(caller);
         return applicationRepository
                 .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
                 .map(ApplicationResponse::from)

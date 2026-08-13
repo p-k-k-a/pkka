@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +20,7 @@ import pl.edu.agh.backend.event.dto.EventDetailsResponse;
 import pl.edu.agh.backend.event.dto.EventListItemResponse;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -33,28 +33,25 @@ public class EventService {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final CurrentUserService currentUserService;
 
-    public Page<EventListItemResponse> list(
-            Authentication authentication, Collection<String> tagNames, Pageable pageable) {
+    public Page<EventListItemResponse> list(Caller caller, Collection<String> tagNames, Pageable pageable) {
         Specification<Event> spec = Specification.allOf(
-                startsAfter(Instant.now()),
-                audienceIn(EventVisibility.audiencesOf(authentication)),
-                hasAnyTag(tagNames));
+                startsAfter(Instant.now()), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
         Map<UUID, Long> seatsTaken = seatsTakenByEvent(events.getContent());
         return events.map(event -> EventListItemResponse.from(event, seatsTaken.getOrDefault(event.getId(), 0L)));
     }
 
-    public EventDetailsResponse getDetails(UUID id, Authentication authentication) {
-        Event event = findVisible(id, authentication);
-        boolean registered = currentUserId(authentication)
+    public EventDetailsResponse getDetails(UUID id, Caller caller) {
+        Event event = findVisible(id, caller);
+        boolean registered = currentUserId(caller)
                 .map(userId -> eventRegistrationRepository.existsByEventIdAndUserId(id, userId))
                 .orElse(false);
         return EventDetailsResponse.from(event, eventRegistrationRepository.countByEventId(id), registered);
     }
 
-    public Event findVisible(UUID id, Authentication authentication) {
-        return requireVisible(eventRepository.findById(id), id, authentication);
+    public Event findVisible(UUID id, Caller caller) {
+        return requireVisible(eventRepository.findById(id), id, caller);
     }
 
     /**
@@ -63,14 +60,14 @@ public class EventService {
      * decision it protects.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public Event findVisibleForUpdate(UUID id, Authentication authentication) {
-        return requireVisible(eventRepository.findForUpdateById(id), id, authentication);
+    public Event findVisibleForUpdate(UUID id, Caller caller) {
+        return requireVisible(eventRepository.findForUpdateById(id), id, caller);
     }
 
     /** Not visible is reported as not existing, so the caller cannot probe for hidden events. */
-    private Event requireVisible(Optional<Event> found, UUID id, Authentication authentication) {
+    private Event requireVisible(Optional<Event> found, UUID id, Caller caller) {
         Event event = found.orElseThrow(() -> new EventNotFoundException(id));
-        if (!EventVisibility.isVisibleTo(event, authentication)) {
+        if (!EventVisibility.isVisibleTo(event, caller)) {
             throw new EventNotFoundException(id);
         }
         return event;
@@ -85,7 +82,7 @@ public class EventService {
                 .collect(Collectors.toMap(EventSeatCount::getEventId, EventSeatCount::getSeatsTaken));
     }
 
-    private Optional<UUID> currentUserId(Authentication authentication) {
-        return currentUserService.find(authentication).map(User::getId);
+    private Optional<UUID> currentUserId(Caller caller) {
+        return currentUserService.find(caller).map(User::getId);
     }
 }

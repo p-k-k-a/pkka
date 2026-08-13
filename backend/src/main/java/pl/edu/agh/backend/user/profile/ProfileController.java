@@ -10,9 +10,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import pl.edu.agh.backend.user.CurrentUserService;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
@@ -25,27 +24,25 @@ import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
 public class ProfileController {
 
     private final ProfileService profileService;
-    private final CurrentUserService currentUserService;
 
     @GetMapping
     @Operation(summary = "Get own profile")
-    public ProfileResponse getMyProfile(Authentication authentication) {
-        return profileService.getProfile(currentUserService.requireKeycloakId(authentication));
+    public ProfileResponse getMyProfile(Caller caller) {
+        return profileService.getProfile(caller.requireKeycloakId());
     }
 
     @PatchMapping
     @Operation(
             summary = "Update own profile",
             description = "Partial update: null/omitted fields are left unchanged; a blank string clears the value")
-    public ProfileResponse updateMyProfile(
-            Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
-        return profileService.updateProfile(currentUserService.requireKeycloakId(authentication), request);
+    public ProfileResponse updateMyProfile(Caller caller, @Valid @RequestBody UpdateProfileRequest request) {
+        return profileService.updateProfile(caller.requireKeycloakId(), request);
     }
 
     @GetMapping("/tags")
     @Operation(summary = "Get own assigned tags")
-    public List<UserTagResponse> getMyTags(Authentication authentication) {
-        return profileService.getTags(currentUserService.requireKeycloakId(authentication));
+    public List<UserTagResponse> getMyTags(Caller caller) {
+        return profileService.getTags(caller.requireKeycloakId());
     }
 
     @PutMapping("/tags")
@@ -57,8 +54,7 @@ public class ProfileController {
                 description = "One or more tag IDs do not exist",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public List<UserTagResponse> updateMyTags(
-            Authentication authentication, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(currentUserService.requireKeycloakId(authentication), request.tagIds());
+    public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
+        return profileService.updateTags(caller.requireKeycloakId(), request.tagIds());
     }
 }
