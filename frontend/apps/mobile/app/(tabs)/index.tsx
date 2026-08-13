@@ -23,7 +23,7 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 gap-10">
+    <View className="px-5 pt-8 gap-10">
       <Hero {...HERO} />
       <CtaCard {...CTA} />
       <SectionHeading title={"Publiczne\nAktualności"} />
@@ -56,7 +56,7 @@ export default function HomeScreen() {
     <FlatList
       className="flex-1 bg-background"
       data={posts}
-      keyExtractor={(item) => item.id}
+      keyExtractor={(item) => item.id!}
       renderItem={({ item }) => (
         <View className="px-5">
           <PostCard post={item} />
