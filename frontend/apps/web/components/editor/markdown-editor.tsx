@@ -21,8 +21,6 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
 
-const ACTIVE_TOGGLE = "data-[state=on]:bg-accent data-[state=on]:text-accent-foreground";
-
 type MarkdownEditorProps = {
   initialContent: string;
   onChange: (markdown: string) => void;
@@ -136,7 +134,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
             title={label}
             pressed={active}
             onPressedChange={run}
-            className={ACTIVE_TOGGLE}
           >
             <Icon />
           </Toggle>
@@ -150,7 +147,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
             title={label}
             pressed={active}
             onPressedChange={run}
-            className={ACTIVE_TOGGLE}
           >
             <Icon />
           </Toggle>
