@@ -182,11 +182,14 @@ export function PostForm({ post }: PostFormProps) {
                   <TabsTrigger value="editor">Edytor</TabsTrigger>
                   <TabsTrigger value="preview">Podgląd</TabsTrigger>
                 </TabsList>
-                <TabsContent value="editor">
+                {/* forceMount keeps the Tiptap instance (and its undo history) alive
+                    while the preview tab is shown — unmounting would reset it to the
+                    initial content. */}
+                <TabsContent value="editor" forceMount className="data-[state=inactive]:hidden">
                   <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
                 </TabsContent>
                 <TabsContent value="preview">
-                  <div className="border-input min-h-64 rounded-lg border px-4 py-3">
+                  <div className="border-border bg-background min-h-64 rounded-lg border px-4 py-3">
                     {content.trim() ? (
                       <ProseContent content={content} />
                     ) : (
@@ -197,9 +200,6 @@ export function PostForm({ post }: PostFormProps) {
                   </div>
                 </TabsContent>
               </Tabs>
-              <p className="text-muted-foreground text-xs">
-                Treść zapisujemy jako Markdown — tak samo wyświetli się w aplikacji mobilnej.
-              </p>
             </section>
 
             <section className="space-y-3">

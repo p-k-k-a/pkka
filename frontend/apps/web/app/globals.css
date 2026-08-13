@@ -1,8 +1,7 @@
 @import "tailwindcss";
-
-/* radix-nova components (tabs, separator) style orientation via these variants. */
-@custom-variant data-horizontal (&[data-orientation="horizontal"]);
-@custom-variant data-vertical (&[data-orientation="vertical"]);
+/* The radix-nova shadcn components style their states (data-active, data-checked,
+   data-horizontal, ...) via custom variants shipped with the shadcn package. */
+@import "shadcn/tailwind.css";
 
 :root {
   --background: oklch(1 0 0); /* #FFFFFF */
