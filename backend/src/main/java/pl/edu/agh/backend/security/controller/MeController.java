@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.security.controller.dto.MeResponse;
 
 @RestController
@@ -62,8 +63,8 @@ public class MeController {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(Objects::nonNull)
-                .filter(authority -> authority.startsWith("ROLE_"))
-                .map(authority -> authority.replaceFirst("^ROLE_", ""))
+                .filter(authority -> authority.startsWith(Roles.ROLE_PREFIX))
+                .map(authority -> authority.substring(Roles.ROLE_PREFIX.length()))
                 .sorted()
                 .toList();
     }

@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.event;
+package pl.edu.agh.backend.event.tag;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.event.tag.dto.TagResponse;
 
 @RestController
 @RequestMapping("/api/tags")

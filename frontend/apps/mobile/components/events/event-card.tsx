@@ -4,18 +4,18 @@ import { Text } from "@/components/ui/text";
 import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
 import { formatEventDateLong } from "@/lib/utils";
-import { EventListItemDtoType, type EventListItemDto } from "@pkka/api";
+import { EventListItemResponseType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type EventCardProps = {
-  event: EventListItemDto;
+  event: EventListItemResponse;
 };
 
 function EventCard({ event }: EventCardProps) {
   const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
-  const isOnline = type === EventListItemDtoType.ONLINE;
+  const isOnline = type === EventListItemResponseType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
 
   const card = (
