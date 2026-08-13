@@ -6,10 +6,6 @@ import lombok.experimental.UtilityClass;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 
-/**
- * Which events a caller may see. Registration uses it too, so an event you cannot see is also one you
- * cannot sign up for, and both report the same 404 rather than leaking its existence.
- */
 @UtilityClass
 public class EventVisibility {
 

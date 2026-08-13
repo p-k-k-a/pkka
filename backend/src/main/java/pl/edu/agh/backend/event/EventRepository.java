@@ -16,10 +16,7 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
     @NullMarked
     Optional<Event> findById(UUID id);
 
-    /**
-     * {@code SELECT ... FOR UPDATE} — the serialization point for seat booking. Tags are not fetched
-     * here; booking a seat only needs the event row itself.
-     */
+    /** {@code SELECT ... FOR UPDATE} — the serialization point for seat booking. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Event> findForUpdateById(UUID id);
 }

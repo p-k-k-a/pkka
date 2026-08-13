@@ -1,6 +1,5 @@
--- Dev-only sign-ups, so the "X of Y seats" counters are not all zero while working on the UI. The file
--- name has to sort after R__dev_seed_alumni and R__dev_seed_events — that is what makes the rows below
--- resolvable. No event is filled up, so there is always a seat left to take by hand.
+-- Dev-only sign-ups, so the "X of Y seats" counters are not all zero. The file name has to sort after
+-- R__dev_seed_alumni and R__dev_seed_events.
 INSERT INTO event_registrations (id, event_id, user_id, registered_at)
 SELECT
     -- Derived from the pair: re-running this repeatable migration must not pile up new rows.

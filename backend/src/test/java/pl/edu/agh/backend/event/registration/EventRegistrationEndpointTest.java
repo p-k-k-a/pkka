@@ -40,10 +40,7 @@ import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
-/**
- * Signing up, cancelling, and the seat counters both feed. The "cannot be oversold" guarantee needs real
- * parallel transactions and lives in {@link EventRegistrationConcurrencyTest}.
- */
+/** The "cannot be oversold" guarantee needs real parallel transactions and lives in {@link EventRegistrationConcurrencyTest}. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
@@ -93,7 +90,6 @@ class EventRegistrationEndpointTest {
                 .build());
     }
 
-    /** Someone other than the caller who has already taken a seat. */
     private void registerOtherAlumn(Event event) {
         User other = new User();
         other.setKeycloakId(UUID.randomUUID().toString());
@@ -113,7 +109,6 @@ class EventRegistrationEndpointTest {
                         new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
     }
 
-    /** A signed-in user who is not a verified alumnus. */
     private RequestPostProcessor plainUser() {
         return jwt().jwt(token -> token.subject(UUID.randomUUID().toString()))
                 .authorities(new SimpleGrantedAuthority("ROLE_USER"));
@@ -140,7 +135,6 @@ class EventRegistrationEndpointTest {
 
     @Test
     void registerForAlumniOnlyEventAsPlainUser_isNotFound() throws Exception {
-        // Invisible to a plain user in the listing, so signing up reports the same 404.
         Event event = newEvent(Audience.ALL_ALUMNI, 10);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
@@ -256,7 +250,6 @@ class EventRegistrationEndpointTest {
 
     @Test
     void registerForEventOutsideOwnAudience_isNotFound() throws Exception {
-        // Reported as missing rather than forbidden — a 403 here would confirm that the event exists.
         Event event = newEvent(Audience.SPECIFIC_GROUP, 10);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())

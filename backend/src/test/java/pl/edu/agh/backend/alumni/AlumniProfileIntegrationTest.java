@@ -318,10 +318,10 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
-    void provisionIfAbsentCreatesRowWithoutContactingKeycloak() {
+    void getOrCreateCreatesRowWithoutContactingKeycloak() {
         String keycloakId = UUID.randomUUID().toString();
 
-        userProvisioningService.provisionIfAbsent(keycloakId);
+        userProvisioningService.getOrCreate(keycloakId);
 
         User created = userRepository.findByKeycloakId(keycloakId).orElseThrow();
         assertThat(created.getFirstName()).isNull();

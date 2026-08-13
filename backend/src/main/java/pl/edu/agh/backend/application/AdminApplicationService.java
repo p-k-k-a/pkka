@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.CurrentUserService;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
 @Service
@@ -16,7 +16,7 @@ import pl.edu.agh.backend.user.User;
 public class AdminApplicationService {
 
     private final ApplicationRepository applicationRepository;
-    private final CurrentUserService currentUserService;
+    private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -36,7 +36,7 @@ public class AdminApplicationService {
 
     @Transactional
     public ApplicationResponse approve(Caller caller, UUID applicationId) {
-        User reviewer = currentUserService.require(caller);
+        User reviewer = callerUserService.getOrCreate(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
@@ -49,7 +49,7 @@ public class AdminApplicationService {
 
     @Transactional
     public ApplicationResponse reject(Caller caller, UUID applicationId, String reason) {
-        User reviewer = currentUserService.require(caller);
+        User reviewer = callerUserService.getOrCreate(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 

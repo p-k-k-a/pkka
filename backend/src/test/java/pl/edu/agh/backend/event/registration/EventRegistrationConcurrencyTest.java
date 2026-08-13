@@ -36,10 +36,7 @@ import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
-/**
- * A seat limit has to hold under concurrent sign-ups, which needs a transaction per contender running at
- * the same time — hence a thread pool instead of MockMvc, and deliberately no {@code @Transactional}.
- */
+/** One transaction per contender at the same time — hence a thread pool, and deliberately no {@code @Transactional}. */
 @SpringBootTest
 @Testcontainers
 @Import(EventRegistrationConcurrencyTest.TestSecurityBeans.class)
@@ -67,7 +64,6 @@ class EventRegistrationConcurrencyTest {
     private Event event;
     private final List<User> contenders = new ArrayList<>();
 
-    /** Nothing runs in a test transaction here, so the committed rows go by hand. */
     @AfterEach
     void cleanUp() {
         eventRegistrationRepository.deleteAll();

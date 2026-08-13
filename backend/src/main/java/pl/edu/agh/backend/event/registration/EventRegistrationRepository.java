@@ -16,10 +16,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
 
     long countByEventId(UUID eventId);
 
-    /**
-     * Seat counts for a whole page in one query instead of a {@code count(*)} per row. An event nobody
-     * signed up for has no row here at all, so callers have to read a missing entry as zero.
-     */
+    /** An event nobody signed up for has no row here at all, so a missing entry reads as zero. */
     @Query("""
             select r.event.id as eventId, count(r) as seatsTaken
             from EventRegistration r

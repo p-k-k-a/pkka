@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.backend.event.registration.dto.EventRegistrationResponse;
 import pl.edu.agh.backend.security.Caller;
 
-/** The caller's own registration — one per (event, user). The full list is an admin view, elsewhere. */
 @RestController
 @RequestMapping("/api/events/{eventId}/registration")
 @RequiredArgsConstructor

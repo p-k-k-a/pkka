@@ -9,10 +9,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import pl.edu.agh.backend.security.Caller;
 
-/**
- * Turns the Spring Security token into a {@link Caller} for any controller method that declares one.
- * Anonymous requests get {@link Caller#anonymous()} rather than {@code null}.
- */
+/** Anonymous requests get {@link Caller#anonymous()} rather than {@code null}. */
 @Component
 public class CallerArgumentResolver implements HandlerMethodArgumentResolver {
 

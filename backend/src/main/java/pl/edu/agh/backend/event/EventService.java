@@ -21,7 +21,7 @@ import pl.edu.agh.backend.event.dto.EventListItemResponse;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.CurrentUserService;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
 @Service
@@ -31,7 +31,7 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
-    private final CurrentUserService currentUserService;
+    private final CallerUserService callerUserService;
 
     public Page<EventListItemResponse> list(Caller caller, Collection<String> tagNames, Pageable pageable) {
         Specification<Event> spec = Specification.allOf(
@@ -54,11 +54,7 @@ public class EventService {
         return requireVisible(eventRepository.findById(id), id, caller);
     }
 
-    /**
-     * {@link #findVisible} plus a row lock, for callers about to decide something from the seat count.
-     * {@code MANDATORY} because a lock taken in a transaction of its own would be released before the
-     * decision it protects.
-     */
+    /** {@code MANDATORY} because a lock taken in a transaction of its own would be released too early. */
     @Transactional(propagation = Propagation.MANDATORY)
     public Event findVisibleForUpdate(UUID id, Caller caller) {
         return requireVisible(eventRepository.findForUpdateById(id), id, caller);
@@ -83,6 +79,6 @@ public class EventService {
     }
 
     private Optional<UUID> currentUserId(Caller caller) {
-        return currentUserService.find(caller).map(User::getId);
+        return callerUserService.find(caller).map(User::getId);
     }
 }

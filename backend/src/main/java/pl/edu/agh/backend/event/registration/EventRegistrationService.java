@@ -11,7 +11,7 @@ import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventService;
 import pl.edu.agh.backend.event.registration.dto.EventRegistrationResponse;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.CurrentUserService;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
 @Service
@@ -20,18 +20,16 @@ public class EventRegistrationService {
 
     private final EventService eventService;
     private final EventRegistrationRepository eventRegistrationRepository;
-    private final CurrentUserService currentUserService;
+    private final CallerUserService callerUserService;
     private final Clock clock;
 
     /**
-     * Counting seats and inserting is a check-then-act, so it runs in one transaction that starts by
-     * locking the event row: competing sign-ups queue up there and each counts what the previous one
-     * already committed. The unique constraint on {@code (event_id, user_id)} is the database-level
-     * backstop for the duplicate check below.
+     * Counting seats and inserting is a check-then-act, so it opens by locking the event row and the
+     * unique constraint on {@code (event_id, user_id)} backs up the duplicate check below.
      */
     @Transactional
     public EventRegistrationResponse register(UUID eventId, Caller caller) {
-        User user = currentUserService.require(caller);
+        User user = callerUserService.getOrCreate(caller);
         Event event = eventService.findVisibleForUpdate(eventId, caller);
 
         if (isRegistrationClosed(event)) {
@@ -58,13 +56,10 @@ public class EventRegistrationService {
                 eventId, registration.getRegisteredAt(), (int) seatsTaken + 1, event.getSeatLimit());
     }
 
-    /**
-     * No lock needed: a delete only lowers the seat count. Allowed even after registration has closed —
-     * keeping someone in a seat they no longer want helps nobody.
-     */
+    /** No lock needed: a delete only lowers the seat count. Allowed after registration has closed. */
     @Transactional
     public void unregister(UUID eventId, Caller caller) {
-        User user = currentUserService.require(caller);
+        User user = callerUserService.getOrCreate(caller);
         Event event = eventService.findVisible(eventId, caller);
 
         EventRegistration registration = eventRegistrationRepository
@@ -73,7 +68,6 @@ public class EventRegistrationService {
         eventRegistrationRepository.delete(registration);
     }
 
-    /** Closed at the organizer's deadline if there is one, and at the event's start in any case. */
     private boolean isRegistrationClosed(Event event) {
         Instant now = Instant.now(clock);
         Instant closesAt = event.getRegistrationClosesAt();

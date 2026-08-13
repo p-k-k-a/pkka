@@ -8,7 +8,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.CurrentUserService;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
 @Service
@@ -19,11 +19,11 @@ public class ApplicationService {
             List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED);
 
     private final ApplicationRepository applicationRepository;
-    private final CurrentUserService currentUserService;
+    private final CallerUserService callerUserService;
 
     @Transactional
     public ApplicationResponse create(Caller caller, CreateApplicationRequest request) {
-        User applicant = currentUserService.require(caller);
+        User applicant = callerUserService.getOrCreate(caller);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
@@ -54,7 +54,7 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public ApplicationResponse getMine(Caller caller) {
-        User applicant = currentUserService.require(caller);
+        User applicant = callerUserService.getOrCreate(caller);
         return applicationRepository
                 .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
                 .map(ApplicationResponse::from)
