@@ -1,7 +1,8 @@
+import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import type { ProfileResponse } from "@pkka/api";
 import { THEME } from "@/lib/theme";
-import { UserRound } from "lucide-react-native";
+import { HeartHandshake, UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
@@ -42,6 +43,14 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
           <Text className="text-sm text-muted-foreground">
             Absolwent: {profile.fieldOfStudy} - {profile.graduationYear}
           </Text>
+        ) : null}
+        {profile.willingToMentor ? (
+          <Badge className="mt-2 gap-1.5 self-start px-3 py-1">
+            <HeartHandshake size={13} color={THEME.light.primaryForeground} />
+            <Text className="text-xs font-semibold uppercase tracking-wider">
+              Otwarty na mentoring
+            </Text>
+          </Badge>
         ) : null}
       </View>
     </View>

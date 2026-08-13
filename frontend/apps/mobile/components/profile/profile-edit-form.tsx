@@ -1,10 +1,10 @@
+import { CheckboxCard } from "@/components/application/checkbox-card";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
 import { TagPicker } from "@/components/profile/tag-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@/lib/profile-links";
 import { THEME } from "@/lib/theme";
@@ -105,24 +105,6 @@ function IdentityRow({
           <Text className="text-muted-foreground">{value}</Text>
         </View>
       ) : null}
-    </View>
-  );
-}
-
-function MentoringRow({ field }: { field: AnyFieldApi }) {
-  const willing = field.state.value as boolean;
-  const title = "Jestem otwarty na mentoring";
-  return (
-    <View className="border-input bg-muted/40 flex-row items-center gap-4 rounded-md border p-4">
-      <View className="flex-1 gap-1">
-        <Label className="text-foreground text-xs font-bold uppercase tracking-wider">
-          {title}
-        </Label>
-        <Text className="text-muted-foreground text-sm leading-5">
-          Inni alumni zobaczą, że chętnie pomagasz, i będą mogli filtrować katalog po mentorach.
-        </Text>
-      </View>
-      <Switch checked={willing} onCheckedChange={field.handleChange} accessibilityLabel={title} />
     </View>
   );
 }
@@ -297,7 +279,16 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           )}
         </form.Field>
 
-        <form.Field name="willingToMentor">{(field) => <MentoringRow field={field} />}</form.Field>
+        <form.Field name="willingToMentor">
+          {(field) => (
+            <CheckboxCard
+              title="Jestem otwarty na mentoring"
+              description="Inni alumni będą to widzieć."
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+            />
+          )}
+        </form.Field>
       </FormSection>
 
       <FormSection
