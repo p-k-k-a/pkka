@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Markdown } from "@tiptap/markdown";
-import { Image } from "@tiptap/extension-image";
 import {
   Bold,
   Code,
   Heading2,
   Heading3,
-  ImagePlus,
   Italic,
   List,
   ListOrdered,
@@ -20,9 +17,6 @@ import {
   Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
@@ -36,12 +30,8 @@ type MarkdownEditorProps = {
 };
 
 export function MarkdownEditor({ initialContent, onChange, className }: MarkdownEditorProps) {
-  const [imagePopoverOpen, setImagePopoverOpen] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageAlt, setImageAlt] = useState("");
-
   const editor = useEditor({
-    extensions: [StarterKit, Markdown, Image],
+    extensions: [StarterKit, Markdown],
     content: initialContent,
     contentType: "markdown",
     immediatelyRender: false,
@@ -74,21 +64,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
   if (!editor) {
     return <div className={cn("bg-muted/40 min-h-80 animate-pulse rounded-lg", className)} />;
   }
-
-  const insertImage = () => {
-    const src = imageUrl.trim();
-    if (!src) {
-      return;
-    }
-    editor
-      .chain()
-      .focus()
-      .setImage({ src, alt: imageAlt.trim() || undefined })
-      .run();
-    setImageUrl("");
-    setImageAlt("");
-    setImagePopoverOpen(false);
-  };
 
   const marks = [
     {
@@ -181,49 +156,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
           </Toggle>
         ))}
         <Separator orientation="vertical" className="mx-1" />
-        <Popover open={imagePopoverOpen} onOpenChange={setImagePopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Wstaw obraz"
-              title="Wstaw obraz"
-            >
-              <ImagePlus />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-80 space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="editor-image-url" className="text-xs font-semibold">
-                Adres URL obrazu
-              </Label>
-              <Input
-                id="editor-image-url"
-                value={imageUrl}
-                placeholder="https://…"
-                onChange={(event) => setImageUrl(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && insertImage()}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editor-image-alt" className="text-xs font-semibold">
-                Opis alternatywny
-              </Label>
-              <Input
-                id="editor-image-alt"
-                value={imageAlt}
-                placeholder="Co widać na obrazie"
-                onChange={(event) => setImageAlt(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && insertImage()}
-              />
-            </div>
-            <Button type="button" size="sm" disabled={!imageUrl.trim()} onClick={insertImage}>
-              Wstaw obraz
-            </Button>
-          </PopoverContent>
-        </Popover>
-        <Separator orientation="vertical" className="mx-1" />
         <Button
           type="button"
           variant="ghost"
@@ -259,8 +191,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
           "[&_blockquote]:border-primary [&_blockquote]:text-muted-foreground [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic",
           "[&_code]:bg-muted [&_code]:rounded-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm",
           "[&_pre]:bg-muted [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
-          "[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-lg",
-          "[&_img.ProseMirror-selectednode]:ring-ring [&_img.ProseMirror-selectednode]:ring-2",
         )}
       />
     </div>
