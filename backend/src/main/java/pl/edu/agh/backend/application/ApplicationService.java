@@ -5,15 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
-import pl.edu.agh.backend.user.UserProvisioningService;
-import pl.edu.agh.backend.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +19,11 @@ public class ApplicationService {
             List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED);
 
     private final ApplicationRepository applicationRepository;
-    private final UserRepository userRepository;
-    private final UserPrincipalExtractor principalExtractor;
-    private final UserProvisioningService userProvisioningService;
+    private final CurrentUserService currentUserService;
 
     @Transactional
     public ApplicationResponse create(Authentication authentication, CreateApplicationRequest request) {
-        User applicant = resolveApplicant(authentication);
+        User applicant = currentUserService.require(authentication);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
@@ -60,20 +54,10 @@ public class ApplicationService {
 
     @Transactional(readOnly = true)
     public ApplicationResponse getMine(Authentication authentication) {
-        User applicant = resolveApplicant(authentication);
+        User applicant = currentUserService.require(authentication);
         return applicationRepository
                 .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
                 .map(ApplicationResponse::from)
                 .orElseThrow(ApplicationNotFoundException::new);
-    }
-
-    private User resolveApplicant(Authentication authentication) {
-        var info = principalExtractor
-                .extract(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        userProvisioningService.provisionIfAbsent(info);
-        return userRepository
-                .findByKeycloakId(info.keycloakId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
 }

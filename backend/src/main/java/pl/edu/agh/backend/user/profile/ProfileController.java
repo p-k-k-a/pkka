@@ -9,12 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
+import pl.edu.agh.backend.user.CurrentUserService;
 import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
@@ -27,12 +25,12 @@ import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
 public class ProfileController {
 
     private final ProfileService profileService;
-    private final UserPrincipalExtractor principalExtractor;
+    private final CurrentUserService currentUserService;
 
     @GetMapping
     @Operation(summary = "Get own profile")
     public ProfileResponse getMyProfile(Authentication authentication) {
-        return profileService.getProfile(keycloakId(authentication));
+        return profileService.getProfile(currentUserService.requireKeycloakId(authentication));
     }
 
     @PatchMapping
@@ -41,13 +39,13 @@ public class ProfileController {
             description = "Partial update: null/omitted fields are left unchanged; a blank string clears the value")
     public ProfileResponse updateMyProfile(
             Authentication authentication, @Valid @RequestBody UpdateProfileRequest request) {
-        return profileService.updateProfile(keycloakId(authentication), request);
+        return profileService.updateProfile(currentUserService.requireKeycloakId(authentication), request);
     }
 
     @GetMapping("/tags")
     @Operation(summary = "Get own assigned tags")
     public List<UserTagResponse> getMyTags(Authentication authentication) {
-        return profileService.getTags(keycloakId(authentication));
+        return profileService.getTags(currentUserService.requireKeycloakId(authentication));
     }
 
     @PutMapping("/tags")
@@ -61,13 +59,6 @@ public class ProfileController {
     })
     public List<UserTagResponse> updateMyTags(
             Authentication authentication, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(keycloakId(authentication), request.tagIds());
-    }
-
-    private String keycloakId(Authentication authentication) {
-        return principalExtractor
-                .extract(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED))
-                .keycloakId();
+        return profileService.updateTags(currentUserService.requireKeycloakId(authentication), request.tagIds());
     }
 }
