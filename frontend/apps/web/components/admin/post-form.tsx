@@ -27,10 +27,6 @@ import { formatPublishedAt } from "@/lib/format-published-at";
 
 const EXCERPT_MAX = 500;
 
-// In dark mode --muted equals --card, so the tab pill's default active state is
-// nearly invisible on a card — mark the active tab with the accent instead.
-const ACTIVE_TAB = "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground";
-
 // TODO: publication channels other than the club website (mobile app push,
 // Discord #ogłoszenia, newsletter) are not wired up yet — the checkboxes
 // below are a mock of the target design.
@@ -182,13 +178,9 @@ export function PostForm({ post }: PostFormProps) {
             <section className="space-y-3">
               <h2 className="text-foreground font-heading text-lg font-semibold">Treść</h2>
               <Tabs defaultValue="editor">
-                <TabsList className="border-border border">
-                  <TabsTrigger value="editor" className={ACTIVE_TAB}>
-                    Edytor
-                  </TabsTrigger>
-                  <TabsTrigger value="preview" className={ACTIVE_TAB}>
-                    Podgląd
-                  </TabsTrigger>
+                <TabsList>
+                  <TabsTrigger value="editor">Edytor</TabsTrigger>
+                  <TabsTrigger value="preview">Podgląd</TabsTrigger>
                 </TabsList>
                 {/* forceMount keeps the Tiptap instance (and its undo history) alive
                     while the preview tab is shown — unmounting would reset it to the
