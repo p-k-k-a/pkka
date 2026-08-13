@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Link2, MapPin } from "lucide-react";
-import { EventListItemDto, EventListItemDtoType, useListEvents } from "@pkka/api";
+import { EventListItemResponse, EventListItemResponseType, useListEvents } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,10 +43,10 @@ function EventCardCompact({
   event,
   variant,
 }: {
-  event: EventListItemDto;
+  event: EventListItemResponse;
   variant: EventsListProps["variant"];
 }) {
-  const isOnline = event.type === EventListItemDtoType.ONLINE;
+  const isOnline = event.type === EventListItemResponseType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
   const location = event.location?.trim();
@@ -97,10 +97,10 @@ function EventCardFeatured({
   event,
   variant,
 }: {
-  event: EventListItemDto;
+  event: EventListItemResponse;
   variant: EventsListProps["variant"];
 }) {
-  const isOnline = event.type === EventListItemDtoType.ONLINE;
+  const isOnline = event.type === EventListItemResponseType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
   const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
   const location = event.location?.trim();

@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.event;
+package pl.edu.agh.backend.event.tag;
 
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

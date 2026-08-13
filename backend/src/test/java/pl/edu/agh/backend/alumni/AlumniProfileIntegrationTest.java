@@ -43,7 +43,6 @@ import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor.UserPrincipalInfo;
 import pl.edu.agh.backend.user.UserProvisioningService;
 import pl.edu.agh.backend.user.UserRepository;
 import pl.edu.agh.backend.user.UserTagRepository;
@@ -319,10 +318,10 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
-    void provisionIfAbsentCreatesRowWithoutContactingKeycloak() {
+    void getOrCreateCreatesRowWithoutContactingKeycloak() {
         String keycloakId = UUID.randomUUID().toString();
 
-        userProvisioningService.provisionIfAbsent(new UserPrincipalInfo(keycloakId));
+        userProvisioningService.getOrCreate(keycloakId);
 
         User created = userRepository.findByKeycloakId(keycloakId).orElseThrow();
         assertThat(created.getFirstName()).isNull();

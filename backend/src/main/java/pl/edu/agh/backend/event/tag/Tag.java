@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.event;
+package pl.edu.agh.backend.event.tag;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

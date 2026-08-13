@@ -4,52 +4,81 @@ import static pl.edu.agh.backend.event.EventSpecifications.*;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.event.dto.EventDetailsResponse;
+import pl.edu.agh.backend.event.dto.EventListItemResponse;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.CallerUserService;
+import pl.edu.agh.backend.user.User;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EventService {
 
-    private static final String ROLE_VERIFIED_ALUMN = "ROLE_VERIFIED_ALUMN";
-
     private final EventRepository eventRepository;
+    private final EventRegistrationRepository eventRegistrationRepository;
+    private final CallerUserService callerUserService;
 
-    public Page<Event> list(Authentication authentication, Collection<String> tagNames, Pageable pageable) {
-        Specification<Event> spec = Specification.where(startsAfter(Instant.now()))
-                .and(audienceIn(visibleAudiences(authentication)))
-                .and(hasAnyTag(tagNames));
+    public Page<EventListItemResponse> list(Caller caller, Collection<String> tagNames, Pageable pageable) {
+        Specification<Event> spec = Specification.allOf(
+                startsAfter(Instant.now()), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
 
-        return eventRepository.findAll(spec, pageable);
+        Page<Event> events = eventRepository.findAll(spec, pageable);
+        Map<UUID, Long> seatsTaken = seatsTakenByEvent(events.getContent());
+        return events.map(event -> EventListItemResponse.from(event, seatsTaken.getOrDefault(event.getId(), 0L)));
     }
 
-    public Event findById(UUID id, Authentication authentication) {
-        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-        if (!visibleAudiences(authentication).contains(event.getAudience())) {
+    public EventDetailsResponse getDetails(UUID id, Caller caller) {
+        Event event = findVisible(id, caller);
+        boolean registered = currentUserId(caller)
+                .map(userId -> eventRegistrationRepository.existsByEventIdAndUserId(id, userId))
+                .orElse(false);
+        return EventDetailsResponse.from(event, eventRegistrationRepository.countByEventId(id), registered);
+    }
+
+    public Event findVisible(UUID id, Caller caller) {
+        return requireVisible(eventRepository.findById(id), id, caller);
+    }
+
+    /** {@code MANDATORY} because a lock taken in a transaction of its own would be released too early. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Event findVisibleForUpdate(UUID id, Caller caller) {
+        return requireVisible(eventRepository.findForUpdateById(id), id, caller);
+    }
+
+    /** Not visible is reported as not existing, so the caller cannot probe for hidden events. */
+    private Event requireVisible(Optional<Event> found, UUID id, Caller caller) {
+        Event event = found.orElseThrow(() -> new EventNotFoundException(id));
+        if (!EventVisibility.isVisibleTo(event, caller)) {
             throw new EventNotFoundException(id);
         }
         return event;
     }
 
-    private Set<Audience> visibleAudiences(Authentication authentication) {
-        Set<Audience> audiences = EnumSet.of(Audience.PUBLIC);
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .anyMatch(ROLE_VERIFIED_ALUMN::equals)) {
-            audiences.add(Audience.ALL_ALUMNI);
+    private Map<UUID, Long> seatsTakenByEvent(List<Event> events) {
+        if (events.isEmpty()) {
+            return Map.of();
         }
-        return audiences;
+        List<UUID> ids = events.stream().map(Event::getId).toList();
+        return eventRegistrationRepository.countByEventIdIn(ids).stream()
+                .collect(Collectors.toMap(EventSeatCount::getEventId, EventSeatCount::getSeatsTaken));
+    }
+
+    private Optional<UUID> currentUserId(Caller caller) {
+        return callerUserService.find(caller).map(User::getId);
     }
 }

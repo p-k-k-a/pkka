@@ -8,7 +8,7 @@ import lombok.*;
 
 /**
  * Alumni skill tag (e.g. "Java", "DevOps"), assignable by a user to their own profile. Deliberately a
- * separate entity/table from {@link pl.edu.agh.backend.event.Tag}: event tags (categories like
+ * separate entity/table from {@link pl.edu.agh.backend.event.tag.Tag}: event tags (categories like
  * "workshop", "networking") and user skill tags are semantically disjoint domains that happened to
  * share a catalog table early on. Keeping them separate avoids a shared uniqueness constraint on
  * {@code name} across two unrelated concepts and lets each catalog evolve independently.

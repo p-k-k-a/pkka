@@ -1,4 +1,4 @@
-import type { ApplicationResponseDto } from "@pkka/api";
+import type { ApplicationResponse } from "@pkka/api";
 import {
   facultyLabel,
   meetingPreferenceLabel,
@@ -22,7 +22,7 @@ export function ApplicationSummary({
   application,
   hideRejectionReason = false,
 }: {
-  application: ApplicationResponseDto;
+  application: ApplicationResponse;
   hideRejectionReason?: boolean;
 }) {
   const interests = application.interests ?? [];
