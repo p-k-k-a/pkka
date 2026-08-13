@@ -34,6 +34,10 @@ import { formatPublishedAt } from "@/lib/format-published-at";
 
 const PAGE_SIZE = 20;
 
+// Same rationale as in post-form: dark --muted == --card makes the default
+// active-tab state invisible, so the active filter gets the accent.
+const ACTIVE_TAB = "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground";
+
 type StatusFilter = "ALL" | NonNullable<ListAdminPostsParams["status"]>;
 
 export function PostsList() {
@@ -97,10 +101,16 @@ export function PostsList() {
             setPage(0);
           }}
         >
-          <TabsList>
-            <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-            <TabsTrigger value="PUBLISHED">Opublikowane</TabsTrigger>
-            <TabsTrigger value="DRAFT">Szkice</TabsTrigger>
+          <TabsList className="border-border border">
+            <TabsTrigger value="ALL" className={ACTIVE_TAB}>
+              Wszystkie
+            </TabsTrigger>
+            <TabsTrigger value="PUBLISHED" className={ACTIVE_TAB}>
+              Opublikowane
+            </TabsTrigger>
+            <TabsTrigger value="DRAFT" className={ACTIVE_TAB}>
+              Szkice
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <Button asChild>
