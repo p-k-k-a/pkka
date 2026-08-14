@@ -92,6 +92,9 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
               aria-expanded={isOpen}
               aria-controls="tag-search-results"
               aria-autocomplete="list"
+              aria-activedescendant={
+                isOpen && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
+              }
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setIsFocused(true)}
@@ -119,9 +122,10 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
             {matches.map((tag) => (
               <li key={tag.id}>
                 <button
+                  id={`tag-search-option-${tag.id}`}
                   type="button"
                   role="option"
-                  aria-selected={false}
+                  aria-selected={matches[0]?.id === tag.id}
                   className="hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
                   // Keeps the input focused so the list survives the click.
                   onMouseDown={(event) => event.preventDefault()}

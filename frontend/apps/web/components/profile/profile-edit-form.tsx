@@ -178,6 +178,13 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     try {
       await updateProfile.mutateAsync({ data: payload });
     } catch {
+      if (avatar !== initialAvatar) {
+        try {
+          saveProfileAvatar(initialAvatar);
+        } catch {
+          // Best-effort rollback - the profile itself did not save.
+        }
+      }
       setFormError("Nie udało się zapisać zmian. Spróbuj ponownie.");
       return;
     }
