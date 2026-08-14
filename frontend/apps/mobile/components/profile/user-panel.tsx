@@ -1,13 +1,15 @@
-import { DiscordIcon } from "@/components/auth/discord-icon";
+import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { DiscordIcon } from "@/components/ui/svg-icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
   ApplicationResponseStatus,
+  ProfileResponse,
   useGetMine,
-  type GetMineQueryResult,
+  useGetMyProfile,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -161,16 +163,41 @@ function ApplicationStatusView({
   );
 }
 
+function AlumniProfileSection({
+  profile,
+  isPending,
+  isError,
+}: {
+  profile: ProfileResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+}) {
+  if (isPending) return <ActivityIndicator />;
+  if (isError || !profile) {
+    return (
+      <Text className="text-muted-foreground text-sm leading-6">
+        Nie udało się wczytać profilu. Pociągnij w dół, aby odświeżyć.
+      </Text>
+    );
+  }
+  return <AlumniProfileView profile={profile} onEdit={() => router.push("/alumni/profile-edit")} />;
+}
+
 export function UserPanel() {
   const { logout } = useAuth();
   const { colors } = useTheme();
-  const { data, isLoading, isError, error, refetch } = useGetMine<GetMineQueryResult, ApiError>();
+  const { data, isLoading, isError, error, refetch } = useGetMine();
   const [refreshing, setRefreshing] = useState(false);
+
+  // GET /api/applications/me answers 404 when the user simply hasn't applied yet; every
+  // other failure is a load error and must not be dressed up as "not verified". The cast
+  // is needed because that 404 carries no schema, so the hook types its error as `void`.
+  const loadError = error as unknown;
+  const missingApplication = loadError instanceof ApiError && loadError.status === 404;
+  const loadFailed = isError && !missingApplication;
 
   const application = data?.data;
   const status = application?.status;
-  const hasNoApplication = isError && error instanceof ApiError && error.status === 404;
-  const isUnavailable = isError && !hasNoApplication;
   const knownStatus =
     status === ApplicationResponseStatus.UNDER_REVIEW ||
     status === ApplicationResponseStatus.APPROVED ||
@@ -178,11 +205,19 @@ export function UserPanel() {
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 
+  const {
+    data: profileData,
+    // isLoading, not isPending: a disabled query stays "pending" forever.
+    isLoading: profilePending,
+    isError: profileError,
+    refetch: refetchProfile,
+  } = useGetMyProfile({ query: { enabled: knownStatus === "APPROVED" } });
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), refetchProfile()]);
     setRefreshing(false);
-  }, [refetch]);
+  }, [refetch, refetchProfile]);
 
   return (
     <ScrollView
@@ -196,10 +231,16 @@ export function UserPanel() {
 
       {isLoading && !refreshing ? (
         <ActivityIndicator />
-      ) : isUnavailable ? (
+      ) : loadFailed ? (
         <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
       ) : !application || !knownStatus ? (
         <NoApplicationView colors={colors} />
+      ) : knownStatus === "APPROVED" ? (
+        <AlumniProfileSection
+          profile={profileData?.data}
+          isPending={profilePending && !refreshing}
+          isError={profileError}
+        />
       ) : (
         <ApplicationStatusView
           status={knownStatus}
