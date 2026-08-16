@@ -16,7 +16,7 @@ class CsrfCookieFilterTest {
 
     @Test
     void rendersDeferredCsrfTokenBeforeContinuingChain() throws Exception {
-        CsrfToken token = new DefaultCsrfToken("X-XSRF-TOKEN", "_csrf", "token-value");
+CsrfToken token = mock(CsrfToken.class);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(CsrfToken.class.getName(), token);
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -24,7 +24,7 @@ class CsrfCookieFilterTest {
 
         filter.doFilter(request, response, chain);
 
-        assert token.getToken().equals("token-value");
+        verify(token).getToken();
         verify(chain).doFilter(request, response);
     }
 
