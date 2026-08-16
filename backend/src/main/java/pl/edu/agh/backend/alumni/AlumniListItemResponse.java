@@ -32,6 +32,10 @@ public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
 
     public static AlumniListItemResponse from(User user) {
+        // Defensive only: the directory query already restricts to show_name = true
+        // (AlumniSpecifications.hasVisibleName()), so the null branches below are unreachable for every user
+        // that reaches this method today. Kept so the DTO cannot leak a hidden name if it is ever built
+        // outside that query.
         boolean showName = user.isShowName();
         return new AlumniListItemResponse(
                 user.getId(),
