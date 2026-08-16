@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import jakarta.servlet.http.HttpSession;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -69,7 +69,7 @@ class BffAuthenticationSuccessHandlerTest {
         OidcUser oidcUser = oidcUser("kc-mobile-user");
         OAuth2AuthenticationToken auth = new OAuth2AuthenticationToken(oidcUser, List.of(), "keycloak-mobile");
 
-        HttpSession session = request.getSession(true);
+        MockHttpSession session = (MockHttpSession) request.getSession(true);
         session.setAttribute("marker", "present");
 
         OAuth2AuthorizedClient client = mock(OAuth2AuthorizedClient.class);
@@ -89,6 +89,7 @@ class BffAuthenticationSuccessHandlerTest {
         assertThat(response.getRedirectedUrl()).contains("rt=");
         verify(authorizedClientService).removeAuthorizedClient("keycloak-mobile", auth.getName());
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(session.isInvalid()).isTrue();
     }
 
     @Test

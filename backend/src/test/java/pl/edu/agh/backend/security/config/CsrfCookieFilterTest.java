@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.DefaultCsrfToken;
 
 class CsrfCookieFilterTest {
 
@@ -16,7 +15,7 @@ class CsrfCookieFilterTest {
 
     @Test
     void rendersDeferredCsrfTokenBeforeContinuingChain() throws Exception {
-CsrfToken token = mock(CsrfToken.class);
+        CsrfToken token = mock(CsrfToken.class);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setAttribute(CsrfToken.class.getName(), token);
         MockHttpServletResponse response = new MockHttpServletResponse();
