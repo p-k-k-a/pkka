@@ -1,8 +1,9 @@
+import { isVerifiedAlumn } from "@/lib/roles";
 import { AuthContextType, User } from "@/types/auth";
 import { configureApi, logoutTokens, refreshTokens } from "@pkka/api";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 
 export const AuthContext = createContext<null | AuthContextType>(null);
@@ -14,15 +15,15 @@ type decodedJwtType = {
   };
 };
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
-    console.warn("login run!");
+    const roles = decoded["realm_access"]?.["roles"] ?? [];
     setUser({
       sub: decoded["sub"],
-      role: decoded["realm_access"]["roles"].includes("alumni") ? "alumni" : "user",
+      role: isVerifiedAlumn(roles) ? "alumni" : "user",
     });
 
     await SecureStore.setItemAsync("at", at);

@@ -78,7 +78,7 @@ repos:
 
       - id: errorprone
         name: Error Prone (Java)
-        entry: bash -c 'cd backend && ./gradlew compileJava -Pstrict --daemon'
+        entry: bash -c 'cd backend && ./gradlew compileJava compileTestJava -Pstrict --daemon'
         language: system
         files: ^backend/.*\.java$
         pass_filenames: false
