@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.post;
 
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,11 +26,10 @@ public class AdminPostService {
     private final UserProvisioningService userProvisioningService;
 
     @Transactional(readOnly = true)
-    public Page<AdminPostSummaryResponse> list(PostStatus status, Pageable pageable) {
-        Page<Post> posts = status == null
-                ? postRepository.findAllByOrderByCreatedAtDesc(pageable)
-                : postRepository.findAllByStatusOrderByCreatedAtDesc(status, pageable);
-        return posts.map(AdminPostSummaryResponse::from);
+    public Page<AdminPostListItemResponse> list(Optional<PostStatus> status, Pageable pageable) {
+        Page<Post> posts = status.map(value -> postRepository.findAllByStatusOrderByCreatedAtDesc(value, pageable))
+                .orElseGet(() -> postRepository.findAllByOrderByCreatedAtDesc(pageable));
+        return posts.map(AdminPostListItemResponse::from);
     }
 
     @Transactional(readOnly = true)
