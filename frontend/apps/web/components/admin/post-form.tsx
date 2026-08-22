@@ -19,13 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { PostStatusBadge } from "@/components/admin/post-status-badge";
 import { ProseContent } from "@/components/content/prose-content";
 import { formatPublishedAt } from "@/lib/format-published-at";
-
-const EXCERPT_MAX = 500;
 
 // TODO: publication channels other than the club website (mobile app push,
 // Discord #ogłoszenia, newsletter) are not wired up yet — the checkboxes
@@ -53,7 +50,6 @@ export function PostForm({ post }: PostFormProps) {
   const isEditing = post !== undefined;
 
   const [title, setTitle] = useState(post?.title ?? "");
-  const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
   const [published, setPublished] = useState(post?.status === "PUBLISHED");
 
@@ -74,7 +70,7 @@ export function PostForm({ post }: PostFormProps) {
   const canSave = title.trim().length > 0 && content.trim().length > 0 && !isPending;
 
   const handleSave = () => {
-    const data = { title: title.trim(), excerpt: excerpt.trim(), content, status } as const;
+    const data = { title: title.trim(), content, status } as const;
     if (isEditing) {
       updatePost.mutate({ id: post.id, data });
     } else {
@@ -150,28 +146,6 @@ export function PostForm({ post }: PostFormProps) {
                     ? `Adres wpisu: /${post.slug} (nie zmienia się przy edycji tytułu)`
                     : "Adres wpisu wygenerujemy automatycznie z tytułu."}
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label
-                    htmlFor="post-excerpt"
-                    className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
-                  >
-                    Krótki opis
-                  </Label>
-                  <span className="text-muted-foreground text-xs tabular-nums">
-                    {excerpt.length}/{EXCERPT_MAX}
-                  </span>
-                </div>
-                <Textarea
-                  id="post-excerpt"
-                  value={excerpt}
-                  maxLength={EXCERPT_MAX}
-                  rows={3}
-                  placeholder="Pojawi się na kartach w aplikacji i banerach"
-                  onChange={(event) => setExcerpt(event.target.value)}
-                />
               </div>
             </section>
 
@@ -291,9 +265,6 @@ export function PostForm({ post }: PostFormProps) {
                 </p>
                 <p className="text-foreground truncate text-sm font-bold">
                   {title.trim() || "Tytuł wpisu"}
-                </p>
-                <p className="text-muted-foreground line-clamp-2 text-xs">
-                  {excerpt.trim() || "Krótki opis wpisu pojawi się tutaj."}
                 </p>
               </div>
             </Card>

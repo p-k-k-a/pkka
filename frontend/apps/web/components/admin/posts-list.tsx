@@ -147,9 +147,6 @@ export function PostsList() {
                       {post.status === "PUBLISHED" ? "Opublikowano" : "Utworzono"}: {dateLabel}
                     </p>
                     <h2 className="text-foreground truncate text-lg font-bold">{post.title}</h2>
-                    {post.excerpt ? (
-                      <p className="text-muted-foreground line-clamp-2 text-sm">{post.excerpt}</p>
-                    ) : null}
                     <p className="text-muted-foreground/70 font-mono text-xs">/{post.slug}</p>
                   </div>
                   <PostStatusBadge status={post.status} />
