@@ -90,6 +90,15 @@ class EventRegistrationEndpointTest {
                 .build());
     }
 
+    /** The caller's own seat, inserted directly: by the time these tests run, POST would be rejected. */
+    private void registerCaller(Event event) {
+        User caller = new User();
+        caller.setKeycloakId(alumnKeycloakId);
+        caller = userRepository.save(caller);
+        eventRegistrationRepository.save(
+                EventRegistration.builder().event(event).user(caller).build());
+    }
+
     private void registerOtherAlumn(Event event) {
         User other = new User();
         other.setKeycloakId(UUID.randomUUID().toString());
@@ -289,6 +298,34 @@ class EventRegistrationEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.seatsTaken").value(1))
                 .andExpect(jsonPath("$.registered").value(false));
+    }
+
+    @Test
+    void unregisterAfterTheDeadlineButBeforeTheStart_isAllowed() throws Exception {
+        Event event = newEvent(
+                Audience.PUBLIC,
+                10,
+                Instant.now().plus(1, ChronoUnit.HOURS),
+                Instant.now().minus(1, ChronoUnit.HOURS));
+        registerCaller(event);
+
+        // Nobody can claim the freed seat any more, but the organiser's head count stays honest.
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void unregisterAfterTheEventHasStarted_isRejected() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(1, ChronoUnit.HOURS), null);
+        registerCaller(event);
+
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("EVENT_ALREADY_STARTED"));
     }
 
     @Test

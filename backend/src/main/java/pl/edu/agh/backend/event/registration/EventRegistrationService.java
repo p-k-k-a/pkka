@@ -56,11 +56,18 @@ public class EventRegistrationService {
                 eventId, registration.getRegisteredAt(), (int) seatsTaken + 1, event.getSeatLimit());
     }
 
-    /** No lock needed: a delete only lowers the seat count. Allowed after registration has closed. */
+    /**
+     * No lock needed: a delete only lowers the seat count. Still allowed once registration has closed —
+     * before the event starts, dropping out keeps the organiser's head count honest even when the freed
+     * seat can no longer be claimed. Once it has started, cancelling achieves neither.
+     */
     @Transactional
     public void unregister(UUID eventId, Caller caller) {
         User user = callerUserService.getOrCreate(caller);
         Event event = eventService.findVisible(eventId, caller);
+        if (hasStarted(event)) {
+            throw EventRegistrationConflictException.eventAlreadyStarted(eventId);
+        }
 
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())
@@ -69,8 +76,11 @@ public class EventRegistrationService {
     }
 
     private boolean isRegistrationClosed(Event event) {
-        Instant now = Instant.now(clock);
         Instant closesAt = event.getRegistrationClosesAt();
-        return !now.isBefore(event.getStartsAt()) || (closesAt != null && !now.isBefore(closesAt));
+        return hasStarted(event) || (closesAt != null && !Instant.now(clock).isBefore(closesAt));
+    }
+
+    private boolean hasStarted(Event event) {
+        return !Instant.now(clock).isBefore(event.getStartsAt());
     }
 }

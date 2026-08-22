@@ -54,14 +54,21 @@ public class EventRegistrationController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(
-            summary = "Cancel the current user's registration",
-            description = "Frees the seat for someone else. Allowed even after registration has closed.")
+    @Operation(summary = "Cancel the current user's registration", description = """
+                    Frees the seat. Before `registrationClosesAt` someone else can claim it; after that
+                    nobody can, but dropping out still keeps the organiser's head count honest, so it stays
+                    allowed. Once the event has started it achieves neither and is rejected with a `reason`
+                    of `EVENT_ALREADY_STARTED`.
+                    """)
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Seat freed"),
         @ApiResponse(
                 responseCode = "404",
                 description = "No such event, or the user is not registered for it",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "The event has already started",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public void unregister(@PathVariable UUID eventId, Caller caller) {
