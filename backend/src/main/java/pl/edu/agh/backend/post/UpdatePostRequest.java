@@ -11,8 +11,6 @@ public record UpdatePostRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 300)
         String title,
 
-        @Size(max = 500) String excerpt,
-
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "Markdown") @NotBlank
         String content,
 

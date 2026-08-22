@@ -16,17 +16,11 @@ public record PostSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String excerpt,
         @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt) {
 
     static PostSummaryResponse from(Post post) {
         return new PostSummaryResponse(
-                post.getId(),
-                post.getSlug(),
-                post.getTitle(),
-                post.getExcerpt(),
-                post.getAuthor().getKeycloakId(),
-                post.getPublishedAt());
+                post.getId(), post.getSlug(), post.getTitle(), post.getAuthor().getKeycloakId(), post.getPublishedAt());
     }
 }
