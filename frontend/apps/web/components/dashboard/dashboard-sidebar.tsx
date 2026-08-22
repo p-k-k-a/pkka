@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, Megaphone, ShieldCheck } from "lucide-react";
+import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +42,12 @@ const adminItems: SidebarItem[] = [
     label: "Wnioski",
     icon: Inbox,
     match: (pathname) => pathname.startsWith("/dashboard/applications"),
+  },
+  {
+    href: "/dashboard/posts",
+    label: "Blog",
+    icon: Newspaper,
+    match: (pathname) => pathname.startsWith("/dashboard/posts"),
   },
 ];
 
