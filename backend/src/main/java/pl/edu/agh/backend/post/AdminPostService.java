@@ -53,12 +53,13 @@ public class AdminPostService {
     @Transactional
     public AdminPostResponse update(UUID id, UpdatePostRequest request) {
         Post post = postRepository.findById(id).orElseThrow(PostNotFoundException::new);
+        if (post.getStatus() == PostStatus.PUBLISHED && request.status() != PostStatus.PUBLISHED) {
+            throw new PostAlreadyPublishedException();
+        }
         post.setTitle(request.title());
         post.setContent(request.content());
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
-        } else {
-            post.unpublish();
         }
         return AdminPostResponse.from(postRepository.saveAndFlush(post));
     }

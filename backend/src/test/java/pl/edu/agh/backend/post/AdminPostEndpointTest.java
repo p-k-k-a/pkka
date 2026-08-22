@@ -36,7 +36,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
-/** Covers the {@code /api/admin/posts} CRUD endpoints: creation with auto-slug, listing drafts, editing, the draft/published toggle and deletion. */
+/** Covers the {@code /api/admin/posts} CRUD endpoints: creation with auto-slug, listing drafts, editing, one-way publication and deletion. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
@@ -160,7 +160,7 @@ class AdminPostEndpointTest {
     }
 
     @Test
-    void updatesFieldsAndTogglesPublicationKeepingSlugAndOriginalPublishedAt() throws Exception {
+    void updatesFieldsAndPublishesKeepingTheSlug() throws Exception {
         String body = createPost("{\"title\": \"Wersja robocza\", \"content\": \"v1\"}");
         String id = JsonPath.read(body, "$.id");
 
@@ -178,17 +178,42 @@ class AdminPostEndpointTest {
         assertEquals("v2", JsonPath.read(published, "$.content"));
         String publishedAt = JsonPath.read(published, "$.publishedAt");
 
-        String unpublished = mockMvc.perform(put("/api/admin/posts/{id}", id)
-                        .with(admin())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\": \"Nowy tytuł\", \"content\": \"v2\", \"status\": \"DRAFT\"}"))
+        String edited = mockMvc.perform(
+                        put("/api/admin/posts/{id}", id)
+                                .with(admin())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"title\": \"Jeszcze nowszy tytuł\", \"content\": \"v3\", \"status\": \"PUBLISHED\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        assertEquals("DRAFT", JsonPath.read(unpublished, "$.status"));
-        assertEquals(publishedAt, JsonPath.read(unpublished, "$.publishedAt"));
+        assertEquals("wersja-robocza", JsonPath.read(edited, "$.slug"));
+        assertEquals("v3", JsonPath.read(edited, "$.content"));
+        assertEquals(publishedAt, JsonPath.read(edited, "$.publishedAt"));
+    }
+
+    @Test
+    void rejectsRevertingAPublishedPostToDraft() throws Exception {
+        String body = createPost("{\"title\": \"Do publikacji\", \"content\": \"v1\"}");
+        String id = JsonPath.read(body, "$.id");
+
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Do publikacji\", \"content\": \"v1\", \"status\": \"PUBLISHED\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Do publikacji\", \"content\": \"v1\", \"status\": \"DRAFT\"}"))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(get("/api/admin/posts/{id}", id).with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PUBLISHED"));
     }
 
     @Test
