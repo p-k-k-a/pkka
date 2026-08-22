@@ -23,7 +23,6 @@ import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
-import pl.edu.agh.backend.user.User;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +48,8 @@ public class EventService {
 
     public EventDetailsResponse getDetails(UUID id, Caller caller) {
         Event event = findVisible(id, caller);
-        boolean registered = currentUserId(caller)
+        boolean registered = callerUserService
+                .findId(caller)
                 .map(userId -> eventRegistrationRepository.existsByEventIdAndUserId(id, userId))
                 .orElse(false);
         return EventDetailsResponse.from(event, eventRegistrationRepository.countByEventId(id), registered);
@@ -87,12 +87,9 @@ public class EventService {
         if (eventIds.isEmpty()) {
             return Set.of();
         }
-        return currentUserId(caller)
+        return callerUserService
+                .findId(caller)
                 .map(userId -> eventRegistrationRepository.findRegisteredEventIds(userId, eventIds))
                 .orElseGet(Set::of);
-    }
-
-    private Optional<UUID> currentUserId(Caller caller) {
-        return callerUserService.find(caller).map(User::getId);
     }
 }

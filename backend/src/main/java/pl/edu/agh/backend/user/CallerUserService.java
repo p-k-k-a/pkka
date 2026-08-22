@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.user;
 
 import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,5 +23,11 @@ public class CallerUserService {
     @Transactional(readOnly = true)
     public Optional<User> find(Caller caller) {
         return caller.isAnonymous() ? Optional.empty() : userRepository.findByKeycloakId(caller.keycloakId());
+    }
+
+    /** For callers that only need the id, typically to match it against a foreign key. */
+    @Transactional(readOnly = true)
+    public Optional<UUID> findId(Caller caller) {
+        return find(caller).map(User::getId);
     }
 }
