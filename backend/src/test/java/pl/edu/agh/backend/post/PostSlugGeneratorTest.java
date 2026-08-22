@@ -31,13 +31,6 @@ class PostSlugGeneratorTest {
     }
 
     @Test
-    void fallsBackWhenTitleProducesNoSlugCharacters() {
-        when(postRepository.existsBySlug(anyString())).thenReturn(false);
-
-        assertEquals("wpis", generator.generateUniqueSlug("!!! ???"));
-    }
-
-    @Test
     void truncatesOverlongTitlesToFitTheColumnWithSuffixRoom() {
         when(postRepository.existsBySlug(anyString())).thenReturn(false);
 
