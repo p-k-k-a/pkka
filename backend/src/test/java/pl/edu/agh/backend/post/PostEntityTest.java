@@ -34,7 +34,7 @@ class PostEntityTest {
     }
 
     @Test
-    void republishDoesNotChangePublishedAt() {
+    void publishIsIdempotentAndKeepsTheFirstPublishedAt() {
         Post post = new Post();
         post.setTitle("Draft");
         post.setContent("body");
@@ -42,22 +42,9 @@ class PostEntityTest {
         post.publish();
         Instant firstPublishedAt = post.getPublishedAt();
 
-        post.unpublish();
         post.publish();
 
+        assertThat(post.getStatus()).isEqualTo(PostStatus.PUBLISHED);
         assertThat(post.getPublishedAt()).isEqualTo(firstPublishedAt);
-    }
-
-    @Test
-    void unpublishRevertsToDraft() {
-        Post post = new Post();
-        post.setTitle("Draft");
-        post.setContent("body");
-        post.setAuthor(new User());
-        post.publish();
-
-        post.unpublish();
-
-        assertThat(post.getStatus()).isEqualTo(PostStatus.DRAFT);
     }
 }

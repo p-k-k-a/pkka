@@ -59,9 +59,13 @@ public class AdminPostController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a post's editable fields and toggle draft/published")
+    @Operation(summary = "Update a post's editable fields and publish it; publication cannot be undone")
     @ApiResponse(responseCode = "200", description = "Post updated")
     @ApiResponse(responseCode = "404", description = "Post not found", content = @Content)
+    @ApiResponse(
+            responseCode = "409",
+            description = "Post is published and cannot revert to a draft",
+            content = @Content)
     public AdminPostResponse updateAdminPost(@PathVariable UUID id, @Valid @RequestBody UpdatePostRequest request) {
         return adminPostService.update(id, request);
     }
