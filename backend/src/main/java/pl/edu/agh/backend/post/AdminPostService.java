@@ -42,7 +42,6 @@ public class AdminPostService {
         Post post = new Post();
         post.setTitle(request.title());
         post.setSlug(slugGenerator.generateUniqueSlug(request.title()));
-        post.setExcerpt(request.excerpt() == null ? "" : request.excerpt());
         post.setContent(request.content());
         post.setAuthor(resolveAuthor(authentication));
         if (request.status() == PostStatus.PUBLISHED) {
@@ -55,7 +54,6 @@ public class AdminPostService {
     public AdminPostResponse update(UUID id, UpdatePostRequest request) {
         Post post = postRepository.findById(id).orElseThrow(PostNotFoundException::new);
         post.setTitle(request.title());
-        post.setExcerpt(request.excerpt() == null ? "" : request.excerpt());
         post.setContent(request.content());
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();

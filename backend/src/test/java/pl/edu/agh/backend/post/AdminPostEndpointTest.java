@@ -94,12 +94,11 @@ class AdminPostEndpointTest {
     @Test
     void createsDraftWithSlugGeneratedFromTitle() throws Exception {
         String body = createPost("""
-                {"title": "Koło naukowe — spotkanie", "excerpt": "Zapraszamy!", "content": "## Hej"}
+                {"title": "Koło naukowe — spotkanie", "content": "## Hej"}
                 """);
 
         assertEquals("kolo-naukowe-spotkanie", JsonPath.read(body, "$.slug"));
         assertEquals("DRAFT", JsonPath.read(body, "$.status"));
-        assertEquals("Zapraszamy!", JsonPath.read(body, "$.excerpt"));
         assertEquals(ADMIN_SUBJECT, JsonPath.read(body, "$.authorId"));
         Object publishedAt = JsonPath.read(body, "$.publishedAt");
         assertNull(publishedAt);
@@ -165,12 +164,10 @@ class AdminPostEndpointTest {
         String body = createPost("{\"title\": \"Wersja robocza\", \"content\": \"v1\"}");
         String id = JsonPath.read(body, "$.id");
 
-        String published = mockMvc.perform(
-                        put("/api/admin/posts/{id}", id)
-                                .with(admin())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        "{\"title\": \"Nowy tytuł\", \"excerpt\": \"zajawka\", \"content\": \"v2\", \"status\": \"PUBLISHED\"}"))
+        String published = mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Nowy tytuł\", \"content\": \"v2\", \"status\": \"PUBLISHED\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -181,12 +178,10 @@ class AdminPostEndpointTest {
         assertEquals("v2", JsonPath.read(published, "$.content"));
         String publishedAt = JsonPath.read(published, "$.publishedAt");
 
-        String unpublished = mockMvc.perform(
-                        put("/api/admin/posts/{id}", id)
-                                .with(admin())
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(
-                                        "{\"title\": \"Nowy tytuł\", \"excerpt\": \"zajawka\", \"content\": \"v2\", \"status\": \"DRAFT\"}"))
+        String unpublished = mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Nowy tytuł\", \"content\": \"v2\", \"status\": \"DRAFT\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
