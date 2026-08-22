@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +39,12 @@ public class EventService {
                 startsAfter(Instant.now()), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
-        Map<UUID, Long> seatsTaken = seatsTakenByEvent(events.getContent());
-        return events.map(event -> EventListItemResponse.from(event, seatsTaken.getOrDefault(event.getId(), 0L)));
+        List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
+        Map<UUID, Long> seatsTaken = seatsTakenByEvent(ids);
+        Set<UUID> registered = registeredEventIds(caller, ids);
+
+        return events.map(event -> EventListItemResponse.from(
+                event, seatsTaken.getOrDefault(event.getId(), 0L), registered.contains(event.getId())));
     }
 
     public EventDetailsResponse getDetails(UUID id, Caller caller) {
@@ -69,13 +74,22 @@ public class EventService {
         return event;
     }
 
-    private Map<UUID, Long> seatsTakenByEvent(List<Event> events) {
-        if (events.isEmpty()) {
+    private Map<UUID, Long> seatsTakenByEvent(List<UUID> eventIds) {
+        if (eventIds.isEmpty()) {
             return Map.of();
         }
-        List<UUID> ids = events.stream().map(Event::getId).toList();
-        return eventRegistrationRepository.countByEventIdIn(ids).stream()
+        return eventRegistrationRepository.countByEventIdIn(eventIds).stream()
                 .collect(Collectors.toMap(EventSeatCount::getEventId, EventSeatCount::getSeatsTaken));
+    }
+
+    /** Anonymous callers have no registrations, so they cost no query here. */
+    private Set<UUID> registeredEventIds(Caller caller, List<UUID> eventIds) {
+        if (eventIds.isEmpty()) {
+            return Set.of();
+        }
+        return currentUserId(caller)
+                .map(userId -> eventRegistrationRepository.findRegisteredEventIds(userId, eventIds))
+                .orElseGet(Set::of);
     }
 
     private Optional<UUID> currentUserId(Caller caller) {

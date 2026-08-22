@@ -3,6 +3,7 @@ package pl.edu.agh.backend.event.registration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,10 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
             group by r.event.id
             """)
     List<EventSeatCount> countByEventIdIn(@Param("eventIds") Collection<UUID> eventIds);
+
+    /** Which of these events the user is signed up for, as ids so a page costs one query and no entities. */
+    @Query("select r.event.id from EventRegistration r where r.user.id = :userId and r.event.id in :eventIds")
+    Set<UUID> findRegisteredEventIds(@Param("userId") UUID userId, @Param("eventIds") Collection<UUID> eventIds);
 
     interface EventSeatCount {
         UUID getEventId();

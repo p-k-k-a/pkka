@@ -322,6 +322,53 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
+    void eventList_flagsTheCallersOwnRegistrations() throws Exception {
+        Tag tag = tagRepository.save(Tag.builder()
+                .name("mine-" + UUID.randomUUID().toString().substring(0, 8))
+                .build());
+        Event signedUpFor = newEvent(Audience.PUBLIC, 10);
+        Event notSignedUpFor = newEvent(Audience.PUBLIC, 10);
+        for (Event event : new Event[] {signedUpFor, notSignedUpFor}) {
+            event.getTags().add(tag);
+            eventRepository.save(event);
+        }
+        // Someone else's seat on the second event, so a non-zero count cannot be mistaken for the flag.
+        registerOtherAlumn(notSignedUpFor);
+
+        mockMvc.perform(post("/api/events/{id}/registration", signedUpFor.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/public/events")
+                        .param("tags", tag.getName())
+                        .param("sort", "startsAt,asc")
+                        .with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].registered".formatted(signedUpFor.getId()))
+                        .value(true))
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].registered".formatted(notSignedUpFor.getId()))
+                        .value(false));
+    }
+
+    @Test
+    void eventListForAnonymousCaller_reportsNothingAsRegistered() throws Exception {
+        Tag tag = tagRepository.save(Tag.builder()
+                .name("anon-" + UUID.randomUUID().toString().substring(0, 8))
+                .build());
+        Event event = newEvent(Audience.PUBLIC, 10);
+        event.getTags().add(tag);
+        eventRepository.save(event);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(get("/api/public/events").param("tags", tag.getName()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].seatsTaken").value(1))
+                .andExpect(jsonPath("$.content[0].registered").value(false));
+    }
+
+    @Test
     void eventDetailsForAnonymousCaller_reportsSeatsTakenButNoRegistration() throws Exception {
         Event event = newEvent(Audience.PUBLIC, 10);
         registerOtherAlumn(event);

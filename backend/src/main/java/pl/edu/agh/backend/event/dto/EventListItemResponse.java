@@ -19,8 +19,13 @@ public record EventListItemResponse(
         Integer seatLimit,
 
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "Registrations for this event so far")
-        int seatsTaken) {
-    public static EventListItemResponse from(Event e, long seatsTaken) {
+        int seatsTaken,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Whether the requesting user is signed up; false for anonymous callers")
+        boolean registered) {
+    public static EventListItemResponse from(Event e, long seatsTaken, boolean registered) {
         return new EventListItemResponse(
                 e.getId(),
                 e.getTitle(),
@@ -29,6 +34,7 @@ public record EventListItemResponse(
                 e.getLocation(),
                 e.getCoverImageUrl(),
                 e.getSeatLimit(),
-                (int) seatsTaken);
+                (int) seatsTaken,
+                registered);
     }
 }
