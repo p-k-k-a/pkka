@@ -25,6 +25,11 @@ export default defineConfig({
       override: {
         mutator: { path: "./mutator.ts", name: "apiFetch" },
         query: { useQuery: true, useMutation: true, signal: true, usePrefetch: true },
+        operations: {
+          listAlumni: {
+            query: { useInfinite: true, useInfiniteQueryParam: "page" },
+          },
+        },
       },
       formatter: "prettier",
     },
