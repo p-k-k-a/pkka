@@ -1,12 +1,12 @@
 import {
-  CreateApplicationRequestDtoFaculty,
-  CreateApplicationRequestDtoMeetingPreferencesItem,
-  CreateApplicationRequestDtoStudyType,
+  CreateApplicationRequestFaculty,
+  CreateApplicationRequestMeetingPreferencesItem,
+  CreateApplicationRequestStudyType,
 } from "@pkka/api";
 
 type Option<T extends string> = { value: T; label: string };
 
-const FACULTY_LABELS: Record<CreateApplicationRequestDtoFaculty, string> = {
+const FACULTY_LABELS: Record<CreateApplicationRequestFaculty, string> = {
   WE: "Wydział Elektromechaniczny (1952-1957)",
   WEGH: "Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)",
   WEAIE: "Wydział Elektrotechniki, Automatyki i Elektroniki (1975-1998)",
@@ -15,29 +15,29 @@ const FACULTY_LABELS: Record<CreateApplicationRequestDtoFaculty, string> = {
   WI: "Wydział Informatyki (2023-obecnie)",
 };
 
-const STUDY_TYPE_LABELS: Record<CreateApplicationRequestDtoStudyType, string> = {
+const STUDY_TYPE_LABELS: Record<CreateApplicationRequestStudyType, string> = {
   BACHELOR: "Studia I stopnia (inżynierskie / licencjackie)",
   MASTER: "Studia II stopnia (magisterskie)",
   DOCTORAL: "Studia doktoranckie",
   POSTGRADUATE: "Studia podyplomowe",
 };
 
-const MEETING_FORMAT_LABELS: Record<CreateApplicationRequestDtoMeetingPreferencesItem, string> = {
+const MEETING_FORMAT_LABELS: Record<CreateApplicationRequestMeetingPreferencesItem, string> = {
   ONLINE: "Online",
   IN_PERSON_KRAKOW: "Stacjonarnie (Kraków)",
   HYBRID: "Hybrydowo",
 };
 
-export const FACULTIES: Option<CreateApplicationRequestDtoFaculty>[] = Object.values(
-  CreateApplicationRequestDtoFaculty,
+export const FACULTIES: Option<CreateApplicationRequestFaculty>[] = Object.values(
+  CreateApplicationRequestFaculty,
 ).map((value) => ({ value, label: FACULTY_LABELS[value] }));
 
-export const STUDY_TYPES: Option<CreateApplicationRequestDtoStudyType>[] = Object.values(
-  CreateApplicationRequestDtoStudyType,
+export const STUDY_TYPES: Option<CreateApplicationRequestStudyType>[] = Object.values(
+  CreateApplicationRequestStudyType,
 ).map((value) => ({ value, label: STUDY_TYPE_LABELS[value] }));
 
-export const MEETING_FORMATS: Option<CreateApplicationRequestDtoMeetingPreferencesItem>[] =
-  Object.values(CreateApplicationRequestDtoMeetingPreferencesItem).map((value) => ({
+export const MEETING_FORMATS: Option<CreateApplicationRequestMeetingPreferencesItem>[] =
+  Object.values(CreateApplicationRequestMeetingPreferencesItem).map((value) => ({
     value,
     label: MEETING_FORMAT_LABELS[value],
   }));

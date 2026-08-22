@@ -38,14 +38,14 @@ export function ApplicationSummary({
       <SummaryRow label="Telefon" value={application.phoneNumber} />
       <SummaryRow
         label="Zainteresowania"
-        value={interests.length > 0 ? interests.join(", ") : "—"}
+        value={interests.length > 0 ? interests.join(", ") : "-"}
       />
       <SummaryRow
         label="Preferowane formy spotkań"
         value={
           meetingPreferences.length > 0
             ? meetingPreferences.map(meetingPreferenceLabel).join(", ")
-            : "—"
+            : "-"
         }
       />
       <SummaryRow
@@ -63,7 +63,7 @@ export function ApplicationSummary({
               ))}
             </span>
           ) : (
-            "—"
+            "-"
           )
         }
       />
