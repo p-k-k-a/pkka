@@ -5,8 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Admin list item — no content, but exposes status and drafts. */
-public record AdminPostSummaryResponse(
+public record AdminPostListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
@@ -15,8 +14,8 @@ public record AdminPostSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminPostSummaryResponse from(Post post) {
-        return new AdminPostSummaryResponse(
+    static AdminPostListItemResponse from(Post post) {
+        return new AdminPostListItemResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),

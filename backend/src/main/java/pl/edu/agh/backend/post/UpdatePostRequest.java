@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** Full replacement of the editable fields. The slug never changes to avoid link rotation. */
 public record UpdatePostRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 300)
         String title,

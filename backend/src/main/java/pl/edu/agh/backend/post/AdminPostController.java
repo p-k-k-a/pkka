@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -34,10 +35,10 @@ public class AdminPostController {
 
     @GetMapping
     @Operation(summary = "List all posts including drafts, newest first, optionally filtered by status")
-    public Page<AdminPostSummaryResponse> listAdminPosts(
+    public Page<AdminPostListItemResponse> listAdminPosts(
             @RequestParam(required = false) PostStatus status,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return adminPostService.list(status, pageable);
+        return adminPostService.list(Optional.ofNullable(status), pageable);
     }
 
     @GetMapping("/{id}")

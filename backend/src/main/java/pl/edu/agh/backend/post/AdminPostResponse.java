@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 
-/** Admin view of a post — includes drafts, status and content. */
 public record AdminPostResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
