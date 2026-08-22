@@ -21,6 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "userInterfaceStyle": "light",
       "package": "com.pkka.app"
     },
     "web": {

@@ -1,12 +1,13 @@
+import { useIsAlumni } from "@/components/auth/require-alumni";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@react-navigation/native";
 import { Tabs } from "expo-router";
-import { Calendar, Home, LogIn, User } from "lucide-react-native";
+import { Calendar, Home, LogIn, User, Users } from "lucide-react-native";
 
 export default function TabsLayout() {
   const { colors } = useTheme();
   const { user } = useAuth();
-  console.log(user);
+  const isAlumni = useIsAlumni();
 
   return (
     <Tabs
@@ -31,6 +32,15 @@ export default function TabsLayout() {
         options={{
           title: "WYDARZENIA",
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="alumni"
+        options={{
+          title: "ALUMNI",
+          // Verified-alumni only: href:null hides the tab and blocks navigation for everyone else.
+          href: isAlumni ? undefined : null,
+          tabBarIcon: ({ color, size }) => <Users color={color} size={size} />,
         }}
       />
       <Tabs.Screen

@@ -1,10 +1,5 @@
-import { TemporaryPage } from "@/components/temporary-page";
+import { ProfileContent } from "@/components/profile/profile-content";
 
 export default function DashboardProfilePage() {
-  return (
-    <TemporaryPage
-      title="Profil"
-      description="Strona profilu użytkownika jest w przygotowaniu. Wkrótce będziesz mógł edytować swoje dane i ustawienia konta."
-    />
-  );
+  return <ProfileContent />;
 }
