@@ -9,7 +9,7 @@ import {
   getListAdminPostsQueryKey,
   useDeleteAdminPost,
   useListAdminPosts,
-  type AdminPostSummaryResponse,
+  type AdminPostListItemResponse,
   type ListAdminPostsParams,
 } from "@pkka/api";
 import {
@@ -43,7 +43,7 @@ export function PostsList() {
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
-  const [postToDelete, setPostToDelete] = useState<AdminPostSummaryResponse | null>(null);
+  const [postToDelete, setPostToDelete] = useState<AdminPostListItemResponse | null>(null);
 
   useEffect(() => {
     if (!isLoading && !admin) {
