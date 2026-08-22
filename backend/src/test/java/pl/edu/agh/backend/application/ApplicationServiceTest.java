@@ -110,12 +110,21 @@ class ApplicationServiceTest {
                 .phoneNumber("+48123456789")
                 .build();
 
-        when(callerUserService.getOrCreate(caller)).thenReturn(applicant);
+        when(callerUserService.find(caller)).thenReturn(Optional.of(applicant));
         when(applicationRepository.findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId()))
                 .thenReturn(Optional.of(application));
 
         ApplicationResponse response = applicationService.getMine(caller);
 
         assertThat(response.fieldOfStudy()).isEqualTo("Informatyka");
+    }
+
+    @Test
+    void getMineDoesNotProvisionAUserRowForACallerWithoutOne() {
+        Caller caller = new Caller(UUID.randomUUID().toString(), Set.of(Roles.USER));
+        when(callerUserService.find(caller)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> applicationService.getMine(caller)).isInstanceOf(ApplicationNotFoundException.class);
+        verify(callerUserService, never()).getOrCreate(any());
     }
 }

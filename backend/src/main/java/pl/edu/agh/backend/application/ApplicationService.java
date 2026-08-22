@@ -52,11 +52,13 @@ public class ApplicationService {
         }
     }
 
+    /** No local row means no application, so this never provisions one the way the write paths do. */
     @Transactional(readOnly = true)
     public ApplicationResponse getMine(Caller caller) {
-        User applicant = callerUserService.getOrCreate(caller);
-        return applicationRepository
-                .findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId())
+        return callerUserService
+                .find(caller)
+                .flatMap(applicant ->
+                        applicationRepository.findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId()))
                 .map(ApplicationResponse::from)
                 .orElseThrow(ApplicationNotFoundException::new);
     }
