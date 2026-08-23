@@ -64,7 +64,7 @@ public class Post {
         }
     }
 
-    /** Publishes the post, setting status and publishedAt (only on first publication). */
+    /** Publishes the post. Publication is one-way: a published post cannot return to draft. */
     public void publish() {
         if (this.status != PostStatus.PUBLISHED) {
             this.status = PostStatus.PUBLISHED;
@@ -72,10 +72,5 @@ public class Post {
                 this.publishedAt = Instant.now();
             }
         }
-    }
-
-    /** Reverts the post to draft. publishedAt remains to preserve the original publication date. */
-    public void unpublish() {
-        this.status = PostStatus.DRAFT;
     }
 }
