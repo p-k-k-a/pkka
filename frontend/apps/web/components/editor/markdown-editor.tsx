@@ -1,25 +1,38 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
-import { Markdown } from "@tiptap/markdown";
 import {
   Bold,
   Code,
+  Heading1,
   Heading2,
   Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
   Italic,
   List,
   ListOrdered,
   Redo2,
-  Strikethrough,
   TextQuote,
   Undo2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Toggle } from "@/components/ui/toggle";
-import { cn } from "@/lib/utils";
+
+function ToolbarTip({ label, children }: { label: string; children: React.ReactElement }) {
+  return (
+    <Tooltip disableHoverableContent>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 type MarkdownEditorProps = {
   initialContent: string;
@@ -29,7 +42,11 @@ type MarkdownEditorProps = {
 
 export function MarkdownEditor({ initialContent, onChange, className }: MarkdownEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit, Markdown],
+    extensions: [
+      // those 2 are not supported by portable markdown, let's not use them
+      StarterKit.configure({ underline: false, strike: false }),
+      Markdown,
+    ],
     content: initialContent,
     contentType: "markdown",
     immediatelyRender: false,
@@ -47,10 +64,13 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
     selector: ({ editor }) => ({
       bold: editor?.isActive("bold") ?? false,
       italic: editor?.isActive("italic") ?? false,
-      strike: editor?.isActive("strike") ?? false,
       code: editor?.isActive("code") ?? false,
+      h1: editor?.isActive("heading", { level: 1 }) ?? false,
       h2: editor?.isActive("heading", { level: 2 }) ?? false,
       h3: editor?.isActive("heading", { level: 3 }) ?? false,
+      h4: editor?.isActive("heading", { level: 4 }) ?? false,
+      h5: editor?.isActive("heading", { level: 5 }) ?? false,
+      h6: editor?.isActive("heading", { level: 6 }) ?? false,
       bulletList: editor?.isActive("bulletList") ?? false,
       orderedList: editor?.isActive("orderedList") ?? false,
       blockquote: editor?.isActive("blockquote") ?? false,
@@ -77,12 +97,6 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
       run: () => editor.chain().focus().toggleItalic().run(),
     },
     {
-      icon: Strikethrough,
-      label: "Przekreślenie",
-      active: state?.strike,
-      run: () => editor.chain().focus().toggleStrike().run(),
-    },
-    {
       icon: Code,
       label: "Kod",
       active: state?.code,
@@ -91,6 +105,12 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
   ];
 
   const blocks = [
+    {
+      icon: Heading1,
+      label: "Nagłówek 1",
+      active: state?.h1,
+      run: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    },
     {
       icon: Heading2,
       label: "Nagłówek 2",
@@ -102,6 +122,24 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
       label: "Nagłówek 3",
       active: state?.h3,
       run: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    },
+    {
+      icon: Heading4,
+      label: "Nagłówek 4",
+      active: state?.h4,
+      run: () => editor.chain().focus().toggleHeading({ level: 4 }).run(),
+    },
+    {
+      icon: Heading5,
+      label: "Nagłówek 5",
+      active: state?.h5,
+      run: () => editor.chain().focus().toggleHeading({ level: 5 }).run(),
+    },
+    {
+      icon: Heading6,
+      label: "Nagłówek 6",
+      active: state?.h6,
+      run: () => editor.chain().focus().toggleHeading({ level: 6 }).run(),
     },
     {
       icon: List,
@@ -127,68 +165,47 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
     <div className={cn("border-border bg-background rounded-lg border", className)}>
       <div className="border-border flex flex-wrap items-center gap-1 border-b p-1.5">
         {marks.map(({ icon: Icon, label, active, run }) => (
-          <Toggle
-            key={label}
-            size="sm"
-            aria-label={label}
-            title={label}
-            pressed={active}
-            onPressedChange={run}
-          >
-            <Icon />
-          </Toggle>
+          <ToolbarTip key={label} label={label}>
+            <Toggle size="sm" aria-label={label} pressed={active} onPressedChange={run}>
+              <Icon />
+            </Toggle>
+          </ToolbarTip>
         ))}
         <Separator orientation="vertical" className="mx-1" />
         {blocks.map(({ icon: Icon, label, active, run }) => (
-          <Toggle
-            key={label}
-            size="sm"
-            aria-label={label}
-            title={label}
-            pressed={active}
-            onPressedChange={run}
-          >
-            <Icon />
-          </Toggle>
+          <ToolbarTip key={label} label={label}>
+            <Toggle size="sm" aria-label={label} pressed={active} onPressedChange={run}>
+              <Icon />
+            </Toggle>
+          </ToolbarTip>
         ))}
         <Separator orientation="vertical" className="mx-1" />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Cofnij"
-          title="Cofnij"
-          disabled={!state?.canUndo}
-          onClick={() => editor.chain().focus().undo().run()}
-        >
-          <Undo2 />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Ponów"
-          title="Ponów"
-          disabled={!state?.canRedo}
-          onClick={() => editor.chain().focus().redo().run()}
-        >
-          <Redo2 />
-        </Button>
+        <ToolbarTip label="Cofnij">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Cofnij"
+            disabled={!state?.canUndo}
+            onClick={() => editor.chain().focus().undo().run()}
+          >
+            <Undo2 />
+          </Button>
+        </ToolbarTip>
+        <ToolbarTip label="Ponów">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Ponów"
+            disabled={!state?.canRedo}
+            onClick={() => editor.chain().focus().redo().run()}
+          >
+            <Redo2 />
+          </Button>
+        </ToolbarTip>
       </div>
-      <EditorContent
-        editor={editor}
-        className={cn(
-          "text-foreground/90 text-base leading-7",
-          "[&_h2]:font-heading [&_h2]:text-foreground [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-xl [&_h2]:font-semibold",
-          "[&_h3]:font-heading [&_h3]:text-foreground [&_h3]:mt-3 [&_h3]:mb-1.5 [&_h3]:text-lg [&_h3]:font-semibold",
-          "[&_p]:my-2",
-          "[&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-6",
-          "[&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-6",
-          "[&_blockquote]:border-primary [&_blockquote]:text-muted-foreground [&_blockquote]:my-2 [&_blockquote]:border-l-4 [&_blockquote]:pl-4 [&_blockquote]:italic",
-          "[&_code]:bg-muted [&_code]:rounded-sm [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-sm",
-          "[&_pre]:bg-muted [&_pre]:my-2 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0",
-        )}
-      />
+      <EditorContent editor={editor} className="rich-text space-y-5 leading-8" />
     </div>
   );
 }

@@ -1,17 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  getListAdminPostsQueryKey,
-  useDeleteAdminPost,
-  useListAdminPosts,
-  type AdminPostListItemResponse,
-  type ListAdminPostsParams,
-} from "@pkka/api";
+import { PostStatusBadge } from "@/components/admin/post-status-badge";
+import { SectionShell } from "@/components/content/section-shell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,13 +16,42 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PostStatusBadge } from "@/components/admin/post-status-badge";
-import { SectionShell } from "@/components/content/section-shell";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
 import { formatPublishedAt } from "@/lib/format-published-at";
+import { isAdmin } from "@/lib/roles";
+import {
+  getListAdminPostsQueryKey,
+  useDeleteAdminPost,
+  useListAdminPosts,
+  type AdminPostListItemResponse,
+  type ListAdminPostsParams,
+} from "@pkka/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const PAGE_SIZE = 20;
+
+function PostCardSkeleton() {
+  return (
+    <Card className="gap-3 p-5 md:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 space-y-1">
+          <Skeleton className="h-4 w-44" />
+          <Skeleton className="h-7 w-64" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <Skeleton className="h-5 w-24 rounded-4xl" />
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Skeleton className="h-[34px] w-24 rounded-md" />
+        <Skeleton className="h-[34px] w-24 rounded-md" />
+      </div>
+    </Card>
+  );
+}
 
 type StatusFilter = "ALL" | NonNullable<ListAdminPostsParams["status"]>;
 
@@ -82,13 +101,11 @@ export function PostsList() {
   const totalElements = pageData?.totalElements ?? 0;
   const totalPages = pageData?.totalPages ?? 0;
   const currentPage = pageData?.number ?? page;
+  const firstShown = currentPage * (pageData?.size ?? PAGE_SIZE) + 1;
+  const lastShown = firstShown + posts.length - 1;
 
   return (
-    <SectionShell
-      title="Blog"
-      description="Wpisy na blogu wydziałowym — szkice i opublikowane artykuły."
-      as="section"
-    >
+    <SectionShell title="Blog" description="Wpisy na blogu klubu Alumna." as="section">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <Tabs
           value={statusFilter}
@@ -114,25 +131,22 @@ export function PostsList() {
       {isListLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+            <PostCardSkeleton key={i} />
           ))}
         </div>
       ) : isError ? (
         <p className="text-destructive font-medium">Nie udało się załadować wpisów.</p>
       ) : posts.length === 0 ? (
         <p className="text-muted-foreground">
-          {statusFilter === "ALL"
-            ? "Brak wpisów — utwórz pierwszy."
-            : "Brak wpisów o tym statusie."}
+          {statusFilter === "ALL" ? "Brak wpisów." : "Brak wpisów o tym statusie."}
         </p>
       ) : (
         <div className="space-y-4">
-          {totalElements > posts.length ? (
-            <p className="text-muted-foreground text-sm">
-              Wyświetlono {posts.length} z {totalElements} wpisów
-              {totalPages > 1 ? ` · strona ${currentPage + 1} z ${totalPages}` : ""}.
-            </p>
-          ) : null}
+          <p className="text-muted-foreground text-sm">
+            {totalPages > 1
+              ? `Wyświetlono ${firstShown}–${lastShown} z ${totalElements} wpisów, strona ${currentPage + 1} z ${totalPages}.`
+              : `Wyświetlono ${totalElements} ${totalElements === 1 ? "wpis" : "wpisów"}.`}
+          </p>
 
           {posts.map((post) => {
             const { dateLabel } = formatPublishedAt(
@@ -151,7 +165,7 @@ export function PostsList() {
                   </div>
                   <PostStatusBadge status={post.status} />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-end gap-2">
                   <Button asChild variant="outline" size="sm">
                     <Link href={`/dashboard/posts/${post.id}`}>
                       <Pencil data-icon="inline-start" />
@@ -160,9 +174,8 @@ export function PostsList() {
                   </Button>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
-                    className="text-destructive hover:text-destructive"
                     onClick={() => setPostToDelete(post)}
                   >
                     <Trash2 data-icon="inline-start" />
@@ -204,7 +217,7 @@ export function PostsList() {
         open={postToDelete !== null}
         onOpenChange={(open) => !open && setPostToDelete(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent onOverlayClick={() => !deletePost.isPending && setPostToDelete(null)}>
           <AlertDialogHeader>
             <AlertDialogTitle>Usunąć wpis?</AlertDialogTitle>
             <AlertDialogDescription>

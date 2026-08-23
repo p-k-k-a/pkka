@@ -1,43 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ImageIcon } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatPublishedAt } from "@/lib/format-published-at";
 import {
   getGetAdminPostQueryKey,
   getListAdminPostsQueryKey,
   useCreateAdminPost,
   useUpdateAdminPost,
   type AdminPostResponse,
+  type CreatePostRequestStatus,
 } from "@pkka/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, CircleAlert, ImageIcon } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import { PostStatusBadge } from "@/components/admin/post-status-badge";
-import { ProseContent } from "@/components/content/prose-content";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
-// TODO: publication channels other than the club website (mobile app push,
-// Discord #ogłoszenia, newsletter) are not wired up yet — the checkboxes
-// below are a mock of the target design.
+// TODO: publication channels other than the club platform (Discord #ogłoszenia,
+// newsletter) are not wired up yet
 const PUBLISH_CHANNELS = [
-  { id: "www", label: "Strona WWW klubu", checked: true, disabled: true },
-  { id: "mobile", label: "Aplikacja mobilna", checked: true, disabled: true },
+  { id: "platform", label: "Strona i aplikacja klubu", checked: true, disabled: true },
   { id: "discord", label: "Discord #ogłoszenia", checked: false, disabled: true },
   { id: "newsletter", label: "Newsletter", checked: false, disabled: true },
 ];
 
-// TODO: notifications are not implemented yet — mock of the target design.
+// TODO: notifications are not implemented yet
 const NOTIFICATIONS = [
-  { id: "push-publish", label: "Push o publikacji", checked: true, disabled: true },
-  { id: "email-followup", label: "Email follow-up", checked: false, disabled: true },
+  { id: "push-publish", label: "Powiadomienie Push", checked: true, disabled: true },
+  { id: "email", label: "Email", checked: false, disabled: true },
 ];
 
 type PostFormProps = {
@@ -48,45 +45,55 @@ export function PostForm({ post }: PostFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEditing = post !== undefined;
+  const isPublished = post?.status === "PUBLISHED";
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
-  const [published, setPublished] = useState(post?.status === "PUBLISHED");
+  const [postId, setPostId] = useState(post?.id);
+  const [pendingStatus, setPendingStatus] = useState<CreatePostRequestStatus | null>(null);
 
-  const onSaved = () => {
-    queryClient.invalidateQueries({ queryKey: getListAdminPostsQueryKey() });
-    if (post) {
-      queryClient.invalidateQueries({ queryKey: getGetAdminPostQueryKey(post.id) });
-    }
-    router.push("/dashboard/posts");
-  };
+  const createPost = useCreateAdminPost();
+  const updatePost = useUpdateAdminPost();
 
-  const createPost = useCreateAdminPost({ mutation: { onSuccess: onSaved } });
-  const updatePost = useUpdateAdminPost({ mutation: { onSuccess: onSaved } });
-
-  const isPending = createPost.isPending || updatePost.isPending;
+  const isPending = pendingStatus !== null;
   const isError = createPost.isError || updatePost.isError;
-  const status = published ? "PUBLISHED" : "DRAFT";
   const canSave = title.trim().length > 0 && content.trim().length > 0 && !isPending;
 
-  const handleSave = () => {
-    const data = { title: title.trim(), content, status } as const;
-    if (isEditing) {
-      updatePost.mutate({ id: post.id, data });
+  const handleSaveSuccess = (savedId: string, status: CreatePostRequestStatus) => {
+    queryClient.invalidateQueries({ queryKey: getListAdminPostsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getGetAdminPostQueryKey(savedId) });
+    setPendingStatus(null);
+    if (status === "PUBLISHED") {
+      toast.success("Wpis opublikowany");
+      router.push("/dashboard/posts");
     } else {
-      createPost.mutate({ data });
+      setPostId(savedId);
+      toast.success("Zapisano szkic");
     }
   };
 
-  const submitLabel = isPending
-    ? "Zapisywanie…"
-    : published
-      ? isEditing
-        ? "Zapisz i opublikuj"
-        : "Opublikuj"
-      : "Zapisz szkic";
+  const save = (status: CreatePostRequestStatus) => {
+    const data = { title: title.trim(), content, status } as const;
+    setPendingStatus(status);
 
-  const previewDate = formatPublishedAt(post?.publishedAt ?? new Date().toISOString());
+    if (postId !== undefined) {
+      updatePost.mutate(
+        { id: postId, data },
+        {
+          onSuccess: () => handleSaveSuccess(postId, status),
+          onError: () => setPendingStatus(null),
+        },
+      );
+    } else {
+      createPost.mutate(
+        { data },
+        {
+          onSuccess: (response) => handleSaveSuccess(response.data.id, status),
+          onError: () => setPendingStatus(null),
+        },
+      );
+    }
+  };
 
   return (
     <div className="px-4 py-10 md:px-10">
@@ -99,19 +106,9 @@ export function PostForm({ post }: PostFormProps) {
         </Button>
 
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-              {isEditing ? "Edytuj wpis" : "Nowy wpis"}
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              {published
-                ? "Wpis będzie widoczny publicznie na stronie klubu."
-                : "Szkic — widoczny tylko w panelu admina."}
-            </p>
-          </div>
-          <Button type="button" size="lg" disabled={!canSave} onClick={handleSave}>
-            {submitLabel}
-          </Button>
+          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+            {isEditing ? "Edytuj wpis" : "Nowy wpis"}
+          </h1>
         </div>
 
         {isError ? (
@@ -142,47 +139,24 @@ export function PostForm({ post }: PostFormProps) {
                   onChange={(event) => setTitle(event.target.value)}
                 />
                 <p className="text-muted-foreground text-xs">
-                  {isEditing
-                    ? `Adres wpisu: /${post.slug} (nie zmienia się przy edycji tytułu)`
-                    : "Adres wpisu wygenerujemy automatycznie z tytułu."}
+                  {!isEditing
+                    ? "Adres wpisu wygenerujemy automatycznie z tytułu."
+                    : `Adres wpisu: /${post.slug}. Nie zmienia się przy edycji.`}
                 </p>
               </div>
             </section>
 
             <section className="space-y-3">
               <h2 className="text-foreground font-heading text-lg font-semibold">Treść</h2>
-              <Tabs defaultValue="editor">
-                <TabsList>
-                  <TabsTrigger value="editor">Edytor</TabsTrigger>
-                  <TabsTrigger value="preview">Podgląd</TabsTrigger>
-                </TabsList>
-                {/* forceMount keeps the Tiptap instance (and its undo history) alive
-                    while the preview tab is shown — unmounting would reset it to the
-                    initial content. */}
-                <TabsContent value="editor" forceMount className="data-[state=inactive]:hidden">
-                  <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
-                </TabsContent>
-                <TabsContent value="preview">
-                  <div className="border-border bg-background min-h-64 rounded-lg border px-4 py-3">
-                    {content.trim() ? (
-                      <ProseContent content={content} />
-                    ) : (
-                      <p className="text-muted-foreground text-sm">
-                        Podgląd pojawi się po dodaniu treści.
-                      </p>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
             </section>
 
             <section className="space-y-3">
               <h2 className="text-foreground font-heading text-lg font-semibold">Okładka</h2>
-              {/* TODO: cover image upload is not supported by the API yet — mock of the target design. */}
-              <div className="border-border text-muted-foreground flex min-h-40 cursor-not-allowed items-center justify-center rounded-lg border-2 border-dashed">
+              {/* TODO: cover image upload is not supported by the API yet */}
+              <div className="bg-background border-border text-muted-foreground flex min-h-40 cursor-not-allowed items-center justify-center rounded-lg border-2 border-dashed">
                 <div className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase">
                   <ImageIcon className="size-4" aria-hidden="true" />
-                  Okładka 1200×630 — wkrótce
                 </div>
               </div>
             </section>
@@ -190,17 +164,48 @@ export function PostForm({ post }: PostFormProps) {
 
           <div className="space-y-6">
             <Card className="gap-4 p-5">
-              <h2 className="text-foreground font-heading text-base font-semibold">Status</h2>
-              <div className="flex items-center justify-between gap-3">
-                <Label htmlFor="post-published" className="text-sm font-medium">
-                  Opublikowany
-                </Label>
-                <Switch id="post-published" checked={published} onCheckedChange={setPublished} />
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-foreground font-heading text-base font-semibold">Status</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Czym różni się szkic od opublikowanego wpisu?"
+                      className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                    >
+                      <CircleAlert className="size-4" aria-hidden="true" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Szkic widzą tylko administratorzy. Możesz go zapisywać wiele razy. Publikacja
+                    jest nieodwracalna i widoczna dla wszystkich.
+                  </TooltipContent>
+                </Tooltip>
               </div>
-              <PostStatusBadge status={status} />
-              {post?.publishedAt ? (
+              <div className="flex flex-col gap-2">
+                {isPublished ? (
+                  <Button type="button" disabled={!canSave} onClick={() => save("PUBLISHED")}>
+                    {pendingStatus === "PUBLISHED" ? "Zapisywanie…" : "Zapisz zmiany"}
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!canSave}
+                      onClick={() => save("DRAFT")}
+                    >
+                      {pendingStatus === "DRAFT" ? "Zapisywanie…" : "Zapisz szkic"}
+                    </Button>
+                    <Button type="button" disabled={!canSave} onClick={() => save("PUBLISHED")}>
+                      {pendingStatus === "PUBLISHED" ? "Publikowanie…" : "Opublikuj"}
+                    </Button>
+                  </>
+                )}
+              </div>
+              {isPublished ? (
                 <p className="text-muted-foreground text-xs">
-                  Pierwsza publikacja: {formatPublishedAt(post.publishedAt).dateLabel}
+                  Opublikowano: {formatPublishedAt(post.publishedAt).dateLabel}
                 </p>
               ) : null}
             </Card>
@@ -226,7 +231,6 @@ export function PostForm({ post }: PostFormProps) {
                   </div>
                 ))}
               </div>
-              <p className="text-muted-foreground text-xs">Pozostałe kanały wkrótce.</p>
             </Card>
 
             <Card className="gap-4 p-5">
@@ -249,23 +253,6 @@ export function PostForm({ post }: PostFormProps) {
                     </Label>
                   </div>
                 ))}
-              </div>
-            </Card>
-
-            <Card className="gap-3 p-5">
-              <h2 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-                Podgląd karty
-              </h2>
-              <div className="border-border rounded-lg border p-4">
-                <div className="bg-muted text-muted-foreground mb-3 flex h-24 items-center justify-center rounded-md text-xs font-semibold tracking-widest uppercase">
-                  Okładka
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  {previewDate.dateLabel} · {published ? "Opublikowany" : "Szkic"}
-                </p>
-                <p className="text-foreground truncate text-sm font-bold">
-                  {title.trim() || "Tytuł wpisu"}
-                </p>
               </div>
             </Card>
           </div>
