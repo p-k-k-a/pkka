@@ -6,7 +6,7 @@ import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { DetailHeader } from "@/components/content/detail-header";
 import { ProseContent } from "@/components/content/prose-content";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { formatPublishedAt } from "@pkka/domain";
 
 type AnnouncementDetailProps = {
   slug: string;

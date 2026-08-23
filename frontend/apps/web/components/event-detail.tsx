@@ -10,8 +10,8 @@ import { DetailBackLink } from "@/components/content/detail-back-link";
 import { DetailHeader } from "@/components/content/detail-header";
 import { InfoRow } from "@/components/content/info-row";
 import { remoteCoverImageSrc } from "@/lib/content-images";
-import { formatEventDateShort, formatTimeRange } from "@/lib/format-event-datetime";
-import { eventTypeLabelUpper, formatSeatsRemaining } from "@/lib/event-labels";
+import { formatEventDateShort, formatTimeRange } from "@pkka/domain";
+import { eventTypeLabelUpper, formatSeatsRemaining } from "@pkka/domain";
 import { useAuth } from "@/lib/auth-context";
 
 type EventDetailProps = {
@@ -147,7 +147,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
       <footer className="border-border bg-background space-y-3 border-t px-6 py-4">
         {variant === "dashboard" ? (
           <>
-            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
+            <p className="text-muted-foreground text-eyebrow text-center font-semibold tracking-widest uppercase">
               Rejestracja na wydarzenie wkrótce dostępna
             </p>
             <Button size="xl" className="w-full rounded-xl font-semibold" disabled>
@@ -156,7 +156,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
           </>
         ) : (
           <>
-            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
+            <p className="text-muted-foreground text-eyebrow text-center font-semibold tracking-widest uppercase">
               Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
             </p>
             <Button

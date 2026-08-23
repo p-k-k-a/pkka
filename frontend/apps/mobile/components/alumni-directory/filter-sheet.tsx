@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
-import { EMPTY_FILTERS, YEAR_MAX, YEAR_MIN, type AlumniFilters } from "@/lib/alumni-directory";
+import { EMPTY_FILTERS, YEAR_MAX, YEAR_MIN, type AlumniFilters } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
@@ -21,7 +21,7 @@ const SHEET_LIST_MAX_HEIGHT = 216;
 
 function HeaderText({ children }: { children: ReactNode }) {
   return (
-    <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest">
+    <Text className="text-muted-foreground text-eyebrow font-semibold uppercase tracking-widest">
       {children}
     </Text>
   );

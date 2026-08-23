@@ -23,7 +23,7 @@ export function SectionShell({
     >
       <div className="mx-auto max-w-[1280px]">
         <div className="mb-10 space-y-3">
-          <h2 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+          <h2 className="font-heading text-foreground text-h2 md:text-h2-lg font-semibold tracking-tight">
             {title}
           </h2>
           {description ? (

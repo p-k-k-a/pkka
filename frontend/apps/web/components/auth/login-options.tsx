@@ -1,7 +1,8 @@
 "use client";
 
+import { EYEBROW } from "@pkka/theme";
 import { ArrowRight } from "lucide-react";
-import { DiscordIcon } from "@/components/auth/discord-icon";
+import { DiscordIcon } from "@pkka/icons";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 
@@ -11,7 +12,7 @@ export function LoginOptions() {
   return (
     <div className="bg-background w-full max-w-md space-y-7 rounded-lg p-8 md:p-10">
       <div className="space-y-2 text-center">
-        <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+        <h1 className="font-heading text-foreground text-h2 md:text-h2-lg font-semibold tracking-tight">
           Zaloguj się
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed md:text-base">
@@ -38,9 +39,7 @@ export function LoginOptions() {
 
       <div className="flex items-center gap-3">
         <div className="bg-border h-px flex-1" />
-        <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-          Nie masz konta?
-        </span>
+        <span className={EYEBROW}>Nie masz konta?</span>
         <div className="bg-border h-px flex-1" />
       </div>
 

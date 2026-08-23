@@ -1,5 +1,6 @@
 "use client";
 
+import { EYEBROW } from "@pkka/theme";
 import Link from "next/link";
 import { ArrowRight, Link2, MapPin } from "lucide-react";
 import { EventListItemDto, EventListItemDtoType, useListEvents } from "@pkka/api";
@@ -9,8 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FeaturedCard } from "@/components/content/featured-card";
 import { SectionShell } from "@/components/content/section-shell";
 import { coverImageSrc } from "@/lib/content-images";
-import { formatEventDateLong } from "@/lib/format-event-datetime";
-import { eventTypeLabelUpper, formatSeatsCompact } from "@/lib/event-labels";
+import { formatEventDateLong } from "@pkka/domain";
+import { eventTypeLabelUpper, formatSeatsCompact } from "@pkka/domain";
 
 type EventsListProps = {
   variant?: "public" | "dashboard";
@@ -58,9 +59,7 @@ function EventCardCompact({
     >
       <Card className="bg-muted flex h-full w-full flex-col gap-3 border-0 p-5 shadow-none transition-opacity group-hover:opacity-90">
         <div className="space-y-1">
-          <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-            {formatEventDateLong(event.startsAt)}
-          </p>
+          <p className={EYEBROW}>{formatEventDateLong(event.startsAt)}</p>
           <h2 className="text-foreground text-xl leading-tight font-bold">{event.title}</h2>
         </div>
 
@@ -110,11 +109,7 @@ function EventCardFeatured({
       href={eventHref(event.id, variant)}
       imageSrc={coverImageSrc(event.coverImageUrl)}
       imageAlt={event.title ?? "Wydarzenie"}
-      meta={
-        <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-          {formatEventDateLong(event.startsAt)}
-        </p>
-      }
+      meta={<p className={EYEBROW}>{formatEventDateLong(event.startsAt)}</p>}
       title={event.title ?? ""}
       cta={
         <>

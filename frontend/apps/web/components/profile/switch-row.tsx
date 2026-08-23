@@ -25,7 +25,7 @@ export function SwitchRow({
           {label}
         </Label>
         {description ? (
-          <p className="text-muted-foreground text-[13px] leading-relaxed">{description}</p>
+          <p className="text-muted-foreground text-hint leading-relaxed">{description}</p>
         ) : null}
       </div>
       <Switch

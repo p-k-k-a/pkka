@@ -1,0 +1,16 @@
+{
+  "name": "@pkka/theme",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "tokens": "tsx scripts/generate.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.20.3"
+  }
+}

@@ -2,7 +2,7 @@
 
 import { ApplicationResponseStatus, useGetMine, type ApplicationResponse } from "@pkka/api";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin, isVerifiedAlumn } from "@/lib/roles";
+import { isAdmin, isVerifiedAlumn } from "@pkka/domain";
 
 export function useVerificationStatus() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();

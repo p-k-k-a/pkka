@@ -1,8 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
-import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
-import { formatEventDateShort, formatTimeRange } from "@/lib/utils";
+import {
+  eventTypeLabelUpper,
+  formatEventDateShort,
+  formatSeatsRemaining,
+  formatTimeRange,
+} from "@pkka/domain";
 import { EventDetailsDtoType, type EventDetailsDto } from "@pkka/api";
 import { Image } from "expo-image";
 import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
@@ -29,7 +33,7 @@ function InfoRow({
       <View className="size-10 items-center justify-center rounded-md bg-muted">{icon}</View>
       <View className="flex-1 gap-0.5">
         {label ? (
-          <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <Text className="text-eyebrow font-semibold uppercase tracking-widest text-muted-foreground">
             {label}
           </Text>
         ) : null}
@@ -46,7 +50,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
   const isOnline = type === EventDetailsDtoType.ONLINE;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
-  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken! : null;
+  const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
   return (
     <ScrollView
@@ -69,7 +73,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
         <View className="gap-3">
           <Badge variant="default" className="self-start">
-            <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
+            <Text>{eventTypeLabelUpper(type)}</Text>
           </Badge>
           <Text variant="h1" className="text-left text-3xl leading-tight">
             {title}
@@ -106,11 +110,11 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             />
           ) : null}
 
-          {seatsLeft !== null ? (
+          {seats ? (
             <InfoRow
               icon={<Users size={18} color={THEME.light.foreground} />}
-              value={`Pozostało ${seatsLeft} miejsc`}
-              sub={`Limit: ${seatLimit} osób`}
+              value={`Pozostało ${seats.remaining} miejsc`}
+              sub={`Limit: ${seats.limit} osób`}
             />
           ) : null}
         </View>

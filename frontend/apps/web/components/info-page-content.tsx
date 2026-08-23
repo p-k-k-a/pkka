@@ -33,7 +33,7 @@ export function InfoPageContent() {
           <p className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
             Wydział Informatyki AGH
           </p>
-          <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
+          <h1 className="font-heading text-foreground text-h2-lg md:text-display max-w-3xl leading-tight font-semibold tracking-tight">
             Czym jest Klub Alumnów WI AGH?
           </h1>
           <div className="text-muted-foreground max-w-3xl space-y-4 text-base leading-relaxed md:text-lg">
@@ -57,7 +57,7 @@ export function InfoPageContent() {
               <div className="bg-primary-foreground/10 flex size-10 items-center justify-center rounded-lg">
                 <Icon className="size-5" aria-hidden="true" />
               </div>
-              <h2 className="font-heading text-[23px] font-semibold">{title}</h2>
+              <h2 className="font-heading text-h3 font-semibold">{title}</h2>
               <p className="text-sm leading-relaxed opacity-90 md:text-base">{description}</p>
             </div>
           ))}
@@ -66,7 +66,7 @@ export function InfoPageContent() {
 
       <section className="bg-background px-4 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[1280px] space-y-6 text-center">
-          <h2 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+          <h2 className="font-heading text-foreground text-h2 md:text-h2-lg font-semibold tracking-tight">
             Gotowy, by dołączyć?
           </h2>
           <p className="text-muted-foreground mx-auto max-w-lg text-base leading-relaxed">

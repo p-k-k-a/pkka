@@ -4,8 +4,12 @@ function parseDate(iso?: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatEventDateTime(iso?: string) {
-  const date = parseDate(iso);
+/**
+ * Structured publication stamp. Callers render `dateLabel` alone, or both parts,
+ * so the two halves stay separate rather than pre-joined.
+ */
+export function formatPublishedAt(publishedAt?: string) {
+  const date = parseDate(publishedAt);
   if (!date) {
     return { dateLabel: "Nieznana data", timeLabel: "--:--" };
   }
@@ -22,6 +26,12 @@ export function formatEventDateTime(iso?: string) {
   }).format(date);
 
   return { dateLabel, timeLabel };
+}
+
+export function formatDateTime(value?: string) {
+  if (!value) return "—";
+  const { dateLabel, timeLabel } = formatPublishedAt(value);
+  return `${dateLabel}, ${timeLabel}`;
 }
 
 export function formatEventDateLong(iso?: string) {
@@ -47,23 +57,9 @@ export function formatEventDateShort(iso?: string) {
 }
 
 export function formatTimeRange(startsAt?: string, endsAt?: string) {
-  const start = formatEventDateTime(startsAt);
+  const start = formatPublishedAt(startsAt);
   if (!endsAt) return start.timeLabel;
 
-  const end = formatEventDateTime(endsAt);
+  const end = formatPublishedAt(endsAt);
   return `${start.timeLabel} - ${end.timeLabel}`;
-}
-
-export function formatEventDateTimeRange(startsAt?: string, endsAt?: string) {
-  const start = formatEventDateTime(startsAt);
-  if (!endsAt) {
-    return `${start.dateLabel}, ${start.timeLabel}`;
-  }
-
-  const end = formatEventDateTime(endsAt);
-  if (start.dateLabel === end.dateLabel) {
-    return `${start.dateLabel}, ${start.timeLabel} – ${end.timeLabel}`;
-  }
-
-  return `${start.dateLabel}, ${start.timeLabel} – ${end.dateLabel}, ${end.timeLabel}`;
 }

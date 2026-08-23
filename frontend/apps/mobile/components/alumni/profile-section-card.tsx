@@ -11,7 +11,7 @@ type ProfileSectionCardProps = {
 export function ProfileSectionCard({ title, children }: ProfileSectionCardProps) {
   return (
     <Card className="gap-3 p-6">
-      <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+      <Text className="text-eyebrow font-semibold uppercase tracking-widest text-muted-foreground">
         {title}
       </Text>
       <View>{children}</View>

@@ -16,7 +16,7 @@ export default function HomePage() {
               Wydział Informatyki AGH
             </p>
 
-            <h1 className="font-heading text-foreground text-[33px] leading-tight font-semibold tracking-tight md:text-[48px]">
+            <h1 className="font-heading text-foreground text-h2-lg md:text-display-lg leading-tight font-semibold tracking-tight">
               Witaj w Klubie Alumnów
             </h1>
 

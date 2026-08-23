@@ -1,5 +1,6 @@
 "use client";
 
+import { EYEBROW } from "@pkka/theme";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { formatPublishedAt } from "@pkka/domain";
 import {
   getGetAdminPostQueryKey,
   getListAdminPostsQueryKey,
@@ -106,7 +107,7 @@ export function PostForm({ post }: PostFormProps) {
         </Button>
 
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+          <h1 className="font-heading text-foreground text-h2 md:text-h2-lg font-semibold tracking-tight">
             {isEditing ? "Edytuj wpis" : "Nowy wpis"}
           </h1>
         </div>
@@ -125,10 +126,7 @@ export function PostForm({ post }: PostFormProps) {
               </h2>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="post-title"
-                  className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
-                >
+                <Label htmlFor="post-title" className={EYEBROW}>
                   Tytuł wpisu
                 </Label>
                 <Input

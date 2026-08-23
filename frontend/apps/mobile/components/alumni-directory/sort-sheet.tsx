@@ -1,7 +1,7 @@
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { SORT_OPTIONS, type SortOption } from "@/lib/alumni-directory";
+import { SORT_OPTIONS, type SortOption } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";

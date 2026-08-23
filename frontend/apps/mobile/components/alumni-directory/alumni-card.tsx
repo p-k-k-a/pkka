@@ -26,7 +26,7 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
           <View className="gap-0.5">
             <Text className="text-foreground text-base font-bold leading-tight">{name}</Text>
             {alumn.graduationYear ? (
-              <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-widest">
+              <Text className="text-muted-foreground text-eyebrow font-semibold uppercase tracking-widest">
                 Rocznik {alumn.graduationYear}
               </Text>
             ) : null}

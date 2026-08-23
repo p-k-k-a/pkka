@@ -1,15 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { DiscordIcon, GithubIcon, LinkedinIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon, GithubIcon, LinkedinIcon } from "@pkka/icons";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import type { ReactNode } from "react";
-import {
-  discordUserIdOf,
-  isHttpsUrl,
-  openDiscordUser,
-  openEmail,
-  openWithFallback,
-} from "@/lib/contact";
+import { openDiscordUser, openEmail, openWithFallback } from "@/lib/contact";
+import { getProfileContacts } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
 import { Mail } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -35,11 +30,7 @@ function ExternalLink({ label, url, icon }: { label: string; url: string; icon: 
 }
 
 export function ContactActions({ profile }: ContactActionsProps) {
-  const email = profile.visibility.email ? profile.email : undefined;
-  const discordId = discordUserIdOf(profile);
-  const linkedinUrl =
-    profile.linkedinUrl && isHttpsUrl(profile.linkedinUrl) ? profile.linkedinUrl : null;
-  const githubUrl = profile.githubUrl && isHttpsUrl(profile.githubUrl) ? profile.githubUrl : null;
+  const { email, discordId, linkedinUrl, githubUrl } = getProfileContacts(profile);
 
   const hasButtons = !!discordId || !!email;
   const hasLinks = !!linkedinUrl || !!githubUrl;
@@ -72,10 +63,18 @@ export function ContactActions({ profile }: ContactActionsProps) {
       {hasLinks ? (
         <View className="flex-row gap-6">
           {linkedinUrl ? (
-            <ExternalLink label="LinkedIn" url={linkedinUrl} icon={<LinkedinIcon size={16} />} />
+            <ExternalLink
+              label="LinkedIn"
+              url={linkedinUrl}
+              icon={<LinkedinIcon size={16} color={THEME.light.accent} />}
+            />
           ) : null}
           {githubUrl ? (
-            <ExternalLink label="GitHub" url={githubUrl} icon={<GithubIcon size={16} />} />
+            <ExternalLink
+              label="GitHub"
+              url={githubUrl}
+              icon={<GithubIcon size={16} color={THEME.light.accent} />}
+            />
           ) : null}
         </View>
       ) : null}

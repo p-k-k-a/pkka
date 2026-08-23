@@ -1,6 +1,6 @@
 import { ApplicationResponseStatus } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
-import { statusLabel } from "@/lib/application-labels";
+import { statusLabel } from "@pkka/domain";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   [ApplicationResponseStatus.UNDER_REVIEW]: "secondary",

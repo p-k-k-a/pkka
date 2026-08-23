@@ -1,5 +1,6 @@
+import { EYEBROW } from "@pkka/theme";
 import { Button } from "@/components/ui/button";
-import { DiscordIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon } from "@pkka/icons";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import * as WebBrowser from "expo-web-browser";
@@ -53,9 +54,7 @@ export function LoginScreen() {
 
         <View className="my-5 flex-row items-center gap-3">
           <View className="h-px flex-1 bg-border" />
-          <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            lub
-          </Text>
+          <Text className={EYEBROW}>lub</Text>
           <View className="h-px flex-1 bg-border" />
         </View>
 

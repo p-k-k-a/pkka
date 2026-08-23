@@ -10,7 +10,7 @@ import { ProfileSectionCard } from "@/components/profile/profile-section-card";
 import { SkillChips } from "@/components/profile/skill-chips";
 import { VisibilitySummary } from "@/components/profile/visibility-summary";
 import { useProfileAvatar } from "@/lib/profile-avatar";
-import { getProfileContacts } from "@/lib/profile-contacts";
+import { getProfileContacts } from "@pkka/domain";
 
 const EDIT_HREF = "/dashboard/profile/edit";
 
@@ -20,10 +20,10 @@ function FactsBand({ facts }: { facts: { label: string; value: string }[] }) {
       <div className="mx-auto grid max-w-[1280px] gap-8 px-4 py-8 md:grid-cols-3 md:px-10">
         {facts.map((fact) => (
           <div key={fact.label} className="flex flex-col gap-1">
-            <span className="font-heading text-foreground text-[23px] leading-tight font-semibold">
+            <span className="font-heading text-foreground text-h3 leading-tight font-semibold">
               {fact.value}
             </span>
-            <span className="text-muted-foreground text-[11px] font-bold tracking-widest uppercase">
+            <span className="text-muted-foreground text-label font-bold tracking-widest uppercase">
               {fact.label}
             </span>
           </div>
@@ -83,7 +83,7 @@ export function ProfileView({ profile }: { profile: ProfileResponse }) {
           <div className="flex flex-col gap-6 lg:col-span-2">
             <ProfileSectionCard title="O mnie" icon={UserRound}>
               {profile.bio ? (
-                <p className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-line">
+                <p className="text-muted-foreground text-body leading-relaxed whitespace-pre-line">
                   {profile.bio}
                 </p>
               ) : (

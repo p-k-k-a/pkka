@@ -1,10 +1,10 @@
-import { useDebouncedValue } from "@/lib/use-debounced-value";
 import {
   useListAlumniInfinite,
   type AlumniListItemResponse,
   type ListAlumniParams,
 } from "@pkka/api";
 import { useMemo } from "react";
+import { useDebouncedValue } from "./use-debounced-value";
 
 export const YEAR_MIN = 1970;
 export const YEAR_MAX = new Date().getFullYear();

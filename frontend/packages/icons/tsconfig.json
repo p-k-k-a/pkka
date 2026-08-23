@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "types": ["react"]
+  },
+  "include": ["index.tsx", "index.native.tsx", "paths.ts"]
+}

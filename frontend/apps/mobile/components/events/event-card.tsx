@@ -1,9 +1,9 @@
+import { EYEBROW } from "@pkka/theme";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
-import { formatEventDateLong } from "@/lib/utils";
+import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
 import { EventListItemDtoType, type EventListItemDto } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
@@ -21,9 +21,7 @@ function EventCard({ event }: EventCardProps) {
   const card = (
     <Card className="border-0 bg-muted gap-3 p-5 shadow-none">
       <View className="gap-1">
-        <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {formatEventDateLong(startsAt)}
-        </Text>
+        <Text className={EYEBROW}>{formatEventDateLong(startsAt)}</Text>
         <Text variant="h3" className="text-xl font-bold leading-tight">
           {title}
         </Text>
@@ -45,11 +43,11 @@ function EventCard({ event }: EventCardProps) {
 
       <View className="flex-row gap-2">
         <Badge variant="default">
-          <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
+          <Text>{eventTypeLabelUpper(type)}</Text>
         </Badge>
         {typeof seatLimit === "number" ? (
           <Badge variant="outline">
-            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
+            <Text>{formatSeatsCompact(seatLimit, seatsTaken)}</Text>
           </Badge>
         ) : null}
       </View>

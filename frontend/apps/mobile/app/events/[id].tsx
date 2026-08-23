@@ -28,7 +28,7 @@ export default function EventDetailScreen() {
         <>
           <EventDetailView event={event} />
           <View className="gap-3 border-t border-border bg-background px-5 py-4">
-            <Text className="text-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <Text className="text-center text-eyebrow font-semibold uppercase tracking-widest text-muted-foreground">
               Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
             </Text>
             <Button className="w-full" onPress={() => router.push("/login")}>

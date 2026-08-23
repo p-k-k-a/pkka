@@ -3,10 +3,28 @@ const { hairlineWidth } = require("nativewind/theme");
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: "class",
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "../../packages/theme/**/*.{ts,tsx}",
+  ],
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontSize: {
+        // @pkka/theme:begin:type — generated from packages/theme/tokens.ts, do not edit
+        eyebrow: "0.625rem",
+        label: "0.6875rem",
+        hint: "0.8125rem",
+        body: "0.9375rem",
+        "card-title": "1.125rem",
+        h3: "1.4375rem",
+        h2: "1.75rem",
+        "h2-lg": "2.0625rem",
+        display: "2.5rem",
+        "display-lg": "3rem",
+        // @pkka/theme:end:type
+      },
       fontFamily: {
         heading: ["Jost"],
         sans: ["Montserrat"],
@@ -52,7 +70,7 @@ module.exports = {
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 1px)",
+        md: "var(--radius)",
         sm: "calc(var(--radius) - 2px)",
       },
       borderWidth: {

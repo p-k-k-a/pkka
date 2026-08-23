@@ -1,5 +1,6 @@
 "use client";
 
+import { EYEBROW } from "@pkka/theme";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,9 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
-import { facultyLabel, studyTypeLabel } from "@/lib/application-labels";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { isAdmin } from "@pkka/domain";
+import { facultyLabel, studyTypeLabel } from "@pkka/domain";
+import { formatPublishedAt } from "@pkka/domain";
 
 const PAGE_SIZE = 20;
 
@@ -90,9 +91,7 @@ export function ApplicationsList() {
                 <Card className="hover:bg-muted/30 gap-3 p-5 transition-colors md:p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 space-y-1">
-                      <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-                        Złożono: {dateLabel}
-                      </p>
+                      <p className={EYEBROW}>Złożono: {dateLabel}</p>
                       <h2 className="text-foreground truncate text-lg font-bold">
                         {application.fieldOfStudy}
                       </h2>

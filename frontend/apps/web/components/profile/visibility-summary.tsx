@@ -21,11 +21,11 @@ export function VisibilitySummary({ visibility, discordConnected }: VisibilitySu
           key={row.label}
           className="flex items-center justify-between gap-4 py-2 first:pt-0 last:pb-0"
         >
-          <span className="text-muted-foreground text-[13px]">{row.label}</span>
+          <span className="text-muted-foreground text-hint">{row.label}</span>
           {row.available ? (
             <span
               className={cn(
-                "inline-flex items-center gap-1.5 text-[11px] font-bold tracking-widest uppercase",
+                "text-label inline-flex items-center gap-1.5 font-bold tracking-widest uppercase",
                 row.visible ? "text-accent" : "text-muted-foreground",
               )}
             >
@@ -37,7 +37,7 @@ export function VisibilitySummary({ visibility, discordConnected }: VisibilitySu
               {row.visible ? "Widoczne" : "Ukryte"}
             </span>
           ) : (
-            <span className="text-muted-foreground text-[11px] font-semibold tracking-widest uppercase">
+            <span className="text-muted-foreground text-label font-semibold tracking-widest uppercase">
               Brak konta
             </span>
           )}

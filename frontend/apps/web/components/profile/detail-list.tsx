@@ -21,7 +21,7 @@ export function DetailRow({ label, value, icon }: DetailRowProps) {
 
   return (
     <div className="flex items-baseline justify-between gap-4 py-2 first:pt-0 last:pb-0">
-      <dt className="text-muted-foreground text-[13px]">{label}</dt>
+      <dt className="text-muted-foreground text-hint">{label}</dt>
       <dd className="text-foreground flex items-center gap-1.5 text-sm font-semibold">
         {icon}
         {value}

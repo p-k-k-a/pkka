@@ -141,13 +141,13 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
 
       <div className="flex items-center justify-between gap-3">
         {query.trim() && matches.length === 0 ? (
-          <p className="text-muted-foreground text-[13px]">
+          <p className="text-muted-foreground text-hint">
             Brak tagów pasujących do „{query.trim()}”.
           </p>
         ) : (
           <span />
         )}
-        <span className="text-muted-foreground text-[13px]">
+        <span className="text-muted-foreground text-hint">
           {selectedIds.length}/{MAX_TAGS}
         </span>
       </div>

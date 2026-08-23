@@ -12,7 +12,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="flex flex-1 justify-start">
             <Link
               href="/"
-              className="font-heading text-foreground text-[23px] font-semibold tracking-tight md:text-[28px]"
+              className="font-heading text-foreground text-h3 md:text-h2 font-semibold tracking-tight"
             >
               PKKA
             </Link>
@@ -39,9 +39,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <footer className="bg-navy text-white-text px-4 py-10 md:px-10 md:py-16">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
-            <p className="font-heading text-[23px] font-semibold tracking-tight md:text-[28px]">
-              PKKA
-            </p>
+            <p className="font-heading text-h3 md:text-h2 font-semibold tracking-tight">PKKA</p>
             <p className="text-white-text/80 max-w-md text-sm leading-relaxed md:text-base">
               Klub Alumnów Wydziału Informatyki AGH — społeczność absolwentów, mentoring i
               networking.

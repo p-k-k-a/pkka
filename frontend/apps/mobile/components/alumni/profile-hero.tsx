@@ -26,7 +26,7 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
           </Text>
         ) : null}
         {alumnSinceDate ? (
-          <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          <Text className="text-eyebrow font-semibold uppercase tracking-widest text-muted-foreground">
             Alumn od {alumnSinceDate}
           </Text>
         ) : null}

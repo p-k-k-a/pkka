@@ -13,7 +13,7 @@ export function DashboardHeader() {
     <header className="bg-muted z-50 flex h-16 shrink-0 items-center justify-between px-4 md:px-10">
       <Link
         href="/dashboard"
-        className="font-heading text-foreground text-[23px] font-semibold tracking-tight md:text-[28px]"
+        className="font-heading text-foreground text-h3 md:text-h2 font-semibold tracking-tight"
       >
         PKKA
       </Link>

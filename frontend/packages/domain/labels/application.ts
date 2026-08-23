@@ -1,10 +1,3 @@
-import {
-  ApplicationResponseConsentsItem,
-  ApplicationResponseFaculty,
-  ApplicationResponseMeetingPreferencesItem,
-  ApplicationResponseStudyType,
-} from "@pkka/api";
-
 const FACULTY_LABELS: Record<string, string> = {
   WE: "Wydział Elektromechaniczny (1952-1957)",
   WEGH: "Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)",
@@ -58,24 +51,16 @@ export function statusLabel(status: string): string {
   return STATUS_LABELS[status] ?? status;
 }
 
-export const FACULTY_OPTIONS = Object.values(ApplicationResponseFaculty).map((value) => ({
-  value,
-  label: facultyLabel(value),
-}));
+export type LabelOption<T extends string> = { value: T; label: string };
 
-export const STUDY_TYPE_OPTIONS = Object.values(ApplicationResponseStudyType).map((value) => ({
-  value,
-  label: studyTypeLabel(value),
-}));
-
-export const MEETING_PREFERENCE_OPTIONS = Object.values(
-  ApplicationResponseMeetingPreferencesItem,
-).map((value) => ({
-  value,
-  label: meetingPreferenceLabel(value),
-}));
-
-export const CONSENT_OPTIONS = Object.values(ApplicationResponseConsentsItem).map((value) => ({
-  value,
-  label: consentLabel(value),
-}));
+/**
+ * Builds picker options from a generated enum object. The request and response
+ * enums (`CreateApplicationRequestFaculty` / `ApplicationResponseFaculty`) are
+ * distinct objects with identical members, so each app passes its own.
+ */
+export function toOptions<T extends string>(
+  values: Record<string, T>,
+  label: (value: string) => string,
+): LabelOption<T>[] {
+  return Object.values(values).map((value) => ({ value, label: label(value) }));
+}

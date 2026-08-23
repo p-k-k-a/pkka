@@ -84,14 +84,14 @@ export function AvatarPicker({ value, fallback, onChange, disabled }: AvatarPick
             ) : null}
           </div>
 
-          <p className="text-muted-foreground text-center text-[13px] sm:text-left">
+          <p className="text-muted-foreground text-hint text-center sm:text-left">
             JPG, PNG lub WebP, maksymalnie {MAX_AVATAR_FILE_MB} MB. Zdjęcie zostanie przycięte do
             kwadratu.
           </p>
         </div>
       </div>
 
-      {error ? <p className="text-destructive text-[13px] font-medium">{error}</p> : null}
+      {error ? <p className="text-destructive text-hint font-medium">{error}</p> : null}
 
       <input
         ref={inputRef}

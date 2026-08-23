@@ -13,7 +13,7 @@ export function InfoRow({ icon, label, value, sub }: InfoRowProps) {
       </div>
       <div className="min-w-0 space-y-0.5">
         {label ? (
-          <p className="text-muted-foreground text-[10px] font-semibold tracking-widest uppercase">
+          <p className="text-muted-foreground text-eyebrow font-semibold tracking-widest uppercase">
             {label}
           </p>
         ) : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { EYEBROW } from "@pkka/theme";
 import { PostStatusBadge } from "@/components/admin/post-status-badge";
 import { SectionShell } from "@/components/content/section-shell";
 import {
@@ -17,8 +18,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { formatPublishedAt } from "@/lib/format-published-at";
-import { isAdmin } from "@/lib/roles";
+import { formatPublishedAt } from "@pkka/domain";
+import { isAdmin } from "@pkka/domain";
 import {
   getListAdminPostsQueryKey,
   useDeleteAdminPost,
@@ -157,7 +158,7 @@ export function PostsList() {
               <Card key={post.id} className="gap-3 p-5 md:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 space-y-1">
-                    <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+                    <p className={EYEBROW}>
                       {post.status === "PUBLISHED" ? "Opublikowano" : "Utworzono"}: {dateLabel}
                     </p>
                     <h2 className="text-foreground truncate text-lg font-bold">{post.title}</h2>

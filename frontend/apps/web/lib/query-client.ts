@@ -1,22 +1,15 @@
+import { createQueryClient } from "@pkka/domain";
 import { QueryClient } from "@tanstack/react-query";
-
-function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 60_000,
-      },
-    },
-  });
-}
 
 let browserQueryClient: QueryClient | undefined;
 
 export function getQueryClient() {
+  // The server renders each request in isolation, so it always gets a fresh
+  // client; the browser keeps one so the cache survives navigation.
   if (typeof window === "undefined") {
-    return makeQueryClient();
+    return createQueryClient();
   }
 
-  browserQueryClient ??= makeQueryClient();
+  browserQueryClient ??= createQueryClient();
   return browserQueryClient;
 }

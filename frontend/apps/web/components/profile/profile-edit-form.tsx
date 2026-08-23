@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
 import { AvatarError, readProfileAvatar, saveProfileAvatar } from "@/lib/profile-avatar";
-import { isHttpsUrl } from "@/lib/utils";
+import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
@@ -62,12 +62,12 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={htmlFor} className="text-[11px] font-bold tracking-widest uppercase">
+      <Label htmlFor={htmlFor} className="text-label font-bold tracking-widest uppercase">
         {label}
       </Label>
       {children}
       {error ? (
-        <p id={`${htmlFor}-error`} className="text-destructive text-[13px] font-medium">
+        <p id={`${htmlFor}-error`} className="text-destructive text-hint font-medium">
           {error}
         </p>
       ) : (
@@ -138,15 +138,15 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     event.preventDefault();
     setFormError(null);
 
-    const linkedin = linkedinUrl.trim();
-    const github = githubUrl.trim();
+    // Canonicalized before validating and submitting: a pasted "copy link" carries
+    // tracking params the backend's @Pattern rejects.
+    const linkedin = canonicalizeProfileUrl(linkedinUrl);
+    const github = canonicalizeProfileUrl(githubUrl);
     const errors: Partial<Record<UrlField, string>> = {};
-    if (linkedin && !isHttpsUrl(linkedin)) {
-      errors.linkedinUrl = "Podaj pełny adres HTTPS, np. https://www.linkedin.com/in/…";
-    }
-    if (github && !isHttpsUrl(github)) {
-      errors.githubUrl = "Podaj pełny adres HTTPS, np. https://github.com/…";
-    }
+    const linkedinError = linkedinUrlError(linkedinUrl);
+    const githubError = githubUrlError(githubUrl);
+    if (linkedinError) errors.linkedinUrl = linkedinError;
+    if (githubError) errors.githubUrl = githubError;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -217,12 +217,12 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
           <div className="flex flex-col gap-1">
             <Link
               href={PROFILE_HREF}
-              className="text-muted-foreground hover:text-accent inline-flex items-center gap-1.5 text-[13px] font-semibold tracking-wider uppercase transition-colors"
+              className="text-muted-foreground hover:text-accent text-hint inline-flex items-center gap-1.5 font-semibold tracking-wider uppercase transition-colors"
             >
               <ArrowLeft className="size-3.5" aria-hidden="true" />
               Wróć do profilu
             </Link>
-            <h1 className="font-heading text-foreground text-[28px] leading-tight font-semibold">
+            <h1 className="font-heading text-foreground text-h2 leading-tight font-semibold">
               Edytuj profil
             </h1>
           </div>
@@ -298,7 +298,7 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                 label="O mnie"
                 htmlFor="bio"
                 hint={
-                  <p className="text-muted-foreground text-right text-[13px]">
+                  <p className="text-muted-foreground text-hint text-right">
                     {bio.length}/{BIO_MAX_LENGTH}
                   </p>
                 }

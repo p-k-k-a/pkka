@@ -1,6 +1,7 @@
+import { EYEBROW } from "@pkka/theme";
 import { Card, CardFooter, CardHeader } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import { formatPublishedAt } from "@/lib/utils";
+import { formatDateTime } from "@pkka/domain";
 import type { PostSummaryResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { Pressable } from "react-native";
@@ -15,9 +16,7 @@ export function PostCard({ post }: PostCardProps) {
   const card = (
     <Card className="border-0 bg-muted rounded-3xl shadow-md shadow-black/10">
       <CardHeader className="gap-2">
-        <Text className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
-          {formatPublishedAt(publishedAt)}
-        </Text>
+        <Text className={EYEBROW}>{formatDateTime(publishedAt)}</Text>
         <Text variant="h3" className="text-xl font-bold leading-tight">
           {title}
         </Text>

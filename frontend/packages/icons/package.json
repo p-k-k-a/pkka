@@ -1,0 +1,23 @@
+{
+  "name": "@pkka/icons",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": {
+      "react-native": "./index.native.tsx",
+      "default": "./index.tsx"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=19",
+    "react-native-svg": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "react-native-svg": {
+      "optional": true
+    }
+  }
+}

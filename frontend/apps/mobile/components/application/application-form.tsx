@@ -9,22 +9,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { INTEREST_AREAS, PRIVACY_URL, TERMS_URL } from "@/lib/application-constants";
 import {
-  FACULTIES,
-  INTEREST_AREAS,
-  MEETING_FORMATS,
-  PRIVACY_URL,
-  STUDY_TYPES,
-  TERMS_URL,
-} from "@/lib/application-constants";
+  APPLICATION_CONFLICT_MESSAGE,
+  APPLICATION_SUBMIT_ERROR_MESSAGE,
+  facultyLabel,
+  graduationYearMax,
+  GRADUATION_YEAR_MIN,
+  meetingPreferenceLabel,
+  MISSING_CONSENTS_MESSAGE,
+  studyTypeLabel,
+  toOptions,
+} from "@pkka/domain";
 import {
   ApiError,
   CreateApplicationRequestConsentsItem,
+  CreateApplicationRequestFaculty,
+  CreateApplicationRequestMeetingPreferencesItem,
+  CreateApplicationRequestStudyType,
   getGetMineQueryKey,
   useCreateApplication,
-  type CreateApplicationRequestFaculty,
-  type CreateApplicationRequestMeetingPreferencesItem,
-  type CreateApplicationRequestStudyType,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
@@ -37,8 +41,14 @@ import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import PhoneInput from "react-native-phone-input";
 
-const CURRENT_YEAR = new Date().getFullYear();
-const MAX_YEAR = CURRENT_YEAR + 7;
+const MAX_YEAR = graduationYearMax();
+
+const FACULTIES = toOptions(CreateApplicationRequestFaculty, facultyLabel);
+const STUDY_TYPES = toOptions(CreateApplicationRequestStudyType, studyTypeLabel);
+const MEETING_FORMATS = toOptions(
+  CreateApplicationRequestMeetingPreferencesItem,
+  meetingPreferenceLabel,
+);
 
 function FieldError({ field }: { field: AnyFieldApi }) {
   if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
@@ -80,7 +90,7 @@ function ApplicationForm() {
         consents.push(CreateApplicationRequestConsentsItem.GDPR_DATA_PROCESSING);
 
       if (!value.faculty || !value.studyType || consents.length < 2) {
-        setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
+        setSubmitError(MISSING_CONSENTS_MESSAGE);
         return;
       }
 
@@ -103,8 +113,8 @@ function ApplicationForm() {
       } catch (error) {
         setSubmitError(
           error instanceof ApiError && error.status === 409
-            ? "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego."
-            : "Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.",
+            ? APPLICATION_CONFLICT_MESSAGE
+            : APPLICATION_SUBMIT_ERROR_MESSAGE,
         );
         return;
       }
@@ -241,7 +251,8 @@ function ApplicationForm() {
             onBlur: ({ value }) => {
               if (!/^\d{4}$/.test(value)) return "Podaj rok w formacie YYYY";
               const year = Number(value);
-              if (year < 1919 || year > MAX_YEAR) return `Podaj rok między 1919 a ${MAX_YEAR}`;
+              if (year < GRADUATION_YEAR_MIN || year > MAX_YEAR)
+                return `Podaj rok między ${GRADUATION_YEAR_MIN} a ${MAX_YEAR}`;
               return undefined;
             },
           }}

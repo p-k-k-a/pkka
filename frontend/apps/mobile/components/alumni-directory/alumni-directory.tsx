@@ -11,7 +11,7 @@ import {
   useAlumniDirectory,
   type AlumniFilters,
   type SortOption,
-} from "@/lib/alumni-directory";
+} from "@pkka/domain";
 import { THEME } from "@/lib/theme";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
 import { useCallback, useState } from "react";
@@ -77,7 +77,7 @@ export function AlumniDirectory() {
             </Text>
             {activeCount > 0 ? (
               <View className="bg-primary ml-1 size-5 items-center justify-center rounded-full">
-                <Text className="text-primary-foreground text-[11px] font-bold">{activeCount}</Text>
+                <Text className="text-primary-foreground text-label font-bold">{activeCount}</Text>
               </View>
             ) : null}
           </Button>

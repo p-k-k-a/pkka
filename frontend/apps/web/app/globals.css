@@ -1,61 +1,71 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
-:root {
-  --background: oklch(1 0 0); /* #FFFFFF */
-  --foreground: oklch(0.244 0.031 254.8); /* #16212F ink */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.244 0.031 254.8);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.244 0.031 254.8);
-  --primary: oklch(0.776 0.166 72.6); /* #F5A200 brand amber */
-  --primary-foreground: oklch(0.218 0 0); /* #1A1A1A near-black */
-  --secondary: oklch(0.989 0.013 86.8); /* #FFFBF2 cream */
-  --secondary-foreground: oklch(0.528 0.113 72.9); /* #925F00 */
-  --muted: oklch(0.958 0.013 266.7); /* #EDF1FA surface-blue */
-  --muted-foreground: oklch(0.49 0.063 255.4); /* #486284 body */
-  --accent: oklch(0.517 0.143 250.7); /* #0F6AB6 accent blue */
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.581 0.202 28.2); /* #D8342C */
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.958 0.013 266.7); /* #EDF1FA line */
-  --input: oklch(0.958 0.013 266.7);
-  --ring: oklch(0.762 0.119 258.4); /* #82B3FD */
-  --radius: 0.3125rem; /* 5px — this system's control radius */
+/* Class recipes shared with mobile live outside this app's auto-detected root. */
+@source "../../../packages/theme";
 
-  /* Brand-specific extras (not part of the shadcn base contract, used by
-      our composed patterns — Section bands, tags). Safe to reference as
-      bg-[oklch(var(--navy))] or add to a Tailwind preset later. */
-  --navy: oklch(0.269 0.075 250.8); /* #022749 */
-  --brand-ink: oklch(0.279 0.059 72.8); /* #3A2300 */
-  --white-text: oklch(0.958 0.013 266.7); /* #EDF1FA on dark bands */
+/* @pkka/theme:begin:colors — generated from packages/theme/tokens.ts, do not edit */
+:root {
+  --background: #ffffff;
+  --foreground: #16212f;
+  --card: #ffffff;
+  --card-foreground: #16212f;
+  --popover: #ffffff;
+  --popover-foreground: #16212f;
+  --primary: #f5a200;
+  --primary-foreground: #1a1a1a;
+  --secondary: #fffbf2;
+  --secondary-foreground: #925f00;
+  --muted: #edf1fa;
+  --muted-foreground: #486284;
+  --accent: #0f6ab6;
+  --accent-foreground: #ffffff;
+  --destructive: #d8342c;
+  --destructive-foreground: #ffffff;
+  --border: #edf1fa;
+  --input: #edf1fa;
+  --ring: #82b3fd;
+  --navy: #022749;
+  --brand-ink: #3a2300;
+  --white-text: #edf1fa;
+  --chart-1: #f5a200;
+  --chart-2: #0f6ab6;
+  --chart-3: #022749;
+  --chart-4: #ffd3ad;
+  --chart-5: #c7dafe;
+  --radius: 0.3125rem;
 }
 
 .dark {
-  --background: oklch(0.176 0.049 251.7); /* #011125 */
-  --foreground: oklch(0.958 0.013 266.7); /* #EDF1FA */
-  --card: oklch(0.367 0.048 255.8); /* #2E4058 */
-  --card-foreground: oklch(0.958 0.013 266.7);
-  --popover: oklch(0.367 0.048 255.8);
-  --popover-foreground: oklch(0.958 0.013 266.7);
-  --primary: oklch(0.776 0.166 72.6); /* amber stays the same */
-  --primary-foreground: oklch(0.218 0 0);
-  --secondary: oklch(0.367 0.048 255.8);
-  --secondary-foreground: oklch(0.958 0.013 266.7);
-  --muted: oklch(0.367 0.048 255.8);
-  --muted-foreground: oklch(0.841 0.054 265.3); /* #BACBEF */
-  --accent: oklch(0.639 0.177 251); /* #188EF2 lighter blue for dark */
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.581 0.202 28.2);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.639 0.177 251);
-
-  --navy: oklch(0.176 0.049 251.7);
-  --brand-ink: oklch(0.279 0.059 72.8);
-  --white-text: oklch(0.958 0.013 266.7);
+  --background: #011125;
+  --foreground: #edf1fa;
+  --card: #2e4058;
+  --card-foreground: #edf1fa;
+  --popover: #2e4058;
+  --popover-foreground: #edf1fa;
+  --primary: #f5a200;
+  --primary-foreground: #1a1a1a;
+  --secondary: #2e4058;
+  --secondary-foreground: #edf1fa;
+  --muted: #2e4058;
+  --muted-foreground: #bacbef;
+  --accent: #188ef2;
+  --accent-foreground: #ffffff;
+  --destructive: #d8342c;
+  --destructive-foreground: #ffffff;
+  --border: #ffffff1f;
+  --input: #ffffff26;
+  --ring: #188ef2;
+  --navy: #011125;
+  --brand-ink: #3a2300;
+  --white-text: #edf1fa;
+  --chart-1: #f5a200;
+  --chart-2: #188ef2;
+  --chart-3: #bacbef;
+  --chart-4: #ffd3ad;
+  --chart-5: #c7dafe;
 }
+/* @pkka/theme:end:colors */
 
 @theme inline {
   --color-background: var(--background);
@@ -82,11 +92,23 @@
   --color-white-text: var(--white-text);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 3px);
+  --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 11px);
   --font-sans: var(--font-montserrat);
   --font-heading: var(--font-jost);
   --font-mono: var(--font-geist-mono);
+  /* @pkka/theme:begin:type — generated from packages/theme/tokens.ts, do not edit */
+  --text-eyebrow: 0.625rem;
+  --text-label: 0.6875rem;
+  --text-hint: 0.8125rem;
+  --text-body: 0.9375rem;
+  --text-card-title: 1.125rem;
+  --text-h3: 1.4375rem;
+  --text-h2: 1.75rem;
+  --text-h2-lg: 2.0625rem;
+  --text-display: 2.5rem;
+  --text-display-lg: 3rem;
+  /* @pkka/theme:end:type */
 }
 
 @layer components {

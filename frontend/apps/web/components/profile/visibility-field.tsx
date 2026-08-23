@@ -25,7 +25,7 @@ export function VisibilityField({
   const hasValue = Boolean(value);
   const toggle = (
     <div className="flex items-center gap-2">
-      <Label htmlFor={id} className="text-muted-foreground text-[13px]">
+      <Label htmlFor={id} className="text-muted-foreground text-hint">
         {checked ? "Widoczne" : "Ukryte"}
       </Label>
       <Switch
@@ -43,7 +43,7 @@ export function VisibilityField({
   return (
     <div className="border-border flex flex-col gap-2 border-b py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-muted-foreground text-[11px] font-bold tracking-widest uppercase">
+        <span className="text-muted-foreground text-label font-bold tracking-widest uppercase">
           {label}
         </span>
         <span className="text-foreground truncate text-sm font-medium">
