@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "shadcn/tailwind.css";
 
 :root {
   --background: oklch(1 0 0); /* #FFFFFF */
@@ -86,6 +87,55 @@
   --font-sans: var(--font-montserrat);
   --font-heading: var(--font-jost);
   --font-mono: var(--font-geist-mono);
+}
+
+@layer components {
+  .rich-text {
+    @apply text-foreground/90 text-base;
+
+    h1 {
+      @apply font-heading text-foreground text-2xl font-semibold;
+    }
+    h2 {
+      @apply font-heading text-foreground text-xl font-semibold;
+    }
+    h3 {
+      @apply font-heading text-foreground text-lg font-semibold;
+    }
+    h4 {
+      @apply font-heading text-foreground text-base font-semibold;
+    }
+    h5 {
+      @apply font-heading text-foreground text-sm font-semibold;
+    }
+    h6 {
+      @apply font-heading text-muted-foreground text-sm font-semibold tracking-wide uppercase;
+    }
+    a {
+      @apply text-accent underline underline-offset-4;
+    }
+    ul {
+      @apply list-disc space-y-1 pl-6;
+    }
+    ol {
+      @apply list-decimal space-y-1 pl-6;
+    }
+    blockquote {
+      @apply border-primary text-muted-foreground border-l-4 pl-4 italic;
+    }
+    code {
+      @apply bg-muted rounded-sm px-1.5 py-0.5 font-mono text-sm;
+    }
+    pre {
+      @apply bg-muted overflow-x-auto rounded-lg p-4;
+    }
+    pre code {
+      @apply bg-transparent p-0;
+    }
+    hr {
+      @apply border-border;
+    }
+  }
 }
 
 body {
