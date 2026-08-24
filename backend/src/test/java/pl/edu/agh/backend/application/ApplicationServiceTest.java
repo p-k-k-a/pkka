@@ -17,12 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.security.Roles;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
-import pl.edu.agh.backend.user.UserProvisioningService;
-import pl.edu.agh.backend.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
@@ -31,13 +29,7 @@ class ApplicationServiceTest {
     private ApplicationRepository applicationRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private UserPrincipalExtractor principalExtractor;
-
-    @Mock
-    private UserProvisioningService userProvisioningService;
+    private CallerUserService callerUserService;
 
     @InjectMocks
     private ApplicationService applicationService;
@@ -47,11 +39,9 @@ class ApplicationServiceTest {
         String keycloakId = UUID.randomUUID().toString();
         User applicant = new User();
         applicant.setKeycloakId(keycloakId);
-        var auth = jwtAuth(keycloakId);
+        Caller caller = new Caller(keycloakId, Set.of(Roles.USER));
 
-        when(principalExtractor.extract(auth))
-                .thenReturn(Optional.of(new UserPrincipalExtractor.UserPrincipalInfo(keycloakId)));
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(applicant));
+        when(callerUserService.getOrCreate(caller)).thenReturn(applicant);
         when(applicationRepository.existsByApplicantIdAndStatusIn(
                         applicant.getId(), List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED)))
                 .thenReturn(false);
@@ -69,11 +59,11 @@ class ApplicationServiceTest {
                 "+48123456789",
                 EnumSet.of(ConsentType.REGULATIONS_PRIVACY, ConsentType.GDPR_DATA_PROCESSING));
 
-        ApplicationResponse response = applicationService.create(auth, request);
+        ApplicationResponse response = applicationService.create(caller, request);
 
         assertThat(response.status()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
         assertThat(response.fieldOfStudy()).isEqualTo("Informatyka");
-        verify(userProvisioningService).provisionIfAbsent(new UserPrincipalExtractor.UserPrincipalInfo(keycloakId));
+        verify(callerUserService).getOrCreate(caller);
     }
 
     @Test
@@ -81,11 +71,9 @@ class ApplicationServiceTest {
         String keycloakId = UUID.randomUUID().toString();
         User applicant = new User();
         applicant.setKeycloakId(keycloakId);
-        var auth = jwtAuth(keycloakId);
+        Caller caller = new Caller(keycloakId, Set.of(Roles.USER));
 
-        when(principalExtractor.extract(auth))
-                .thenReturn(Optional.of(new UserPrincipalExtractor.UserPrincipalInfo(keycloakId)));
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(applicant));
+        when(callerUserService.getOrCreate(caller)).thenReturn(applicant);
         when(applicationRepository.existsByApplicantIdAndStatusIn(
                         applicant.getId(), List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED)))
                 .thenReturn(true);
@@ -102,7 +90,7 @@ class ApplicationServiceTest {
                 "+48123456789",
                 EnumSet.of(ConsentType.REGULATIONS_PRIVACY, ConsentType.GDPR_DATA_PROCESSING));
 
-        assertThatThrownBy(() -> applicationService.create(auth, request))
+        assertThatThrownBy(() -> applicationService.create(caller, request))
                 .isInstanceOf(ApplicationAlreadyExistsException.class);
         verify(applicationRepository, never()).saveAndFlush(any());
     }
@@ -112,7 +100,7 @@ class ApplicationServiceTest {
         String keycloakId = UUID.randomUUID().toString();
         User applicant = new User();
         applicant.setKeycloakId(keycloakId);
-        var auth = jwtAuth(keycloakId);
+        Caller caller = new Caller(keycloakId, Set.of(Roles.USER));
         Application application = Application.builder()
                 .applicant(applicant)
                 .faculty(Faculty.WI)
@@ -122,22 +110,21 @@ class ApplicationServiceTest {
                 .phoneNumber("+48123456789")
                 .build();
 
-        when(principalExtractor.extract(auth))
-                .thenReturn(Optional.of(new UserPrincipalExtractor.UserPrincipalInfo(keycloakId)));
-        when(userRepository.findByKeycloakId(keycloakId)).thenReturn(Optional.of(applicant));
+        when(callerUserService.find(caller)).thenReturn(Optional.of(applicant));
         when(applicationRepository.findFirstByApplicantIdOrderByCreatedAtDesc(applicant.getId()))
                 .thenReturn(Optional.of(application));
 
-        ApplicationResponse response = applicationService.getMine(auth);
+        ApplicationResponse response = applicationService.getMine(caller);
 
         assertThat(response.fieldOfStudy()).isEqualTo("Informatyka");
     }
 
-    private static JwtAuthenticationToken jwtAuth(String subject) {
-        Jwt jwt = Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .subject(subject)
-                .build();
-        return new JwtAuthenticationToken(jwt, List.of());
+    @Test
+    void getMineDoesNotProvisionAUserRowForACallerWithoutOne() {
+        Caller caller = new Caller(UUID.randomUUID().toString(), Set.of(Roles.USER));
+        when(callerUserService.find(caller)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> applicationService.getMine(caller)).isInstanceOf(ApplicationNotFoundException.class);
+        verify(callerUserService, never()).getOrCreate(any());
     }
 }
