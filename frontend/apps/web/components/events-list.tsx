@@ -1,179 +1,125 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, Link2, MapPin } from "lucide-react";
-import { EventListItemDto, EventListItemDtoType, useListEvents } from "@pkka/api";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ListEventsTimeframe, useListEvents } from "@pkka/api";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FeaturedCard } from "@/components/content/featured-card";
-import { SectionShell } from "@/components/content/section-shell";
-import { coverImageSrc } from "@/lib/content-images";
-import { formatEventDateLong } from "@/lib/format-event-datetime";
-import { eventTypeLabelUpper, formatSeatsCompact } from "@/lib/event-labels";
+import { EventCalendarCard } from "@/components/events/event-calendar-card";
+import { EventsArchiveBand } from "@/components/events/events-archive-band";
+import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
+import Link from "next/link";
+
+const PAGE_SIZE = 20;
 
 type EventsListProps = {
-  variant?: "public" | "dashboard";
+  variant?: EventPathVariant;
+  archive?: boolean;
 };
 
-function eventHref(id: string, variant: EventsListProps["variant"]) {
-  return variant === "dashboard" ? `/dashboard/events/${id}` : `/events/${id}`;
+function EventCardSkeleton() {
+  return <Skeleton className="bg-muted h-72 w-full rounded-none" />;
 }
 
-function EventCardSkeleton({ featured = false }: { featured?: boolean }) {
-  if (featured) {
-    return <Skeleton className="h-64 rounded-[24px] md:col-span-2 md:h-80" />;
-  }
+export function EventsList({ variant = "public", archive = false }: EventsListProps) {
+  const [page, setPage] = useState(0);
+  const timeframe = archive ? ListEventsTimeframe.PAST : ListEventsTimeframe.UPCOMING;
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useListEvents({
+    page,
+    size: PAGE_SIZE,
+    timeframe,
+    ...(archive ? { sort: ["startsAt,desc"] } : {}),
+  });
+  const pageData = response?.data;
+  const events = pageData?.content ?? [];
+  const totalPages = pageData?.totalPages ?? 0;
+  const currentPage = pageData?.number ?? page;
 
   return (
-    <Card className="bg-muted gap-3 border-0 p-5 shadow-none">
-      <Skeleton className="h-3 w-28" />
-      <Skeleton className="h-6 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-4 w-24" />
-      <div className="flex gap-2 pt-1">
-        <Skeleton className="h-5 w-24 rounded-lg" />
-        <Skeleton className="h-5 w-20 rounded-lg" />
-      </div>
-    </Card>
-  );
-}
-
-function EventCardCompact({
-  event,
-  variant,
-}: {
-  event: EventListItemDto;
-  variant: EventsListProps["variant"];
-}) {
-  const isOnline = event.type === EventListItemDtoType.ONLINE;
-  const LocationIcon = isOnline ? Link2 : MapPin;
-  const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
-  const location = event.location?.trim();
-
-  return (
-    <Link
-      href={eventHref(event.id, variant)}
-      className="group focus-visible:ring-ring flex h-full rounded-3xl focus-visible:ring-2 focus-visible:outline-none"
-    >
-      <Card className="bg-muted flex h-full w-full flex-col gap-3 border-0 p-5 shadow-none transition-opacity group-hover:opacity-90">
-        <div className="space-y-1">
-          <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-            {formatEventDateLong(event.startsAt)}
+    <div>
+      <section
+        className={`${variant === "dashboard" ? "bg-background" : "bg-muted"} px-4 py-10 md:px-10 md:py-20`}
+      >
+        <div className="mx-auto max-w-[1280px] space-y-6">
+          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+            {archive ? "Archiwum" : "Kalendarz wydarzeń"}
           </p>
-          <h2 className="text-foreground text-xl leading-tight font-bold">{event.title}</h2>
-        </div>
-
-        {location ? (
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
-            <span>{location}</span>
-          </div>
-        ) : null}
-
-        <div className="flex items-center gap-1.5 pt-1">
-          <span className="text-foreground text-xs font-bold tracking-widest uppercase">
-            Szczegóły
-          </span>
-          <ArrowRight className="size-3.5" aria-hidden="true" />
-        </div>
-
-        <div className="mt-auto flex flex-wrap gap-2">
-          <Badge variant="default" className="rounded-lg uppercase">
-            {eventTypeLabelUpper(event.type)}
-          </Badge>
-          {seats ? (
-            <Badge variant="outline" className="rounded-lg uppercase">
-              {seats}
-            </Badge>
-          ) : null}
-        </div>
-      </Card>
-    </Link>
-  );
-}
-
-function EventCardFeatured({
-  event,
-  variant,
-}: {
-  event: EventListItemDto;
-  variant: EventsListProps["variant"];
-}) {
-  const isOnline = event.type === EventListItemDtoType.ONLINE;
-  const LocationIcon = isOnline ? Link2 : MapPin;
-  const seats = formatSeatsCompact(event.seatLimit, event.seatsTaken);
-  const location = event.location?.trim();
-
-  return (
-    <FeaturedCard
-      href={eventHref(event.id, variant)}
-      imageSrc={coverImageSrc(event.coverImageUrl)}
-      imageAlt={event.title ?? "Wydarzenie"}
-      meta={
-        <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-          {formatEventDateLong(event.startsAt)}
-        </p>
-      }
-      title={event.title ?? ""}
-      cta={
-        <>
-          Szczegóły
-          <ArrowRight className="size-3.5" aria-hidden="true" />
-        </>
-      }
-      ctaAlign="start"
-      imageOverlay={
-        <div className="absolute top-4 left-4">
-          <Badge variant="default" className="rounded-lg uppercase">
-            {eventTypeLabelUpper(event.type)}
-          </Badge>
-        </div>
-      }
-    >
-      {location ? (
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <LocationIcon className="size-3.5 shrink-0" aria-hidden="true" />
-          <span>{location}</span>
-        </div>
-      ) : null}
-      {seats ? (
-        <Badge variant="outline" className="rounded-lg uppercase">
-          {seats}
-        </Badge>
-      ) : null}
-    </FeaturedCard>
-  );
-}
-
-export function EventsList({ variant = "public" }: EventsListProps) {
-  const { data: response, isLoading, isError } = useListEvents({ size: 20 });
-  const events = response?.data?.content ?? [];
-
-  return (
-    <SectionShell title="Wydarzenia">
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <EventCardSkeleton featured />
-          {Array.from({ length: 3 }).map((_, i) => (
-            <EventCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : isError ? (
-        <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
-      ) : events.length === 0 ? (
-        <p className="text-muted-foreground">Brak nadchodzących wydarzeń.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {events.map((event, index) =>
-            index === 0 ? (
-              <EventCardFeatured key={event.id} event={event} variant={variant} />
-            ) : (
-              <EventCardCompact key={event.id} event={event} variant={variant} />
-            ),
+          <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
+            {archive
+              ? "Wydarzenia, które już się odbyły"
+              : "Nie przegap tego, co dzieje się w Klubie"}
+          </h1>
+          {archive ? (
+            <Button asChild variant="link" size="lg" className="text-accent h-auto px-0 underline">
+              <Link href={eventsListHref(variant)}>
+                Wróć do nadchodzących wydarzeń
+                <ArrowRight data-icon="inline-end" />
+              </Link>
+            </Button>
+          ) : (
+            <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
+              Znajdziesz tutaj informacje o nadchodzących spotkaniach, szkoleniach, turniejach i
+              innych aktywnościach, a także formularze zapisów na najbliższe wydarzenia.
+            </p>
           )}
         </div>
-      )}
-    </SectionShell>
+      </section>
+
+      <section id="kalendarz" className="bg-background px-4 py-10 md:px-10 md:py-20">
+        <div className="mx-auto max-w-[1280px]">
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : isError ? (
+            <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
+          ) : events.length === 0 ? (
+            <p className="text-muted-foreground">
+              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
+            </p>
+          ) : (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {events.map((event) => (
+                  <EventCalendarCard key={event.id} event={event} variant={variant} />
+                ))}
+              </div>
+              {totalPages > 1 ? (
+                <div className="flex items-center justify-between gap-4 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 0}
+                    onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                  >
+                    <ArrowLeft data-icon="inline-start" />
+                    Poprzednia
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    Następna
+                    <ArrowRight data-icon="inline-end" />
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {archive ? null : <EventsArchiveBand variant={variant} />}
+    </div>
   );
 }
