@@ -185,6 +185,35 @@ INSERT INTO events (
      now(), now(), 0)
 ON CONFLICT (id) DO NOTHING;
 
+UPDATE events SET short_description = 'Praktyczny warsztat online o podstawach uczenia maszynowego.'
+WHERE id = '22222222-2222-2222-2222-222222222201';
+UPDATE events SET short_description = 'Spotkanie integracyjne absolwentów: prezentacje, rozmowy i networking.'
+WHERE id = '22222222-2222-2222-2222-222222222202';
+UPDATE events SET short_description = 'Prelekcja o skalowalnych systemach w chmurze — stacjonarnie lub zdalnie.'
+WHERE id = '22222222-2222-2222-2222-222222222203';
+UPDATE events SET short_description = 'Targi pracy dla studentów i absolwentów informatyki.'
+WHERE id = '22222222-2222-2222-2222-222222222204';
+UPDATE events SET short_description = 'Prezentacje startupów założonych przez absolwentów, jury i Q&A.'
+WHERE id = '22222222-2222-2222-2222-222222222205';
+UPDATE events SET short_description = 'Doroczna konferencja naukowo-techniczna Wydziału Informatyki.'
+WHERE id = '22222222-2222-2222-2222-222222222206';
+UPDATE events SET short_description = 'Otwarta sesja pytań i odpowiedzi z zarządem klubu alumnów.'
+WHERE id = '22222222-2222-2222-2222-222222222207';
+UPDATE events SET short_description = 'Luźne spotkanie integracyjne przy grach planszowych.'
+WHERE id = '22222222-2222-2222-2222-222222222208';
+UPDATE events SET short_description = 'Czterotygodniowy cykl warsztatów online z uczenia maszynowego.'
+WHERE id = '22222222-2222-2222-2222-222222222209';
+UPDATE events SET short_description = 'Speed-mentoring łączący mentorów-absolwentów ze studentami.'
+WHERE id = '22222222-2222-2222-2222-222222222210';
+UPDATE events SET short_description = 'Całodobowy hackathon zespołowy z nagrodami dla najlepszych ekip.'
+WHERE id = '22222222-2222-2222-2222-222222222211';
+UPDATE events SET short_description = 'Spotkanie wewnętrzne dedykowanej grupy projektowej.'
+WHERE id = '22222222-2222-2222-2222-222222222212';
+UPDATE events SET short_description = 'Archiwalny webinar podsumowujący działalność klubu.'
+WHERE id = '22222222-2222-2222-2222-222222222213';
+UPDATE events SET short_description = 'Archiwalna gala absolwentów z poprzedniego sezonu.'
+WHERE id = '22222222-2222-2222-2222-222222222214';
+
 INSERT INTO event_tags (event_id, tag_id) VALUES
     -- 1) AI workshop: ai, workshop, online
     ('22222222-2222-2222-2222-222222222201', '11111111-1111-1111-1111-111111111106'),

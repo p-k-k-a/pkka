@@ -39,6 +39,10 @@ public class Event {
     @ToString.Include
     private String title;
 
+    @Size(max = 400)
+    @Column(name = "short_description", length = 400)
+    private String shortDescription;
+
     @Column(name = "full_description", columnDefinition = "TEXT")
     private String fullDescription;
 

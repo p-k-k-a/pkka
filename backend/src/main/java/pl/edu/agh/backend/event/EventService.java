@@ -25,10 +25,17 @@ public class EventService {
 
     private final EventRepository eventRepository;
 
-    public Page<Event> list(Authentication authentication, Collection<String> tagNames, Pageable pageable) {
-        Specification<Event> spec = Specification.where(startsAfter(Instant.now()))
-                .and(audienceIn(visibleAudiences(authentication)))
-                .and(hasAnyTag(tagNames));
+    public Page<Event> list(
+            Authentication authentication, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
+        Instant now = Instant.now();
+        EventTimeframe resolved = timeframe == null ? EventTimeframe.UPCOMING : timeframe;
+        Specification<Event> spec = Specification.unrestricted();
+        if (resolved == EventTimeframe.UPCOMING) {
+            spec = spec.and(startsAfter(now));
+        } else if (resolved == EventTimeframe.PAST) {
+            spec = spec.and(startsBeforeOrEqual(now));
+        }
+        spec = spec.and(audienceIn(visibleAudiences(authentication))).and(hasAnyTag(tagNames));
 
         return eventRepository.findAll(spec, pageable);
     }

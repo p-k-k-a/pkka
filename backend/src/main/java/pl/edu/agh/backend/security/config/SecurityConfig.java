@@ -61,7 +61,7 @@ public class SecurityConfig {
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
                         .permitAll()
-                        .requestMatchers("/api/me")
+                        .requestMatchers("/api/me", "/api/tags")
                         .authenticated()
                         .requestMatchers("/api/alumni/**")
                         .hasRole("VERIFIED_ALUMN")

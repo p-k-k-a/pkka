@@ -13,6 +13,10 @@ public class EventSpecifications {
         return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
     }
 
+    public Specification<Event> startsBeforeOrEqual(Instant dateTime) {
+        return (root, query, cb) -> dateTime == null ? null : cb.lessThanOrEqualTo(root.get("startsAt"), dateTime);
+    }
+
     public Specification<Event> audienceIn(Collection<Audience> audiences) {
         return (root, query, cb) -> (audiences == null || audiences.isEmpty())
                 ? null

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public record EventDetailsDto(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+        String shortDescription,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
@@ -25,6 +26,7 @@ public record EventDetailsDto(
         return new EventDetailsDto(
                 e.getId(),
                 e.getTitle(),
+                e.getShortDescription(),
                 e.getFullDescription(),
                 e.getType(),
                 e.getStartsAt(),

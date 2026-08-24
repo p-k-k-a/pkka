@@ -42,7 +42,7 @@ class EventServiceTest {
         when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(publicEvent)));
 
-        var page = eventService.list(null, Set.of(), PageRequest.of(0, 10));
+        var page = eventService.list(null, Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
     }
