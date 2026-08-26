@@ -5,15 +5,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
-import pl.edu.agh.backend.user.UserProvisioningService;
-import pl.edu.agh.backend.user.UserRepository;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
 @RequiredArgsConstructor
@@ -21,9 +16,7 @@ public class AdminPostService {
 
     private final PostRepository postRepository;
     private final PostSlugGenerator slugGenerator;
-    private final UserRepository userRepository;
-    private final UserPrincipalExtractor principalExtractor;
-    private final UserProvisioningService userProvisioningService;
+    private final CallerUserService callerUserService;
 
     @Transactional(readOnly = true)
     public Page<AdminPostListItemResponse> list(Optional<PostStatus> status, Pageable pageable) {
@@ -38,12 +31,12 @@ public class AdminPostService {
     }
 
     @Transactional
-    public AdminPostResponse create(Authentication authentication, CreatePostRequest request) {
+    public AdminPostResponse create(Caller caller, CreatePostRequest request) {
         Post post = new Post();
         post.setTitle(request.title());
         post.setSlug(slugGenerator.generateUniqueSlug(request.title()));
         post.setContent(request.content());
-        post.setAuthor(resolveAuthor(authentication));
+        post.setAuthor(callerUserService.getOrCreate(caller));
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
         }
@@ -68,15 +61,5 @@ public class AdminPostService {
     public void delete(UUID id) {
         Post post = postRepository.findById(id).orElseThrow(PostNotFoundException::new);
         postRepository.delete(post);
-    }
-
-    private User resolveAuthor(Authentication authentication) {
-        var info = principalExtractor
-                .extract(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        userProvisioningService.provisionIfAbsent(info);
-        return userRepository
-                .findByKeycloakId(info.keycloakId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
 }

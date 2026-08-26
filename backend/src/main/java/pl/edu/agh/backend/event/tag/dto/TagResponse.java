@@ -1,8 +1,9 @@
-package pl.edu.agh.backend.event;
+package pl.edu.agh.backend.event.tag.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.util.UUID;
+import pl.edu.agh.backend.event.tag.Tag;
 
 public record TagResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,

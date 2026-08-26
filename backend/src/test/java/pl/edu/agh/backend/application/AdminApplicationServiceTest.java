@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,12 +16,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.security.Roles;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
-import pl.edu.agh.backend.user.UserProvisioningService;
-import pl.edu.agh.backend.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AdminApplicationServiceTest {
@@ -30,13 +28,7 @@ class AdminApplicationServiceTest {
     private ApplicationRepository applicationRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private UserPrincipalExtractor principalExtractor;
-
-    @Mock
-    private UserProvisioningService userProvisioningService;
+    private CallerUserService callerUserService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -50,20 +42,18 @@ class AdminApplicationServiceTest {
         User applicant = user("applicant-kc");
         User reviewer = user("reviewer-kc");
         Application application = pendingApplication(applicant);
+        Caller reviewerCaller = caller(reviewer);
 
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(principalExtractor.extract(any()))
-                .thenReturn(Optional.of(new UserPrincipalExtractor.UserPrincipalInfo(reviewer.getKeycloakId())));
-        when(userRepository.findByKeycloakId(reviewer.getKeycloakId())).thenReturn(Optional.of(reviewer));
+        when(callerUserService.getOrCreate(reviewerCaller)).thenReturn(reviewer);
         when(applicationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ApplicationResponse response =
-                adminApplicationService.approve(jwtAuth(reviewer.getKeycloakId()), applicationId);
+        ApplicationResponse response = adminApplicationService.approve(reviewerCaller, applicationId);
 
         assertThat(response.status()).isEqualTo(ApplicationStatus.APPROVED);
         assertThat(applicant.getGraduationYear()).isEqualTo(2020);
 
-        verify(userProvisioningService).provisionIfAbsent(any());
+        verify(callerUserService).getOrCreate(reviewerCaller);
 
         ArgumentCaptor<ApplicationApprovedEvent> eventCaptor = ArgumentCaptor.forClass(ApplicationApprovedEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
@@ -76,15 +66,13 @@ class AdminApplicationServiceTest {
         User applicant = user("applicant-kc");
         User reviewer = user("reviewer-kc");
         Application application = pendingApplication(applicant);
+        Caller reviewerCaller = caller(reviewer);
 
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
-        when(principalExtractor.extract(any()))
-                .thenReturn(Optional.of(new UserPrincipalExtractor.UserPrincipalInfo(reviewer.getKeycloakId())));
-        when(userRepository.findByKeycloakId(reviewer.getKeycloakId())).thenReturn(Optional.of(reviewer));
+        when(callerUserService.getOrCreate(reviewerCaller)).thenReturn(reviewer);
         when(applicationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ApplicationResponse response =
-                adminApplicationService.reject(jwtAuth(reviewer.getKeycloakId()), applicationId, "Incomplete docs");
+        ApplicationResponse response = adminApplicationService.reject(reviewerCaller, applicationId, "Incomplete docs");
 
         assertThat(response.status()).isEqualTo(ApplicationStatus.REJECTED);
         assertThat(response.rejectionReason()).isEqualTo("Incomplete docs");
@@ -117,11 +105,7 @@ class AdminApplicationServiceTest {
         return user;
     }
 
-    private static JwtAuthenticationToken jwtAuth(String subject) {
-        Jwt jwt = Jwt.withTokenValue("token")
-                .header("alg", "none")
-                .subject(subject)
-                .build();
-        return new JwtAuthenticationToken(jwt, List.of());
+    private static Caller caller(User user) {
+        return new Caller(user.getKeycloakId(), Set.of(Roles.ADMIN));
     }
 }
