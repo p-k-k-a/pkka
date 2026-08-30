@@ -3,13 +3,13 @@
 import { useState } from "react";
 import {
   ApiError,
-  ApplicationResponseDtoConsentsItem,
+  ApplicationResponseConsentsItem,
   useCreateApplication,
-  type CreateApplicationRequestDto,
-  type CreateApplicationRequestDtoConsentsItem,
-  type CreateApplicationRequestDtoFaculty,
-  type CreateApplicationRequestDtoMeetingPreferencesItem,
-  type CreateApplicationRequestDtoStudyType,
+  type CreateApplicationRequest,
+  type CreateApplicationRequestConsentsItem,
+  type CreateApplicationRequestFaculty,
+  type CreateApplicationRequestMeetingPreferencesItem,
+  type CreateApplicationRequestStudyType,
 } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,8 +26,8 @@ import {
 } from "@/lib/application-labels";
 
 const REQUIRED_CONSENTS: string[] = [
-  ApplicationResponseDtoConsentsItem.REGULATIONS_PRIVACY,
-  ApplicationResponseDtoConsentsItem.GDPR_DATA_PROCESSING,
+  ApplicationResponseConsentsItem.REGULATIONS_PRIVACY,
+  ApplicationResponseConsentsItem.GDPR_DATA_PROCESSING,
 ];
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -85,20 +85,20 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
       return;
     }
 
-    const payload: CreateApplicationRequestDto = {
-      faculty: faculty as CreateApplicationRequestDtoFaculty,
+    const payload: CreateApplicationRequest = {
+      faculty: faculty as CreateApplicationRequestFaculty,
       fieldOfStudy: fieldOfStudy.trim(),
-      studyType: studyType as CreateApplicationRequestDtoStudyType,
+      studyType: studyType as CreateApplicationRequestStudyType,
       graduationYear: parsedGraduationYear,
       phoneNumber: phoneNumber.trim(),
       interests: interests
         .split(",")
         .map((interest) => interest.trim())
         .filter(Boolean),
-      meetingPreferences: meetingPreferences as CreateApplicationRequestDtoMeetingPreferencesItem[],
+      meetingPreferences: meetingPreferences as CreateApplicationRequestMeetingPreferencesItem[],
       coCreationInterest,
       newsletterSubscription,
-      consents: consents as CreateApplicationRequestDtoConsentsItem[],
+      consents: consents as CreateApplicationRequestConsentsItem[],
     };
 
     mutate({ data: payload });

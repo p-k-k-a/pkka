@@ -3,14 +3,14 @@ import { Text } from "@/components/ui/text";
 import { TYPE_LABELS } from "@/lib/consts";
 import { THEME } from "@/lib/theme";
 import { formatEventDateShort, formatTimeRange } from "@/lib/utils";
-import { EventDetailsDtoType, type EventDetailsDto } from "@pkka/api";
+import { EventDetailsResponseType, type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
 type EventDetailViewProps = {
-  event: EventDetailsDto;
+  event: EventDetailsResponse;
 };
 
 function InfoRow({
@@ -44,9 +44,9 @@ export function EventDetailView({ event }: EventDetailViewProps) {
   const { title, type, startsAt, endsAt, location, seatLimit, seatsTaken, coverImageUrl, tags } =
     event;
 
-  const isOnline = type === EventDetailsDtoType.ONLINE;
+  const isOnline = type === EventDetailsResponseType.ONLINE;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
-  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken : null;
+  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken! : null;
 
   return (
     <ScrollView
@@ -69,14 +69,14 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
         <View className="gap-3">
           <Badge variant="default" className="self-start">
-            <Text>{TYPE_LABELS[type].toUpperCase()}</Text>
+            <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
           </Badge>
           <Text variant="h1" className="text-left text-3xl leading-tight">
             {title}
           </Text>
-          {tags.length > 0 ? (
+          {(tags ?? []).length > 0 ? (
             <View className="flex-row flex-wrap gap-x-3 gap-y-1">
-              {tags.map((tag) => (
+              {(tags ?? []).map((tag) => (
                 <Text key={tag} className="text-sm text-muted-foreground">
                   #{tag}
                 </Text>

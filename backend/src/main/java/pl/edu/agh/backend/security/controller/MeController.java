@@ -3,10 +3,8 @@ package pl.edu.agh.backend.security.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -14,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.controller.dto.MeResponse;
 
 @RestController
@@ -59,12 +58,6 @@ public class MeController {
     }
 
     private static List<String> extractRoles(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(Objects::nonNull)
-                .filter(authority -> authority.startsWith("ROLE_"))
-                .map(authority -> authority.replaceFirst("^ROLE_", ""))
-                .sorted()
-                .toList();
+        return Caller.from(authentication).roles().stream().sorted().toList();
     }
 }

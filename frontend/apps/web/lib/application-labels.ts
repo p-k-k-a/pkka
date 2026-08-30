@@ -1,8 +1,8 @@
 import {
-  ApplicationResponseDtoConsentsItem,
-  ApplicationResponseDtoFaculty,
-  ApplicationResponseDtoMeetingPreferencesItem,
-  ApplicationResponseDtoStudyType,
+  ApplicationResponseConsentsItem,
+  ApplicationResponseFaculty,
+  ApplicationResponseMeetingPreferencesItem,
+  ApplicationResponseStudyType,
 } from "@pkka/api";
 
 const FACULTY_LABELS: Record<string, string> = {
@@ -58,24 +58,24 @@ export function statusLabel(status: string): string {
   return STATUS_LABELS[status] ?? status;
 }
 
-export const FACULTY_OPTIONS = Object.values(ApplicationResponseDtoFaculty).map((value) => ({
+export const FACULTY_OPTIONS = Object.values(ApplicationResponseFaculty).map((value) => ({
   value,
   label: facultyLabel(value),
 }));
 
-export const STUDY_TYPE_OPTIONS = Object.values(ApplicationResponseDtoStudyType).map((value) => ({
+export const STUDY_TYPE_OPTIONS = Object.values(ApplicationResponseStudyType).map((value) => ({
   value,
   label: studyTypeLabel(value),
 }));
 
 export const MEETING_PREFERENCE_OPTIONS = Object.values(
-  ApplicationResponseDtoMeetingPreferencesItem,
+  ApplicationResponseMeetingPreferencesItem,
 ).map((value) => ({
   value,
   label: meetingPreferenceLabel(value),
 }));
 
-export const CONSENT_OPTIONS = Object.values(ApplicationResponseDtoConsentsItem).map((value) => ({
+export const CONSENT_OPTIONS = Object.values(ApplicationResponseConsentsItem).map((value) => ({
   value,
   label: consentLabel(value),
 }));
