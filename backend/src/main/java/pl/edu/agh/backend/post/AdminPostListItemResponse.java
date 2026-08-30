@@ -10,6 +10,7 @@ public record AdminPostListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String authorDisplayName,
         Instant publishedAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
@@ -20,6 +21,7 @@ public record AdminPostListItemResponse(
                 post.getSlug(),
                 post.getTitle(),
                 post.getStatus(),
+                post.getAuthor().getDisplayName(),
                 post.getPublishedAt(),
                 post.getCreatedAt(),
                 post.getUpdatedAt());

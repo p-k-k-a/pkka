@@ -11,7 +11,7 @@ public record AdminPostResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) String content,
         @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String authorDisplayName,
         Instant publishedAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
@@ -23,7 +23,7 @@ public record AdminPostResponse(
                 post.getTitle(),
                 post.getContent(),
                 post.getStatus(),
-                post.getAuthor().getKeycloakId(),
+                post.getAuthor().getDisplayName(),
                 post.getPublishedAt(),
                 post.getCreatedAt(),
                 post.getUpdatedAt());
