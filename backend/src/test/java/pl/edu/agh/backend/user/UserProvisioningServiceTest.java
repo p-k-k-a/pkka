@@ -30,30 +30,30 @@ class UserProvisioningServiceTest {
     private UserProvisioningService provisioningService;
 
     @Test
-    void provisionIfAbsentReturnsExistingUserWithoutCreating() {
+    void getOrCreateReturnsExistingUserWithoutCreating() {
         User existing = new User();
         existing.setKeycloakId("kc-1");
         when(userRepository.findByKeycloakId("kc-1")).thenReturn(Optional.of(existing));
 
-        User result = provisioningService.provisionIfAbsent(new UserPrincipalExtractor.UserPrincipalInfo("kc-1"));
+        User result = provisioningService.getOrCreate("kc-1");
 
         assertThat(result).isSameAs(existing);
         verify(userRepository, never()).save(any());
     }
 
     @Test
-    void provisionIfAbsentCreatesUserWhenMissing() {
+    void getOrCreateCreatesUserWhenMissing() {
         when(userRepository.findByKeycloakId("kc-new")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        User result = provisioningService.provisionIfAbsent(new UserPrincipalExtractor.UserPrincipalInfo("kc-new"));
+        User result = provisioningService.getOrCreate("kc-new");
 
         assertThat(result.getKeycloakId()).isEqualTo("kc-new");
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void provisionIfAbsentRecoversFromConcurrentInsertRace() {
+    void getOrCreateRecoversFromConcurrentInsertRace() {
         User racedUser = new User();
         racedUser.setKeycloakId("kc-race");
 
@@ -62,7 +62,7 @@ class UserProvisioningServiceTest {
                 .thenReturn(Optional.of(racedUser));
         when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
 
-        User result = provisioningService.provisionIfAbsent(new UserPrincipalExtractor.UserPrincipalInfo("kc-race"));
+        User result = provisioningService.getOrCreate("kc-race");
 
         assertThat(result).isSameAs(racedUser);
         verify(userRepository, times(2)).findByKeycloakId("kc-race");

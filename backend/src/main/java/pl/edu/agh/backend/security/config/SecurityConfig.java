@@ -36,6 +36,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 @Configuration
@@ -64,11 +65,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/me")
                         .authenticated()
                         .requestMatchers("/api/alumni/**")
-                        .hasRole("VERIFIED_ALUMN")
+                        .hasRole(Roles.VERIFIED_ALUMN)
+                        .requestMatchers("/api/events/**")
+                        .hasRole(Roles.USER)
                         .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        .hasRole(Roles.ADMIN)
                         .anyRequest()
-                        .hasRole("USER"))
+                        .hasRole(Roles.USER))
                 // we as resource server validate JWT by Keycloak JWKS, if SecurityContext is filled
                 // up from session,
                 // that is skipped
@@ -167,7 +170,7 @@ public class SecurityConfig {
         }
         return roles.stream()
                 .map(r -> new SimpleGrantedAuthority(
-                        "ROLE_" + r.toUpperCase(Locale.ROOT).replace("-", "_")))
+                        Roles.ROLE_PREFIX + r.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .collect(Collectors.toUnmodifiableSet());
     }
 
