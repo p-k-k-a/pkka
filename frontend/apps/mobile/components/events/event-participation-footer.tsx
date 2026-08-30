@@ -2,7 +2,6 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { addEventToCalendar } from "@/lib/calendar";
 import {
   ApiError,
   getGetEventByIdQueryKey,
@@ -12,12 +11,13 @@ import {
   type EventDetailsResponse,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Calendar from "expo-calendar";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 
 type ActiveSheet = "calendar" | "leave" | null;
-// In ideal world we would have this enum from the backend from openapi but I don't want t odo that myself and I don't want to wait for backend to be updated so let's stick with it
+// In ideal world we would have this enum from the backend from openapi but I don't want to do that myself and I don't want to wait for backend to be updated so let's stick with it
 type ConflictReason =
   | "ALREADY_REGISTERED"
   | "REGISTRATION_CLOSED"
@@ -88,7 +88,18 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onAddToCalendar = async () => {
     setSheet(null);
     try {
-      await addEventToCalendar(event);
+      const { granted } = await Calendar.requestCalendarPermissionsAsync();
+      if (!granted) {
+        setError("Brak dostępu do kalendarza.");
+        return;
+      }
+      await Calendar.createEventInCalendarAsync({
+        title: event.title,
+        startDate: new Date(event.startsAt),
+        endDate: new Date(event.endsAt),
+        location: event.location ?? undefined,
+        notes: event.fullDescription ?? undefined,
+      });
     } catch {
       setError("Nie udało się otworzyć kalendarza.");
     }
