@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class EventRegistrationService {
     private final EventService eventService;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final CallerUserService callerUserService;
+    private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
     /**
@@ -39,32 +41,41 @@ public class EventRegistrationService {
             throw EventRegistrationConflictException.alreadyRegistered(eventId);
         }
 
-        long seatsTaken = eventRegistrationRepository.countByEventId(eventId);
-        if (event.getSeatLimit() != null && seatsTaken >= event.getSeatLimit()) {
-            throw EventRegistrationConflictException.noSeatsLeft(eventId);
-        }
+        long seatsTaken =
+                eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.REGISTERED);
+        boolean takesASeat = hasFreeSeat(event, seatsTaken);
 
-        EventRegistration registration =
-                EventRegistration.builder().event(event).user(user).build();
+        EventRegistration registration = EventRegistration.builder()
+                .event(event)
+                .user(user)
+                .status(takesASeat ? EventRegistrationStatus.REGISTERED : EventRegistrationStatus.WAITLISTED)
+                .build();
         try {
             eventRegistrationRepository.saveAndFlush(registration);
         } catch (DataIntegrityViolationException ex) {
             throw EventRegistrationConflictException.alreadyRegistered(eventId);
         }
 
-        return new EventRegistrationResponse(
-                eventId, registration.getRegisteredAt(), (int) seatsTaken + 1, event.getSeatLimit());
+        return toResponse(registration, event, seatsTaken + (takesASeat ? 1 : 0));
     }
 
-    /**
-     * No lock needed: a delete only lowers the seat count. Still allowed once registration has closed —
-     * before the event starts, dropping out keeps the organiser's head count honest even when the freed
-     * seat can no longer be claimed. Once it has started, cancelling achieves neither.
-     */
+    @Transactional(readOnly = true)
+    public EventRegistrationResponse getOwnRegistration(UUID eventId, Caller caller) {
+        Event event = eventService.findVisible(eventId, caller);
+        EventRegistration registration = callerUserService
+                .findId(caller)
+                .flatMap(userId -> eventRegistrationRepository.findByEventIdAndUserId(eventId, userId))
+                .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
+
+        long seatsTaken =
+                eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.REGISTERED);
+        return toResponse(registration, event, seatsTaken);
+    }
+
     @Transactional
     public void unregister(UUID eventId, Caller caller) {
         User user = callerUserService.getOrCreate(caller);
-        Event event = eventService.findVisible(eventId, caller);
+        Event event = eventService.findVisibleForUpdate(eventId, caller);
         if (hasStarted(event)) {
             throw EventRegistrationConflictException.eventAlreadyStarted(eventId);
         }
@@ -72,7 +83,49 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())
                 .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
+        boolean freedASeat = registration.getStatus() == EventRegistrationStatus.REGISTERED;
         eventRegistrationRepository.delete(registration);
+
+        if (freedASeat) {
+            promoteHeadOfQueue(event);
+        }
+    }
+
+    private void promoteHeadOfQueue(Event event) {
+        eventRegistrationRepository
+                .findFirstByEventIdAndStatusOrderByRegisteredAtAscIdAsc(
+                        event.getId(), EventRegistrationStatus.WAITLISTED)
+                .ifPresent(next -> {
+                    next.setStatus(EventRegistrationStatus.REGISTERED);
+                    eventPublisher.publishEvent(new RegistrationPromotedEvent(
+                            event.getId(), next.getUser().getId()));
+                });
+    }
+
+    private EventRegistrationResponse toResponse(EventRegistration registration, Event event, long seatsTaken) {
+        return new EventRegistrationResponse(
+                event.getId(),
+                registration.getRegisteredAt(),
+                registration.getStatus(),
+                waitlistPosition(registration),
+                (int) seatsTaken,
+                event.getSeatLimit());
+    }
+
+    private Integer waitlistPosition(EventRegistration registration) {
+        if (registration.getStatus() != EventRegistrationStatus.WAITLISTED) {
+            return null;
+        }
+        return (int) eventRegistrationRepository.countQueuedAhead(
+                        registration.getEvent().getId(),
+                        EventRegistrationStatus.WAITLISTED,
+                        registration.getRegisteredAt(),
+                        registration.getId())
+                + 1;
+    }
+
+    private boolean hasFreeSeat(Event event, long seatsTaken) {
+        return event.getSeatLimit() == null || seatsTaken < event.getSeatLimit();
     }
 
     private boolean isRegistrationClosed(Event event) {

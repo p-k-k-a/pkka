@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,8 @@ import pl.edu.agh.backend.event.dto.EventDetailsResponse;
 import pl.edu.agh.backend.event.dto.EventListItemResponse;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository.OwnRegistration;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 
@@ -40,19 +41,20 @@ public class EventService {
         Page<Event> events = eventRepository.findAll(spec, pageable);
         List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
         Map<UUID, Long> seatsTaken = seatsTakenByEvent(ids);
-        Set<UUID> registered = registeredEventIds(caller, ids);
+        Map<UUID, EventRegistrationStatus> ownStatus = ownRegistrationsByEvent(caller, ids);
 
         return events.map(event -> EventListItemResponse.from(
-                event, seatsTaken.getOrDefault(event.getId(), 0L), registered.contains(event.getId())));
+                event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
     }
 
     public EventDetailsResponse getDetails(UUID id, Caller caller) {
         Event event = findVisible(id, caller);
-        boolean registered = callerUserService
+        EventRegistrationStatus registrationStatus = callerUserService
                 .findId(caller)
-                .map(userId -> eventRegistrationRepository.existsByEventIdAndUserId(id, userId))
-                .orElse(false);
-        return EventDetailsResponse.from(event, eventRegistrationRepository.countByEventId(id), registered);
+                .flatMap(userId -> eventRegistrationRepository.findStatus(id, userId))
+                .orElse(null);
+        long seatsTaken = eventRegistrationRepository.countByEventIdAndStatus(id, EventRegistrationStatus.REGISTERED);
+        return EventDetailsResponse.from(event, seatsTaken, registrationStatus);
     }
 
     public Event findVisible(UUID id, Caller caller) {
@@ -78,18 +80,21 @@ public class EventService {
         if (eventIds.isEmpty()) {
             return Map.of();
         }
-        return eventRegistrationRepository.countByEventIdIn(eventIds).stream()
-                .collect(Collectors.toMap(EventSeatCount::getEventId, EventSeatCount::getSeatsTaken));
+        return eventRegistrationRepository
+                .countByEventIdInAndStatus(eventIds, EventRegistrationStatus.REGISTERED)
+                .stream()
+                .collect(Collectors.toMap(EventSeatCount::eventId, EventSeatCount::seatsTaken));
     }
 
     /** Anonymous callers have no registrations, so they cost no query here. */
-    private Set<UUID> registeredEventIds(Caller caller, List<UUID> eventIds) {
+    private Map<UUID, EventRegistrationStatus> ownRegistrationsByEvent(Caller caller, List<UUID> eventIds) {
         if (eventIds.isEmpty()) {
-            return Set.of();
+            return Map.of();
         }
         return callerUserService
                 .findId(caller)
-                .map(userId -> eventRegistrationRepository.findRegisteredEventIds(userId, eventIds))
-                .orElseGet(Set::of);
+                .map(userId -> eventRegistrationRepository.findOwnRegistrations(userId, eventIds).stream()
+                        .collect(Collectors.toMap(OwnRegistration::eventId, OwnRegistration::status)))
+                .orElseGet(Map::of);
     }
 }

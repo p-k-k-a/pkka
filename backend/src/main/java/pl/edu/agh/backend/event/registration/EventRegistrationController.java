@@ -27,29 +27,48 @@ public class EventRegistrationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Sign the current user up for an event", description = """
-                    Takes one seat, atomically with respect to other sign-ups for the same event: an event
-                    with a seat limit can never be oversold. Conflicts carry a `reason` property
-                    (`ALREADY_REGISTERED`, `REGISTRATION_CLOSED`, `NO_SEATS_LEFT`) so they can be told apart
+                    Takes one seat when the event has a free one, atomically with respect to other sign-ups
+                    for the same event: an event with a seat limit can never be oversold. A full event puts
+                    the caller on the waitlist instead of refusing them — the response says which happened in
+                    `status`, and a queued sign-up also carries its `waitlistPosition`. Conflicts carry a
+                    `reason` property (`ALREADY_REGISTERED`, `REGISTRATION_CLOSED`) so they can be told apart
                     without parsing the message. Registration closes at `registrationClosesAt`, and at the
-                    event's start in any case.
+                    event's start in any case; the waitlist closes with it.
 
                     Who may sign up follows the event's `audience`, exactly like who may see it: `PUBLIC`
                     events are open to every signed-in user, `ALL_ALUMNI` events to verified alumni only.
                     An event the caller cannot see reports 404 rather than 403.
                     """)
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Seat taken"),
+        @ApiResponse(responseCode = "201", description = "Seat taken, or a place on the waitlist"),
         @ApiResponse(
                 responseCode = "404",
                 description = "No such event, or it is not visible to this user",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "Already registered, registration closed, or no seats left",
+                description = "Already registered, or registration closed",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public EventRegistrationResponse register(@PathVariable UUID eventId, Caller caller) {
         return eventRegistrationService.register(eventId, caller);
+    }
+
+    @GetMapping
+    @Operation(summary = "Get the current user's registration for an event", description = """
+                    Says whether the caller holds a seat or is queuing for one, and for a queued sign-up how
+                    many cancellations away from a seat they are, in `waitlistPosition`. A caller who is not
+                    signed up gets 404, as does one who cannot see the event at all.
+                    """)
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "The caller's own registration"),
+        @ApiResponse(
+                responseCode = "404",
+                description = "No such event, or the caller is not signed up for it",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    public EventRegistrationResponse getOwnRegistration(@PathVariable UUID eventId, Caller caller) {
+        return eventRegistrationService.getOwnRegistration(eventId, caller);
     }
 
     @DeleteMapping

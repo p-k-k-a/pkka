@@ -9,7 +9,6 @@ public class EventRegistrationConflictException extends RuntimeException {
     public enum Reason {
         ALREADY_REGISTERED,
         REGISTRATION_CLOSED,
-        NO_SEATS_LEFT,
         EVENT_ALREADY_STARTED
     }
 
@@ -28,11 +27,6 @@ public class EventRegistrationConflictException extends RuntimeException {
     public static EventRegistrationConflictException registrationClosed(UUID eventId) {
         return new EventRegistrationConflictException(
                 Reason.REGISTRATION_CLOSED, "Registration for event %s is closed".formatted(eventId));
-    }
-
-    public static EventRegistrationConflictException noSeatsLeft(UUID eventId) {
-        return new EventRegistrationConflictException(
-                Reason.NO_SEATS_LEFT, "Event %s has no seats left".formatted(eventId));
     }
 
     public static EventRegistrationConflictException eventAlreadyStarted(UUID eventId) {

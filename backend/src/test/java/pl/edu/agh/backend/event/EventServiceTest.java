@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.CallerUserService;
@@ -52,13 +53,15 @@ class EventServiceTest {
                 .build();
         when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(publicEvent)));
-        when(eventRegistrationRepository.countByEventIdIn(List.of(eventId))).thenReturn(List.of(seatCount(eventId, 3)));
+        when(eventRegistrationRepository.countByEventIdInAndStatus(
+                        List.of(eventId), EventRegistrationStatus.REGISTERED))
+                .thenReturn(List.of(new EventSeatCount(eventId, 3)));
 
         var page = eventService.list(Caller.anonymous(), Set.of(), PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);
-        assertThat(page.getContent().getFirst().registered()).isFalse();
+        assertThat(page.getContent().getFirst().registrationStatus()).isNull();
         // An anonymous caller has no row to look registrations up against, so none are fetched.
         verify(callerUserService).findId(Caller.anonymous());
     }
@@ -98,19 +101,5 @@ class EventServiceTest {
         Event found = eventService.findVisible(id, alumn);
 
         assertThat(found.getAudience()).isEqualTo(Audience.ALL_ALUMNI);
-    }
-
-    private static EventSeatCount seatCount(UUID eventId, long seatsTaken) {
-        return new EventSeatCount() {
-            @Override
-            public UUID getEventId() {
-                return eventId;
-            }
-
-            @Override
-            public long getSeatsTaken() {
-                return seatsTaken;
-            }
-        };
     }
 }
