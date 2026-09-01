@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventType;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.event.tag.Tag;
 
 public record EventDetailsResponse(
@@ -31,11 +32,9 @@ public record EventDetailsResponse(
         String coverImageUrl,
         @Schema(requiredMode = RequiredMode.REQUIRED) Set<String> tags,
 
-        @Schema(
-                requiredMode = RequiredMode.REQUIRED,
-                description = "Whether the requesting user is signed up; false for anonymous callers")
-        boolean registered) {
-    public static EventDetailsResponse from(Event e, long seatsTaken, boolean registered) {
+        @Schema(description = "The requesting user's own sign-up; absent when they are not signed up or anonymous")
+        EventRegistrationStatus registrationStatus) {
+    public static EventDetailsResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
         return new EventDetailsResponse(
                 e.getId(),
                 e.getTitle(),
@@ -50,6 +49,6 @@ public record EventDetailsResponse(
                 e.getAudience(),
                 e.getCoverImageUrl(),
                 e.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
-                registered);
+                registrationStatus);
     }
 }
