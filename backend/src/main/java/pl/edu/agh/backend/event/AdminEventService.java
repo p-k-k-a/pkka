@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.tag.Tag;
+import pl.edu.agh.backend.event.tag.TagRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class AdminEventService {
 
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
+    private final EventRegistrationRepository eventRegistrationRepository;
 
     @Transactional(readOnly = true)
     public Page<AdminEventSummaryResponse> list(EventTimeframe timeframe, Pageable pageable) {
@@ -36,7 +40,7 @@ public class AdminEventService {
 
     @Transactional(readOnly = true)
     public AdminEventResponse get(UUID id) {
-        return AdminEventResponse.from(findOrThrow(id));
+        return respond(findOrThrow(id));
     }
 
     @Transactional
@@ -56,7 +60,7 @@ public class AdminEventService {
                 .coverImageUrl(request.coverImageUrl())
                 .tags(new HashSet<>(resolveTags(request.tags())))
                 .build();
-        return AdminEventResponse.from(eventRepository.saveAndFlush(event));
+        return respond(eventRepository.saveAndFlush(event));
     }
 
     @Transactional
@@ -81,12 +85,16 @@ public class AdminEventService {
         }
         tags.clear();
         tags.addAll(resolveTags(request.tags()));
-        return AdminEventResponse.from(eventRepository.saveAndFlush(event));
+        return respond(eventRepository.saveAndFlush(event));
     }
 
     @Transactional
     public void delete(UUID id) {
         eventRepository.delete(findOrThrow(id));
+    }
+
+    private AdminEventResponse respond(Event event) {
+        return AdminEventResponse.from(event, eventRegistrationRepository.countByEventId(event.getId()));
     }
 
     private Event findOrThrow(UUID id) {

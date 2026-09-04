@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import pl.edu.agh.backend.event.tag.Tag;
 
 
 public record AdminEventResponse(
@@ -19,7 +20,9 @@ public record AdminEventResponse(
         String transmissionUrl,
         String location,
         Integer seatLimit,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Integer seatsTaken,
+        @Schema(requiredMode = RequiredMode.REQUIRED, description = "Registrations for this event so far")
+        int seatsTaken,
+
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String coverImageUrl,
@@ -27,7 +30,7 @@ public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminEventResponse from(Event event) {
+    static AdminEventResponse from(Event event, long seatsTaken) {
         return new AdminEventResponse(
                 event.getId(),
                 event.getTitle(),
@@ -39,7 +42,7 @@ public record AdminEventResponse(
                 event.getTransmissionUrl(),
                 event.getLocation(),
                 event.getSeatLimit(),
-                0, // TODO(events-registrations)
+                (int) seatsTaken,
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
                 event.getCoverImageUrl(),

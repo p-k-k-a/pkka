@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, Link2, MapPin, Users } from "lucide-react";
-import { EventDetailsDtoType, useGetEventById } from "@pkka/api";
+import { EventDetailsResponseType, useGetEventById } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +26,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
   const event = response?.data;
   const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
   const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;
-  const isOnline = event?.type === EventDetailsDtoType.ONLINE;
+  const isOnline = event?.type === EventDetailsResponseType.ONLINE;
   const location = event?.location?.trim();
   if (isLoading && !event) {
     return (

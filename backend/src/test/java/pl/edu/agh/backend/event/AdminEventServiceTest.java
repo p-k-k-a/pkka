@@ -22,6 +22,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.tag.Tag;
+import pl.edu.agh.backend.event.tag.TagRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AdminEventServiceTest {
@@ -32,6 +35,9 @@ class AdminEventServiceTest {
     @Mock
     private TagRepository tagRepository;
 
+    @Mock
+    private EventRegistrationRepository eventRegistrationRepository;
+
     @InjectMocks
     private AdminEventService adminEventService;
 
@@ -41,6 +47,24 @@ class AdminEventServiceTest {
         when(eventRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> adminEventService.get(id)).isInstanceOf(EventNotFoundException.class);
+    }
+
+    @Test
+    void getReportsSeatsTaken() {
+        UUID id = UUID.randomUUID();
+        Event event = Event.builder()
+                .id(id)
+                .title("Warsztat AI")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.parse("2026-09-01T17:00:00Z"))
+                .endsAt(Instant.parse("2026-09-01T19:00:00Z"))
+                .audience(Audience.PUBLIC)
+                .tags(new HashSet<>())
+                .build();
+        when(eventRepository.findById(id)).thenReturn(Optional.of(event));
+        when(eventRegistrationRepository.countByEventId(id)).thenReturn(7L);
+
+        assertThat(adminEventService.get(id).seatsTaken()).isEqualTo(7);
     }
 
     @Test

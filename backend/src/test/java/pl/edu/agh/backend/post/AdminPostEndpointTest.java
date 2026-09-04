@@ -99,9 +99,27 @@ class AdminPostEndpointTest {
 
         assertEquals("kolo-naukowe-spotkanie", JsonPath.read(body, "$.slug"));
         assertEquals("DRAFT", JsonPath.read(body, "$.status"));
-        assertEquals(ADMIN_SUBJECT, JsonPath.read(body, "$.authorId"));
         Object publishedAt = JsonPath.read(body, "$.publishedAt");
         assertNull(publishedAt);
+    }
+
+    @Test
+    void exposesAuthorDisplayNameOnDetailAndList() throws Exception {
+        createPost("{\"title\": \"Wpis z podpisem\", \"content\": \"x\"}");
+        User author = userRepository.findByKeycloakId(ADMIN_SUBJECT).orElseThrow();
+        author.setFirstName("Anna");
+        author.setLastName("Nowak");
+        userRepository.saveAndFlush(author);
+
+        UUID id = postRepository.findAll().getFirst().getId();
+
+        mockMvc.perform(get("/api/admin/posts/{id}", id).with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authorDisplayName").value("Anna Nowak"));
+
+        mockMvc.perform(get("/api/admin/posts").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].authorDisplayName").value("Anna Nowak"));
     }
 
     @Test
