@@ -14,7 +14,10 @@ public record AdminEventSummaryResponse(
         String location,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String coverImageUrl,
-        Integer seatLimit) {
+        Integer seatLimit,
+
+        @Schema(description = "Admin who created the event; absent for events that predate authorship tracking")
+        String authorDisplayName) {
 
     static AdminEventSummaryResponse from(Event event) {
         return new AdminEventSummaryResponse(
@@ -26,6 +29,7 @@ public record AdminEventSummaryResponse(
                 event.getLocation(),
                 event.getAudience(),
                 event.getCoverImageUrl(),
-                event.getSeatLimit());
+                event.getSeatLimit(),
+                event.getAuthor() == null ? null : event.getAuthor().getDisplayName());
     }
 }

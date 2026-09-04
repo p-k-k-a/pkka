@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class AdminEventService {
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final CallerUserService callerUserService;
 
     @Transactional(readOnly = true)
     public Page<AdminEventSummaryResponse> list(EventTimeframe timeframe, Pageable pageable) {
@@ -44,8 +47,9 @@ public class AdminEventService {
     }
 
     @Transactional
-    public AdminEventResponse create(EventRequest request) {
+    public AdminEventResponse create(Caller caller, EventRequest request) {
         Event event = Event.builder()
+                .author(callerUserService.getOrCreate(caller))
                 .title(request.title())
                 .shortDescription(request.shortDescription())
                 .fullDescription(request.fullDescription())

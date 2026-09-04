@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.event;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -28,6 +29,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
+import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,11 +43,16 @@ class AdminEventEndpointTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
+    private static final String ADMIN_SUBJECT = "11111111-1111-1111-1111-111111111111";
+
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @BeforeEach
     void cleanEvents() {
@@ -53,7 +61,7 @@ class AdminEventEndpointTest {
 
     private String createEvent(String body) throws Exception {
         return mockMvc.perform(post("/api/admin/events")
-                        .with(JwtTestSupport.asAdmin())
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -113,6 +121,48 @@ class AdminEventEndpointTest {
                 .andExpect(jsonPath("$.audience").value("PUBLIC"))
                 .andExpect(jsonPath("$.transmissionUrl").value("https://meet.example.com/event"))
                 .andExpect(jsonPath("$.tags").value(hasItem("ai")));
+    }
+
+    @Test
+    void exposesAuthorDisplayNameOnDetailAndList() throws Exception {
+        Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
+        Instant end = start.plus(2, ChronoUnit.HOURS);
+        String created = createEvent(eventJson("Z podpisem", start.toString(), end.toString(), "PUBLIC", "[]"));
+        String id = JsonPath.read(created, "$.id");
+
+        User author = userRepository.findByKeycloakId(ADMIN_SUBJECT).orElseThrow();
+        author.setFirstName("Anna");
+        author.setLastName("Nowak");
+        userRepository.saveAndFlush(author);
+
+        mockMvc.perform(get("/api/admin/events/{id}", id).with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authorDisplayName").value("Anna Nowak"));
+
+        mockMvc.perform(get("/api/admin/events").with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].authorDisplayName").value("Anna Nowak"));
+    }
+
+    /** Blank lines around embedded images are layout, so the description must survive verbatim. */
+    @Test
+    void keepsBlankLinesInsideDescription() throws Exception {
+        Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
+        Instant end = start.plus(2, ChronoUnit.HOURS);
+        String created = createEvent("""
+                {
+                  "title": "Z plakatem",
+                  "fullDescription": "Zapraszamy!\\n\\n\\n![plakat](https://example.com/plakat.png)\\n\\n",
+                  "type": "ONLINE",
+                  "startsAt": "%s",
+                  "endsAt": "%s",
+                  "audience": "PUBLIC",
+                  "tags": []
+                }
+                """.formatted(start, end));
+
+        assertThat(JsonPath.<String>read(created, "$.fullDescription"))
+                .isEqualTo("Zapraszamy!\n\n\n![plakat](https://example.com/plakat.png)\n\n");
     }
 
     @Test

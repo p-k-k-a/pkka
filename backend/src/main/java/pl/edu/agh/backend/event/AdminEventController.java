@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/admin/events")
@@ -53,12 +54,15 @@ public class AdminEventController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create an event")
     @ApiResponse(responseCode = "201", description = "Event created")
-    public AdminEventResponse createAdminEvent(@Valid @RequestBody EventRequest request) {
-        return adminEventService.create(request);
+    public AdminEventResponse createAdminEvent(@Valid @RequestBody EventRequest request, Caller caller) {
+        return adminEventService.create(caller, request);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Replace an event's editable fields")
+    @Operation(
+            summary = "Replace an event's editable fields",
+            description = "Full replacement: every editable field is taken from the body, "
+                    + "so omitted optional fields are cleared.")
     @ApiResponse(responseCode = "200", description = "Event updated")
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
     public AdminEventResponse updateAdminEvent(@PathVariable UUID id, @Valid @RequestBody EventRequest request) {

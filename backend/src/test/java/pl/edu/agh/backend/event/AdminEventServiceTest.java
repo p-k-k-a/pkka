@@ -25,6 +25,10 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.security.Roles;
+import pl.edu.agh.backend.user.CallerUserService;
+import pl.edu.agh.backend.user.User;
 
 @ExtendWith(MockitoExtension.class)
 class AdminEventServiceTest {
@@ -38,8 +42,13 @@ class AdminEventServiceTest {
     @Mock
     private EventRegistrationRepository eventRegistrationRepository;
 
+    @Mock
+    private CallerUserService callerUserService;
+
     @InjectMocks
     private AdminEventService adminEventService;
+
+    private static final Caller ADMIN = new Caller("admin-sub", Set.of(Roles.ADMIN));
 
     @Test
     void getThrowsWhenMissing() {
@@ -68,9 +77,11 @@ class AdminEventServiceTest {
     }
 
     @Test
-    void createPersistsResolvedTags() {
+    void createPersistsResolvedTagsAndStampsAuthor() {
         Tag ai = Tag.builder().name("ai").build();
+        User author = new User();
         when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
+        when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         EventRequest request = new EventRequest(
@@ -88,11 +99,12 @@ class AdminEventServiceTest {
                 null,
                 Set.of("ai"));
 
-        AdminEventResponse response = adminEventService.create(request);
+        AdminEventResponse response = adminEventService.create(ADMIN, request);
 
         ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
         verify(eventRepository).saveAndFlush(captor.capture());
         assertThat(captor.getValue().getTags()).containsExactlyInAnyOrder(ai);
+        assertThat(captor.getValue().getAuthor()).isSameAs(author);
         assertThat(response.title()).isEqualTo("Warsztat AI");
         assertThat(response.tags()).containsExactlyInAnyOrder("ai");
     }
@@ -116,7 +128,7 @@ class AdminEventServiceTest {
                 null,
                 Set.of("nope"));
 
-        assertThatThrownBy(() -> adminEventService.create(request)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> adminEventService.create(ADMIN, request)).isInstanceOf(ResponseStatusException.class);
     }
 
     @Test

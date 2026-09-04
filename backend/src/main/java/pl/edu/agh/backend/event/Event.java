@@ -14,6 +14,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import pl.edu.agh.backend.event.tag.Tag;
+import pl.edu.agh.backend.user.User;
 
 @Entity
 @Table(name = "events", indexes = @Index(name = "idx_events_starts_at", columnList = "starts_at"))
@@ -83,6 +84,11 @@ public class Event {
 
     @Column(name = "cover_image_url", length = 500)
     private String coverImageUrl;
+
+    /** The admin who created the event; absent for events that predate authorship tracking. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
