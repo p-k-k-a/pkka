@@ -1,6 +1,6 @@
-import type { EventDetailsResponseType, EventListItemResponseType } from "@pkka/api";
+import type { EventDetailsDtoType, EventListItemDtoType } from "@pkka/api";
 
-type EventType = EventListItemResponseType | EventDetailsResponseType;
+type EventType = EventListItemDtoType | EventDetailsDtoType;
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   ONLINE: "Online",
