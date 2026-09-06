@@ -3,13 +3,8 @@ import { DiscordIcon, GithubIcon, LinkedinIcon } from "@/components/ui/svg-icons
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import type { ReactNode } from "react";
-import {
-  discordUserIdOf,
-  isHttpsUrl,
-  openDiscordUser,
-  openEmail,
-  openWithFallback,
-} from "@/lib/contact";
+import { getProfileContacts } from "@pkka/domain";
+import { openDiscordUser, openEmail, openWithFallback } from "@/lib/contact";
 import { THEME } from "@/lib/theme";
 import { Mail } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -35,15 +30,11 @@ function ExternalLink({ label, url, icon }: { label: string; url: string; icon: 
 }
 
 export function ContactActions({ profile }: ContactActionsProps) {
-  const email = profile.visibility.email ? profile.email : undefined;
-  const discordId = discordUserIdOf(profile);
-  const linkedinUrl =
-    profile.linkedinUrl && isHttpsUrl(profile.linkedinUrl) ? profile.linkedinUrl : null;
-  const githubUrl = profile.githubUrl && isHttpsUrl(profile.githubUrl) ? profile.githubUrl : null;
+  const { email, discordId, linkedinUrl, githubUrl, hasAny } = getProfileContacts(profile);
 
   const hasButtons = !!discordId || !!email;
   const hasLinks = !!linkedinUrl || !!githubUrl;
-  if (!hasButtons && !hasLinks) return null;
+  if (!hasAny) return null;
 
   return (
     <View className="gap-5">

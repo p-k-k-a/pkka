@@ -7,14 +7,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { formatPublishedAt } from "@pkka/domain";
 import {
   getGetAdminPostQueryKey,
   getListAdminPostsQueryKey,
   useCreateAdminPost,
   useUpdateAdminPost,
   type AdminPostResponse,
-  type CreatePostRequestStatus,
+  type PostStatus,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert, ImageIcon } from "lucide-react";
@@ -50,7 +50,7 @@ export function PostForm({ post }: PostFormProps) {
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
   const [postId, setPostId] = useState(post?.id);
-  const [pendingStatus, setPendingStatus] = useState<CreatePostRequestStatus | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<PostStatus | null>(null);
 
   const createPost = useCreateAdminPost();
   const updatePost = useUpdateAdminPost();
@@ -59,7 +59,7 @@ export function PostForm({ post }: PostFormProps) {
   const isError = createPost.isError || updatePost.isError;
   const canSave = title.trim().length > 0 && content.trim().length > 0 && !isPending;
 
-  const handleSaveSuccess = (savedId: string, status: CreatePostRequestStatus) => {
+  const handleSaveSuccess = (savedId: string, status: PostStatus) => {
     queryClient.invalidateQueries({ queryKey: getListAdminPostsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetAdminPostQueryKey(savedId) });
     setPendingStatus(null);
@@ -72,7 +72,7 @@ export function PostForm({ post }: PostFormProps) {
     }
   };
 
-  const save = (status: CreatePostRequestStatus) => {
+  const save = (status: PostStatus) => {
     const data = { title: title.trim(), content, status } as const;
     setPendingStatus(status);
 

@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
 import { AvatarError, readProfileAvatar, saveProfileAvatar } from "@/lib/profile-avatar";
-import { isHttpsUrl } from "@/lib/utils";
+import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
@@ -111,6 +111,11 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
   const hasEducation = Boolean(profile.fieldOfStudy || profile.graduationYear || alumnSinceYear);
 
+  // Compared and submitted in canonical form so an untouched field is never
+  // reported dirty just because the stored value carries a trailing slash.
+  const linkedin = canonicalizeProfileUrl(linkedinUrl);
+  const github = canonicalizeProfileUrl(githubUrl);
+
   const assignedTagIds = profile.tags.map((tag) => tag.id);
   const tagsChanged =
     selectedTagIds.length !== assignedTagIds.length ||
@@ -121,8 +126,8 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
     company.trim() !== (profile.company ?? "") ||
     bio.trim() !== (profile.bio ?? "") ||
-    linkedinUrl.trim() !== (profile.linkedinUrl ?? "") ||
-    githubUrl.trim() !== (profile.githubUrl ?? "") ||
+    linkedin !== canonicalizeProfileUrl(profile.linkedinUrl ?? "") ||
+    github !== canonicalizeProfileUrl(profile.githubUrl ?? "") ||
     willingToMentor !== profile.willingToMentor ||
     showName !== profile.visibility.name ||
     showEmail !== profile.visibility.email ||
@@ -138,15 +143,11 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     event.preventDefault();
     setFormError(null);
 
-    const linkedin = linkedinUrl.trim();
-    const github = githubUrl.trim();
     const errors: Partial<Record<UrlField, string>> = {};
-    if (linkedin && !isHttpsUrl(linkedin)) {
-      errors.linkedinUrl = "Podaj pełny adres HTTPS, np. https://www.linkedin.com/in/…";
-    }
-    if (github && !isHttpsUrl(github)) {
-      errors.githubUrl = "Podaj pełny adres HTTPS, np. https://github.com/…";
-    }
+    const linkedinError = linkedinUrlError(linkedinUrl);
+    const githubError = githubUrlError(githubUrl);
+    if (linkedinError) errors.linkedinUrl = linkedinError;
+    if (githubError) errors.githubUrl = githubError;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 

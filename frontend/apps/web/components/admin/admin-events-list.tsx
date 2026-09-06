@@ -28,8 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
-import { audienceLabel } from "@/lib/event-labels";
+import { audienceLabel, isAdmin } from "@pkka/domain";
 
 const PAGE_SIZE = 20;
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";

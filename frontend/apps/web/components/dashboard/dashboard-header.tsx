@@ -10,7 +10,7 @@ export function DashboardHeader() {
   const { logout } = useAuth();
 
   return (
-    <header className="bg-muted z-50 flex h-16 shrink-0 items-center justify-between border-b border-background px-4 md:px-10">
+    <header className="bg-muted border-background z-50 flex h-16 shrink-0 items-center justify-between border-b px-4 md:px-10">
       <Link
         href="/dashboard"
         className="font-heading text-foreground text-[23px] font-semibold tracking-tight md:text-[28px]"

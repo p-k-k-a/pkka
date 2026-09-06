@@ -3,13 +3,12 @@
 import { useState } from "react";
 import {
   ApiError,
-  ApplicationResponseConsentsItem,
+  ConsentType,
+  Faculty,
+  MeetingPreference,
+  StudyType,
   useCreateApplication,
   type CreateApplicationRequest,
-  type CreateApplicationRequestConsentsItem,
-  type CreateApplicationRequestFaculty,
-  type CreateApplicationRequestMeetingPreferencesItem,
-  type CreateApplicationRequestStudyType,
 } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,16 +18,24 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  CONSENT_OPTIONS,
-  FACULTY_OPTIONS,
-  MEETING_PREFERENCE_OPTIONS,
-  STUDY_TYPE_OPTIONS,
-} from "@/lib/application-labels";
+  consentLabel,
+  facultyLabel,
+  graduationYearError,
+  graduationYearMax,
+  hasRequiredConsents,
+  isGraduationYearValid,
+  meetingPreferenceLabel,
+  studyTypeLabel,
+  toOptions,
+  APPLICATION_CONFLICT_MESSAGE,
+  APPLICATION_SUBMIT_ERROR_MESSAGE,
+  GRADUATION_YEAR_MIN,
+} from "@pkka/domain";
 
-const REQUIRED_CONSENTS: string[] = [
-  ApplicationResponseConsentsItem.REGULATIONS_PRIVACY,
-  ApplicationResponseConsentsItem.GDPR_DATA_PROCESSING,
-];
+const FACULTY_OPTIONS = toOptions(Faculty, facultyLabel);
+const STUDY_TYPE_OPTIONS = toOptions(StudyType, studyTypeLabel);
+const MEETING_PREFERENCE_OPTIONS = toOptions(MeetingPreference, meetingPreferenceLabel);
+const CONSENT_OPTIONS = toOptions(ConsentType, consentLabel);
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
@@ -54,51 +61,43 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
       },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 409) {
-          setFormError(
-            "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego.",
-          );
+          setFormError(APPLICATION_CONFLICT_MESSAGE);
         } else {
-          setFormError("Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.");
+          setFormError(APPLICATION_SUBMIT_ERROR_MESSAGE);
         }
       },
     },
   });
 
-  const currentYear = new Date().getFullYear();
-
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    if (!REQUIRED_CONSENTS.every((consent) => consents.includes(consent))) {
+    if (!hasRequiredConsents(consents)) {
       setFormError("Aby złożyć wniosek, musisz zaakceptować wymagane zgody.");
       return;
     }
 
     const parsedGraduationYear = Number.parseInt(graduationYear, 10);
-    if (
-      !Number.isInteger(parsedGraduationYear) ||
-      parsedGraduationYear < 1919 ||
-      parsedGraduationYear > currentYear
-    ) {
-      setFormError(`Podaj prawidłowy rok ukończenia (1919–${currentYear}).`);
+    if (!isGraduationYearValid(parsedGraduationYear)) {
+      setFormError(graduationYearError());
       return;
     }
 
     const payload: CreateApplicationRequest = {
-      faculty: faculty as CreateApplicationRequestFaculty,
+      faculty: faculty as Faculty,
       fieldOfStudy: fieldOfStudy.trim(),
-      studyType: studyType as CreateApplicationRequestStudyType,
+      studyType: studyType as StudyType,
       graduationYear: parsedGraduationYear,
       phoneNumber: phoneNumber.trim(),
       interests: interests
         .split(",")
         .map((interest) => interest.trim())
         .filter(Boolean),
-      meetingPreferences: meetingPreferences as CreateApplicationRequestMeetingPreferencesItem[],
+      meetingPreferences: meetingPreferences as MeetingPreference[],
       coCreationInterest,
       newsletterSubscription,
-      consents: consents as CreateApplicationRequestConsentsItem[],
+      consents: consents as ConsentType[],
     };
 
     mutate({ data: payload });
@@ -172,8 +171,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
               id="graduationYear"
               type="number"
               required
-              min={1919}
-              max={currentYear}
+              min={GRADUATION_YEAR_MIN}
+              max={graduationYearMax()}
               step={1}
               placeholder="np. 2022"
               value={graduationYear}

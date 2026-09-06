@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-
 public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,

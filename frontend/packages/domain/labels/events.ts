@@ -14,7 +14,7 @@ const AUDIENCE_LABELS = {
 
 type Audience = keyof typeof AUDIENCE_LABELS;
 
-export function eventTypeLabel(type?: string) {
+function eventTypeLabel(type?: string) {
   return type && type in EVENT_TYPE_LABELS ? EVENT_TYPE_LABELS[type as EventType] : "Wydarzenie";
 }
 
@@ -44,11 +44,6 @@ export function eventLocationLabel(type?: string, location?: string) {
   if (location?.trim()) return location;
   if (type === "ONLINE") return "Online";
   return "Miejsce do ustalenia";
-}
-
-export function formatSeats(seatLimit?: number, seatsTaken?: number) {
-  if (seatLimit == null) return null;
-  return `${seatsTaken ?? 0} / ${seatLimit} miejsc`;
 }
 
 export function formatSeatsCompact(seatLimit?: number, seatsTaken?: number) {

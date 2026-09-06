@@ -1,6 +1,10 @@
 import { Calendar, Clock, MapPin } from "lucide-react";
-import { eventLocationLabel, eventTypeLabelUpper } from "@/lib/event-labels";
-import { formatEventDateComma, formatTimeRange } from "@/lib/format-event-datetime";
+import {
+  eventLocationLabel,
+  eventTypeLabelUpper,
+  formatEventDateComma,
+  formatTimeRange,
+} from "@pkka/domain";
 import { cn } from "@/lib/utils";
 
 export type EventSchedule = {

@@ -1,11 +1,11 @@
-import { ApplicationResponseStatus } from "@pkka/api";
+import { ApplicationStatus } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
-import { statusLabel } from "@/lib/application-labels";
+import { statusLabel } from "@pkka/domain";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
-  [ApplicationResponseStatus.UNDER_REVIEW]: "secondary",
-  [ApplicationResponseStatus.APPROVED]: "default",
-  [ApplicationResponseStatus.REJECTED]: "destructive",
+  [ApplicationStatus.UNDER_REVIEW]: "secondary",
+  [ApplicationStatus.APPROVED]: "default",
+  [ApplicationStatus.REJECTED]: "destructive",
 };
 
 export function StatusBadge({ status }: { status: string }) {

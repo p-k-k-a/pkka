@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-
 public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 200)
         String title,

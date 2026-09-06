@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@pkka/api"],
+  transpilePackages: ["@pkka/api", "@pkka/domain"],
   async rewrites() {
     if (process.env.NODE_ENV !== "development") return [];
     return [

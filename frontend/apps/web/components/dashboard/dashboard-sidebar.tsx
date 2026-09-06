@@ -66,7 +66,7 @@ export function DashboardSidebar() {
     : userItems.filter((item) => item.href !== "/dashboard/verification" || !isVerified);
 
   return (
-    <aside className="bg-muted sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto border-r border-background">
+    <aside className="bg-muted border-background sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto border-r">
       <nav className="font-heading flex flex-col gap-1 p-4">
         {isAuthLoading ? (
           <>

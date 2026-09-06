@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  EventRequestAudience,
-  EventRequestType,
+  Audience,
+  EventType,
   getGetAdminEventQueryKey,
   getGetEventByIdQueryKey,
   getListAdminEventsQueryKey,
@@ -26,8 +26,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import { AUDIENCE_OPTIONS, EVENT_TYPE_OPTIONS, audienceLabel } from "@/lib/event-labels";
-import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/format-event-datetime";
+import {
+  AUDIENCE_OPTIONS,
+  EVENT_TYPE_OPTIONS,
+  audienceLabel,
+  fromDatetimeLocalValue,
+  toDatetimeLocalValue,
+} from "@pkka/domain";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
@@ -77,7 +82,7 @@ export function EventForm({ event }: EventFormProps) {
   const [title, setTitle] = useState(event?.title ?? "");
   const [shortDescription, setShortDescription] = useState(event?.shortDescription ?? "");
   const [fullDescription, setFullDescription] = useState(event?.fullDescription ?? "");
-  const [type, setType] = useState<EventRequest["type"]>(event?.type ?? EventRequestType.ONLINE);
+  const [type, setType] = useState<EventRequest["type"]>(event?.type ?? EventType.ONLINE);
   const [startsAt, setStartsAt] = useState(toDatetimeLocalValue(event?.startsAt));
   const [endsAt, setEndsAt] = useState(toDatetimeLocalValue(event?.endsAt));
   const [registrationClosesAt, setRegistrationClosesAt] = useState(
@@ -89,7 +94,7 @@ export function EventForm({ event }: EventFormProps) {
     event?.seatLimit != null ? String(event.seatLimit) : "",
   );
   const [audience, setAudience] = useState<EventRequest["audience"]>(
-    event?.audience ?? EventRequestAudience.PUBLIC,
+    event?.audience ?? Audience.PUBLIC,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(event?.tags ?? []);
 
