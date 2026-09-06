@@ -53,8 +53,8 @@ springdoc emits one component and both DTOs point at it:
 
 and orval generates a single `Faculty`, usable on both sides.
 
-Applying this to the nine existing enums took 34 generated objects down to 9 and
-removed 74 call-site references to duplicated names.
+Applying this to the nine existing enums turned 26 inline enum definitions into 9 shared
+components, and removed 74 call-site references to duplicated names.
 
 Notes:
 
