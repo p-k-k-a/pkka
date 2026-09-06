@@ -34,25 +34,25 @@ export function formatDateTime(value?: string) {
   return `${dateLabel}, ${timeLabel}`;
 }
 
-export function formatEventDateComma(iso?: string) {
+export function formatEventDateComma(iso: string) {
   const date = parseDate(iso);
   if (!date) return UNKNOWN_DATE;
   return format(date, "d MMMM, yyyy", { locale: pl });
 }
 
-export function formatEventDateLong(iso?: string) {
+export function formatEventDateLong(iso: string) {
   const date = parseDate(iso);
   if (!date) return UNKNOWN_DATE;
   return format(date, "d MMMM yyyy", { locale: pl });
 }
 
-export function formatEventDateShort(iso?: string) {
+export function formatEventDateShort(iso: string) {
   const date = parseDate(iso);
   if (!date) return UNKNOWN_DATE;
   return format(date, "d MMM yyyy", { locale: pl });
 }
 
-export function formatTimeRange(startsAt?: string, endsAt?: string) {
+export function formatTimeRange(startsAt: string, endsAt: string) {
   const start = parseDate(startsAt);
   if (!start) return UNKNOWN_TIME;
 

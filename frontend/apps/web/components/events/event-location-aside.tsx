@@ -8,9 +8,9 @@ import {
 import { cn } from "@/lib/utils";
 
 export type EventSchedule = {
-  type?: string;
-  startsAt?: string;
-  endsAt?: string;
+  type: string;
+  startsAt: string;
+  endsAt: string;
   location?: string;
 };
 
@@ -66,6 +66,6 @@ export function EventLocationAside({
   );
 }
 
-export function eventCategoryLabel(type?: string) {
+export function eventCategoryLabel(type: string) {
   return eventTypeLabelUpper(type);
 }
