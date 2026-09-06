@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DiscordIcon, GithubIcon, LinkedinIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon, GithubIcon, LinkedinIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import type { ReactNode } from "react";

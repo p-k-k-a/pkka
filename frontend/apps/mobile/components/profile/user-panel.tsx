@@ -1,7 +1,7 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DiscordIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {

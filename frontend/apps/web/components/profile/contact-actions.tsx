@@ -1,7 +1,6 @@
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DiscordIcon } from "@/components/auth/discord-icon";
-import { GithubIcon, LinkedinIcon } from "@/components/profile/social-icons";
+import { DiscordIcon, GithubIcon, LinkedinIcon } from "@pkka/icons/web";
 import type { ProfileContacts } from "@pkka/domain";
 
 export function ContactActions({ contacts }: { contacts: ProfileContacts }) {
