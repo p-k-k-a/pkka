@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Clock, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { eventLocationLabel, formatEventDateComma, formatTimeRange } from "@pkka/domain";
+import { eventLocationLabel } from "@pkka/domain";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
+import { formatEventDateComma, formatTimeRange } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { eventCategoryLabel, type EventSchedule } from "@/components/events/event-location-aside";
 

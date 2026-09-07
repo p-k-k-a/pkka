@@ -15,8 +15,6 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 200)
         String title,
 
-        @Size(max = 400) String shortDescription,
-
         String fullDescription,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
@@ -41,8 +39,7 @@ public record EventRequest(
 
     public EventRequest {
         title = trimToNull(title);
-        shortDescription = trimToNull(shortDescription);
-        fullDescription = trimToNull(fullDescription);
+        fullDescription = blankToNull(fullDescription);
         transmissionUrl = trimToNull(transmissionUrl);
         location = trimToNull(location);
         coverImageUrl = trimToNull(coverImageUrl);
@@ -61,11 +58,20 @@ public record EventRequest(
         return registrationClosesAt == null || startsAt == null || !registrationClosesAt.isAfter(startsAt);
     }
 
+    /** For single-line fields, where surrounding whitespace is always accidental. */
     private static String trimToNull(String value) {
         if (value == null) {
             return null;
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /**
+     * For rich text, which is stored verbatim: blank lines around an embedded image or attachment are
+     * the author's layout, so only an entirely blank body is discarded.
+     */
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }

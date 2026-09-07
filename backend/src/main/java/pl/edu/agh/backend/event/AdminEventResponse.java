@@ -6,11 +6,11 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import pl.edu.agh.backend.event.tag.Tag;
 
 public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
-        String shortDescription,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
@@ -18,19 +18,25 @@ public record AdminEventResponse(
         String transmissionUrl,
         String location,
         Integer seatLimit,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Integer seatsTaken,
+
+        @Schema(requiredMode = RequiredMode.REQUIRED, description = "Registrations for this event so far")
+        int seatsTaken,
+
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String coverImageUrl,
         @Schema(requiredMode = RequiredMode.REQUIRED) Set<String> tags,
+
+        @Schema(description = "Admin who created the event; absent for events that predate authorship tracking")
+        String authorDisplayName,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminEventResponse from(Event event) {
+    static AdminEventResponse from(Event event, long seatsTaken) {
         return new AdminEventResponse(
                 event.getId(),
                 event.getTitle(),
-                event.getShortDescription(),
                 event.getFullDescription(),
                 event.getType(),
                 event.getStartsAt(),
@@ -38,11 +44,12 @@ public record AdminEventResponse(
                 event.getTransmissionUrl(),
                 event.getLocation(),
                 event.getSeatLimit(),
-                0, // TODO(events-registrations)
+                (int) seatsTaken,
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
                 event.getCoverImageUrl(),
                 event.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
+                event.getAuthor() == null ? null : event.getAuthor().getDisplayName(),
                 event.getCreatedAt(),
                 event.getUpdatedAt());
     }

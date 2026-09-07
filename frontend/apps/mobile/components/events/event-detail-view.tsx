@@ -1,20 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
+import { eventTypeLabelUpper, formatEventDateShort, formatTimeRange } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
-import {
-  eventTypeLabelUpper,
-  formatEventDateShort,
-  formatSeatsRemaining,
-  formatTimeRange,
-} from "@pkka/domain";
-import { EventType, type EventDetailsDto } from "@pkka/api";
+import { EventType, type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
 type EventDetailViewProps = {
-  event: EventDetailsDto;
+  event: EventDetailsResponse;
 };
 
 function InfoRow({
@@ -50,7 +45,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
   const isOnline = type === EventType.ONLINE;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
-  const seats = formatSeatsRemaining(seatLimit, seatsTaken);
+  const seatsLeft = typeof seatLimit === "number" ? seatLimit - seatsTaken! : null;
 
   return (
     <ScrollView
@@ -110,11 +105,11 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             />
           ) : null}
 
-          {seats ? (
+          {seatsLeft !== null ? (
             <InfoRow
               icon={<Users size={18} color={THEME.light.foreground} />}
-              value={`Pozostało ${seats.remaining} miejsc`}
-              sub={`Limit: ${seats.limit} osób`}
+              value={`Pozostało ${seatsLeft} miejsc`}
+              sub={`Limit: ${seatLimit} osób`}
             />
           ) : null}
         </View>

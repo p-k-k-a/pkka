@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,6 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
+import pl.edu.agh.backend.user.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -35,6 +37,9 @@ class ApplicationIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private static String validApplicationBody() {
         return """
@@ -87,8 +92,13 @@ class ApplicationIntegrationTest {
 
     @Test
     void getMineReturns404WhenNoApplication() throws Exception {
-        mockMvc.perform(get("/api/applications/me").with(JwtTestSupport.asUser()))
+        String keycloakId = UUID.randomUUID().toString();
+
+        mockMvc.perform(get("/api/applications/me").with(JwtTestSupport.asUser(keycloakId)))
                 .andExpect(status().isNotFound());
+
+        // Reading must not provision, unlike the write paths.
+        assertThat(userRepository.findByKeycloakId(keycloakId)).isEmpty();
     }
 
     @Test

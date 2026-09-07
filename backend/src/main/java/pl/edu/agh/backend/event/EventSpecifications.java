@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.Collection;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
+import pl.edu.agh.backend.event.tag.Tag;
 
 @UtilityClass
 public class EventSpecifications {

@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.event.tag.Tag;
+import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
 

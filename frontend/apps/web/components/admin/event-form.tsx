@@ -24,15 +24,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import {
-  AUDIENCE_OPTIONS,
-  EVENT_TYPE_OPTIONS,
-  audienceLabel,
-  fromDatetimeLocalValue,
-  toDatetimeLocalValue,
-} from "@pkka/domain";
+import { AUDIENCE_OPTIONS, EVENT_TYPE_OPTIONS, audienceLabel } from "@pkka/domain";
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@pkka/domain";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
@@ -80,7 +74,6 @@ export function EventForm({ event }: EventFormProps) {
   const isEditing = event !== undefined;
 
   const [title, setTitle] = useState(event?.title ?? "");
-  const [shortDescription, setShortDescription] = useState(event?.shortDescription ?? "");
   const [fullDescription, setFullDescription] = useState(event?.fullDescription ?? "");
   const [type, setType] = useState<EventRequest["type"]>(event?.type ?? EventType.ONLINE);
   const [startsAt, setStartsAt] = useState(toDatetimeLocalValue(event?.startsAt));
@@ -139,7 +132,6 @@ export function EventForm({ event }: EventFormProps) {
   const payload = useMemo<EventRequest>(
     () => ({
       title: title.trim(),
-      shortDescription: optionalText(shortDescription),
       fullDescription: optionalText(fullDescription),
       type,
       startsAt: startsAtIso ?? "",
@@ -161,7 +153,6 @@ export function EventForm({ event }: EventFormProps) {
       registrationClosesAtIso,
       seatLimit,
       selectedTags,
-      shortDescription,
       startsAtIso,
       title,
       transmissionUrl,
@@ -254,18 +245,6 @@ export function EventForm({ event }: EventFormProps) {
             </section>
 
             <section className="space-y-5">
-              <FieldLabel htmlFor="event-short-description">Krótki opis</FieldLabel>
-              <Textarea
-                id="event-short-description"
-                value={shortDescription}
-                maxLength={400}
-                rows={3}
-                placeholder="Pojawi się pod tytułem na stronie wydarzenia"
-                onChange={(changeEvent) => setShortDescription(changeEvent.target.value)}
-              />
-            </section>
-
-            <section className="space-y-5">
               <SectionTitle>O wydarzeniu</SectionTitle>
               <MarkdownEditor
                 initialContent={event?.fullDescription ?? ""}
@@ -322,7 +301,7 @@ export function EventForm({ event }: EventFormProps) {
             </section>
 
             <section className="space-y-4">
-              <SectionTitle>Tagi</SectionTitle>
+              <SectionTitle>Tagi wydarzenia</SectionTitle>
               {catalogTags.length === 0 ? (
                 <p className="text-muted-foreground text-sm">Brak tagów w katalogu.</p>
               ) : (

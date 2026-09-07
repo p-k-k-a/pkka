@@ -1,15 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import { eventTypeLabelUpper, formatEventDateLong } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
-import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
-import { EventType, type EventListItemDto } from "@pkka/api";
+import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type EventCardProps = {
-  event: EventListItemDto;
+  event: EventListItemResponse;
 };
 
 function EventCard({ event }: EventCardProps) {
@@ -48,7 +48,7 @@ function EventCard({ event }: EventCardProps) {
         </Badge>
         {typeof seatLimit === "number" ? (
           <Badge variant="outline">
-            <Text>{formatSeatsCompact(seatLimit, seatsTaken)}</Text>
+            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
           </Badge>
         ) : null}
       </View>
