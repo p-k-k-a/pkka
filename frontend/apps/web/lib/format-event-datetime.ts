@@ -24,6 +24,16 @@ export function formatEventDateTime(iso?: string) {
   return { dateLabel, timeLabel };
 }
 
+export function formatEventDateComma(iso?: string) {
+  const date = parseDate(iso);
+  if (!date) return "Nieznana data";
+
+  const day = new Intl.DateTimeFormat("pl-PL", { day: "numeric" }).format(date);
+  const month = new Intl.DateTimeFormat("pl-PL", { month: "long" }).format(date);
+  const year = new Intl.DateTimeFormat("pl-PL", { year: "numeric" }).format(date);
+  return `${day} ${month}, ${year}`;
+}
+
 export function formatEventDateLong(iso?: string) {
   const date = parseDate(iso);
   if (!date) return "Nieznana data";
@@ -51,7 +61,26 @@ export function formatTimeRange(startsAt?: string, endsAt?: string) {
   if (!endsAt) return start.timeLabel;
 
   const end = formatEventDateTime(endsAt);
-  return `${start.timeLabel} - ${end.timeLabel}`;
+  return `${start.timeLabel} – ${end.timeLabel}`;
+}
+
+export function toDatetimeLocalValue(iso?: string) {
+  const date = parseDate(iso);
+  if (!date) return "";
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+export function fromDatetimeLocalValue(value: string) {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+export function isEventPast(startsAt?: string) {
+  const date = parseDate(startsAt);
+  return date != null && date.getTime() <= Date.now();
 }
 
 export function formatEventDateTimeRange(startsAt?: string, endsAt?: string) {

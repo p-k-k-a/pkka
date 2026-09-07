@@ -1,46 +1,39 @@
 "use client";
 
-import { Calendar, Link2, MapPin, Users } from "lucide-react";
-import { EventDetailsResponseType, useGetEventById } from "@pkka/api";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
+import { useGetEventById } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
-import { DetailHeader } from "@/components/content/detail-header";
-import { InfoRow } from "@/components/content/info-row";
-import { remoteCoverImageSrc } from "@/lib/content-images";
-import { formatEventDateShort, formatTimeRange } from "@/lib/format-event-datetime";
-import { eventTypeLabelUpper, formatSeatsRemaining } from "@/lib/event-labels";
+import { EventLocationAside, eventCategoryLabel } from "@/components/events/event-location-aside";
+import { ProseContent } from "@/components/content/prose-content";
+import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
+import { isEventPast } from "@/lib/format-event-datetime";
 import { useAuth } from "@/lib/auth-context";
 
 type EventDetailProps = {
   id: string;
-  variant?: "public" | "dashboard";
+  variant?: EventPathVariant;
 };
 
 export function EventDetail({ id, variant = "public" }: EventDetailProps) {
-  const eventsBackHref = variant === "dashboard" ? "/dashboard/events" : "/events";
-  const { loginWithKeycloak } = useAuth();
+  const { isAuthenticated, loginWithKeycloak } = useAuth();
   const { data: response, isLoading, isError, isFetching } = useGetEventById(id);
   const event = response?.data;
-  const seats = event ? formatSeatsRemaining(event.seatLimit, event.seatsTaken) : null;
-  const coverSrc = event ? remoteCoverImageSrc(event.coverImageUrl) : null;
-  const isOnline = event?.type === EventDetailsResponseType.ONLINE;
-  const location = event?.location?.trim();
+  const archived = isEventPast(event?.startsAt);
+  const eventsBackHref = eventsListHref(variant, archived);
+
   if (isLoading && !event) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <div className="mb-6 flex h-10 items-center gap-3 border-b">
-          <Skeleton className="size-8 rounded-full" />
-          <Skeleton className="h-4 w-40" />
-        </div>
-        <Skeleton className="mb-6 aspect-[4/3] w-full rounded-xl" />
-        <Skeleton className="mb-4 h-5 w-20 rounded-lg" />
-        <Skeleton className="mb-6 h-10 w-full max-w-xl" />
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full rounded-md" />
-          <Skeleton className="h-12 w-full rounded-md" />
+      <div className="px-4 py-10 md:px-10 md:py-20">
+        <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-6">
+            <Skeleton className="h-6 w-32 rounded-lg" />
+            <Skeleton className="h-16 w-full max-w-xl rounded-lg" />
+            <Skeleton className="h-24 w-full rounded-lg" />
+            <Skeleton className="h-12 w-40 rounded-lg" />
+          </div>
+          <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       </div>
     );
@@ -48,12 +41,12 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
 
   if (isError || !event) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <div className="mx-auto max-w-[1280px] px-4 py-16 text-center md:px-10">
         {isError ? (
           <p className="text-destructive mb-6 font-semibold">Nie udało się załadować wydarzenia.</p>
         ) : (
           <>
-            <h1 className="mb-2 text-2xl font-bold">Nie znaleziono wydarzenia</h1>
+            <h1 className="font-heading mb-2 text-2xl font-semibold">Nie znaleziono wydarzenia</h1>
             <p className="text-muted-foreground mb-8">
               {isFetching
                 ? "Szukamy wydarzenia…"
@@ -61,114 +54,83 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
             </p>
           </>
         )}
-        <DetailBackLink href={eventsBackHref} label="Wróć do wydarzeń" />
+        <DetailBackLink href={eventsListHref(variant)} label="Wróć do wydarzeń" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <article className="px-6 py-8">
-        <DetailHeader backHref={eventsBackHref} title="Szczegóły wydarzenia" />
-
-        <CoverImage
-          src={coverSrc}
-          alt={event.title ?? "Wydarzenie"}
-          aspect="photo"
-          showPlaceholder
+    <div className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <div className="mx-auto max-w-[1280px]">
+        <DetailBackLink
+          href={eventsBackHref}
+          label={archived ? "Wróć do archiwum" : "Wróć do kalendarza"}
         />
 
-        <div className="mb-6 space-y-3">
-          <Badge variant="default" className="rounded-lg uppercase">
-            {eventTypeLabelUpper(event.type)}
-          </Badge>
-          <h1 className="text-foreground text-3xl leading-tight font-extrabold tracking-tight">
-            {event.title}
-          </h1>
-          {event.tags && event.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-x-3 gap-y-1">
-              {event.tags.map((tag) => (
-                <span key={tag} className="text-muted-foreground text-sm">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
+        <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            <span className="bg-navy text-white-text mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+              {eventCategoryLabel(event.type)}
+            </span>
+            <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
+              {event.title}
+            </h1>
+            {archived ? null : (
+              <div className="mt-8">
+                {isAuthenticated ? (
+                  <div className="space-y-2">
+                    <Button size="xl" className="gap-2" disabled>
+                      Zapisz się
+                      <ArrowRight data-icon="inline-end" />
+                    </Button>
+                    <p className="text-muted-foreground text-xs">
+                      Rejestracja na wydarzenie wkrótce dostępna.
+                    </p>
+                  </div>
+                ) : (
+                  <Button size="xl" className="gap-2" onClick={loginWithKeycloak}>
+                    Zapisz się
+                    <ArrowRight data-icon="inline-end" />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {event.fullDescription || (event.tags && event.tags.length > 0) ? (
+              <section className="mt-16 space-y-6">
+                {event.fullDescription ? (
+                  <>
+                    <div className="relative inline-block">
+                      <span
+                        className="bg-muted absolute inset-x-0 bottom-0 h-3"
+                        aria-hidden="true"
+                      />
+                      <h2 className="text-accent relative text-xs font-semibold tracking-widest uppercase">
+                        O wydarzeniu
+                      </h2>
+                    </div>
+                    <ProseContent
+                      content={event.fullDescription}
+                      className="text-muted-foreground max-w-2xl"
+                    />
+                  </>
+                ) : null}
+                {event.tags && event.tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {event.tags.map((tag) => (
+                      <span key={tag} className="text-muted-foreground text-sm">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+          </div>
+
+          <EventLocationAside event={event} className="lg:sticky lg:top-24" />
         </div>
-
-        <div className="mb-6 space-y-4">
-          <InfoRow
-            icon={<Calendar className="size-[18px]" />}
-            value={formatEventDateShort(event.startsAt)}
-            sub={formatTimeRange(event.startsAt, event.endsAt)}
-          />
-
-          {isOnline ? (
-            <InfoRow
-              icon={<Link2 className="size-[18px]" />}
-              value="Link do spotkania"
-              sub={
-                variant === "dashboard"
-                  ? "Link do spotkania zostanie udostępniony przed wydarzeniem"
-                  : "Link dostępny po zalogowaniu"
-              }
-            />
-          ) : location ? (
-            <InfoRow
-              icon={<MapPin className="size-[18px]" />}
-              label="Lokalizacja"
-              value={location}
-            />
-          ) : null}
-
-          {seats ? (
-            <InfoRow
-              icon={<Users className="size-[18px]" />}
-              value={`Pozostało ${seats.remaining} miejsc`}
-              sub={`Limit: ${seats.limit} osób`}
-            />
-          ) : null}
-        </div>
-
-        <div className="border-border bg-border mb-6 h-px" />
-
-        {event.fullDescription ? (
-          <section className="space-y-3">
-            <h2 className="text-foreground text-xs font-bold tracking-widest uppercase">
-              O wydarzeniu
-            </h2>
-            <p className="text-muted-foreground leading-7 whitespace-pre-line">
-              {event.fullDescription}
-            </p>
-          </section>
-        ) : null}
-      </article>
-
-      <footer className="border-border bg-background space-y-3 border-t px-6 py-4">
-        {variant === "dashboard" ? (
-          <>
-            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
-              Rejestracja na wydarzenie wkrótce dostępna
-            </p>
-            <Button size="xl" className="w-full rounded-xl font-semibold" disabled>
-              Zapisz się na wydarzenie
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="text-muted-foreground text-center text-[10px] font-semibold tracking-widest uppercase">
-              Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
-            </p>
-            <Button
-              size="xl"
-              className="w-full rounded-xl font-semibold"
-              onClick={loginWithKeycloak}
-            >
-              Zaloguj się, aby dołączyć
-            </Button>
-          </>
-        )}
-      </footer>
+      </div>
     </div>
   );
 }
