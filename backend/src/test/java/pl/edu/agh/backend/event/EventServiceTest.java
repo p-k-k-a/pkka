@@ -54,7 +54,7 @@ class EventServiceTest {
                 .thenReturn(new PageImpl<>(List.of(publicEvent)));
         when(eventRegistrationRepository.countByEventIdIn(List.of(eventId))).thenReturn(List.of(seatCount(eventId, 3)));
 
-        var page = eventService.list(Caller.anonymous(), Set.of(), PageRequest.of(0, 10));
+        var page = eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);

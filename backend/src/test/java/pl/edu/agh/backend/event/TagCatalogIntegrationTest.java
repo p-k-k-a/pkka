@@ -34,7 +34,7 @@ class TagCatalogIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    void listEventTagsRequiresUserRole() throws Exception {
+    void listEventTagsRequiresAuthentication() throws Exception {
         mockMvc.perform(get("/api/tags")).andExpect(status().isUnauthorized());
     }
 

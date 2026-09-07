@@ -33,9 +33,10 @@ public class EventService {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final CallerUserService callerUserService;
 
-    public Page<EventListItemResponse> list(Caller caller, Collection<String> tagNames, Pageable pageable) {
+    public Page<EventListItemResponse> list(
+            Caller caller, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
         Specification<Event> spec = Specification.allOf(
-                startsAfter(Instant.now()), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
+                inTimeframe(timeframe), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
         List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
@@ -72,6 +73,16 @@ public class EventService {
             throw new EventNotFoundException(id);
         }
         return event;
+    }
+
+    /** No timeframe means upcoming, so the calendar never opens on the archive. */
+    private Specification<Event> inTimeframe(EventTimeframe timeframe) {
+        Instant now = Instant.now();
+        return switch (timeframe == null ? EventTimeframe.UPCOMING : timeframe) {
+            case UPCOMING -> startsAfter(now);
+            case PAST -> startsBeforeOrEqual(now);
+            case ALL -> Specification.unrestricted();
+        };
     }
 
     private Map<UUID, Long> seatsTakenByEvent(List<UUID> eventIds) {

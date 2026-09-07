@@ -96,6 +96,23 @@ class EventIntegrationTest {
     }
 
     @Test
+    void pastTimeframeReturnsArchivedPublicEvents() throws Exception {
+        mockMvc.perform(get("/api/public/events").param("timeframe", "PAST"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(pastEventId))
+                        .exists())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(PUBLIC_EVENT_ID))
+                        .doesNotExist());
+    }
+
+    @Test
+    void listItemsExposeEndsAt() throws Exception {
+        mockMvc.perform(get("/api/public/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].endsAt").exists());
+    }
+
+    @Test
     void getPublicEventByIdWithoutAuth() throws Exception {
         mockMvc.perform(get("/api/public/events/{id}", PUBLIC_EVENT_ID))
                 .andExpect(status().isOk())
