@@ -165,22 +165,27 @@ export function PostsList() {
                   </div>
                   <PostStatusBadge status={post.status} />
                 </div>
-                <div className="flex items-center justify-end gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/dashboard/posts/${post.id}`}>
-                      <Pencil data-icon="inline-start" />
-                      Edytuj
-                    </Link>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setPostToDelete(post)}
-                  >
-                    <Trash2 data-icon="inline-start" />
-                    Usuń
-                  </Button>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-muted-foreground min-w-0 truncate text-xs font-semibold tracking-widest uppercase">
+                    Autor: {post.authorDisplayName}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/posts/${post.id}`}>
+                        <Pencil data-icon="inline-start" />
+                        Edytuj
+                      </Link>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setPostToDelete(post)}
+                    >
+                      <Trash2 data-icon="inline-start" />
+                      Usuń
+                    </Button>
+                  </div>
                 </div>
               </Card>
             );

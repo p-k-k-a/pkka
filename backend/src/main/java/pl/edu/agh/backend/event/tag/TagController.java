@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.event;
+package pl.edu.agh.backend.event.tag;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,17 +8,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.event.tag.dto.TagResponse;
 
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
-@Tag(name = "Tags", description = "Available skill tags — requires USER role")
+@Tag(
+        name = "Tags",
+        description = "Available event tags (e.g. \"workshop\", \"networking\") — requires USER role. "
+                + "Alumni skill tags live under /api/user-tags.")
 public class TagController {
 
     private final TagRepository tagRepository;
 
     @GetMapping
-    @Operation(summary = "List all available skill tags")
+    @Operation(summary = "List all available event tags")
     public List<TagResponse> listTags() {
         return tagRepository.findAll().stream()
                 .map(TagResponse::from)
