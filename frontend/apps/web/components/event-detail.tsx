@@ -75,11 +75,6 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
             <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
               {event.title}
             </h1>
-            {event.shortDescription ? (
-              <p className="text-muted-foreground mt-6 max-w-2xl text-base leading-relaxed">
-                {event.shortDescription}
-              </p>
-            ) : null}
             {archived ? null : (
               <div className="mt-8">
                 {isAuthenticated ? (
