@@ -38,9 +38,15 @@ type MarkdownEditorProps = {
   initialContent: string;
   onChange: (markdown: string) => void;
   className?: string;
+  ariaLabel?: string;
 };
 
-export function MarkdownEditor({ initialContent, onChange, className }: MarkdownEditorProps) {
+export function MarkdownEditor({
+  initialContent,
+  onChange,
+  className,
+  ariaLabel = "Treść wpisu",
+}: MarkdownEditorProps) {
   const editor = useEditor({
     extensions: [
       // those 2 are not supported by portable markdown, let's not use them
@@ -54,7 +60,7 @@ export function MarkdownEditor({ initialContent, onChange, className }: Markdown
     editorProps: {
       attributes: {
         class: "focus:outline-none min-h-64 px-4 py-3",
-        "aria-label": "Treść wpisu",
+        "aria-label": ariaLabel,
       },
     },
   });
