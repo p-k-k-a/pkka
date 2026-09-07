@@ -80,6 +80,8 @@ export function AdminEventsList() {
   const totalElements = pageData?.totalElements ?? 0;
   const totalPages = pageData?.totalPages ?? 0;
   const currentPage = pageData?.number ?? page;
+  const firstShown = currentPage * (pageData?.size ?? PAGE_SIZE) + 1;
+  const lastShown = firstShown + events.length - 1;
 
   return (
     <div>
@@ -137,12 +139,11 @@ export function AdminEventsList() {
             </p>
           ) : (
             <div className="space-y-8">
-              {totalElements > events.length ? (
-                <p className="text-muted-foreground text-sm">
-                  Wyświetlono {events.length} z {totalElements} wydarzeń
-                  {totalPages > 1 ? ` · strona ${currentPage + 1} z ${totalPages}` : ""}.
-                </p>
-              ) : null}
+              <p className="text-muted-foreground text-sm">
+                {totalPages > 1
+                  ? `Wyświetlono ${firstShown}–${lastShown} z ${totalElements} wydarzeń, strona ${currentPage + 1} z ${totalPages}.`
+                  : `Wyświetlono ${totalElements} ${totalElements === 1 ? "wydarzenie" : "wydarzeń"}.`}
+              </p>
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {events.map((item) => (
@@ -213,7 +214,7 @@ export function AdminEventsList() {
           <AlertDialogHeader>
             <AlertDialogTitle>Usunąć wydarzenie?</AlertDialogTitle>
             <AlertDialogDescription>
-              „{eventToDelete?.title}” zniknie z kalendarza. Tej operacji nie można cofnąć.
+              „{eventToDelete?.title}” zostanie trwale usunięte. Tej operacji nie można cofnąć.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteEvent.isError ? (
