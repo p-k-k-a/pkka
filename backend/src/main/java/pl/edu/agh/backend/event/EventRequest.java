@@ -15,8 +15,6 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 200)
         String title,
 
-        @Size(max = 400) String shortDescription,
-
         String fullDescription,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
@@ -41,7 +39,6 @@ public record EventRequest(
 
     public EventRequest {
         title = trimToNull(title);
-        shortDescription = trimToNull(shortDescription);
         fullDescription = blankToNull(fullDescription);
         transmissionUrl = trimToNull(transmissionUrl);
         location = trimToNull(location);

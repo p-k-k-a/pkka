@@ -86,7 +86,6 @@ class AdminEventServiceTest {
 
         EventRequest request = new EventRequest(
                 "Warsztat AI",
-                "Krótki opis",
                 "Opis",
                 EventType.ONLINE,
                 Instant.parse("2026-09-01T17:00:00Z"),
@@ -115,7 +114,6 @@ class AdminEventServiceTest {
 
         EventRequest request = new EventRequest(
                 "Warsztat",
-                null,
                 null,
                 EventType.ONLINE,
                 Instant.parse("2026-09-01T17:00:00Z"),

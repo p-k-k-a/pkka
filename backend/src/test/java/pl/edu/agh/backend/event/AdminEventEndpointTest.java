@@ -75,7 +75,6 @@ class AdminEventEndpointTest {
         return """
                 {
                   "title": "%s",
-                  "shortDescription": "Krótki opis wydarzenia",
                   "fullDescription": "Opis wydarzenia",
                   "type": "ONLINE",
                   "startsAt": "%s",
@@ -241,7 +240,6 @@ class AdminEventEndpointTest {
                         .content("""
                                 {
                                   "title": "Wersja 2",
-                                  "shortDescription": "Nowy krótki opis",
                                   "fullDescription": "Nowy opis",
                                   "type": "HYBRID",
                                   "startsAt": "%s",
@@ -254,7 +252,7 @@ class AdminEventEndpointTest {
                                 """.formatted(newStart, newEnd)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Wersja 2"))
-                .andExpect(jsonPath("$.shortDescription").value("Nowy krótki opis"))
+                .andExpect(jsonPath("$.fullDescription").value("Nowy opis"))
                 .andExpect(jsonPath("$.type").value("HYBRID"))
                 .andExpect(jsonPath("$.location").value("AGH D-17"))
                 .andExpect(jsonPath("$.seatLimit").value(80))

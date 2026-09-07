@@ -11,7 +11,6 @@ import pl.edu.agh.backend.event.tag.Tag;
 public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
-        String shortDescription,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
@@ -38,7 +37,6 @@ public record AdminEventResponse(
         return new AdminEventResponse(
                 event.getId(),
                 event.getTitle(),
-                event.getShortDescription(),
                 event.getFullDescription(),
                 event.getType(),
                 event.getStartsAt(),

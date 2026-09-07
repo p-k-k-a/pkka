@@ -51,7 +51,6 @@ public class AdminEventService {
         Event event = Event.builder()
                 .author(callerUserService.getOrCreate(caller))
                 .title(request.title())
-                .shortDescription(request.shortDescription())
                 .fullDescription(request.fullDescription())
                 .type(request.type())
                 .startsAt(request.startsAt())
@@ -71,7 +70,6 @@ public class AdminEventService {
     public AdminEventResponse update(UUID id, EventRequest request) {
         Event event = findOrThrow(id);
         event.setTitle(request.title());
-        event.setShortDescription(request.shortDescription());
         event.setFullDescription(request.fullDescription());
         event.setType(request.type());
         event.setStartsAt(request.startsAt());
