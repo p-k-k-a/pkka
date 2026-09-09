@@ -7,6 +7,8 @@ import { Platform } from "react-native";
 
 const INSTALLATION_ID_KEY = "pushInstallationId";
 const PREFERENCE_KEY = "pushNotificationsEnabled";
+/** Written by the auth context; its presence is what "signed in" means to the API client too. */
+const ACCESS_TOKEN_KEY = "at";
 
 export type PushRegistration = "registered" | "denied" | "unavailable" | "unsupported" | "off";
 
@@ -109,7 +111,11 @@ export function watchForTokenRotation(): Notifications.EventSubscription {
     void (async () => {
       if (!(await isPushEnabled())) return;
       const token = await fetchToken(devicePushToken);
-      if (token) await storeToken(token);
+      if (!token) return;
+
+      // A rotation can land after sign-out; re-registering then would revive the device the user just released.
+      if (!(await SecureStore.getItemAsync(ACCESS_TOKEN_KEY))) return;
+      await storeToken(token);
     })();
   });
 }
