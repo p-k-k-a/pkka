@@ -8,19 +8,35 @@ import {
   setPushEnabled,
   unregisterFromPushNotifications,
 } from "@/lib/notifications";
-import { useEffect, useState } from "react";
-import { Linking, Pressable, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { AppState, Linking, Pressable, View } from "react-native";
 
 export function NotificationToggle() {
   const [enabled, setEnabled] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const wasBlocked = useRef(false);
 
   useEffect(() => {
-    void (async () => {
-      setEnabled(await isPushEnabled());
-      setBlocked(await isPushPermissionBlocked());
-    })();
+    const refresh = async () => {
+      const on = await isPushEnabled();
+      setEnabled(on);
+
+      const nowBlocked = on && (await isPushPermissionBlocked());
+      // Granting the permission happens on the system settings screen, so the only signal we get that it
+      // worked is coming back to the app — without this the banner stays up and no token is ever registered.
+      if (wasBlocked.current && !nowBlocked && on) {
+        await registerForPushNotifications();
+      }
+      wasBlocked.current = nowBlocked;
+      setBlocked(nowBlocked);
+    };
+
+    void refresh();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void refresh();
+    });
+    return () => subscription.remove();
   }, []);
 
   // `next` comes from the argument, never from the captured state: React Compiler memoises this handler.
@@ -28,15 +44,34 @@ export function NotificationToggle() {
     if (busy) return;
     setBusy(true);
     setEnabled(next);
-    await setPushEnabled(next);
 
-    if (next) {
-      setBlocked((await registerForPushNotifications()) === "denied");
-    } else {
-      await unregisterFromPushNotifications();
-      setBlocked(false);
+    try {
+      await setPushEnabled(next);
+
+      if (!next) {
+        await unregisterFromPushNotifications();
+        setBlocked(false);
+        wasBlocked.current = false;
+        return;
+      }
+
+      const result = await registerForPushNotifications();
+      const denied = result === "denied";
+      setBlocked(denied);
+      wasBlocked.current = denied;
+
+      // Denied is recoverable from system settings, so the switch stays on and explains itself. Nothing
+      // recovers a missing project id or an unsupported platform, so those settle back to off.
+      if (result === "unavailable" || result === "unsupported") {
+        setEnabled(false);
+        await setPushEnabled(false);
+      }
+    } catch {
+      setEnabled(!next);
+      await setPushEnabled(!next);
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   };
 
   return (
