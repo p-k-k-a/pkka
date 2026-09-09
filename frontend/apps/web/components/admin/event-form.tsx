@@ -68,6 +68,14 @@ function SectionTitle({ children }: { children: ReactNode }) {
   );
 }
 
+const REMINDER_OPTIONS = [
+  { value: "", label: "Bez przypomnienia" },
+  { value: "60", label: "1 godzina przed" },
+  { value: "180", label: "3 godziny przed" },
+  { value: "1440", label: "24 godziny przed" },
+  { value: "2880", label: "2 dni przed" },
+];
+
 export function EventForm({ event }: EventFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -90,6 +98,9 @@ export function EventForm({ event }: EventFormProps) {
     event?.audience ?? Audience.PUBLIC,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(event?.tags ?? []);
+  const [reminderLeadTime, setReminderLeadTime] = useState(
+    event?.reminderLeadTimeMinutes != null ? String(event.reminderLeadTimeMinutes) : "",
+  );
 
   const { data: tagsResponse } = useListTags();
   const catalogTags = tagsResponse?.data ?? [];
@@ -142,6 +153,7 @@ export function EventForm({ event }: EventFormProps) {
       registrationClosesAt: registrationClosesAtIso,
       audience,
       coverImageUrl: event?.coverImageUrl,
+      reminderLeadTimeMinutes: reminderLeadTime === "" ? undefined : Number(reminderLeadTime),
       tags: selectedTags,
     }),
     [
@@ -151,6 +163,7 @@ export function EventForm({ event }: EventFormProps) {
       fullDescription,
       location,
       registrationClosesAtIso,
+      reminderLeadTime,
       seatLimit,
       selectedTags,
       startsAtIso,
@@ -369,6 +382,20 @@ export function EventForm({ event }: EventFormProps) {
                   placeholder="Bez limitu"
                   onChange={(changeEvent) => setSeatLimit(changeEvent.target.value)}
                 />
+              </div>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="event-reminder">Przypomnienie</FieldLabel>
+                <Select
+                  id="event-reminder"
+                  value={reminderLeadTime}
+                  onChange={(changeEvent) => setReminderLeadTime(changeEvent.target.value)}
+                >
+                  {REMINDER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </div>
               <div className="space-y-2">
                 <FieldLabel htmlFor="event-registration-closes-at">Zamknięcie zapisów</FieldLabel>

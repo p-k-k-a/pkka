@@ -81,6 +81,12 @@ spring:
 
 # App
 app:
+  # Off by default: a dev machine pointed at the real Expo project would push to real phones.
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:false}
+    base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
+    access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
+    reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 0 * * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
   web:
@@ -172,6 +178,11 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
 
 app:
+  notifications:
+    enabled: ${NOTIFICATIONS_ENABLED:true}
+    base-url: ${EXPO_PUSH_BASE_URL:https://exp.host/--/api/v2/push}
+    access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
+    reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 0 * * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
   web:

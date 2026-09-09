@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,6 +29,7 @@ public class AdminEventService {
     private final TagRepository tagRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final CallerUserService callerUserService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<AdminEventSummaryResponse> list(EventTimeframe timeframe, Pageable pageable) {
@@ -61,9 +63,13 @@ public class AdminEventService {
                 .registrationClosesAt(request.registrationClosesAt())
                 .audience(request.audience())
                 .coverImageUrl(request.coverImageUrl())
+                .reminderLeadTimeMinutes(request.reminderLeadTimeMinutes())
                 .tags(new HashSet<>(resolveTags(request.tags())))
                 .build();
-        return respond(eventRepository.saveAndFlush(event));
+
+        Event created = eventRepository.saveAndFlush(event);
+        eventPublisher.publishEvent(new EventCreatedEvent(created.getId()));
+        return respond(created);
     }
 
     @Transactional
@@ -80,6 +86,7 @@ public class AdminEventService {
         event.setRegistrationClosesAt(request.registrationClosesAt());
         event.setAudience(request.audience());
         event.setCoverImageUrl(request.coverImageUrl());
+        event.setReminderLeadTimeMinutes(request.reminderLeadTimeMinutes());
         Set<Tag> tags = event.getTags();
         if (tags == null) {
             tags = new HashSet<>();

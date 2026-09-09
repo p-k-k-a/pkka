@@ -45,6 +45,10 @@ public class EventRegistration {
     @ToString.Include
     private Instant registeredAt;
 
+    /** Set once the reminder goes out, so a restart inside the sweep window cannot send it twice. */
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

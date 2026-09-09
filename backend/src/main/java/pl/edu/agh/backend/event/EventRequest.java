@@ -35,6 +35,10 @@ public record EventRequest(
         Audience audience,
 
         @Size(max = 500) String coverImageUrl,
+
+        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder") @Min(1)
+        Integer reminderLeadTimeMinutes,
+
         Set<@NotBlank @Size(max = 32) String> tags) {
 
     public EventRequest {
