@@ -48,6 +48,14 @@ async function ensureChannels(): Promise<void> {
   });
 }
 
+/** Android 13 stops prompting after two dismissals, so the only way back is the system settings screen. */
+export async function isPushPermissionBlocked(): Promise<boolean> {
+  if (Platform.OS !== "android") return false;
+
+  const current = await Notifications.getPermissionsAsync();
+  return !current.granted && !current.canAskAgain;
+}
+
 async function ensurePermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
