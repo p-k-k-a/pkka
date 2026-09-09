@@ -1,4 +1,5 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
+import { NotificationToggle } from "@/components/profile/notification-toggle";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DiscordIcon } from "@pkka/icons/native";
@@ -248,6 +249,8 @@ export function UserPanel() {
           colors={colors}
         />
       )}
+
+      <NotificationToggle />
 
       <Separator />
 
