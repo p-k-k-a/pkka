@@ -8,7 +8,7 @@ import {
 } from "@/lib/notifications";
 import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 
 export const AuthContext = createContext<null | AuthContextType>(null);
@@ -22,6 +22,7 @@ type decodedJwtType = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const loggingOut = useRef(false);
 
   const login = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
@@ -36,12 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    // Before the tokens go: unregistering is an authenticated call.
-    await unregisterFromPushNotifications();
-    await logoutTokens();
-    setUser(null);
-    await SecureStore.deleteItemAsync("at");
-    await SecureStore.deleteItemAsync("rt");
+    // Unregistering is an authenticated call, so it has to happen before the tokens go — but on an expired
+    // session it 401s, which drives the refresh path back into onUnauthenticated (this function). Without this
+    // guard the two await each other and the sign-out never completes.
+    if (loggingOut.current) return;
+    loggingOut.current = true;
+    try {
+      await unregisterFromPushNotifications();
+      await logoutTokens();
+      setUser(null);
+      await SecureStore.deleteItemAsync("at");
+      await SecureStore.deleteItemAsync("rt");
+    } finally {
+      loggingOut.current = false;
+    }
   };
 
   useEffect(() => {
