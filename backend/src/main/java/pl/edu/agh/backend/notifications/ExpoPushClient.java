@@ -1,11 +1,15 @@
 package pl.edu.agh.backend.notifications;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
@@ -18,11 +22,32 @@ public class ExpoPushClient {
     /** Expo counts recipients, not message objects, against this limit. */
     private static final int MAX_RECIPIENTS_PER_REQUEST = 100;
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(15);
+
+    /**
+     * What one send attempt achieved: whether Expo accepted it at all, and which tokens it says are dead.
+     * The caller needs both — a refused batch must be retried later, a dead token must be forgotten now.
+     */
+    public record Outcome(boolean delivered, List<String> unreachableTokens) {
+        static Outcome refused() {
+            return new Outcome(false, List.of());
+        }
+    }
+
     private final RestClient restClient;
 
     @Autowired
     public ExpoPushClient(NotificationProperties properties) {
-        this(RestClient.builder(), properties);
+        this(RestClient.builder().requestFactory(timeoutFactory()), properties);
+    }
+
+    /** Without these the JDK client waits forever, and the caller's thread and DB connection wait with it. */
+    private static ClientHttpRequestFactory timeoutFactory() {
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(
+                HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build());
+        factory.setReadTimeout(READ_TIMEOUT);
+        return factory;
     }
 
     /** Takes a builder so a test can bind a {@code MockRestServiceServer} to it; the app has no builder bean. */
@@ -36,18 +61,21 @@ public class ExpoPushClient {
         this.restClient = configured.build();
     }
 
-    /** Returns the tokens Expo reports as permanently unreachable, for the caller to delete. */
-    public List<String> send(List<ExpoPushMessage> messages) {
+    /** Returns whether every chunk was accepted, plus the tokens Expo reports as permanently unreachable. */
+    public Outcome send(List<ExpoPushMessage> messages) {
         List<String> unreachable = new ArrayList<>();
+        boolean delivered = true;
         for (int from = 0; from < messages.size(); from += MAX_RECIPIENTS_PER_REQUEST) {
             int to = Math.min(messages.size(), from + MAX_RECIPIENTS_PER_REQUEST);
-            unreachable.addAll(sendChunk(messages.subList(from, to)));
+            Outcome outcome = sendChunk(messages.subList(from, to));
+            delivered &= outcome.delivered();
+            unreachable.addAll(outcome.unreachableTokens());
         }
-        return unreachable;
+        return new Outcome(delivered, unreachable);
     }
 
     /** A failed send is logged, never rethrown: a push nobody receives must not fail the request that caused it. */
-    private List<String> sendChunk(List<ExpoPushMessage> chunk) {
+    private Outcome sendChunk(List<ExpoPushMessage> chunk) {
         ExpoPushResponse response;
         try {
             response = restClient
@@ -59,11 +87,11 @@ public class ExpoPushClient {
                     .body(ExpoPushResponse.class);
         } catch (RestClientException ex) {
             log.error("Expo rejected a batch of {} notifications", chunk.size(), ex);
-            return List.of();
+            return Outcome.refused();
         }
 
         if (response == null || response.data() == null) {
-            return List.of();
+            return Outcome.refused();
         }
 
         List<String> unreachable = new ArrayList<>();
@@ -76,6 +104,6 @@ public class ExpoPushClient {
                 log.warn("Expo could not deliver a notification: {}", ticket.message());
             }
         }
-        return unreachable;
+        return new Outcome(true, unreachable);
     }
 }

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.Event;
 
 @Service
@@ -21,7 +20,6 @@ public class NotificationService {
     private final DeviceTokenRepository deviceTokenRepository;
     private final ExpoPushClient expoPushClient;
 
-    @Transactional
     public void announce(Event event) {
         List<DeviceToken> devices =
                 switch (event.getAudience()) {
@@ -32,10 +30,10 @@ public class NotificationService {
         push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getId());
     }
 
-    @Transactional
-    public void remind(Event event, Collection<UUID> userIds) {
+    /** Returns false when Expo refused the batch, so the caller can leave the reminder due for the next sweep. */
+    public boolean remind(Event event, Collection<UUID> userIds) {
         String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
-        push(
+        return push(
                 deviceTokenRepository.findByUserIdIn(userIds),
                 NotificationType.EVENT_REMINDER,
                 "Przypomnienie",
@@ -43,9 +41,9 @@ public class NotificationService {
                 event.getId());
     }
 
-    private void push(List<DeviceToken> devices, NotificationType type, String title, String body, UUID targetId) {
+    private boolean push(List<DeviceToken> devices, NotificationType type, String title, String body, UUID targetId) {
         if (devices.isEmpty()) {
-            return;
+            return true;
         }
         List<ExpoPushMessage> messages = devices.stream()
                 .map(device -> new ExpoPushMessage(
@@ -56,9 +54,10 @@ public class NotificationService {
                         Map.of("type", type.name(), "targetId", targetId.toString())))
                 .toList();
 
-        List<String> unreachable = expoPushClient.send(messages);
-        if (!unreachable.isEmpty()) {
-            deviceTokenRepository.deleteByTokenIn(unreachable);
+        ExpoPushClient.Outcome outcome = expoPushClient.send(messages);
+        if (!outcome.unreachableTokens().isEmpty()) {
+            deviceTokenRepository.deleteByTokenIn(outcome.unreachableTokens());
         }
+        return outcome.delivered();
     }
 }

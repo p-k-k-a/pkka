@@ -46,9 +46,10 @@ class ExpoPushClientTest {
                           {"status":"error","message":"too big","details":{"error":"MessageTooBig"}}
                         ]}""", MediaType.APPLICATION_JSON));
 
-        List<String> unreachable = client.send(List.of(message("a"), message("b"), message("c")));
+        ExpoPushClient.Outcome outcome = client.send(List.of(message("a"), message("b"), message("c")));
 
-        assertThat(unreachable).containsExactly("b");
+        assertThat(outcome.delivered()).isTrue();
+        assertThat(outcome.unreachableTokens()).containsExactly("b");
         server.verify();
     }
 
@@ -68,11 +69,39 @@ class ExpoPushClientTest {
         server.verify();
     }
 
+    /** Guards the index arithmetic: a ticket is positional within its own chunk, not within the whole batch. */
+    @Test
+    void send_mapsADeadTokenInTheSecondChunkToTheRightToken() {
+        server.expect(requestTo(SEND_URL))
+                .andExpect(jsonPath("$.length()").value(100))
+                .andRespond(withSuccess(okTickets(100), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(SEND_URL))
+                .andExpect(jsonPath("$.length()").value(20))
+                .andRespond(withSuccess(
+                        """
+                        {"data":[%s{"status":"error","message":"gone","details":{"error":"DeviceNotRegistered"}}]}""".formatted("{\"status\":\"ok\",\"id\":\"x\"},".repeat(19)), MediaType.APPLICATION_JSON));
+
+        ExpoPushClient.Outcome outcome = client.send(
+                IntStream.range(0, 120).mapToObj(i -> message("token-" + i)).toList());
+
+        assertThat(outcome.unreachableTokens()).containsExactly("token-119");
+        server.verify();
+    }
+
+    private static String okTickets(int count) {
+        return """
+                {"data":[%s]}""".formatted(
+                        "{\"status\":\"ok\",\"id\":\"x\"},".repeat(count - 1) + "{\"status\":\"ok\",\"id\":\"x\"}");
+    }
+
     @Test
     void send_swallowsATransportFailure() {
         server.expect(requestTo(SEND_URL)).andRespond(withServerError());
 
-        assertThat(client.send(List.of(message("a")))).isEmpty();
+        ExpoPushClient.Outcome outcome = client.send(List.of(message("a")));
+
+        assertThat(outcome.delivered()).isFalse();
+        assertThat(outcome.unreachableTokens()).isEmpty();
         server.verify();
     }
 }

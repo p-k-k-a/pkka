@@ -41,8 +41,9 @@ public class EventReminderScheduler {
             List<UUID> userIds = group.stream()
                     .map(registration -> registration.getUser().getId())
                     .toList();
-            notificationService.remind(group.getFirst().getEvent(), userIds);
-            group.forEach(registration -> registration.setReminderSentAt(sentAt));
+            if (notificationService.remind(group.getFirst().getEvent(), userIds)) {
+                group.forEach(registration -> registration.setReminderSentAt(sentAt));
+            }
         });
     }
 }

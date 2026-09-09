@@ -31,14 +31,19 @@ public class DeviceTokenController {
                     updates the token in place rather than adding a device, which makes this safe to call on
                     every login and on every token rotation.
 
-                    A token already held by a different installation is released first — Android hands the same
-                    token to a reinstalled app, and two rows holding it would push to that device twice.
+                    A token already held by another installation of the *same* user is released first — Android
+                    hands the same token to a reinstalled app, and two rows holding it would push twice. A token
+                    held by a different user is refused instead, so nobody can evict someone else's device.
                     """)
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Token stored"),
         @ApiResponse(
                 responseCode = "400",
                 description = "Malformed push token",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "That push token belongs to another user",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public void registerDevice(

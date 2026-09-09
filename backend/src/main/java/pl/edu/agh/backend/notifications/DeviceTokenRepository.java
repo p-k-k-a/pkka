@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface DeviceTokenRepository extends JpaRepository<DeviceToken, UUID> {
 
@@ -17,9 +18,7 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, UUID> 
      * Bulk delete so the row is gone before the caller inserts its own; a queued delete would flush after the
      * insert and trip the unique constraint on {@code token}.
      */
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("delete from DeviceToken d where d.token = :token and d.installationId <> :installationId")
-    void releaseToken(@Param("token") String token, @Param("installationId") String installationId);
+    Optional<DeviceToken> findByToken(String token);
 
     List<DeviceToken> findByUserIdIn(Collection<UUID> userIds);
 
@@ -34,7 +33,12 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, UUID> 
             """)
     List<DeviceToken> findAllForApprovedAlumni();
 
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    /**
+     * Deliberately does not clear the persistence context: this runs inside a caller's transaction, and clearing
+     * would detach the entities that caller is midway through updating.
+     */
+    @Transactional
+    @Modifying(flushAutomatically = true)
     @Query("delete from DeviceToken d where d.token in :tokens")
     void deleteByTokenIn(@Param("tokens") Collection<String> tokens);
 }

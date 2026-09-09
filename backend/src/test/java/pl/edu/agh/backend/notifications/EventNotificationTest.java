@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,7 +42,7 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** No {@code @Transactional}: the announcement fires on commit, which a rolled-back test never reaches. */
-@SpringBootTest(properties = "app.notifications.enabled=true")
+@SpringBootTest(properties = {"app.notifications.enabled=true", "app.notifications.reminder-cron=-"})
 @Testcontainers
 @Import(EventNotificationTest.TestSecurityBeans.class)
 class EventNotificationTest {
@@ -74,13 +75,17 @@ class EventNotificationTest {
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    /** The announcement is @Async, so assertions wait for the executor rather than racing it. */
+    private static final long SEND_TIMEOUT_MS = 5000;
+
     private Caller admin;
 
     @BeforeEach
     void setUp() {
+        eventRegistrationRepository.deleteAll();
         deviceTokenRepository.deleteAll();
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(List.of());
+        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
     }
 
@@ -129,7 +134,7 @@ class EventNotificationTest {
     @SuppressWarnings("unchecked")
     private List<ExpoPushMessage> captureSentMessages() {
         ArgumentCaptor<List<ExpoPushMessage>> captor = ArgumentCaptor.forClass(List.class);
-        verify(expoPushClient).send(captor.capture());
+        verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(captor.capture());
         return captor.getValue();
     }
 
@@ -166,11 +171,12 @@ class EventNotificationTest {
     @Test
     void aTokenExpoCallsGone_isDeleted() {
         userWithDevice("ExponentPushToken[dead]", false);
-        when(expoPushClient.send(any())).thenReturn(List.of("ExponentPushToken[dead]"));
+        when(expoPushClient.send(any()))
+                .thenReturn(new ExpoPushClient.Outcome(true, List.of("ExponentPushToken[dead]")));
 
         adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
 
-        assertThat(deviceTokenRepository.findAll()).isEmpty();
+        awaitUntil(() -> deviceTokenRepository.findAll().isEmpty());
     }
 
     private Event registerFor(Instant startsAt, Integer leadTimeMinutes) {
@@ -205,9 +211,45 @@ class EventNotificationTest {
                 .isTrue();
 
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(List.of());
+        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
         eventReminderScheduler.sendDueReminders();
         verify(expoPushClient, never()).send(any());
+    }
+
+    /** Regression: a refused batch must leave the reminder due, not silently consume it. */
+    @Test
+    void aRefusedSend_leavesTheReminderDueForTheNextSweep() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(false, List.of()));
+
+        eventReminderScheduler.sendDueReminders();
+
+        assertThat(eventRegistrationRepository.findAll())
+                .allSatisfy(registration ->
+                        assertThat(registration.getReminderSentAt()).isNull());
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
+        eventReminderScheduler.sendDueReminders();
+        verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(any());
+    }
+
+    /**
+     * Regression: deleting a dead token mid-sweep used to clear the persistence context, silently discarding
+     * every reminderSentAt stamp and re-sending the same reminders every hour.
+     */
+    @Test
+    void aDeadTokenDuringTheSweep_stillMarksTheReminderSent() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        when(expoPushClient.send(any()))
+                .thenReturn(new ExpoPushClient.Outcome(true, List.of("ExponentPushToken[attendee]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        assertThat(deviceTokenRepository.findAll()).isEmpty();
+        assertThat(eventRegistrationRepository.findAll())
+                .allSatisfy(registration ->
+                        assertThat(registration.getReminderSentAt()).isNotNull());
     }
 
     @Test
@@ -226,6 +268,22 @@ class EventNotificationTest {
         eventReminderScheduler.sendDueReminders();
 
         verify(expoPushClient, never()).send(any());
+    }
+
+    private static void awaitUntil(java.util.function.BooleanSupplier condition) {
+        long deadline = System.currentTimeMillis() + SEND_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (condition.getAsBoolean()) {
+                return;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        throw new AssertionError("condition was not met within %d ms".formatted(SEND_TIMEOUT_MS));
     }
 
     @TestConfiguration

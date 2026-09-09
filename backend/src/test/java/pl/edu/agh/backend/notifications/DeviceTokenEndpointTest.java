@@ -135,12 +135,12 @@ class DeviceTokenEndpointTest {
         assertThat(deviceTokenRepository.count()).isEqualTo(1);
     }
 
-    /** Android recycles a token onto a fresh install; the stale row must go or the device gets doubles. */
+    /** Android recycles a token onto a fresh install; the caller's own stale row must go or the device gets doubles. */
     @Test
-    void registerWithTokenHeldByAnotherInstallation_dropsTheStaleRow() throws Exception {
+    void registerWithTokenHeldByAnOwnEarlierInstallation_dropsTheStaleRow() throws Exception {
         String otherInstallation = UUID.randomUUID().toString();
         deviceTokenRepository.save(DeviceToken.builder()
-                .user(existingUser(UUID.randomUUID().toString()))
+                .user(existingUser(keycloakId))
                 .installationId(otherInstallation)
                 .token(token("shared"))
                 .platform(DevicePlatform.ANDROID)
@@ -156,6 +156,28 @@ class DeviceTokenEndpointTest {
         assertThat(deviceTokenRepository.findByInstallationId(otherInstallation))
                 .isEmpty();
         assertThat(deviceTokenRepository.findByInstallationId(installationId)).isPresent();
+    }
+
+    /** Releasing a stranger's row would let anyone holding a token evict that device and capture its pushes. */
+    @Test
+    void registerWithTokenHeldByAnotherUser_isConflict() throws Exception {
+        String otherInstallation = UUID.randomUUID().toString();
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(existingUser(UUID.randomUUID().toString()))
+                .installationId(otherInstallation)
+                .token(token("theirs"))
+                .platform(DevicePlatform.ANDROID)
+                .build());
+
+        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
+                        .with(user())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(token("theirs"))))
+                .andExpect(status().isConflict());
+
+        assertThat(deviceTokenRepository.findByInstallationId(otherInstallation))
+                .isPresent();
     }
 
     @Test

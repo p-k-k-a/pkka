@@ -19,9 +19,8 @@ public class DeviceTokenService {
     /** Idempotent, so a first registration and a rotated token are the same call. */
     @Transactional
     public void register(Caller caller, String installationId, RegisterDeviceRequest request) {
-        deviceTokenRepository.releaseToken(request.token(), installationId);
-
         User user = callerUserService.getOrCreate(caller);
+        releaseFromPreviousInstallation(request.token(), installationId, user);
         DeviceToken device = deviceTokenRepository
                 .findByInstallationId(installationId)
                 .orElseGet(() ->
@@ -30,6 +29,24 @@ public class DeviceTokenService {
         device.setToken(request.token());
         device.setPlatform(request.platform());
         deviceTokenRepository.save(device);
+    }
+
+    /**
+     * Android hands a reinstalled app the token its previous install had, so the caller's own stale row is
+     * released. A row belonging to somebody else is refused rather than released — otherwise anyone holding a
+     * token could evict that device and redirect its notifications to themselves.
+     */
+    private void releaseFromPreviousInstallation(String token, String installationId, User user) {
+        deviceTokenRepository
+                .findByToken(token)
+                .filter(held -> !held.getInstallationId().equals(installationId))
+                .ifPresent(held -> {
+                    if (!held.getUser().getId().equals(user.getId())) {
+                        throw new DeviceTokenConflictException(token);
+                    }
+                    deviceTokenRepository.delete(held);
+                    deviceTokenRepository.flush();
+                });
     }
 
     /** Someone else's installation reports 404 rather than 403, so a device id cannot be probed. */
