@@ -1,11 +1,6 @@
-import {
-  ApplicationResponseConsentsItem,
-  ApplicationResponseFaculty,
-  ApplicationResponseMeetingPreferencesItem,
-  ApplicationResponseStudyType,
-} from "@pkka/api";
+import type { Faculty, MeetingPreference, StudyType } from "@pkka/api";
 
-const FACULTY_LABELS: Record<string, string> = {
+const FACULTY_LABELS: Record<Faculty, string> = {
   WE: "Wydział Elektromechaniczny (1952-1957)",
   WEGH: "Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)",
   WEAIE: "Wydział Elektrotechniki, Automatyki i Elektroniki (1975-1998)",
@@ -14,14 +9,14 @@ const FACULTY_LABELS: Record<string, string> = {
   WI: "Wydział Informatyki (2023-obecnie)",
 };
 
-const STUDY_TYPE_LABELS: Record<string, string> = {
+const STUDY_TYPE_LABELS: Record<StudyType, string> = {
   BACHELOR: "Studia I stopnia (inżynierskie / licencjackie)",
   MASTER: "Studia II stopnia (magisterskie)",
   DOCTORAL: "Studia doktoranckie",
   POSTGRADUATE: "Studia podyplomowe",
 };
 
-const MEETING_PREFERENCE_LABELS: Record<string, string> = {
+const MEETING_PREFERENCE_LABELS: Record<MeetingPreference, string> = {
   ONLINE: "Online",
   IN_PERSON_KRAKOW: "Stacjonarnie (Kraków)",
   HYBRID: "Hybrydowo",
@@ -39,15 +34,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function facultyLabel(faculty: string): string {
-  return FACULTY_LABELS[faculty] ?? faculty;
+  return FACULTY_LABELS[faculty as Faculty] ?? faculty;
 }
 
 export function studyTypeLabel(studyType: string): string {
-  return STUDY_TYPE_LABELS[studyType] ?? studyType;
+  return STUDY_TYPE_LABELS[studyType as StudyType] ?? studyType;
 }
 
 export function meetingPreferenceLabel(preference: string): string {
-  return MEETING_PREFERENCE_LABELS[preference] ?? preference;
+  return MEETING_PREFERENCE_LABELS[preference as MeetingPreference] ?? preference;
 }
 
 export function consentLabel(consent: string): string {
@@ -58,24 +53,13 @@ export function statusLabel(status: string): string {
   return STATUS_LABELS[status] ?? status;
 }
 
-export const FACULTY_OPTIONS = Object.values(ApplicationResponseFaculty).map((value) => ({
-  value,
-  label: facultyLabel(value),
-}));
+type LabelOption<T extends string> = { value: T; label: string };
 
-export const STUDY_TYPE_OPTIONS = Object.values(ApplicationResponseStudyType).map((value) => ({
-  value,
-  label: studyTypeLabel(value),
-}));
-
-export const MEETING_PREFERENCE_OPTIONS = Object.values(
-  ApplicationResponseMeetingPreferencesItem,
-).map((value) => ({
-  value,
-  label: meetingPreferenceLabel(value),
-}));
-
-export const CONSENT_OPTIONS = Object.values(ApplicationResponseConsentsItem).map((value) => ({
-  value,
-  label: consentLabel(value),
-}));
+// The request and response enums are distinct generated objects with the same members,
+// so each app passes the one its form field is typed against.
+export function toOptions<T extends string>(
+  values: Record<string, T>,
+  label: (value: T) => string,
+): LabelOption<T>[] {
+  return Object.values(values).map((value) => ({ value, label: label(value) }));
+}

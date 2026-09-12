@@ -17,8 +17,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { formatPublishedAt } from "@/lib/format-published-at";
-import { isAdmin } from "@/lib/roles";
+import { formatPublishedAt } from "@pkka/domain";
+import { isAdmin } from "@pkka/domain";
 import {
   getListAdminPostsQueryKey,
   useDeleteAdminPost,

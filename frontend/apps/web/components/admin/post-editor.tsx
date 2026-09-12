@@ -6,7 +6,7 @@ import { useGetAdminPost } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PostForm } from "@/components/admin/post-form";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin } from "@pkka/domain";
 
 type PostEditorProps = {
   id?: string;

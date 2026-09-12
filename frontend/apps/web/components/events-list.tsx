@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ListEventsTimeframe, useListEvents } from "@pkka/api";
+import { EventTimeframe, useListEvents } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventCalendarCard } from "@/components/events/event-calendar-card";
@@ -23,7 +23,7 @@ function EventCardSkeleton() {
 
 export function EventsList({ variant = "public", archive = false }: EventsListProps) {
   const [page, setPage] = useState(0);
-  const timeframe = archive ? ListEventsTimeframe.PAST : ListEventsTimeframe.UPCOMING;
+  const timeframe = archive ? EventTimeframe.PAST : EventTimeframe.UPCOMING;
   const {
     data: response,
     isLoading,

@@ -1,12 +1,12 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DiscordIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
-  ApplicationResponseStatus,
+  ApplicationStatus,
   ProfileResponse,
   useGetMine,
   useGetMyProfile,
@@ -199,9 +199,9 @@ export function UserPanel() {
   const application = data?.data;
   const status = application?.status;
   const knownStatus =
-    status === ApplicationResponseStatus.UNDER_REVIEW ||
-    status === ApplicationResponseStatus.APPROVED ||
-    status === ApplicationResponseStatus.REJECTED
+    status === ApplicationStatus.UNDER_REVIEW ||
+    status === ApplicationStatus.APPROVED ||
+    status === ApplicationStatus.REJECTED
       ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
       : null;
 

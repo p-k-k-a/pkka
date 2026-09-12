@@ -14,18 +14,16 @@ const AUDIENCE_LABELS = {
 
 type Audience = keyof typeof AUDIENCE_LABELS;
 
-export function eventTypeLabel(type?: string) {
-  return type && type in EVENT_TYPE_LABELS ? EVENT_TYPE_LABELS[type as EventType] : "Wydarzenie";
+function eventTypeLabel(type: string) {
+  return type in EVENT_TYPE_LABELS ? EVENT_TYPE_LABELS[type as EventType] : "Wydarzenie";
 }
 
-export function eventTypeLabelUpper(type?: string) {
+export function eventTypeLabelUpper(type: string) {
   return eventTypeLabel(type).toUpperCase();
 }
 
-export function audienceLabel(audience?: string) {
-  return audience && audience in AUDIENCE_LABELS
-    ? AUDIENCE_LABELS[audience as Audience]
-    : "Odbiorcy";
+export function audienceLabel(audience: string) {
+  return audience in AUDIENCE_LABELS ? AUDIENCE_LABELS[audience as Audience] : "Odbiorcy";
 }
 
 export const EVENT_TYPE_OPTIONS = (Object.keys(EVENT_TYPE_LABELS) as EventType[]).map((value) => ({
@@ -40,15 +38,10 @@ export const AUDIENCE_OPTIONS = (Object.keys(AUDIENCE_LABELS) as Audience[])
     label: AUDIENCE_LABELS[value],
   }));
 
-export function eventLocationLabel(type?: string, location?: string) {
+export function eventLocationLabel(type: string, location?: string) {
   if (location?.trim()) return location;
   if (type === "ONLINE") return "Online";
   return "Miejsce do ustalenia";
-}
-
-export function formatSeats(seatLimit?: number, seatsTaken?: number) {
-  if (seatLimit == null) return null;
-  return `${seatsTaken ?? 0} / ${seatLimit} miejsc`;
 }
 
 export function formatSeatsCompact(seatLimit?: number, seatsTaken?: number) {

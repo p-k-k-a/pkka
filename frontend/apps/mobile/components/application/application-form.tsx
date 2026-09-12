@@ -9,22 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { FACULTIES, MEETING_FORMATS, STUDY_TYPES } from "@/lib/application-constants";
 import {
-  FACULTIES,
+  graduationYearError,
+  hasRequiredConsents,
+  isGraduationYearValid,
+  APPLICATION_CONFLICT_MESSAGE,
+  APPLICATION_SUBMIT_ERROR_MESSAGE,
   INTEREST_AREAS,
-  MEETING_FORMATS,
   PRIVACY_URL,
-  STUDY_TYPES,
   TERMS_URL,
-} from "@/lib/application-constants";
+} from "@pkka/domain";
 import {
   ApiError,
-  CreateApplicationRequestConsentsItem,
+  ConsentType,
   getGetMineQueryKey,
   useCreateApplication,
-  type CreateApplicationRequestFaculty,
-  type CreateApplicationRequestMeetingPreferencesItem,
-  type CreateApplicationRequestStudyType,
+  type Faculty,
+  type MeetingPreference,
+  type StudyType,
 } from "@pkka/api";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
@@ -36,9 +39,6 @@ import { useRef, useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import PhoneInput from "react-native-phone-input";
-
-const CURRENT_YEAR = new Date().getFullYear();
-const MAX_YEAR = CURRENT_YEAR + 7;
 
 function FieldError({ field }: { field: AnyFieldApi }) {
   if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
@@ -59,12 +59,12 @@ function ApplicationForm() {
   const form = useForm({
     defaultValues: {
       phoneNumber: "",
-      faculty: null as CreateApplicationRequestFaculty | null,
+      faculty: null as Faculty | null,
       fieldOfStudy: "",
-      studyType: null as CreateApplicationRequestStudyType | null,
+      studyType: null as StudyType | null,
       graduationYear: "",
       interests: [] as string[],
-      meetingPreferences: [] as CreateApplicationRequestMeetingPreferencesItem[],
+      meetingPreferences: [] as MeetingPreference[],
       coCreationInterest: false,
       newsletterSubscription: false,
       acceptedTerms: false,
@@ -73,13 +73,11 @@ function ApplicationForm() {
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
-      const consents: CreateApplicationRequestConsentsItem[] = [];
-      if (value.acceptedTerms)
-        consents.push(CreateApplicationRequestConsentsItem.REGULATIONS_PRIVACY);
-      if (value.acceptedRodo)
-        consents.push(CreateApplicationRequestConsentsItem.GDPR_DATA_PROCESSING);
+      const consents: ConsentType[] = [];
+      if (value.acceptedTerms) consents.push(ConsentType.REGULATIONS_PRIVACY);
+      if (value.acceptedRodo) consents.push(ConsentType.GDPR_DATA_PROCESSING);
 
-      if (!value.faculty || !value.studyType || consents.length < 2) {
+      if (!value.faculty || !value.studyType || !hasRequiredConsents(consents)) {
         setSubmitError("Uzupełnij wymagane pola i zaakceptuj wymagane zgody.");
         return;
       }
@@ -103,8 +101,8 @@ function ApplicationForm() {
       } catch (error) {
         setSubmitError(
           error instanceof ApiError && error.status === 409
-            ? "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego."
-            : "Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.",
+            ? APPLICATION_CONFLICT_MESSAGE
+            : APPLICATION_SUBMIT_ERROR_MESSAGE,
         );
         return;
       }
@@ -188,7 +186,7 @@ function ApplicationForm() {
                 value={field.state.value}
                 options={FACULTIES}
                 placeholder="Wybierz wydział"
-                onChange={(value) => field.handleChange(value as CreateApplicationRequestFaculty)}
+                onChange={(value) => field.handleChange(value as Faculty)}
               />
               <FieldError field={field} />
             </FormField>
@@ -228,7 +226,7 @@ function ApplicationForm() {
                 value={field.state.value}
                 options={STUDY_TYPES}
                 placeholder="Wybierz stopień"
-                onChange={(value) => field.handleChange(value as CreateApplicationRequestStudyType)}
+                onChange={(value) => field.handleChange(value as StudyType)}
               />
               <FieldError field={field} />
             </FormField>
@@ -240,8 +238,7 @@ function ApplicationForm() {
           validators={{
             onBlur: ({ value }) => {
               if (!/^\d{4}$/.test(value)) return "Podaj rok w formacie YYYY";
-              const year = Number(value);
-              if (year < 1919 || year > MAX_YEAR) return `Podaj rok między 1919 a ${MAX_YEAR}`;
+              if (!isGraduationYearValid(Number(value))) return graduationYearError();
               return undefined;
             },
           }}
@@ -295,9 +292,7 @@ function ApplicationForm() {
               <OptionChips
                 options={MEETING_FORMATS}
                 value={field.state.value}
-                onChange={(next) =>
-                  field.handleChange(next as CreateApplicationRequestMeetingPreferencesItem[])
-                }
+                onChange={(next) => field.handleChange(next as MeetingPreference[])}
               />
             </FormField>
           )}

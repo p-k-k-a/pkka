@@ -10,7 +10,7 @@ import { ProfileSectionCard } from "@/components/profile/profile-section-card";
 import { SkillChips } from "@/components/profile/skill-chips";
 import { VisibilitySummary } from "@/components/profile/visibility-summary";
 import { useProfileAvatar } from "@/lib/profile-avatar";
-import { getProfileContacts } from "@/lib/profile-contacts";
+import { getProfileContacts } from "@pkka/domain";
 
 const EDIT_HREF = "/dashboard/profile/edit";
 
