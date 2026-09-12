@@ -14,7 +14,7 @@ type EventCardProps = {
 };
 
 function EventCard({ event }: EventCardProps) {
-  const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
+  const { id, title, startsAt, type, location, seatLimit, seatsTaken, registered } = event;
   const isOnline = type === EventListItemResponseType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
 
@@ -50,6 +50,11 @@ function EventCard({ event }: EventCardProps) {
         {typeof seatLimit === "number" ? (
           <Badge variant="outline">
             <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
+          </Badge>
+        ) : null}
+        {registered ? (
+          <Badge variant="secondary">
+            <Text>ZAPISANO</Text>
           </Badge>
         ) : null}
       </View>
