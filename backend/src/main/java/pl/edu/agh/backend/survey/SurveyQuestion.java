@@ -10,6 +10,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "survey_questions")
@@ -38,6 +39,7 @@ public class SurveyQuestion {
     @Column(name = "display_order", nullable = false)
     private int displayOrder;
 
+    @BatchSize(size = 50)
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<SurveyQuestionOption> options = new ArrayList<>();
