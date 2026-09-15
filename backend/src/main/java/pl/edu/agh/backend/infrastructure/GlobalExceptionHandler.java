@@ -18,6 +18,7 @@ import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
+import pl.edu.agh.backend.topic.TopicProposalNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -91,6 +92,13 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY, "Failed to update user role in identity provider");
         problem.setTitle("Identity provider error");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicProposalNotFoundException.class)
+    public ProblemDetail handleTopicProposalNotFound(TopicProposalNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Topic proposal not found");
         return problem;
     }
 
