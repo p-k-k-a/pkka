@@ -18,6 +18,11 @@ import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
+import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
+import pl.edu.agh.backend.survey.SurveyAlreadySubmittedException;
+import pl.edu.agh.backend.survey.SurveyHasSubmissionsException;
+import pl.edu.agh.backend.survey.SurveyNotActiveException;
+import pl.edu.agh.backend.survey.SurveyNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -91,6 +96,41 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY, "Failed to update user role in identity provider");
         problem.setTitle("Identity provider error");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyNotFoundException.class)
+    public ProblemDetail handleSurveyNotFound(SurveyNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Survey not found");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyNotActiveException.class)
+    public ProblemDetail handleSurveyNotActive(SurveyNotActiveException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey not active");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyAlreadySubmittedException.class)
+    public ProblemDetail handleSurveyAlreadySubmitted(SurveyAlreadySubmittedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey already submitted");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidSurveyAnswerException.class)
+    public ProblemDetail handleInvalidSurveyAnswer(InvalidSurveyAnswerException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid survey answer");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyHasSubmissionsException.class)
+    public ProblemDetail handleSurveyHasSubmissions(SurveyHasSubmissionsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey has submissions");
         return problem;
     }
 
