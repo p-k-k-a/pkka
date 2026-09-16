@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/alumni/materials")
@@ -29,7 +30,8 @@ public class MaterialController {
             @RequestParam(required = false) MaterialType type,
             @RequestParam(required = false) UUID eventId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-                    Pageable pageable) {
-        return materialService.list(Optional.ofNullable(type), Optional.ofNullable(eventId), pageable);
+                    Pageable pageable,
+            Caller caller) {
+        return materialService.list(Optional.ofNullable(type), Optional.ofNullable(eventId), pageable, caller);
     }
 }
