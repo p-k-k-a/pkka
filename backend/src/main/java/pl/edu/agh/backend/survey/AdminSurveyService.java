@@ -2,6 +2,7 @@ package pl.edu.agh.backend.survey;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,9 +39,14 @@ public class AdminSurveyService {
         return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey));
     }
 
+    /**
+     * Locks the survey row before checking for submissions (mirrors {@code SurveyService.submit},
+     * which takes the same lock): otherwise a submission could be inserted between the
+     * "no submissions yet" check and this update/delete going through.
+     */
     @Transactional
     public AdminSurveyResponse update(UUID id, UpdateSurveyRequest request) {
-        Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
+        Survey survey = surveyRepository.findForUpdateById(id).orElseThrow(SurveyNotFoundException::new);
         ensureNoSubmissions(id);
         validateStatusAndEndDate(request.status(), request.endsAt());
         survey.setTitle(request.title());
@@ -53,7 +59,7 @@ public class AdminSurveyService {
 
     @Transactional
     public void delete(UUID id) {
-        Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
+        Survey survey = surveyRepository.findForUpdateById(id).orElseThrow(SurveyNotFoundException::new);
         ensureNoSubmissions(id);
         surveyRepository.delete(survey);
     }
@@ -62,20 +68,27 @@ public class AdminSurveyService {
     public SurveyResultsResponse getResults(UUID id) {
         Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
         List<SurveySubmission> submissions = surveySubmissionRepository.findAllBySurveyId(id);
+
+        // Group every answer by question id once (O(submissions x answers)) instead of having
+        // aggregateQuestion re-scan every submission's answers for every question
+        // (O(questions x submissions x answers)). With Q questions and roughly Q answers per
+        // submission, that previously degraded to O(submissions x questions^2).
+        Map<UUID, List<SurveyAnswer>> answersByQuestionId = submissions.stream()
+                .flatMap(submission -> submission.getAnswers().stream())
+                .collect(Collectors.groupingBy(answer -> answer.getQuestion().getId()));
+
         List<SurveyResultsResponse.QuestionResult> questionResults = survey.getQuestions().stream()
-                .map(question -> aggregateQuestion(question, submissions))
+                .map(question ->
+                        aggregateQuestion(question, answersByQuestionId.getOrDefault(question.getId(), List.of())))
                 .toList();
         return new SurveyResultsResponse(survey.getId(), submissions.size(), questionResults);
     }
 
     private SurveyResultsResponse.QuestionResult aggregateQuestion(
-            SurveyQuestion question, List<SurveySubmission> submissions) {
+            SurveyQuestion question, List<SurveyAnswer> answers) {
         if (question.getType() == QuestionType.TEXT) {
-            List<String> textAnswers = submissions.stream()
-                    .flatMap(submission -> submission.getAnswers().stream())
-                    .filter(answer -> answer.getQuestion().getId().equals(question.getId()))
-                    .map(SurveyAnswer::getValue)
-                    .toList();
+            List<String> textAnswers =
+                    answers.stream().map(SurveyAnswer::getValue).toList();
             return new SurveyResultsResponse.QuestionResult(
                     question.getId(), question.getContent(), question.getType(), List.of(), textAnswers);
         }
@@ -85,15 +98,12 @@ public class AdminSurveyService {
             counts.put(option.getId(), 0L);
         }
 
-        submissions.stream()
-                .flatMap(submission -> submission.getAnswers().stream())
-                .filter(answer -> answer.getQuestion().getId().equals(question.getId()))
-                .forEach(answer -> {
-                    for (String part : SurveyAnswerValues.commaSeparated(answer.getValue())) {
-                        UUID optionId = UUID.fromString(part);
-                        counts.computeIfPresent(optionId, (key, value) -> value + 1);
-                    }
-                });
+        answers.forEach(answer -> {
+            for (String part : SurveyAnswerValues.commaSeparated(answer.getValue())) {
+                UUID optionId = UUID.fromString(part);
+                counts.computeIfPresent(optionId, (key, value) -> value + 1);
+            }
+        });
 
         List<SurveyResultsResponse.OptionCount> optionCounts = question.getOptions().stream()
                 .map(option -> new SurveyResultsResponse.OptionCount(
@@ -129,7 +139,9 @@ public class AdminSurveyService {
     }
 
     private void ensureNoSubmissions(UUID surveyId) {
-        if (!surveySubmissionRepository.findAllBySurveyId(surveyId).isEmpty()) {
+        // existsBySurveyId, not findAllBySurveyId(...).isEmpty(): the latter's @EntityGraph
+        // fetch-joins answers and questions just to check a boolean.
+        if (surveySubmissionRepository.existsBySurveyId(surveyId)) {
             throw new SurveyHasSubmissionsException();
         }
     }

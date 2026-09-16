@@ -36,9 +36,15 @@ public class SurveyService {
         return SurveyResponse.from(survey);
     }
 
+    /**
+     * Checking for an existing submission and inserting is a check-then-act, so it opens by
+     * locking the survey row (mirrors {@code EventRegistrationService.register}); this also
+     * serializes submission against an admin edit/delete that requires "no submissions yet" (see
+     * {@code AdminSurveyService}), which lock the same row.
+     */
     @Transactional
     public SubmitSurveyResponse submit(UUID surveyId, Caller caller, SubmitSurveyRequest request) {
-        Survey survey = surveyRepository.findById(surveyId).orElseThrow(SurveyNotFoundException::new);
+        Survey survey = surveyRepository.findForUpdateById(surveyId).orElseThrow(SurveyNotFoundException::new);
         ensureActive(survey);
         User user = callerUserService.getOrCreate(caller);
         if (surveySubmissionRepository.existsBySurveyIdAndUserId(surveyId, user.getId())) {
@@ -68,6 +74,7 @@ public class SurveyService {
             String normalizedValue = validateAndNormalizeAnswer(question, answerInput.value());
             SurveyAnswer answer = new SurveyAnswer();
             answer.setSubmission(submission);
+            answer.setSurvey(survey);
             answer.setQuestion(question);
             answer.setValue(normalizedValue);
             submission.getAnswers().add(answer);
@@ -77,6 +84,13 @@ public class SurveyService {
             SurveySubmission saved = surveySubmissionRepository.saveAndFlush(submission);
             return new SubmitSurveyResponse(saved.getId(), surveyId, saved.getSubmittedAt());
         } catch (DataIntegrityViolationException ex) {
+            // The findForUpdateById lock above already serializes concurrent submissions for the
+            // same survey+user, so uq_survey_submissions_user_survey should never actually fire
+            // here. Kept as a defensive fallback with the same broad catch used by
+            // EventRegistrationService.register for the same reason there: this insert can only
+            // violate that one constraint (submission_id/question_id come from entities created
+            // a few lines above, not from client input), so mapping any DataIntegrityViolationException
+            // here to "already submitted" is unambiguous.
             throw new SurveyAlreadySubmittedException();
         }
     }

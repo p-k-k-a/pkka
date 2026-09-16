@@ -10,6 +10,8 @@ public interface SurveySubmissionRepository extends JpaRepository<SurveySubmissi
 
     boolean existsBySurveyIdAndUserId(UUID surveyId, UUID userId);
 
+    boolean existsBySurveyId(UUID surveyId);
+
     @EntityGraph(attributePaths = {"answers", "answers.question"})
     List<SurveySubmission> findAllBySurveyId(UUID surveyId);
 
