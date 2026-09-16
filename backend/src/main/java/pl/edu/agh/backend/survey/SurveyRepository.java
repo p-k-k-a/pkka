@@ -10,13 +10,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SurveyRepository extends JpaRepository<Survey, UUID> {
 
+    // Fetch-joining the questions collection is safe here: findById loads a single row, so there
+    // is no pagination to defeat by multiplying rows client-side.
     @EntityGraph(attributePaths = "questions")
     @Override
     Optional<Survey> findById(UUID id);
 
-    @EntityGraph(attributePaths = "questions")
+    // Deliberately no @EntityGraph on the collection here: a fetch-join would multiply rows and
+    // force Hibernate to paginate in memory. Survey.questions uses @BatchSize instead, so the
+    // page of surveys is still selected with a real SQL LIMIT/OFFSET, and questions are then
+    // batch-loaded for just that page.
     Page<Survey> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    @EntityGraph(attributePaths = "questions")
     Page<Survey> findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus status, Instant now, Pageable pageable);
 }

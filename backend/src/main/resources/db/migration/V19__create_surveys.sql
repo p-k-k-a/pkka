@@ -23,6 +23,7 @@ CREATE TABLE survey_questions
     display_order INT          NOT NULL,
 
     CONSTRAINT pk_survey_questions        PRIMARY KEY (id),
+    CONSTRAINT uq_survey_questions_id_survey UNIQUE (id, survey_id),
     CONSTRAINT fk_survey_questions_survey FOREIGN KEY (survey_id) REFERENCES surveys (id) ON DELETE CASCADE,
     CONSTRAINT chk_survey_questions_type  CHECK (type IN ('SINGLE_CHOICE', 'MULTI_CHOICE', 'TEXT'))
 );
@@ -55,15 +56,25 @@ CREATE TABLE survey_submissions
     CONSTRAINT uq_survey_submissions_user_survey UNIQUE (user_id, survey_id)
 );
 
+-- Composite unique constraints only enforce column order for equality lookups, so a plain index
+-- with survey_id leading is still needed for admin queries like "all submissions for a survey"
+-- (uq_survey_submissions_user_survey has user_id first and can't serve that access pattern).
+CREATE INDEX idx_survey_submissions_survey_id ON survey_submissions (survey_id);
+
 CREATE TABLE survey_answers
 (
     id            UUID NOT NULL,
     submission_id UUID NOT NULL,
+    survey_id     UUID NOT NULL,
     question_id   UUID NOT NULL,
     value         TEXT NOT NULL,
 
     CONSTRAINT pk_survey_answers              PRIMARY KEY (id),
     CONSTRAINT fk_survey_answers_submission   FOREIGN KEY (submission_id) REFERENCES survey_submissions (id) ON DELETE CASCADE,
-    CONSTRAINT fk_survey_answers_question     FOREIGN KEY (question_id) REFERENCES survey_questions (id),
+    CONSTRAINT fk_survey_answers_survey       FOREIGN KEY (survey_id) REFERENCES surveys (id),
+    -- Composite FK against uq_survey_questions_id_survey: the database — not just application
+    -- code — now rejects an answer whose question belongs to a different survey than the
+    -- submission it's attached to.
+    CONSTRAINT fk_survey_answers_question_survey FOREIGN KEY (question_id, survey_id) REFERENCES survey_questions (id, survey_id),
     CONSTRAINT uq_survey_answers_submission_question UNIQUE (submission_id, question_id)
 );

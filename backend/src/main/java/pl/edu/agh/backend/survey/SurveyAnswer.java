@@ -28,6 +28,17 @@ public class SurveyAnswer {
     @JoinColumn(name = "submission_id", nullable = false)
     private SurveySubmission submission;
 
+    /**
+     * Denormalized alongside {@link #question}: the database enforces, via a composite foreign
+     * key to {@code survey_questions(id, survey_id)}, that the question actually belongs to this
+     * survey. This is defense-in-depth — {@code SurveyService} already rejects a question id that
+     * isn't part of the target survey — but without this column the constraint could only be
+     * enforced in application code.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "survey_id", nullable = false)
+    private Survey survey;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "question_id", nullable = false)
     private SurveyQuestion question;
