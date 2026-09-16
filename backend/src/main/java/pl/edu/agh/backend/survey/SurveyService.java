@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -84,14 +85,10 @@ public class SurveyService {
             SurveySubmission saved = surveySubmissionRepository.saveAndFlush(submission);
             return new SubmitSurveyResponse(saved.getId(), surveyId, saved.getSubmittedAt());
         } catch (DataIntegrityViolationException ex) {
-            // The findForUpdateById lock above already serializes concurrent submissions for the
-            // same survey+user, so uq_survey_submissions_user_survey should never actually fire
-            // here. Kept as a defensive fallback with the same broad catch used by
-            // EventRegistrationService.register for the same reason there: this insert can only
-            // violate that one constraint (submission_id/question_id come from entities created
-            // a few lines above, not from client input), so mapping any DataIntegrityViolationException
-            // here to "already submitted" is unambiguous.
-            throw new SurveyAlreadySubmittedException();
+            if (isDuplicateSurveySubmission(ex)) {
+                throw new SurveyAlreadySubmittedException();
+            }
+            throw ex;
         }
     }
 
@@ -141,5 +138,15 @@ public class SurveyService {
         if (!found) {
             throw new InvalidSurveyAnswerException("Option does not belong to question: " + question.getId());
         }
+    }
+
+    private boolean isDuplicateSurveySubmission(DataIntegrityViolationException ex) {
+        for (Throwable cause = ex.getCause(); cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException violation) {
+                return "uq_survey_submissions_user_survey".equals(violation.getConstraintName());
+            }
+        }
+        String message = ex.getMostSpecificCause().getMessage();
+        return message != null && message.contains("uq_survey_submissions_user_survey");
     }
 }

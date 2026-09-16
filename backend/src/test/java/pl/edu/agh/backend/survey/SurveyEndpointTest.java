@@ -117,4 +117,26 @@ class SurveyEndpointTest {
                 .andExpect(jsonPath("$.questions[0].optionCounts[0].count").value(1))
                 .andExpect(jsonPath("$.questions[1].textAnswers[0]").value("Super wydarzenie"));
     }
+
+    @Test
+    void rejectsSurveyWithOversizedChoiceOptionLabel() throws Exception {
+        Instant endsAt = Instant.now().plus(7, ChronoUnit.DAYS);
+        String oversizedLabel = "x".repeat(501);
+
+        mockMvc.perform(post("/api/admin/surveys")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title":"Ankieta",
+                                  "endsAt":"%s",
+                                  "status":"DRAFT",
+                                  "questions":[
+                                    {"content":"Pytanie","type":"SINGLE_CHOICE","options":["%s"]}
+                                  ]
+                                }
+                                """.formatted(endsAt, oversizedLabel)))
+                .andExpect(status().isBadRequest());
+    }
 }
