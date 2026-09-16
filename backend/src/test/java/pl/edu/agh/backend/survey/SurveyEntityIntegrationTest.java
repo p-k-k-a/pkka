@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -66,7 +67,7 @@ class SurveyEntityIntegrationTest {
     void rejectsAnswerWhoseQuestionBelongsToADifferentSurvey() {
         Survey surveyA = persistSurveyWithOneQuestion("Ankieta A");
         Survey surveyB = persistSurveyWithOneQuestion("Ankieta B");
-        User user = userRepository.save(new User());
+        User user = persistUser();
 
         SurveySubmission submission = new SurveySubmission();
         submission.setSurvey(surveyA);
@@ -75,19 +76,46 @@ class SurveyEntityIntegrationTest {
 
         SurveyAnswer answer = new SurveyAnswer();
         answer.setSubmission(submission);
-        // Mismatch: the answer is attached to surveyA's submission but points at surveyB's
-        // question. Application code (SurveyService) already rejects this; this test proves the
-        // database's composite FK (question_id, survey_id) -> survey_questions(id, survey_id)
-        // rejects it too, even if a future code path forgets that check.
+        // Mismatch: submission belongs to surveyA, but the answer's survey_id still points at
+        // surveyA while the question belongs to surveyB. The composite question FK rejects this.
         answer.setSurvey(surveyA);
         answer.setQuestion(surveyB.getQuestions().getFirst());
         answer.setValue("Java");
         submission.getAnswers().add(answer);
 
-        assertThatThrownBy(() -> {
-                    surveySubmissionRepository.saveAndFlush(submission);
-                })
+        assertThatThrownBy(() -> surveySubmissionRepository.saveAndFlush(submission))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void rejectsAnswerWhoseSurveyDoesNotMatchItsSubmission() {
+        Survey surveyA = persistSurveyWithOneQuestion("Ankieta A");
+        Survey surveyB = persistSurveyWithOneQuestion("Ankieta B");
+        User user = persistUser();
+
+        SurveySubmission submission = new SurveySubmission();
+        submission.setSurvey(surveyA);
+        submission.setUser(user);
+        submission.setSubmittedAt(Instant.now());
+
+        SurveyAnswer answer = new SurveyAnswer();
+        answer.setSubmission(submission);
+        // Mismatch: submission belongs to surveyA, but answer.survey_id points at surveyB while
+        // the question is from surveyB. The composite submission FK rejects this even though the
+        // question FK alone would pass.
+        answer.setSurvey(surveyB);
+        answer.setQuestion(surveyB.getQuestions().getFirst());
+        answer.setValue("Java");
+        submission.getAnswers().add(answer);
+
+        assertThatThrownBy(() -> surveySubmissionRepository.saveAndFlush(submission))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    private User persistUser() {
+        User user = new User();
+        user.setKeycloakId(UUID.randomUUID().toString());
+        return userRepository.save(user);
     }
 
     private Survey persistSurveyWithOneQuestion(String title) {

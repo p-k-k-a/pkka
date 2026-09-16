@@ -51,6 +51,7 @@ CREATE TABLE survey_submissions
     submitted_at TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT pk_survey_submissions        PRIMARY KEY (id),
+    CONSTRAINT uq_survey_submissions_id_survey UNIQUE (id, survey_id),
     CONSTRAINT fk_survey_submissions_survey FOREIGN KEY (survey_id) REFERENCES surveys (id),
     CONSTRAINT fk_survey_submissions_user   FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT uq_survey_submissions_user_survey UNIQUE (user_id, survey_id)
@@ -70,11 +71,12 @@ CREATE TABLE survey_answers
     value         TEXT NOT NULL,
 
     CONSTRAINT pk_survey_answers              PRIMARY KEY (id),
-    CONSTRAINT fk_survey_answers_submission   FOREIGN KEY (submission_id) REFERENCES survey_submissions (id) ON DELETE CASCADE,
+    -- Composite FK against uq_survey_submissions_id_survey: answer.survey_id must match the
+    -- submission's survey, not just any submission row.
+    CONSTRAINT fk_survey_answers_submission_survey FOREIGN KEY (submission_id, survey_id) REFERENCES survey_submissions (id, survey_id) ON DELETE CASCADE,
     CONSTRAINT fk_survey_answers_survey       FOREIGN KEY (survey_id) REFERENCES surveys (id),
-    -- Composite FK against uq_survey_questions_id_survey: the database — not just application
-    -- code — now rejects an answer whose question belongs to a different survey than the
-    -- submission it's attached to.
+    -- Composite FK against uq_survey_questions_id_survey: answer.survey_id must match the
+    -- question's survey too, so question and submission cannot point at different surveys.
     CONSTRAINT fk_survey_answers_question_survey FOREIGN KEY (question_id, survey_id) REFERENCES survey_questions (id, survey_id),
     CONSTRAINT uq_survey_answers_submission_question UNIQUE (submission_id, question_id)
 );
