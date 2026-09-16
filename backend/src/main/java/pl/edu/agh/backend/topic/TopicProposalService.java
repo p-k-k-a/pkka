@@ -1,13 +1,10 @@
 package pl.edu.agh.backend.topic;
 
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
@@ -31,13 +28,20 @@ public class TopicProposalService {
         return TopicProposalResponse.from(topicProposalRepository.saveAndFlush(proposal));
     }
 
+    /**
+     * A valid, verified-alumn token is enough to reach this endpoint (see SecurityConfig); the
+     * local {@link pl.edu.agh.backend.user.User} row is only created lazily on the first write
+     * (see {@link CallerUserService#getOrCreate}). So a caller who has never submitted anything
+     * yet is a legitimate, authenticated caller with zero proposals — not an error — and gets an
+     * empty page instead of a 401.
+     */
     @Transactional(readOnly = true)
     public Page<TopicProposalResponse> listMine(Caller caller, Pageable pageable) {
-        UUID authorId = callerUserService
+        return callerUserService
                 .findId(caller)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        return topicProposalRepository
-                .findAllByAuthorIdOrderByCreatedAtDesc(authorId, pageable)
-                .map(TopicProposalResponse::from);
+                .map(authorId -> topicProposalRepository
+                        .findAllByAuthorIdOrderByCreatedAtDesc(authorId, pageable)
+                        .map(TopicProposalResponse::from))
+                .orElseGet(() -> Page.empty(pageable));
     }
 }

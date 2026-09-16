@@ -82,4 +82,44 @@ class TopicProposalEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
     }
+
+    @Test
+    void listMineReturnsEmptyPageInsteadOf401ForAVerifiedAlumnWhoNeverSubmittedAnything() throws Exception {
+        // No local User row exists yet for this subject: CallerUserService only provisions one
+        // lazily on the first write (see submit() above). A verified-alumn token is still a
+        // legitimate, authenticated caller, so this must be an empty page, not a 401.
+        mockMvc.perform(get("/api/alumni/topic-proposals")
+                        .with(JwtTestSupport.asVerifiedAlumn(UUID.randomUUID().toString())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void authorDisplayNameFallsBackInsteadOfRenderingNullNullForAFreshlyProvisionedUser() throws Exception {
+        // The author's local User row is auto-provisioned on first submit and has no profile
+        // (first/last name) yet — see User.getDisplayName().
+        mockMvc.perform(post("/api/alumni/topic-proposals")
+                        .with(JwtTestSupport.asVerifiedAlumn(UUID.randomUUID().toString()))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Temat","description":"Opis","rationale":"Bo warto"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.authorDisplayName").value("Alumn"));
+    }
+
+    @Test
+    void rejectsProposalWithOversizedDescription() throws Exception {
+        String tooLong = "a".repeat(5001);
+        mockMvc.perform(post("/api/alumni/topic-proposals")
+                        .with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Temat","description":"%s","rationale":"Bo warto"}
+                                """.formatted(tooLong)))
+                .andExpect(status().isBadRequest());
+    }
 }

@@ -9,8 +9,8 @@ public record CreateTopicProposalRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 300)
         String title,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank
+        @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 5000)
         String description,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank
+        @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 5000)
         String rationale) {}

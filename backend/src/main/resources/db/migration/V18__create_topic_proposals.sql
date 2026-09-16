@@ -15,4 +15,4 @@ CREATE TABLE topic_proposals
 );
 
 CREATE INDEX idx_topic_proposals_status_created_at ON topic_proposals (status, created_at DESC);
-CREATE INDEX idx_topic_proposals_author_id ON topic_proposals (author_id);
+CREATE INDEX idx_topic_proposals_author_created_at ON topic_proposals (author_id, created_at DESC);
