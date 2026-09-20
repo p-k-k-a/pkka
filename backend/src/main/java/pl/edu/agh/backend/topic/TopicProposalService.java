@@ -29,11 +29,11 @@ public class TopicProposalService {
     }
 
     /**
-     * A valid, verified-alumn token is enough to reach this endpoint (see SecurityConfig); the
-     * local {@link pl.edu.agh.backend.user.User} row is only created lazily on the first write
-     * (see {@link CallerUserService#getOrCreate}). So a caller who has never submitted anything
-     * yet is a legitimate, authenticated caller with zero proposals — not an error — and gets an
-     * empty page instead of a 401.
+     * Unauthenticated callers never reach this method — SecurityConfig already returns 401 for
+     * them. A verified-alumn token with no local {@link pl.edu.agh.backend.user.User} row yet
+     * (provisioned lazily on first write via {@link CallerUserService#getOrCreate}) is still
+     * authenticated and authorized; they simply have zero proposals, so 200 with an empty page is
+     * correct. Neither 401 (auth already passed) nor 404 (the collection endpoint exists) fits.
      */
     @Transactional(readOnly = true)
     public Page<TopicProposalResponse> listMine(Caller caller, Pageable pageable) {

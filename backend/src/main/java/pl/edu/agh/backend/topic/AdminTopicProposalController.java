@@ -13,8 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,7 +30,7 @@ public class AdminTopicProposalController {
 
     @GetMapping
     @Operation(summary = "List all topic proposals, optionally filtered by status")
-    public Page<AdminTopicProposalResponse> listTopicProposals(
+    public Page<AdminTopicProposalResponse> listAdminTopicProposals(
             @RequestParam(required = false) TopicProposalStatus status,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return adminTopicProposalService.list(Optional.ofNullable(status), pageable);
@@ -40,15 +40,16 @@ public class AdminTopicProposalController {
     @Operation(summary = "Get a single topic proposal")
     @ApiResponse(responseCode = "200", description = "Topic proposal details")
     @ApiResponse(responseCode = "404", description = "Topic proposal not found", content = @Content)
-    public AdminTopicProposalResponse getTopicProposal(@PathVariable UUID id) {
+    public AdminTopicProposalResponse getAdminTopicProposal(@PathVariable UUID id) {
         return adminTopicProposalService.get(id);
     }
 
-    @PutMapping("/{id}/status")
+    @PatchMapping("/{id}/status")
     @Operation(summary = "Update the moderation status of a topic proposal")
     @ApiResponse(responseCode = "200", description = "Topic proposal updated")
+    @ApiResponse(responseCode = "400", description = "Validation failed", content = @Content)
     @ApiResponse(responseCode = "404", description = "Topic proposal not found", content = @Content)
-    public AdminTopicProposalResponse updateStatus(
+    public AdminTopicProposalResponse patchTopicProposalStatus(
             @PathVariable UUID id, @Valid @RequestBody UpdateTopicProposalStatusRequest request) {
         return adminTopicProposalService.updateStatus(id, request);
     }

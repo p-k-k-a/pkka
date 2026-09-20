@@ -2,8 +2,8 @@ package pl.edu.agh.backend.topic;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,7 +74,7 @@ class TopicProposalEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(id.toString()));
 
-        mockMvc.perform(put("/api/admin/topic-proposals/{id}/status", id)
+        mockMvc.perform(patch("/api/admin/topic-proposals/{id}/status", id)
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,10 +84,32 @@ class TopicProposalEndpointTest {
     }
 
     @Test
-    void listMineReturnsEmptyPageInsteadOf401ForAVerifiedAlumnWhoNeverSubmittedAnything() throws Exception {
+    void rejectsStatusUpdateWithoutStatusField() throws Exception {
+        String created = mockMvc.perform(post("/api/alumni/topic-proposals")
+                        .with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Temat","description":"Opis","rationale":"Bo warto"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID id = UUID.fromString(JsonPath.read(created, "$.id"));
+
+        mockMvc.perform(patch("/api/admin/topic-proposals/{id}/status", id)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listMyTopicProposalsReturnsEmptyPageForVerifiedAlumnWithoutLocalUserRow() throws Exception {
         // No local User row exists yet for this subject: CallerUserService only provisions one
-        // lazily on the first write (see submit() above). A verified-alumn token is still a
-        // legitimate, authenticated caller, so this must be an empty page, not a 401.
+        // lazily on the first write. Security already accepted the token; zero proposals => 200 [].
         mockMvc.perform(get("/api/alumni/topic-proposals")
                         .with(JwtTestSupport.asVerifiedAlumn(UUID.randomUUID().toString())))
                 .andExpect(status().isOk())

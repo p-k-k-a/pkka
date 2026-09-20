@@ -30,13 +30,14 @@ public class TopicProposalController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Submit a new topic proposal")
     @ApiResponse(responseCode = "201", description = "Topic proposal created")
-    public TopicProposalResponse submit(@Valid @RequestBody CreateTopicProposalRequest request, Caller caller) {
+    public TopicProposalResponse createTopicProposal(
+            @Valid @RequestBody CreateTopicProposalRequest request, Caller caller) {
         return topicProposalService.submit(caller, request);
     }
 
     @GetMapping
     @Operation(summary = "List topic proposals submitted by the current user")
-    public Page<TopicProposalResponse> listMine(
+    public Page<TopicProposalResponse> listMyTopicProposals(
             Caller caller, @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return topicProposalService.listMine(caller, pageable);
     }
