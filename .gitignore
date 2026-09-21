@@ -11,3 +11,8 @@ thesis.yaml
 # Claude Code local state. skills/ is tracked and shared; these are not.
 .claude/worktrees/
 .claude/settings.local.json
+
+# Local-only credentials (FCM service account key etc). Never committed.
+backend/local/
+*fcm*private*.json
+*-service-account*.json
