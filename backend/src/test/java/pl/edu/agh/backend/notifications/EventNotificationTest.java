@@ -42,7 +42,7 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** No {@code @Transactional}: the announcement fires on commit, which a rolled-back test never reaches. */
-@SpringBootTest(properties = {"app.notifications.enabled=true", "app.notifications.reminder-cron=-"})
+@SpringBootTest(properties = "app.notifications.reminder-cron=-")
 @Testcontainers
 @Import(EventNotificationTest.TestSecurityBeans.class)
 class EventNotificationTest {

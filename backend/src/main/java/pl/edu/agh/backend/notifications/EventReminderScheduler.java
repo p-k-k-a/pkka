@@ -18,7 +18,6 @@ public class EventReminderScheduler {
 
     private final EventRegistrationRepository eventRegistrationRepository;
     private final NotificationService notificationService;
-    private final NotificationProperties properties;
 
     /**
      * Sends everything already due rather than everything inside a one-hour window, so a sweep the server missed
@@ -27,10 +26,6 @@ public class EventReminderScheduler {
     @Scheduled(cron = "${app.notifications.reminder-cron:0 0 * * * *}")
     @Transactional
     public void sendDueReminders() {
-        if (!properties.enabled()) {
-            return;
-        }
-
         List<EventRegistration> due = eventRegistrationRepository.findDueForReminder();
         Instant sentAt = Instant.now();
         Map<UUID, List<EventRegistration>> byEvent = due.stream()

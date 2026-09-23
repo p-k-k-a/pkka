@@ -28,7 +28,7 @@ class ExpoPushClientTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new ExpoPushClient(builder, new NotificationProperties(true, "https://exp.host/--/api/v2/push", ""));
+        client = new ExpoPushClient(builder, new NotificationProperties("https://exp.host/--/api/v2/push", ""));
     }
 
     private static ExpoPushMessage message(String token) {

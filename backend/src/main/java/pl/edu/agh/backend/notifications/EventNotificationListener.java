@@ -15,7 +15,6 @@ public class EventNotificationListener {
 
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
-    private final NotificationProperties properties;
 
     /**
      * After commit, so an event that failed to save never announces itself, and {@code @Async} so the admin's
@@ -26,9 +25,6 @@ public class EventNotificationListener {
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onEventCreated(EventCreatedEvent event) {
-        if (!properties.enabled()) {
-            return;
-        }
         eventRepository.findById(event.eventId()).ifPresent(notificationService::announce);
     }
 }
