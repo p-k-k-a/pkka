@@ -26,7 +26,11 @@ function CtaCard({
 
   return (
     <View className="bg-band dark:border-border rounded-2xl p-7 dark:border dark:bg-card">
-      <Text className="font-heading text-band-foreground text-[28px] font-semibold leading-tight tracking-tight">
+      <Text
+        role="heading"
+        aria-level="2"
+        className="font-heading text-band-foreground text-[28px] font-semibold leading-tight tracking-tight"
+      >
         {title}
       </Text>
       <Text className="text-band-foreground/80 mt-3 text-base leading-relaxed">{subtitle}</Text>

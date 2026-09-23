@@ -59,7 +59,7 @@ function NoApplicationView({ colors }: { colors: (typeof THEME)["light"] }) {
     <View className="gap-5">
       <View className="self-start flex-row items-center gap-2 rounded-full border border-destructive bg-destructive/10 px-3 py-1.5">
         <View className="bg-destructive size-2 rounded-full" />
-        <Text className="text-destructive text-xs font-semibold">Status: Niezweryfikowany</Text>
+        <Text className="text-foreground text-xs font-semibold">Status: Niezweryfikowany</Text>
       </View>
 
       <View className="gap-2">
@@ -257,7 +257,7 @@ export function UserPanel() {
 
       <Button size="lg" variant="outline" className="w-full" onPress={logout}>
         <LogOut size={18} color={colors.destructive} />
-        <Text className="text-destructive font-bold">Wyloguj się</Text>
+        <Text className="font-bold">Wyloguj się</Text>
       </Button>
     </ScrollView>
   );

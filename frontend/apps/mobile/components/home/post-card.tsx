@@ -16,15 +16,21 @@ export function PostCard({ post }: PostCardProps) {
   const { title, slug, publishedAt } = post;
 
   const card = (
-    <Card className="gap-0 rounded-3xl p-6">
+    <Card className="bg-muted gap-0 rounded-3xl border-0 p-6 shadow-none">
       <View className="gap-3">
         <Text className="text-muted-foreground text-sm font-semibold">
           {formatPublishedAtCompact(publishedAt)}
         </Text>
-        <Text className="text-foreground text-xl font-bold leading-tight">{title}</Text>
+        <Text
+          role="heading"
+          aria-level="3"
+          className="text-foreground text-xl font-bold leading-tight"
+        >
+          {title}
+        </Text>
       </View>
 
-      <View className="border-border mt-6 flex-row items-center justify-end gap-1.5 border-t pt-5">
+      <View className="border-foreground/10 mt-6 flex-row items-center justify-end gap-1.5 border-t pt-5">
         <Text className="text-foreground text-xs font-bold uppercase tracking-widest">
           CZYTAJ WIĘCEJ
         </Text>

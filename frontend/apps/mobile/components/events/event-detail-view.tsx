@@ -67,7 +67,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
         </View>
 
         <View className="gap-3">
-          <View className="bg-band self-start rounded-lg px-3 py-1">
+          <View className="bg-band dark:bg-muted self-start rounded-lg px-3 py-1">
             <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
               {eventTypeLabelUpper(type)}
             </Text>

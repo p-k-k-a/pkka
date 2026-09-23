@@ -48,7 +48,7 @@ export function AlumniDirectory() {
     <View className="bg-background flex-1">
       {/* Pinned above the list: keeping the search TextInput out of the FlatList
           header avoids Android focus loss when results change on each keystroke. */}
-      <View className="bg-muted gap-4 px-5 pb-6 pt-8">
+      <View className="border-border gap-4 border-b px-5 pb-5 pt-8">
         <Text
           role="heading"
           aria-level="1"
