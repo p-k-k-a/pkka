@@ -5,9 +5,10 @@ import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import { ApiError } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { AppState } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +26,13 @@ const queryClient = new QueryClient({
       },
     },
   },
+});
+
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener("change", (state) =>
+    handleFocus(state === "active"),
+  );
+  return () => subscription.remove();
 });
 
 export default function RootLayout() {
