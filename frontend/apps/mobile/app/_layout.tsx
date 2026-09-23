@@ -8,7 +8,7 @@ import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
-import { router, Stack } from "expo-router";
+import { router, Stack, useNavigationContainerRef } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -27,6 +27,8 @@ Notifications.setNotificationHandler({
 });
 
 function useNotificationRouting() {
+  const navigationRef = useNavigationContainerRef();
+
   useEffect(() => {
     const openTarget = (response: Notifications.NotificationResponse | null) => {
       const payload = parseNotificationPayload(response?.notification.request.content.data);
@@ -34,13 +36,22 @@ function useNotificationRouting() {
       router.push({ pathname: "/events/[id]", params: { id: payload.targetId } });
     };
 
-    // Read synchronously: a cold start must route after the router mounts but before the value is cleared.
-    openTarget(Notifications.getLastNotificationResponse());
-    Notifications.clearLastNotificationResponse();
+    const openLaunchTarget = () => {
+      openTarget(Notifications.getLastNotificationResponse());
+      Notifications.clearLastNotificationResponse();
+    };
+
+    const removeReadyListener = navigationRef.isReady()
+      ? undefined
+      : navigationRef.addListener("ready", openLaunchTarget);
+    if (!removeReadyListener) openLaunchTarget();
 
     const subscription = Notifications.addNotificationResponseReceivedListener(openTarget);
-    return () => subscription.remove();
-  }, []);
+    return () => {
+      removeReadyListener?.();
+      subscription.remove();
+    };
+  }, [navigationRef]);
 }
 
 export default function RootLayout() {
