@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/lib/theme";
+import { ArrowRight } from "lucide-react-native";
 import * as React from "react";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 
 type CtaCardProps = {
   title: string;
@@ -21,28 +22,29 @@ function CtaCard({
   onPrimary,
   onSecondary,
 }: CtaCardProps) {
+  const theme = useThemeColors();
+
   return (
-    <Card className="bg-foreground border-0 p-8 gap-0">
-      <Text
-        variant="h2"
-        className="text-background text-center border-0 pb-0 text-2xl font-bold tracking-tight"
-      >
+    <View className="bg-band dark:border-border rounded-2xl p-7 dark:border dark:bg-card">
+      <Text className="font-heading text-band-foreground text-[28px] font-semibold leading-tight tracking-tight">
         {title}
       </Text>
-      <Text className="text-background/60 text-center text-sm leading-5 mt-3">{subtitle}</Text>
-      <Button variant="secondary" className="mt-6 w-full" onPress={onPrimary}>
-        <Text className="text-foreground text-xs font-bold tracking-widest uppercase">
-          {primaryLabel}
-        </Text>
+      <Text className="text-band-foreground/80 mt-3 text-base leading-relaxed">{subtitle}</Text>
+      <Button size="lg" className="mt-7 w-full" onPress={onPrimary}>
+        <Text className="text-base font-semibold">{primaryLabel}</Text>
+        <ArrowRight size={18} color={theme.primaryForeground} />
       </Button>
       {secondaryLabel ? (
-        <Pressable className="mt-4 items-center" onPress={onSecondary}>
-          <Text className="text-background/60 text-xs font-semibold tracking-widest uppercase">
+        <Pressable
+          className="mt-4 flex-row items-center justify-center gap-1.5 py-2 active:opacity-70"
+          onPress={onSecondary}
+        >
+          <Text className="text-band-foreground text-sm font-semibold underline">
             {secondaryLabel}
           </Text>
         </Pressable>
       ) : null}
-    </Card>
+    </View>
   );
 }
 

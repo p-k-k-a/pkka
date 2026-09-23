@@ -16,10 +16,14 @@ export function BlogPostView({ post }: BlogPostViewProps) {
     >
       <View className="gap-6 px-5 pt-5">
         <View className="gap-2">
-          <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <Text className="text-muted-foreground text-sm font-semibold">
             {formatPublishedAtCompact(post.publishedAt)}
           </Text>
-          <Text variant="h1" className="text-left text-3xl leading-tight">
+          <Text
+            role="heading"
+            aria-level="1"
+            className="font-heading text-foreground text-[28px] font-semibold leading-tight tracking-tight"
+          >
             {post.title}
           </Text>
         </View>
@@ -27,10 +31,8 @@ export function BlogPostView({ post }: BlogPostViewProps) {
         <View className="h-px bg-border" />
 
         <View className="gap-3">
-          <Text className="text-xs font-bold uppercase tracking-widest text-foreground">
-            O wpisie
-          </Text>
-          <Text className="leading-7 text-muted-foreground">{post.content}</Text>
+          <Text className="font-heading text-foreground text-xl font-semibold">O wpisie</Text>
+          <Text className="text-foreground/90 text-base leading-7">{post.content}</Text>
         </View>
       </View>
     </ScrollView>

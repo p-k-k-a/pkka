@@ -21,10 +21,15 @@ function InterestRow({ label, checked, onCheckedChange }: InterestRowProps) {
       <View
         className={cn(
           "flex-1 rounded-md border px-4 py-2.5",
-          checked ? "bg-foreground border-foreground" : "bg-background border-foreground",
+          checked ? "bg-secondary border-primary" : "bg-background border-input",
         )}
       >
-        <Text className={cn("text-sm font-bold", checked ? "text-background" : "text-foreground")}>
+        <Text
+          className={cn(
+            "text-sm font-bold",
+            checked ? "text-secondary-foreground" : "text-foreground",
+          )}
+        >
           {label}
         </Text>
       </View>
