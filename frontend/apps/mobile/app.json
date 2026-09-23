@@ -42,7 +42,75 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "android": {
+            "fonts": [
+              {
+                "fontFamily": "Jost",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Jost_400Regular.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./assets/fonts/Jost_500Medium.ttf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./assets/fonts/Jost_600SemiBold.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./assets/fonts/Jost_700Bold.ttf",
+                    "weight": 700
+                  }
+                ]
+              },
+              {
+                "fontFamily": "Montserrat",
+                "fontDefinitions": [
+                  {
+                    "path": "./assets/fonts/Montserrat_400Regular.ttf",
+                    "weight": 400
+                  },
+                  {
+                    "path": "./assets/fonts/Montserrat_500Medium.ttf",
+                    "weight": 500
+                  },
+                  {
+                    "path": "./assets/fonts/Montserrat_600SemiBold.ttf",
+                    "weight": 600
+                  },
+                  {
+                    "path": "./assets/fonts/Montserrat_700Bold.ttf",
+                    "weight": 700
+                  },
+                  {
+                    "path": "./assets/fonts/Montserrat_800ExtraBold.ttf",
+                    "weight": 800
+                  }
+                ]
+              }
+            ]
+          },
+          "ios": {
+            "fonts": [
+              "./assets/fonts/Jost_400Regular.ttf",
+              "./assets/fonts/Jost_500Medium.ttf",
+              "./assets/fonts/Jost_600SemiBold.ttf",
+              "./assets/fonts/Jost_700Bold.ttf",
+              "./assets/fonts/Montserrat_400Regular.ttf",
+              "./assets/fonts/Montserrat_500Medium.ttf",
+              "./assets/fonts/Montserrat_600SemiBold.ttf",
+              "./assets/fonts/Montserrat_700Bold.ttf",
+              "./assets/fonts/Montserrat_800ExtraBold.ttf"
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

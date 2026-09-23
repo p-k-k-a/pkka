@@ -15,7 +15,12 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: theme.foreground,
         tabBarInactiveTintColor: theme.mutedForeground,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8 },
+        tabBarLabelStyle: {
+          fontFamily: "Montserrat",
+          fontSize: 10,
+          fontWeight: "700",
+          letterSpacing: 0.8,
+        },
         tabBarStyle: {
           backgroundColor: theme.card,
           borderTopColor: theme.border,
