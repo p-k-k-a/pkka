@@ -10,7 +10,7 @@ type EyebrowProps = {
 
 function Eyebrow({ children, className }: EyebrowProps) {
   return (
-    <View className={cn("bg-accent/10 self-start rounded-lg px-3 py-1", className)}>
+    <View className={cn("bg-background self-start rounded-lg px-3 py-1", className)}>
       <Text className="text-accent text-xs font-semibold uppercase tracking-widest">
         {children}
       </Text>

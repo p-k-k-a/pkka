@@ -36,7 +36,11 @@ function EventCard({ event }: EventCardProps) {
         ) : null}
       </View>
 
-      <Text className="font-heading text-foreground text-lg font-semibold leading-snug">
+      <Text
+        role="heading"
+        aria-level="3"
+        className="font-heading text-foreground text-lg font-semibold leading-snug"
+      >
         {title}
       </Text>
 

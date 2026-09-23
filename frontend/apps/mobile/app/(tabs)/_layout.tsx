@@ -1,11 +1,12 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { useAuth } from "@/lib/auth-context";
-import { useThemeColors } from "@/lib/theme";
+import { useAppColorScheme, useThemeColors } from "@/lib/theme";
 import { Tabs } from "expo-router";
 import { Calendar, Home, LogIn, User, Users } from "lucide-react-native";
 
 export default function TabsLayout() {
   const theme = useThemeColors();
+  const scheme = useAppColorScheme();
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
 
@@ -13,7 +14,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.foreground,
+        tabBarActiveTintColor: scheme === "dark" ? theme.primary : theme.accent,
         tabBarInactiveTintColor: theme.mutedForeground,
         tabBarLabelStyle: {
           fontFamily: "Montserrat",
