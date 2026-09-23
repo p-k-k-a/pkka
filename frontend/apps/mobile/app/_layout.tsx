@@ -1,6 +1,6 @@
 import "@/global.css";
 import { AuthProvider } from "@/lib/auth-context";
-import { NAV_THEME } from "@/lib/theme";
+import { NAV_THEME, useAppColorScheme } from "@/lib/theme";
 import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import { createQueryClient } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
@@ -15,7 +15,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 const queryClient = createQueryClient();
 
 export default function RootLayout() {
-  const colorScheme: "light" | "dark" = "light";
+  const colorScheme = useAppColorScheme();
 
   return (
     <KeyboardProvider>
@@ -34,7 +34,7 @@ export default function RootLayout() {
                     <Stack.Screen name="alumni/[id]" options={{ headerShown: false }} />
                   </Stack>
                 </SafeAreaView>
-                <StatusBar style="auto" />
+                <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
                 <PortalHost />
               </BottomSheetProvider>
             </AuthProvider>

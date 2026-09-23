@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "userInterfaceStyle": "light",
+      "userInterfaceStyle": "automatic",
       "package": "com.pkka.app"
     },
     "web": {
@@ -38,7 +38,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#011125"
           }
         }
       ],

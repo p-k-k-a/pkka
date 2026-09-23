@@ -1,11 +1,9 @@
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { eventTypeLabelUpper, formatEventDateLong } from "@pkka/domain";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
-import { ArrowRight, Link2, MapPin } from "lucide-react-native";
+import { ArrowRight, Calendar, Link2, MapPin, Users } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type EventCardProps = {
@@ -13,46 +11,51 @@ type EventCardProps = {
 };
 
 function EventCard({ event }: EventCardProps) {
+  const theme = useThemeColors();
   const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
   const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
 
   const card = (
-    <Card className="border-0 bg-muted gap-3 p-5 shadow-none">
-      <View className="gap-1">
-        <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {formatEventDateLong(startsAt)}
-        </Text>
-        <Text variant="h3" className="text-xl font-bold leading-tight">
-          {title}
+    <View className="bg-muted gap-5 rounded-2xl p-6">
+      <View className="bg-band self-start rounded-lg px-3 py-1">
+        <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
+          {eventTypeLabelUpper(type)}
         </Text>
       </View>
 
-      {location ? (
-        <View className="flex-row items-center gap-2">
-          <LocationIcon size={14} color={THEME.light.mutedForeground} />
-          <Text className="text-sm text-muted-foreground">{location}</Text>
+      <Text className="font-heading text-foreground text-lg font-semibold leading-snug">
+        {title}
+      </Text>
+
+      <View className="gap-3">
+        <View className="flex-row items-start gap-3">
+          <Calendar size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
+          <Text className="text-muted-foreground flex-1 text-sm">
+            {formatEventDateLong(startsAt)}
+          </Text>
         </View>
-      ) : null}
-
-      <View className="flex-row items-center gap-1.5 pt-1">
-        <Text className="text-xs font-bold uppercase tracking-widest text-foreground">
-          Szczegóły
-        </Text>
-        <ArrowRight size={14} color={THEME.light.foreground} />
-      </View>
-
-      <View className="flex-row gap-2">
-        <Badge variant="default">
-          <Text>{eventTypeLabelUpper(type)}</Text>
-        </Badge>
+        {location ? (
+          <View className="flex-row items-start gap-3">
+            <LocationIcon size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
+            <Text className="text-muted-foreground flex-1 text-sm">{location}</Text>
+          </View>
+        ) : null}
         {typeof seatLimit === "number" ? (
-          <Badge variant="outline">
-            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
-          </Badge>
+          <View className="flex-row items-start gap-3">
+            <Users size={16} color={theme.mutedForeground} style={{ marginTop: 2 }} />
+            <Text className="text-muted-foreground flex-1 text-sm">
+              {`${seatsTaken!}/${seatLimit} MIEJSC`}
+            </Text>
+          </View>
         ) : null}
       </View>
-    </Card>
+
+      <View className="bg-background flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2">
+        <Text className="text-accent text-sm font-medium">Szczegóły</Text>
+        <ArrowRight size={14} color={theme.accent} />
+      </View>
+    </View>
   );
 
   return (

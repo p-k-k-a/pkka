@@ -3,6 +3,7 @@ import { Hero } from "@/components/home/hero";
 import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/lib/theme";
 import { useListPosts } from "@pkka/api";
 import { ChevronDown } from "lucide-react-native";
 import * as React from "react";
@@ -23,15 +24,19 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 pt-8 gap-10">
+    <View className="gap-10">
       <Hero {...HERO} />
-      <CtaCard {...CTA} />
-      <SectionHeading title={"Publiczne\nAktualności"} />
+      <View className="gap-10 px-5">
+        <CtaCard {...CTA} />
+        <SectionHeading title="Publiczne Aktualności" />
+      </View>
     </View>
   );
 }
 
 function ListFooter() {
+  const theme = useThemeColors();
+
   return (
     <Pressable
       className="flex-row items-center justify-center gap-2 py-8"
@@ -39,10 +44,10 @@ function ListFooter() {
         console.log("nothing yet");
       }}
     >
-      <Text className="text-xs font-bold tracking-widest uppercase text-foreground">
+      <Text className="text-accent text-xs font-bold uppercase tracking-widest">
         ZOBACZ STARSZE WPISY
       </Text>
-      <ChevronDown size={16} />
+      <ChevronDown size={16} color={theme.accent} />
     </Pressable>
   );
 }
@@ -62,9 +67,9 @@ export default function HomeScreen() {
           <PostCard post={item} />
         </View>
       )}
-      ItemSeparatorComponent={() => <View className="h-5" />}
+      ItemSeparatorComponent={() => <View className="h-6" />}
       ListHeaderComponent={ListHeader}
-      ListHeaderComponentStyle={{ marginBottom: 20 }}
+      ListHeaderComponentStyle={{ marginBottom: 24 }}
       ListFooterComponent={
         isLoading ? (
           <ActivityIndicator className="py-8" />

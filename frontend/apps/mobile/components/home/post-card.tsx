@@ -1,33 +1,35 @@
-import { Card, CardFooter, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/lib/theme";
 import { formatPublishedAtCompact } from "@pkka/domain";
 import type { PostSummaryResponse } from "@pkka/api";
 import { Link } from "expo-router";
-import { Pressable } from "react-native";
+import { ArrowRight } from "lucide-react-native";
+import { Pressable, View } from "react-native";
 
 type PostCardProps = {
   post: PostSummaryResponse;
 };
 
 export function PostCard({ post }: PostCardProps) {
+  const theme = useThemeColors();
   const { title, slug, publishedAt } = post;
 
   const card = (
-    <Card className="border-0 bg-muted rounded-3xl shadow-md shadow-black/10">
-      <CardHeader className="gap-2">
-        <Text className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
+    <Card className="gap-0 rounded-3xl p-6">
+      <View className="gap-3">
+        <Text className="text-muted-foreground text-sm font-semibold">
           {formatPublishedAtCompact(publishedAt)}
         </Text>
-        <Text variant="h3" className="text-xl font-bold leading-tight">
-          {title}
-        </Text>
-      </CardHeader>
+        <Text className="text-foreground text-xl font-bold leading-tight">{title}</Text>
+      </View>
 
-      <CardFooter>
-        <Text className="text-xs font-bold tracking-widest uppercase text-foreground">
+      <View className="border-border mt-6 flex-row items-center justify-end gap-1.5 border-t pt-5">
+        <Text className="text-foreground text-xs font-bold uppercase tracking-widest">
           CZYTAJ WIĘCEJ
         </Text>
-      </CardFooter>
+        <ArrowRight size={14} color={theme.foreground} />
+      </View>
     </Card>
   );
 

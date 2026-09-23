@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { HeartHandshake, UserRound } from "lucide-react-native";
 import { View } from "react-native";
 
@@ -10,18 +10,23 @@ type ProfileHeroProps = {
 };
 
 export function ProfileHero({ profile }: ProfileHeroProps) {
+  const theme = useThemeColors();
   const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
   const alumnSinceDate = profile.alumnSince?.split("-").reverse().join(".");
 
   return (
     <View className="gap-6">
-      <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
-        <UserRound size={96} color={THEME.light.mutedForeground} strokeWidth={1.5} />
+      <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
+        <UserRound size={96} color={theme.mutedForeground} strokeWidth={1.5} />
       </View>
 
       <View className="gap-1">
         {profile.visibility.name && name ? (
-          <Text variant="h1" className="text-left font-heading leading-tight">
+          <Text
+            role="heading"
+            aria-level="1"
+            className="font-heading text-foreground text-[33px] font-semibold leading-tight tracking-tight"
+          >
             {name}
           </Text>
         ) : null}
@@ -46,7 +51,7 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
         ) : null}
         {profile.willingToMentor ? (
           <Badge className="mt-2 gap-1.5 self-start px-3 py-1">
-            <HeartHandshake size={13} color={THEME.light.primaryForeground} />
+            <HeartHandshake size={13} color={theme.primaryForeground} />
             <Text className="text-xs font-semibold uppercase tracking-wider">
               Otwarty na mentoring
             </Text>
