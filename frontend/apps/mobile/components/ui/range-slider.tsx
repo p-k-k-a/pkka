@@ -74,7 +74,7 @@ export function RangeSlider({ min, max, low, high, step = 1, onChange }: RangeSl
             <View
               {...responders.low.panHandlers}
               hitSlop={12}
-              className="border-primary bg-background absolute size-6 rounded-full border-2"
+              className="border-foreground dark:border-primary bg-background absolute size-6 rounded-full border-2"
               // When both thumbs sit at max, lift the low thumb above the high
               // thumb so it stays grabbable (only the low thumb can still move).
               style={{ left: valueToX(low), zIndex: low === max ? 2 : 1 }}
@@ -82,7 +82,7 @@ export function RangeSlider({ min, max, low, high, step = 1, onChange }: RangeSl
             <View
               {...responders.high.panHandlers}
               hitSlop={12}
-              className="border-primary bg-background absolute size-6 rounded-full border-2"
+              className="border-foreground dark:border-primary bg-background absolute size-6 rounded-full border-2"
               style={{ left: valueToX(high), zIndex: 1 }}
             />
           </>

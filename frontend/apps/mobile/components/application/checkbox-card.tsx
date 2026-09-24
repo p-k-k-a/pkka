@@ -19,7 +19,7 @@ function CheckboxCard({ title, description, checked, onCheckedChange }: Checkbox
       className={cn(
         "flex-row items-start gap-4 rounded-lg border p-4",
         checked
-          ? "bg-secondary border-primary"
+          ? "bg-primary/15 border-primary"
           : "bg-background border-muted-foreground/25 dark:border-input",
       )}
     >
