@@ -48,7 +48,7 @@ const STATUS_CONFIG: Record<"UNDER_REVIEW" | "APPROVED" | "REJECTED", StatusConf
   REJECTED: {
     dotClass: "bg-destructive",
     badgeClass: "border-destructive bg-destructive/10",
-    textClass: "text-destructive",
+    textClass: "text-foreground",
     label: "Wniosek odrzucony",
     heading: "Wniosek odrzucony",
     description: "Twój wniosek nie został zaakceptowany.",

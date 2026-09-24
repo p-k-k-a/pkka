@@ -84,7 +84,9 @@ export function LoginScreen() {
         <View className="mt-7 flex-row items-center justify-center">
           <Text variant="muted">Nie masz konta? </Text>
           <Button variant="link" onPress={() => loginWith(KEYCLOAK_URL)}>
-            <Text className="font-bold text-accent underline">Zarejestruj się</Text>
+            <Text className="font-bold text-accent underline dark:text-primary">
+              Zarejestruj się
+            </Text>
           </Button>
         </View>
       </View>

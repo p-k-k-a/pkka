@@ -22,18 +22,11 @@ function InterestRow({ label, checked, onCheckedChange }: InterestRowProps) {
         className={cn(
           "flex-1 rounded-md border px-4 py-2.5",
           checked
-            ? "bg-secondary border-primary"
+            ? "bg-primary/15 border-primary"
             : "bg-background border-muted-foreground/25 dark:border-input",
         )}
       >
-        <Text
-          className={cn(
-            "text-sm font-bold",
-            checked ? "text-secondary-foreground" : "text-foreground",
-          )}
-        >
-          {label}
-        </Text>
+        <Text className={cn("text-sm font-bold", "text-foreground")}>{label}</Text>
       </View>
     </Pressable>
   );
