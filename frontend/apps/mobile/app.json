@@ -52,14 +52,6 @@
                 "fontFamily": "Jost",
                 "fontDefinitions": [
                   {
-                    "path": "./assets/fonts/Jost_400Regular.ttf",
-                    "weight": 400
-                  },
-                  {
-                    "path": "./assets/fonts/Jost_500Medium.ttf",
-                    "weight": 500
-                  },
-                  {
                     "path": "./assets/fonts/Jost_600SemiBold.ttf",
                     "weight": 600
                   },
@@ -98,8 +90,6 @@
           },
           "ios": {
             "fonts": [
-              "./assets/fonts/Jost_400Regular.ttf",
-              "./assets/fonts/Jost_500Medium.ttf",
               "./assets/fonts/Jost_600SemiBold.ttf",
               "./assets/fonts/Jost_700Bold.ttf",
               "./assets/fonts/Montserrat_400Regular.ttf",
