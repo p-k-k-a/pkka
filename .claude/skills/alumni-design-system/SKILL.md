@@ -93,9 +93,29 @@ mobile's `tailwind.config.js` colour map stay hand-written, and only need
 touching when a token is added or removed, not when a value changes.
 
 Fonts are separate: web loads Jost + Montserrat via `next/font/google` in
-`app/layout.tsx` (`--font-jost` / `--font-montserrat`). Mobile declares
-`fontFamily.heading/sans` in `tailwind.config.js` but **loads no font file
-yet** — `font-heading` currently falls back to the system face there.
+`app/layout.tsx` (`--font-jost` / `--font-montserrat`). Mobile bundles the TTFs
+in `assets/fonts/` and registers them with the `expo-font` config plugin in
+`app.json` (weighted families, so `font-semibold` resolves natively; adding a
+weight needs a native rebuild). `Text` defaults to `font-sans`, heading variants
+use `font-heading`, and `cn()` in `lib/utils.ts` knows both families so
+tailwind-merge lets `font-heading` override the base.
+
+## Mobile colour rules (light + dark)
+
+- Colours come from semantic tokens only: `className` utilities for views/text,
+  `useThemeColors()` from `lib/theme.ts` for imperative props (lucide icons,
+  sheet surfaces, tab bar). Never `THEME.light.*` or a hex literal — ESLint
+  (`no-restricted-syntax` in `apps/mobile/eslint.config.js`) rejects both.
+- Dark tokens collide: `card` = `muted` = `secondary` = `popover` (`#2e4058`)
+  and `background` = `band` (`#011125`). A `bg-muted` element on a card, or a
+  `bg-band` chip on the page, disappears in dark — pick the surface against
+  its actual parent.
+- Light tokens collide too: `border` = `input` = `muted` = `#edf1fa`, invisible
+  on white. Field and outline borders use `border-muted-foreground/25
+dark:border-input`.
+- Selected states use an amber tint (`bg-primary/15 border-primary`), never an
+  inverted `bg-foreground` fill.
+- Check every visual change in both schemes before merging.
 
 ## Page rhythm — bands of tone
 
