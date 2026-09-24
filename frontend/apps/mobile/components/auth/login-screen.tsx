@@ -39,9 +39,11 @@ export function LoginScreen() {
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-muted px-5">
+    <View className="flex-1 items-center justify-center bg-muted px-5 dark:bg-background">
       <View className="w-full gap-0 rounded-3xl border border-border bg-card p-7 shadow-sm shadow-black/5">
-        <Eyebrow className="mb-4">Klub Alumnów WI AGH</Eyebrow>
+        <Eyebrow onCard className="mb-4">
+          Klub Alumnów WI AGH
+        </Eyebrow>
         <Text
           role="heading"
           aria-level="1"

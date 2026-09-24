@@ -1,5 +1,6 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
@@ -72,8 +73,8 @@ function NoApplicationView({ colors }: { colors: (typeof THEME)["light"] }) {
       </View>
 
       <View className="gap-3 mt-2">
-        <Button size="lg" className="w-full" disabled>
-          <DiscordIcon size={18} color={colors.primaryForeground} />
+        <Button size="lg" variant="outline" className="w-full" disabled>
+          <DiscordIcon size={18} color={colors.foreground} />
           <Text className="font-bold">Zweryfikuj przez Discord (wkrótce)</Text>
         </Button>
 
@@ -222,43 +223,39 @@ export function UserPanel() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-4 py-8 gap-8"
+      contentContainerClassName="pb-10"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <Text
-        role="heading"
-        aria-level="1"
-        className="font-heading text-foreground text-[33px] font-semibold leading-tight tracking-tight"
-      >
-        Profil
-      </Text>
+      <PageHeader title="Profil" className="pb-8" />
 
-      {isLoading && !refreshing ? (
-        <ActivityIndicator />
-      ) : loadFailed ? (
-        <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
-      ) : !application || !knownStatus ? (
-        <NoApplicationView colors={colors} />
-      ) : knownStatus === "APPROVED" ? (
-        <AlumniProfileSection
-          profile={profileData?.data}
-          isPending={profilePending && !refreshing}
-          isError={profileError}
-        />
-      ) : (
-        <ApplicationStatusView
-          status={knownStatus}
-          rejectionReason={application.rejectionReason}
-          colors={colors}
-        />
-      )}
+      <View className="gap-8 px-5 pt-8">
+        {isLoading && !refreshing ? (
+          <ActivityIndicator />
+        ) : loadFailed ? (
+          <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
+        ) : !application || !knownStatus ? (
+          <NoApplicationView colors={colors} />
+        ) : knownStatus === "APPROVED" ? (
+          <AlumniProfileSection
+            profile={profileData?.data}
+            isPending={profilePending && !refreshing}
+            isError={profileError}
+          />
+        ) : (
+          <ApplicationStatusView
+            status={knownStatus}
+            rejectionReason={application.rejectionReason}
+            colors={colors}
+          />
+        )}
 
-      <Separator />
+        <Separator />
 
-      <Button size="lg" variant="outline" className="w-full" onPress={logout}>
-        <LogOut size={18} color={colors.destructive} />
-        <Text className="font-bold">Wyloguj się</Text>
-      </Button>
+        <Button size="lg" variant="outline" className="w-full" onPress={logout}>
+          <LogOut size={18} color={colors.destructive} />
+          <Text className="font-bold">Wyloguj się</Text>
+        </Button>
+      </View>
     </ScrollView>
   );
 }

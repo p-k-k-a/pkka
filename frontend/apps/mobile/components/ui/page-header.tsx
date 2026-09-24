@@ -5,12 +5,19 @@ import { View } from "react-native";
 
 type EyebrowProps = {
   children: string;
+  onCard?: boolean;
   className?: string;
 };
 
-function Eyebrow({ children, className }: EyebrowProps) {
+function Eyebrow({ children, onCard = false, className }: EyebrowProps) {
   return (
-    <View className={cn("bg-background self-start rounded-lg px-3 py-1", className)}>
+    <View
+      className={cn(
+        "self-start rounded-lg px-3 py-1",
+        onCard ? "bg-accent/10 dark:bg-background" : "bg-background",
+        className,
+      )}
+    >
       <Text className="text-accent text-xs font-semibold uppercase tracking-widest">
         {children}
       </Text>

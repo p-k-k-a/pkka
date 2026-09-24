@@ -18,7 +18,9 @@ function CheckboxCard({ title, description, checked, onCheckedChange }: Checkbox
       onPress={() => onCheckedChange(!checked)}
       className={cn(
         "flex-row items-start gap-4 rounded-lg border p-4",
-        checked ? "bg-secondary border-primary" : "bg-background border-input",
+        checked
+          ? "bg-secondary border-primary"
+          : "bg-background border-muted-foreground/25 dark:border-input",
       )}
     >
       <Checkbox checked={checked} onCheckedChange={onCheckedChange} className="mt-0.5" />
