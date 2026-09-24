@@ -30,7 +30,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         setIndex(next);
         if (next === 0) onClose();
       }}
-      scrimColor="#000000"
+      scrimColor="black"
       scrimOpacities={SCRIM_OPACITIES}
       surface={
         <View
