@@ -16,7 +16,7 @@ const textVariants = cva(
       variant: {
         default: "",
         h1: cn(
-          "font-heading text-center text-4xl font-extrabold tracking-tight",
+          "font-heading text-center text-4xl font-semibold tracking-tight",
           Platform.select({ web: "scroll-m-20 text-balance" }),
         ),
         h2: cn(
