@@ -12,7 +12,14 @@ type SectionHeadingProps = {
 function SectionHeading({ title, className, centered = false }: SectionHeadingProps) {
   return (
     <View className={cn("gap-1", className)}>
-      <Text variant="h1" className={cn("text-left text-4xl", centered && "text-center")}>
+      <Text
+        role="heading"
+        aria-level="2"
+        className={cn(
+          "font-heading text-foreground text-[28px] font-semibold leading-tight tracking-tight",
+          centered && "text-center",
+        )}
+      >
         {title}
       </Text>
     </View>

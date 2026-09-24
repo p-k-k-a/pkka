@@ -1,5 +1,6 @@
 import { EventCard } from "@/components/events/event-card";
 import { CtaCard } from "@/components/home/cta-card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
 import { useListEvents } from "@pkka/api";
 import { router } from "expo-router";
@@ -14,19 +15,15 @@ const CTA = {
 
 function ListHeader() {
   return (
-    <View className="px-5 pt-8 gap-8">
-      <View>
-        <View className="gap-1">
-          <Text variant="h1" className="text-left text-4xl">
-            Wydarzenia
-          </Text>
-        </View>
-        <Text className="leading-6 text-muted-foreground">
-          Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH.
-          Dołącz do nas i buduj sieć kontaktów.
-        </Text>
+    <View className="gap-10">
+      <PageHeader
+        eyebrow="Kalendarz wydarzeń"
+        title="Wydarzenia"
+        description="Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH. Dołącz do nas i buduj sieć kontaktów."
+      />
+      <View className="px-5">
+        <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
       </View>
-      <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
     </View>
   );
 }
@@ -46,9 +43,9 @@ export default function EventsScreen() {
           <EventCard event={item} />
         </View>
       )}
-      ItemSeparatorComponent={() => <View className="h-5" />}
+      ItemSeparatorComponent={() => <View className="h-6" />}
       ListHeaderComponent={ListHeader}
-      ListHeaderComponentStyle={{ marginBottom: 20 }}
+      ListHeaderComponentStyle={{ marginBottom: 24 }}
       ListFooterComponent={
         <View className="px-5 pb-12 pt-8">
           {isLoading ? (

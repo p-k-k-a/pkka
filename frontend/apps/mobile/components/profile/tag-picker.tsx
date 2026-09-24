@@ -1,7 +1,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { UserTagResponse } from "@pkka/api";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react-native";
@@ -30,6 +30,7 @@ export function TagPicker({
   error = false,
   max = MAX_TAGS,
 }: TagPickerProps) {
+  const theme = useThemeColors();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -87,7 +88,7 @@ export function TagPicker({
               <Text className="text-foreground text-xs font-semibold">
                 {tag.name.toUpperCase()}
               </Text>
-              <X size={12} color={THEME.light.mutedForeground} />
+              <X size={12} color={theme.mutedForeground} />
             </Pressable>
           ))}
         </View>
@@ -95,7 +96,7 @@ export function TagPicker({
 
       <View className="relative justify-center">
         <View pointerEvents="none" className="absolute left-3 z-10">
-          <Search size={18} color={THEME.light.mutedForeground} />
+          <Search size={18} color={theme.mutedForeground} />
         </View>
         <Input
           ref={inputRef}
@@ -129,11 +130,11 @@ export function TagPicker({
           className="absolute right-2 h-8 w-8 items-center justify-center rounded-full active:bg-muted"
         >
           {query ? (
-            <X size={18} color={THEME.light.mutedForeground} />
+            <X size={18} color={theme.mutedForeground} />
           ) : open ? (
-            <ChevronUp size={18} color={THEME.light.mutedForeground} />
+            <ChevronUp size={18} color={theme.mutedForeground} />
           ) : (
-            <ChevronDown size={18} color={THEME.light.mutedForeground} />
+            <ChevronDown size={18} color={theme.mutedForeground} />
           )}
         </Pressable>
       </View>

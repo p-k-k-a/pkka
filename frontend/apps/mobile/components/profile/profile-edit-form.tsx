@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -67,6 +67,7 @@ function IdentityRow({
   value?: string;
   field: AnyFieldApi;
 }) {
+  const theme = useThemeColors();
   const visible = field.state.value as boolean;
   return (
     <View className="gap-2">
@@ -86,9 +87,9 @@ function IdentityRow({
           className="border-border active:bg-muted flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
         >
           {visible ? (
-            <Eye size={14} color={THEME.light.mutedForeground} />
+            <Eye size={14} color={theme.mutedForeground} />
           ) : (
-            <EyeOff size={14} color={THEME.light.mutedForeground} />
+            <EyeOff size={14} color={theme.mutedForeground} />
           )}
           <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
             {visible ? "Widoczne" : "Ukryte"}
@@ -98,7 +99,7 @@ function IdentityRow({
       {value ? (
         <View
           className={cn(
-            "border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
+            "border-muted-foreground/25 dark:border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
             !visible && "opacity-50",
           )}
         >
@@ -110,6 +111,7 @@ function IdentityRow({
 }
 
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
+  const theme = useThemeColors();
   const queryClient = useQueryClient();
 
   const availableTagsQuery = useListUserTags();
@@ -193,18 +195,18 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
   return (
     <KeyboardAwareScrollView
-      style={{ flex: 1, backgroundColor: THEME.light.background }}
+      style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"
       bottomOffset={24}
     >
       <View className="items-center gap-3">
         <View className="border-border bg-muted size-36 items-center justify-center overflow-hidden rounded-full border">
-          <UserRound size={64} color={THEME.light.mutedForeground} strokeWidth={1.5} />
+          <UserRound size={64} color={theme.mutedForeground} strokeWidth={1.5} />
         </View>
         {/* Mocked — photo upload isn't implemented; the button intentionally does nothing. */}
         <Button variant="outline" size="sm" onPress={() => {}} className="active:bg-muted">
-          <Camera size={16} color={THEME.light.foreground} />
+          <Camera size={16} color={theme.foreground} />
           <Text className="group-active:text-foreground">Zmień zdjęcie</Text>
         </Button>
       </View>

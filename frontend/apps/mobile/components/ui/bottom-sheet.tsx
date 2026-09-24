@@ -1,4 +1,4 @@
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useEffect, useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
@@ -14,6 +14,7 @@ const DETENTS: (number | "content")[] = [0, "content"];
 const SCRIM_OPACITIES = [0, 0.4];
 
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+  const theme = useThemeColors();
   const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(visible ? 1 : 0);
 
@@ -29,14 +30,14 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         setIndex(next);
         if (next === 0) onClose();
       }}
-      scrimColor="#000000"
+      scrimColor="black"
       scrimOpacities={SCRIM_OPACITIES}
       surface={
         <View
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: THEME.light.background,
+              backgroundColor: theme.background,
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
             },
@@ -51,7 +52,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
             width: 48,
             height: 5,
             borderRadius: 999,
-            backgroundColor: THEME.light.mutedForeground,
+            backgroundColor: theme.mutedForeground,
             opacity: 0.3,
             marginBottom: 16,
           }}

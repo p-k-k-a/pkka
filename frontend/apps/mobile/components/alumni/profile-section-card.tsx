@@ -10,10 +10,8 @@ type ProfileSectionCardProps = {
 // Card used for bio as well as skills
 export function ProfileSectionCard({ title, children }: ProfileSectionCardProps) {
   return (
-    <Card className="gap-3 p-6">
-      <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-        {title}
-      </Text>
+    <Card className="gap-3 rounded-2xl p-6">
+      <Text className="font-heading text-foreground text-lg font-semibold">{title}</Text>
       <View>{children}</View>
     </Card>
   );

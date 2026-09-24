@@ -10,9 +10,11 @@ type FormSectionProps = {
 
 function FormSection({ title, description, className, children }: FormSectionProps) {
   return (
-    <Card className={cn("gap-5", className)}>
+    <Card className={cn("gap-5 rounded-2xl", className)}>
       <CardHeader>
-        <CardTitle className="text-xl font-extrabold uppercase tracking-tight">{title}</CardTitle>
+        <CardTitle className="font-heading text-[23px] font-semibold leading-tight tracking-tight">
+          {title}
+        </CardTitle>
         {description ? (
           <CardDescription className="leading-5">{description}</CardDescription>
         ) : null}
