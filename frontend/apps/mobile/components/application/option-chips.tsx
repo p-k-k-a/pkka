@@ -26,12 +26,13 @@ function OptionChips<T extends string>({ options, value, onChange }: OptionChips
             isFirst={index === 0}
             isLast={index === options.length - 1}
             className={cn(
+              "h-auto min-h-10 flex-1 shrink px-2 py-2",
               selected ? "bg-secondary border-primary active:bg-secondary/80" : "active:bg-muted",
             )}
           >
             <Text
               className={cn(
-                "text-sm font-bold",
+                "text-center text-[13px] font-bold leading-4",
                 selected ? "text-secondary-foreground" : "text-foreground",
               )}
             >
