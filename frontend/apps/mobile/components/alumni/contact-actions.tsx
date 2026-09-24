@@ -67,7 +67,11 @@ export function ContactActions({ profile }: ContactActionsProps) {
             <ExternalLink label="LinkedIn" url={linkedinUrl} icon={<LinkedinIcon size={16} />} />
           ) : null}
           {githubUrl ? (
-            <ExternalLink label="GitHub" url={githubUrl} icon={<GithubIcon size={16} />} />
+            <ExternalLink
+              label="GitHub"
+              url={githubUrl}
+              icon={<GithubIcon size={16} color={theme.foreground} />}
+            />
           ) : null}
         </View>
       ) : null}
