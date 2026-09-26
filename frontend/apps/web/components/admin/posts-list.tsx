@@ -17,14 +17,13 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { formatPublishedAt } from "@pkka/domain";
-import { isAdmin } from "@pkka/domain";
+import { formatPublishedAt, isAdmin } from "@pkka/domain";
 import {
   getListAdminPostsQueryKey,
   useDeleteAdminPost,
   useListAdminPosts,
+  PostStatus,
   type AdminPostListItemResponse,
-  type ListAdminPostsParams,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
@@ -53,7 +52,7 @@ function PostCardSkeleton() {
   );
 }
 
-type StatusFilter = "ALL" | NonNullable<ListAdminPostsParams["status"]>;
+type StatusFilter = "ALL" | PostStatus;
 
 export function PostsList() {
   const router = useRouter();
@@ -116,8 +115,8 @@ export function PostsList() {
         >
           <TabsList>
             <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-            <TabsTrigger value="PUBLISHED">Opublikowane</TabsTrigger>
-            <TabsTrigger value="DRAFT">Szkice</TabsTrigger>
+            <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
+            <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
           </TabsList>
         </Tabs>
         <Button asChild>
@@ -150,7 +149,7 @@ export function PostsList() {
 
           {posts.map((post) => {
             const { dateLabel } = formatPublishedAt(
-              post.status === "PUBLISHED" ? post.publishedAt : post.createdAt,
+              post.status === PostStatus.PUBLISHED ? post.publishedAt : post.createdAt,
             );
 
             return (
@@ -158,7 +157,8 @@ export function PostsList() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 space-y-1">
                     <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-                      {post.status === "PUBLISHED" ? "Opublikowano" : "Utworzono"}: {dateLabel}
+                      {post.status === PostStatus.PUBLISHED ? "Opublikowano" : "Utworzono"}:{" "}
+                      {dateLabel}
                     </p>
                     <h2 className="text-foreground truncate text-lg font-bold">{post.title}</h2>
                     <p className="text-muted-foreground/70 font-mono text-xs">/{post.slug}</p>

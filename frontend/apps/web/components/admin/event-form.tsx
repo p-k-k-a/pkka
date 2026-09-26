@@ -25,8 +25,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import { AUDIENCE_OPTIONS, EVENT_TYPE_OPTIONS, audienceLabel } from "@pkka/domain";
-import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@pkka/domain";
+import {
+  AUDIENCE_OPTIONS,
+  EVENT_TYPE_OPTIONS,
+  audienceLabel,
+  fromDatetimeLocalValue,
+  toDatetimeLocalValue,
+} from "@pkka/domain";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
