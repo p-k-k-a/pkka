@@ -1,10 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import { TYPE_LABELS } from "@/lib/consts";
+import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
-import { formatEventDateLong } from "@/lib/utils";
-import { EventListItemResponseType, type EventListItemResponse } from "@pkka/api";
+import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -15,7 +14,8 @@ type EventCardProps = {
 
 function EventCard({ event }: EventCardProps) {
   const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
-  const isOnline = type === EventListItemResponseType.ONLINE;
+  const seatsLabel = formatSeatsCompact(seatLimit, seatsTaken);
+  const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
 
   const card = (
@@ -45,11 +45,11 @@ function EventCard({ event }: EventCardProps) {
 
       <View className="flex-row gap-2">
         <Badge variant="default">
-          <Text>{TYPE_LABELS[type!].toUpperCase()}</Text>
+          <Text>{eventTypeLabelUpper(type)}</Text>
         </Badge>
-        {typeof seatLimit === "number" ? (
+        {seatsLabel ? (
           <Badge variant="outline">
-            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
+            <Text>{seatsLabel}</Text>
           </Badge>
         ) : null}
       </View>
@@ -57,7 +57,7 @@ function EventCard({ event }: EventCardProps) {
   );
 
   return (
-    <Link href={{ pathname: "/events/[id]", params: { id: id! } }} asChild>
+    <Link href={{ pathname: "/events/[id]", params: { id } }} asChild>
       <Pressable className="active:opacity-90">{card}</Pressable>
     </Link>
   );

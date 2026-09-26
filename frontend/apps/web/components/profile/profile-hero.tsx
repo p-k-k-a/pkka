@@ -27,16 +27,16 @@ export function ProfileHero({
   const role = [currentPosition, company].filter(Boolean).join(" · ");
 
   return (
-    <section className="bg-navy text-white-text">
+    <section className="bg-band text-band-foreground">
       <div className="mx-auto flex max-w-[1280px] flex-col gap-8 px-4 py-10 md:flex-row md:items-center md:justify-between md:px-10 md:py-16">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
           {/* Both schemes are pinned to band tokens — the avatar's own hashed
-              palette would fight the navy band. */}
+              palette would fight the band. */}
           <Avatar
             src={avatarUrl ?? undefined}
             fallback={fullName}
             alt={fullName}
-            className="border-white-text/20 bg-white-text/10 text-white-text dark:bg-white-text/10 dark:text-white-text size-24 text-2xl font-semibold md:size-28"
+            className="border-band-foreground/20 bg-band-foreground/10 text-band-foreground dark:bg-band-foreground/10 dark:text-band-foreground size-24 text-2xl font-semibold md:size-28"
           />
 
           <div className="flex flex-col gap-2">
@@ -48,7 +48,7 @@ export function ProfileHero({
                   </Badge>
                 ) : null}
                 {willingToMentor ? (
-                  <Badge className="bg-white-text/10 text-white-text rounded-md px-2 py-0.5 text-[11px] font-bold tracking-widest uppercase">
+                  <Badge className="bg-band-foreground/10 text-band-foreground rounded-md px-2 py-0.5 text-[11px] font-bold tracking-widest uppercase">
                     <GraduationCap aria-hidden="true" />
                     Mentor
                   </Badge>
@@ -61,7 +61,7 @@ export function ProfileHero({
                 {fullName || "Twój profil"}
               </h1>
               {nameHidden ? (
-                <span className="text-white-text/60 inline-flex items-center gap-1 text-[11px] font-semibold tracking-widest uppercase">
+                <span className="text-band-foreground/60 inline-flex items-center gap-1 text-[11px] font-semibold tracking-widest uppercase">
                   <EyeOff className="size-3" aria-hidden="true" />
                   Ukryte
                 </span>
@@ -69,7 +69,7 @@ export function ProfileHero({
             </div>
 
             {role ? (
-              <p className="text-white-text/80 flex items-center gap-2 text-[18px]">
+              <p className="text-band-foreground/80 flex items-center gap-2 text-[18px]">
                 <Briefcase className="size-4 shrink-0" aria-hidden="true" />
                 {role}
               </p>
