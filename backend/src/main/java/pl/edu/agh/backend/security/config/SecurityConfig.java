@@ -31,11 +31,13 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
@@ -47,7 +49,9 @@ public class SecurityConfig {
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(
-            HttpSecurity http, JwtAuthenticationConverter jwtAuthenticationConverter) {
+            HttpSecurity http,
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            ApplicationRepository applicationRepository) {
 
         // session read when it exists (web), not created for mobile
         // CSRF enabled for web sessions, ignored for mobile
@@ -60,6 +64,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
                         .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
+                .addFilterAfter(
+                        new ApprovedAlumnRoleFilter(applicationRepository), BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
                         .permitAll()
                         .requestMatchers("/api/me", "/api/tags")
