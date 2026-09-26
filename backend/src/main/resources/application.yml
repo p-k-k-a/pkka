@@ -111,6 +111,18 @@ springdoc:
   swagger-ui:
     enabled: true
 
+# Actuator — health probes; verbose on dev for local debugging
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,flyway,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+
 # Logging
 logging:
   level:
@@ -130,6 +142,11 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      max-lifetime: 1800000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -185,7 +202,7 @@ keycloak:
   realm: ${KEYCLOAK_REALM}
   client-id: pkka-web
   client-secret: ${KEYCLOAK_WEB_CLIENT_SECRET}
-  verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}
+  verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE}
 
 discord:
   guild-id: ${DISCORD_GUILD_ID}
@@ -197,10 +214,30 @@ springdoc:
     enabled: false
 
 server:
-  port: ${PORT:8080}
-  tomcat:
-    remote-ip-header: x-forwarded-for
-    protocol-header: x-forwarded-proto
+  port: ${PORT}
+  forward-headers-strategy: native
+  shutdown: graceful
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: lax
+
+management:
+  server:
+    port: 9090
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
 
 logging:
   level:
