@@ -116,6 +116,6 @@ export function watchForTokenRotation(): Notifications.EventSubscription {
       // A rotation can land after sign-out; re-registering then would revive the device the user just released.
       if (!(await SecureStore.getItemAsync(ACCESS_TOKEN_KEY))) return;
       await storeToken(token);
-    })();
+    })().catch((error) => console.warn("Push token refresh failed:", error));
   });
 }
