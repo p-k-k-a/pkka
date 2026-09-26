@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,7 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** No {@code @Transactional}: the announcement fires on commit, which a rolled-back test never reaches. */
-@SpringBootTest(properties = "app.notifications.reminder-cron=-")
+@SpringBootTest(properties = {"app.notifications.reminder-cron=-", "app.notifications.receipt-cron=-"})
 @Testcontainers
 @Import(EventNotificationTest.TestSecurityBeans.class)
 class EventNotificationTest {
@@ -80,6 +81,9 @@ class EventNotificationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PushTicketRepository pushTicketRepository;
+
     /** The announcement is @Async, so assertions wait for the executor rather than racing it. */
     private static final long SEND_TIMEOUT_MS = 5000;
 
@@ -89,6 +93,7 @@ class EventNotificationTest {
     void setUp() {
         eventRegistrationRepository.deleteAll();
         deviceTokenRepository.deleteAll();
+        pushTicketRepository.deleteAll();
         reset(expoPushClient);
         when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
@@ -182,6 +187,20 @@ class EventNotificationTest {
         adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
 
         awaitUntil(() -> deviceTokenRepository.findAll().isEmpty());
+    }
+
+    @Test
+    void anAcceptedAnnouncement_leavesATicketToCheckForItsReceipt() {
+        userWithDevice("ExponentPushToken[attendee]", false);
+        when(expoPushClient.send(any()))
+                .thenReturn(
+                        new ExpoPushClient.Outcome(true, List.of(), Map.of("ticket-1", "ExponentPushToken[attendee]")));
+
+        adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
+
+        awaitUntil(() -> pushTicketRepository.existsById("ticket-1"));
+        assertThat(pushTicketRepository.findById("ticket-1"))
+                .hasValueSatisfying(ticket -> assertThat(ticket.getToken()).isEqualTo("ExponentPushToken[attendee]"));
     }
 
     private Event registerFor(Instant startsAt, Integer leadTimeMinutes) {

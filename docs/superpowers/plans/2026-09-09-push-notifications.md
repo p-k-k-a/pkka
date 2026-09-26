@@ -24,7 +24,7 @@ expo-notifications ~0.32.17 / expo-router 6 · Next.js web admin.
 per-event lead time. Deep link to the event. In-app on/off switch.
 
 **Out:** iOS (no Apple account — the app never registers a token there). Email and Discord
-channels. Notifications on event edit or deletion. Push receipts polling. Waitlist-promotion
+channels. Notifications on event edit or deletion. Waitlist-promotion
 pushes. `SPECIFIC_GROUP` audience (no groups exist).
 
 ---
@@ -57,7 +57,7 @@ pushes. `SPECIFIC_GROUP` audience (no groups exist).
 | Q10/Q14 | Reminder lead time is **per event**, nullable. `null` means no reminder. No global default. |
 | Q11 | Hourly sweep. No reminder for events created, or registrations made, inside the lead window. |
 | Q13/Q17 | #105 keeps the automatic announcement on event creation. |
-| Q15 | Ticket-level `DeviceNotRegistered` cleanup only. No receipts polling. |
+| Q15 | `DeviceNotRegistered` cleanup from tickets and from receipts: sent tickets are stored and checked 15 minutes later, then dropped after 24 hours. (Revised 2026-09-26: an uninstalled app is only reported in the receipt.) |
 | Q16 | `event_registrations.reminder_sent_at` guards against double sends. |
 | Q18/Q28 | The reminder select in `event-form.tsx` ships **inside #105**, so the field is never unreachable. |
 | Q19 | Logout deletes the row; the client remembers the preference in SecureStore. |
