@@ -1,46 +1,40 @@
-const EVENT_TYPE_LABELS = {
+import { Audience, EventType } from "@pkka/api";
+
+const EVENT_TYPE_LABELS: Record<EventType, string> = {
   ONLINE: "Online",
   IN_PERSON: "Stacjonarnie",
   HYBRID: "Hybrydowo",
-} as const;
+};
 
-type EventType = keyof typeof EVENT_TYPE_LABELS;
-
-const AUDIENCE_LABELS = {
+const AUDIENCE_LABELS: Record<Audience, string> = {
   PUBLIC: "Publiczne",
   ALL_ALUMNI: "Alumini",
   SPECIFIC_GROUP: "Wybrana grupa",
-} as const;
+};
 
-type Audience = keyof typeof AUDIENCE_LABELS;
-
-function eventTypeLabel(type: string) {
-  return type in EVENT_TYPE_LABELS ? EVENT_TYPE_LABELS[type as EventType] : "Wydarzenie";
+export function eventTypeLabelUpper(type: EventType) {
+  return EVENT_TYPE_LABELS[type].toUpperCase();
 }
 
-export function eventTypeLabelUpper(type: string) {
-  return eventTypeLabel(type).toUpperCase();
+export function audienceLabel(audience: Audience) {
+  return AUDIENCE_LABELS[audience];
 }
 
-export function audienceLabel(audience: string) {
-  return audience in AUDIENCE_LABELS ? AUDIENCE_LABELS[audience as Audience] : "Odbiorcy";
-}
-
-export const EVENT_TYPE_OPTIONS = (Object.keys(EVENT_TYPE_LABELS) as EventType[]).map((value) => ({
+export const EVENT_TYPE_OPTIONS = Object.values(EventType).map((value) => ({
   value,
   label: EVENT_TYPE_LABELS[value],
 }));
 
-export const AUDIENCE_OPTIONS = (Object.keys(AUDIENCE_LABELS) as Audience[])
-  .filter((value) => value !== "SPECIFIC_GROUP")
+export const AUDIENCE_OPTIONS = Object.values(Audience)
+  .filter((value) => value !== Audience.SPECIFIC_GROUP)
   .map((value) => ({
     value,
     label: AUDIENCE_LABELS[value],
   }));
 
-export function eventLocationLabel(type: string, location?: string) {
+export function eventLocationLabel(type: EventType, location?: string) {
   if (location?.trim()) return location;
-  if (type === "ONLINE") return "Online";
+  if (type === EventType.ONLINE) return "Online";
   return "Miejsce do ustalenia";
 }
 

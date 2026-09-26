@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import { eventTypeLabelUpper, formatEventDateLong } from "@pkka/domain";
+import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
 import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
@@ -14,6 +14,7 @@ type EventCardProps = {
 
 function EventCard({ event }: EventCardProps) {
   const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
+  const seatsLabel = formatSeatsCompact(seatLimit, seatsTaken);
   const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
 
@@ -46,9 +47,9 @@ function EventCard({ event }: EventCardProps) {
         <Badge variant="default">
           <Text>{eventTypeLabelUpper(type)}</Text>
         </Badge>
-        {typeof seatLimit === "number" ? (
+        {seatsLabel ? (
           <Badge variant="outline">
-            <Text>{`${seatsTaken!}/${seatLimit} MIEJSC`}</Text>
+            <Text>{seatsLabel}</Text>
           </Badge>
         ) : null}
       </View>
@@ -56,7 +57,7 @@ function EventCard({ event }: EventCardProps) {
   );
 
   return (
-    <Link href={{ pathname: "/events/[id]", params: { id: id! } }} asChild>
+    <Link href={{ pathname: "/events/[id]", params: { id } }} asChild>
       <Pressable className="active:opacity-90">{card}</Pressable>
     </Link>
   );

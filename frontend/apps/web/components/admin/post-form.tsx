@@ -13,8 +13,8 @@ import {
   getListAdminPostsQueryKey,
   useCreateAdminPost,
   useUpdateAdminPost,
+  PostStatus,
   type AdminPostResponse,
-  type PostStatus,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CircleAlert, ImageIcon } from "lucide-react";
@@ -45,7 +45,7 @@ export function PostForm({ post }: PostFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isEditing = post !== undefined;
-  const isPublished = post?.status === "PUBLISHED";
+  const isPublished = post?.status === PostStatus.PUBLISHED;
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
@@ -63,7 +63,7 @@ export function PostForm({ post }: PostFormProps) {
     queryClient.invalidateQueries({ queryKey: getListAdminPostsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetAdminPostQueryKey(savedId) });
     setPendingStatus(null);
-    if (status === "PUBLISHED") {
+    if (status === PostStatus.PUBLISHED) {
       toast.success("Wpis opublikowany");
       router.push("/dashboard/posts");
     } else {
@@ -184,8 +184,12 @@ export function PostForm({ post }: PostFormProps) {
               </div>
               <div className="flex flex-col gap-2">
                 {isPublished ? (
-                  <Button type="button" disabled={!canSave} onClick={() => save("PUBLISHED")}>
-                    {pendingStatus === "PUBLISHED" ? "Zapisywanie…" : "Zapisz zmiany"}
+                  <Button
+                    type="button"
+                    disabled={!canSave}
+                    onClick={() => save(PostStatus.PUBLISHED)}
+                  >
+                    {pendingStatus === PostStatus.PUBLISHED ? "Zapisywanie…" : "Zapisz zmiany"}
                   </Button>
                 ) : (
                   <>
@@ -193,12 +197,16 @@ export function PostForm({ post }: PostFormProps) {
                       type="button"
                       variant="outline"
                       disabled={!canSave}
-                      onClick={() => save("DRAFT")}
+                      onClick={() => save(PostStatus.DRAFT)}
                     >
-                      {pendingStatus === "DRAFT" ? "Zapisywanie…" : "Zapisz szkic"}
+                      {pendingStatus === PostStatus.DRAFT ? "Zapisywanie…" : "Zapisz szkic"}
                     </Button>
-                    <Button type="button" disabled={!canSave} onClick={() => save("PUBLISHED")}>
-                      {pendingStatus === "PUBLISHED" ? "Publikowanie…" : "Opublikuj"}
+                    <Button
+                      type="button"
+                      disabled={!canSave}
+                      onClick={() => save(PostStatus.PUBLISHED)}
+                    >
+                      {pendingStatus === PostStatus.PUBLISHED ? "Publikowanie…" : "Opublikuj"}
                     </Button>
                   </>
                 )}

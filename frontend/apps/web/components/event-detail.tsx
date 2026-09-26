@@ -5,10 +5,10 @@ import { useGetEventById } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DetailBackLink } from "@/components/content/detail-back-link";
-import { EventLocationAside, eventCategoryLabel } from "@/components/events/event-location-aside";
+import { EventLocationAside } from "@/components/events/event-location-aside";
 import { ProseContent } from "@/components/content/prose-content";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
-import { isEventPast } from "@pkka/domain";
+import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 import { useAuth } from "@/lib/auth-context";
 
 type EventDetailProps = {
@@ -70,7 +70,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
             <span className="bg-band text-band-foreground mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-              {eventCategoryLabel(event.type)}
+              {eventTypeLabelUpper(event.type)}
             </span>
             <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
               {event.title}

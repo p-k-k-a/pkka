@@ -40,7 +40,7 @@ export default function EventsScreen() {
     <FlatList
       className="flex-1 bg-background"
       data={events}
-      keyExtractor={(item) => item.id!}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
         <View className="px-5">
           <EventCard event={item} />
