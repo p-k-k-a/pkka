@@ -14,11 +14,31 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceToken, UUID> 
 
     Optional<DeviceToken> findByInstallationId(String installationId);
 
-    /**
-     * Bulk delete so the row is gone before the caller inserts its own; a queued delete would flush after the
-     * insert and trip the unique constraint on {@code token}.
-     */
     Optional<DeviceToken> findByToken(String token);
+
+    @Modifying(flushAutomatically = true)
+    @Query(value = """
+                    insert into device_tokens (id, user_id, installation_id, token, platform, created_at, updated_at)
+                    values (gen_random_uuid(), :userId, :installationId, :token, :platform, now(), now())
+                    on conflict do nothing
+                    """, nativeQuery = true)
+    void insertIfAbsent(
+            @Param("userId") UUID userId,
+            @Param("installationId") String installationId,
+            @Param("token") String token,
+            @Param("platform") String platform);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+                    update device_tokens
+                    set user_id = :userId, token = :token, platform = :platform, updated_at = now()
+                    where installation_id = :installationId
+                    """, nativeQuery = true)
+    void updateByInstallationId(
+            @Param("userId") UUID userId,
+            @Param("installationId") String installationId,
+            @Param("token") String token,
+            @Param("platform") String platform);
 
     List<DeviceToken> findByUserIdIn(Collection<UUID> userIds);
 
