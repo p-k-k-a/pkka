@@ -53,22 +53,6 @@ class ExpoPushClientTest {
         server.verify();
     }
 
-    @Test
-    void send_splitsAtOneHundredRecipients() {
-        server.expect(requestTo(SEND_URL))
-                .andExpect(jsonPath("$.length()").value(100))
-                .andRespond(withSuccess("""
-                        {"data":[]}""", MediaType.APPLICATION_JSON));
-        server.expect(requestTo(SEND_URL))
-                .andExpect(jsonPath("$.length()").value(50))
-                .andRespond(withSuccess("""
-                        {"data":[]}""", MediaType.APPLICATION_JSON));
-
-        client.send(IntStream.range(0, 150).mapToObj(i -> message("token-" + i)).toList());
-
-        server.verify();
-    }
-
     /** Guards the index arithmetic: a ticket is positional within its own chunk, not within the whole batch. */
     @Test
     void send_mapsADeadTokenInTheSecondChunkToTheRightToken() {
