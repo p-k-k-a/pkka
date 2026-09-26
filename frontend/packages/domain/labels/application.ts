@@ -1,9 +1,9 @@
-import type {
-  ApplicationStatus,
+import {
   ConsentType,
   Faculty,
   MeetingPreference,
   StudyType,
+  type ApplicationStatus,
 } from "@pkka/api";
 
 const FACULTY_LABELS: Record<Faculty, string> = {
@@ -59,13 +59,16 @@ export function statusLabel(status: ApplicationStatus): string {
   return STATUS_LABELS[status];
 }
 
-type LabelOption<T extends string> = { value: T; label: string };
+export type LabelOption<T extends string> = { value: T; label: string };
 
-// The request and response enums are distinct generated objects with the same members,
-// so each app passes the one its form field is typed against.
 export function toOptions<T extends string>(
   values: Record<string, T>,
   label: (value: T) => string,
 ): LabelOption<T>[] {
   return Object.values(values).map((value) => ({ value, label: label(value) }));
 }
+
+export const FACULTY_OPTIONS = toOptions(Faculty, facultyLabel);
+export const STUDY_TYPE_OPTIONS = toOptions(StudyType, studyTypeLabel);
+export const MEETING_PREFERENCE_OPTIONS = toOptions(MeetingPreference, meetingPreferenceLabel);
+export const CONSENT_OPTIONS = toOptions(ConsentType, consentLabel);

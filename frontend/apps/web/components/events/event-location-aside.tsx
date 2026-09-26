@@ -1,15 +1,12 @@
 import { Calendar, Clock, MapPin } from "lucide-react";
-import type { EventType } from "@pkka/api";
-import { eventLocationLabel, eventTypeLabelUpper } from "@pkka/domain";
-import { formatEventDateComma, formatTimeRange } from "@pkka/domain";
+import type { EventListItemResponse } from "@pkka/api";
+import { eventLocationLabel, formatEventDateComma, formatTimeRange } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 
-export type EventSchedule = {
-  type: EventType;
-  startsAt: string;
-  endsAt: string;
-  location?: string;
-};
+export type EventSchedule = Pick<
+  EventListItemResponse,
+  "type" | "startsAt" | "endsAt" | "location"
+>;
 
 function splitLocation(location: string) {
   const trimmed = location.trim();
@@ -61,8 +58,4 @@ export function EventLocationAside({
       </ul>
     </aside>
   );
-}
-
-export function eventCategoryLabel(type: EventType) {
-  return eventTypeLabelUpper(type);
 }

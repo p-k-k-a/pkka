@@ -91,6 +91,7 @@ until this runs.
 
 ## Where the generated names surface
 
-`packages/domain` imports `@pkka/api` with `import type` only — it must never gain a
-runtime dependency on it. Anything needing an enum **value** at runtime (`Object.values`,
-`instanceof ApiError`) belongs in the app or in `@pkka/api` itself, not in domain.
+`packages/domain` may import generated enum objects from `@pkka/api` (e.g. `EventType.ONLINE`)
+and should type every enum-valued param with the generated type, never `string`. It must not
+use the generated hooks, fetchers or the mutator, and `@pkka/api` must never import from
+`@pkka/domain` — that would be a cycle.
