@@ -21,14 +21,9 @@ public class DeviceTokenService {
     public void register(Caller caller, String installationId, RegisterDeviceRequest request) {
         User user = callerUserService.getOrCreate(caller);
         releaseFromPreviousInstallation(request.token(), installationId, user);
-        DeviceToken device = deviceTokenRepository
-                .findByInstallationId(installationId)
-                .orElseGet(() ->
-                        DeviceToken.builder().installationId(installationId).build());
-        device.setUser(user);
-        device.setToken(request.token());
-        device.setPlatform(request.platform());
-        deviceTokenRepository.save(device);
+        String platform = request.platform().name();
+        deviceTokenRepository.insertIfAbsent(user.getId(), installationId, request.token(), platform);
+        deviceTokenRepository.updateByInstallationId(user.getId(), installationId, request.token(), platform);
     }
 
     /**

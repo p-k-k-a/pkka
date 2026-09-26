@@ -9,9 +9,11 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +25,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -42,7 +45,7 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** No {@code @Transactional}: the announcement fires on commit, which a rolled-back test never reaches. */
-@SpringBootTest(properties = "app.notifications.reminder-cron=-")
+@SpringBootTest(properties = {"app.notifications.reminder-cron=-", "app.notifications.receipt-cron=-"})
 @Testcontainers
 @Import(EventNotificationTest.TestSecurityBeans.class)
 class EventNotificationTest {
@@ -75,6 +78,12 @@ class EventNotificationTest {
     @Autowired
     private ApplicationRepository applicationRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PushTicketRepository pushTicketRepository;
+
     /** The announcement is @Async, so assertions wait for the executor rather than racing it. */
     private static final long SEND_TIMEOUT_MS = 5000;
 
@@ -84,6 +93,7 @@ class EventNotificationTest {
     void setUp() {
         eventRegistrationRepository.deleteAll();
         deviceTokenRepository.deleteAll();
+        pushTicketRepository.deleteAll();
         reset(expoPushClient);
         when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
@@ -179,7 +189,25 @@ class EventNotificationTest {
         awaitUntil(() -> deviceTokenRepository.findAll().isEmpty());
     }
 
+    @Test
+    void anAcceptedAnnouncement_leavesATicketToCheckForItsReceipt() {
+        userWithDevice("ExponentPushToken[attendee]", false);
+        when(expoPushClient.send(any()))
+                .thenReturn(
+                        new ExpoPushClient.Outcome(true, List.of(), Map.of("ticket-1", "ExponentPushToken[attendee]")));
+
+        adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
+
+        awaitUntil(() -> pushTicketRepository.existsById("ticket-1"));
+        assertThat(pushTicketRepository.findById("ticket-1"))
+                .hasValueSatisfying(ticket -> assertThat(ticket.getToken()).isEqualTo("ExponentPushToken[attendee]"));
+    }
+
     private Event registerFor(Instant startsAt, Integer leadTimeMinutes) {
+        return registerFor(startsAt, leadTimeMinutes, Instant.now().minus(1, ChronoUnit.DAYS));
+    }
+
+    private Event registerFor(Instant startsAt, Integer leadTimeMinutes, Instant registeredAt) {
         User user = userWithDevice("ExponentPushToken[attendee]", false);
         Event event = eventRepository.save(Event.builder()
                 .title("Warsztaty")
@@ -189,8 +217,12 @@ class EventNotificationTest {
                 .audience(Audience.PUBLIC)
                 .reminderLeadTimeMinutes(leadTimeMinutes)
                 .build());
-        eventRegistrationRepository.save(
+        EventRegistration registration = eventRegistrationRepository.save(
                 EventRegistration.builder().event(event).user(user).build());
+        jdbcTemplate.update(
+                "update event_registrations set registered_at = ? where id = ?",
+                Timestamp.from(registeredAt),
+                registration.getId());
         return event;
     }
 
@@ -255,6 +287,15 @@ class EventNotificationTest {
     @Test
     void aReminderStillOutsideItsLeadTime_isNotSent() {
         registerFor(Instant.now().plus(5, ChronoUnit.DAYS), 60);
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void aRegistrationInsideTheLeadTime_isNeverReminded() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60, Instant.now());
 
         eventReminderScheduler.sendDueReminders();
 

@@ -3,7 +3,11 @@ package pl.edu.agh.backend.notifications;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +26,8 @@ public class ExpoPushClient {
     /** Expo counts recipients, not message objects, against this limit. */
     private static final int MAX_RECIPIENTS_PER_REQUEST = 100;
 
+    private static final int MAX_RECEIPTS_PER_REQUEST = 1000;
+
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final Duration READ_TIMEOUT = Duration.ofSeconds(15);
 
@@ -29,11 +35,17 @@ public class ExpoPushClient {
      * What one send attempt achieved: whether Expo accepted it at all, and which tokens it says are dead.
      * The caller needs both — a refused batch must be retried later, a dead token must be forgotten now.
      */
-    public record Outcome(boolean delivered, List<String> unreachableTokens) {
+    public record Outcome(boolean delivered, List<String> unreachableTokens, Map<String, String> tickets) {
+        public Outcome(boolean delivered, List<String> unreachableTokens) {
+            this(delivered, unreachableTokens, Map.of());
+        }
+
         static Outcome refused() {
             return new Outcome(false, List.of());
         }
     }
+
+    public record Receipts(Set<String> checked, Set<String> deviceGone) {}
 
     private final RestClient restClient;
 
@@ -64,14 +76,48 @@ public class ExpoPushClient {
     /** Returns whether every chunk was accepted, plus the tokens Expo reports as permanently unreachable. */
     public Outcome send(List<ExpoPushMessage> messages) {
         List<String> unreachable = new ArrayList<>();
+        Map<String, String> tickets = new HashMap<>();
         boolean delivered = true;
         for (int from = 0; from < messages.size(); from += MAX_RECIPIENTS_PER_REQUEST) {
             int to = Math.min(messages.size(), from + MAX_RECIPIENTS_PER_REQUEST);
             Outcome outcome = sendChunk(messages.subList(from, to));
             delivered &= outcome.delivered();
             unreachable.addAll(outcome.unreachableTokens());
+            tickets.putAll(outcome.tickets());
         }
-        return new Outcome(delivered, unreachable);
+        return new Outcome(delivered, unreachable, tickets);
+    }
+
+    /** Receipts Expo has not produced yet are simply absent, so their tickets stay unchecked for the next run. */
+    public Receipts fetchReceipts(List<String> ticketIds) {
+        Set<String> checked = new HashSet<>();
+        Set<String> deviceGone = new HashSet<>();
+        for (int from = 0; from < ticketIds.size(); from += MAX_RECEIPTS_PER_REQUEST) {
+            List<String> chunk = ticketIds.subList(from, Math.min(ticketIds.size(), from + MAX_RECEIPTS_PER_REQUEST));
+            ExpoReceiptsResponse response;
+            try {
+                response = restClient
+                        .post()
+                        .uri("/getReceipts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of("ids", chunk))
+                        .retrieve()
+                        .body(ExpoReceiptsResponse.class);
+            } catch (RestClientException ex) {
+                log.error("Expo refused a receipt lookup for {} tickets", chunk.size(), ex);
+                continue;
+            }
+            if (response == null || response.data() == null) {
+                continue;
+            }
+            response.data().forEach((id, receipt) -> {
+                checked.add(id);
+                if (receipt.deviceGone()) {
+                    deviceGone.add(id);
+                }
+            });
+        }
+        return new Receipts(checked, deviceGone);
     }
 
     /** A failed send is logged, never rethrown: a push nobody receives must not fail the request that caused it. */
@@ -95,6 +141,7 @@ public class ExpoPushClient {
         }
 
         List<String> unreachable = new ArrayList<>();
+        Map<String, String> tickets = new HashMap<>();
         // Tickets come back positionally, so the token a ticket refers to is the one at the same index.
         for (int i = 0; i < Math.min(response.data().size(), chunk.size()); i++) {
             ExpoPushTicket ticket = response.data().get(i);
@@ -102,8 +149,10 @@ public class ExpoPushClient {
                 unreachable.add(chunk.get(i).to());
             } else if (!ticket.ok()) {
                 log.warn("Expo could not deliver a notification: {}", ticket.message());
+            } else if (ticket.id() != null) {
+                tickets.put(ticket.id(), chunk.get(i).to());
             }
         }
-        return new Outcome(true, unreachable);
+        return new Outcome(true, unreachable, tickets);
     }
 }
