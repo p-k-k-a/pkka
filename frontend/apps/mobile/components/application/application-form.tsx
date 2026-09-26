@@ -9,15 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
-import { FACULTIES, MEETING_FORMATS, STUDY_TYPES } from "@/lib/application-constants";
 import {
   graduationYearError,
   hasRequiredConsents,
   isGraduationYearValid,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
+  FACULTY_OPTIONS,
   INTEREST_AREAS,
+  MEETING_PREFERENCE_OPTIONS,
   PRIVACY_URL,
+  STUDY_TYPE_OPTIONS,
   TERMS_URL,
 } from "@pkka/domain";
 import {
@@ -184,9 +186,9 @@ function ApplicationForm() {
             <FormField label="Wydział" required>
               <SelectField
                 value={field.state.value}
-                options={FACULTIES}
+                options={FACULTY_OPTIONS}
                 placeholder="Wybierz wydział"
-                onChange={(value) => field.handleChange(value as Faculty)}
+                onChange={(value) => field.handleChange(value)}
               />
               <FieldError field={field} />
             </FormField>
@@ -224,9 +226,9 @@ function ApplicationForm() {
             <FormField label="Rodzaj studiów" required>
               <SelectField
                 value={field.state.value}
-                options={STUDY_TYPES}
+                options={STUDY_TYPE_OPTIONS}
                 placeholder="Wybierz stopień"
-                onChange={(value) => field.handleChange(value as StudyType)}
+                onChange={(value) => field.handleChange(value)}
               />
               <FieldError field={field} />
             </FormField>
@@ -290,9 +292,9 @@ function ApplicationForm() {
           {(field) => (
             <FormField label="Preferowana forma spotkań">
               <OptionChips
-                options={MEETING_FORMATS}
+                options={MEETING_PREFERENCE_OPTIONS}
                 value={field.state.value}
-                onChange={(next) => field.handleChange(next as MeetingPreference[])}
+                onChange={(value) => field.handleChange(value)}
               />
             </FormField>
           )}
