@@ -5,14 +5,22 @@ import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import { createQueryClient } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { focusManager, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { AppState } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const queryClient = createQueryClient();
+
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener("change", (state) =>
+    handleFocus(state === "active"),
+  );
+  return () => subscription.remove();
+});
 
 export default function RootLayout() {
   const colorScheme: "light" | "dark" = "light";
