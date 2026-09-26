@@ -70,20 +70,19 @@ class DeviceTokenConcurrentRegistrationTest {
     @Test
     void simultaneousRegistrationsOfOneInstallation_bothSucceedWithASingleRow() throws Exception {
         for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
-            String installationId = UUID.randomUUID().toString();
-            RegisterDeviceRequest request = new RegisterDeviceRequest(
-                    "ExponentPushToken[race-%s]".formatted(installationId), DevicePlatform.ANDROID);
+            String token = "ExponentPushToken[race-%s]".formatted(UUID.randomUUID());
+            RegisterDeviceRequest request = new RegisterDeviceRequest(DevicePlatform.ANDROID);
             CountDownLatch start = new CountDownLatch(1);
 
             List<Future<?>> registrations = List.of(
                     executor.submit(() -> {
                         start.await();
-                        deviceTokenService.register(caller, installationId, request);
+                        deviceTokenService.register(caller, token, request);
                         return null;
                     }),
                     executor.submit(() -> {
                         start.await();
-                        deviceTokenService.register(caller, installationId, request);
+                        deviceTokenService.register(caller, token, request);
                         return null;
                     }));
             start.countDown();
@@ -91,8 +90,7 @@ class DeviceTokenConcurrentRegistrationTest {
                 registration.get();
             }
 
-            assertThat(deviceTokenRepository.findById(installationId))
-                    .hasValueSatisfying(device -> assertThat(device.getToken()).isEqualTo(request.token()));
+            assertThat(deviceTokenRepository.findById(token)).isPresent();
         }
         assertThat(deviceTokenRepository.count()).isEqualTo(ATTEMPTS);
     }

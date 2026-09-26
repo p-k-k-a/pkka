@@ -53,47 +53,41 @@ class DeviceTokenEndpointTest {
     private UserRepository userRepository;
 
     private String keycloakId;
-    private String installationId;
 
     @BeforeEach
     void setUp() {
         keycloakId = UUID.randomUUID().toString();
-        installationId = UUID.randomUUID().toString();
     }
 
     private static String token(String suffix) {
         return "ExponentPushToken[%s]".formatted(suffix);
     }
 
-    private static String body(String token) {
-        return """
-                {"token":"%s","platform":"ANDROID"}""".formatted(token);
-    }
+    private static final String BODY = """
+            {"platform":"ANDROID"}""";
 
     private RequestPostProcessor user() {
         return jwt().jwt(t -> t.subject(keycloakId)).authorities(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     private ResultActions register(String token) throws Exception {
-        return mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
+        return mockMvc.perform(put("/api/notifications/tokens/{token}", token)
                 .with(user())
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body(token)));
+                .content(BODY));
     }
 
-    private ResultActions unregister(String installation) throws Exception {
-        return mockMvc.perform(delete("/api/notifications/devices/{id}", installation)
-                .with(user())
-                .with(csrf()));
+    private ResultActions unregister(String token) throws Exception {
+        return mockMvc.perform(
+                delete("/api/notifications/tokens/{token}", token).with(user()).with(csrf()));
     }
 
-    private void deviceOwnedBy(String ownerKeycloakId, String installation, String token) {
+    private void deviceOwnedBy(String ownerKeycloakId, String token) {
         User owner = new User();
         owner.setKeycloakId(ownerKeycloakId);
         deviceTokenRepository.save(DeviceToken.builder()
                 .user(userRepository.save(owner))
-                .installationId(installation)
                 .token(token)
                 .platform(DevicePlatform.ANDROID)
                 .build());
@@ -101,10 +95,10 @@ class DeviceTokenEndpointTest {
 
     @Test
     void registerWithoutAuthentication_isUnauthorized() throws Exception {
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
+        mockMvc.perform(put("/api/notifications/tokens/{token}", token("aaa"))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("aaa"))))
+                        .content(BODY))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -112,64 +106,55 @@ class DeviceTokenEndpointTest {
     void register_storesTokenForCaller() throws Exception {
         register(token("aaa")).andExpect(status().isNoContent());
 
-        DeviceToken stored = deviceTokenRepository.findById(installationId).orElseThrow();
-        assertThat(stored.getToken()).isEqualTo(token("aaa"));
+        DeviceToken stored = deviceTokenRepository.findById(token("aaa")).orElseThrow();
         assertThat(stored.getPlatform()).isEqualTo(DevicePlatform.ANDROID);
         assertThat(stored.getUser().getKeycloakId()).isEqualTo(keycloakId);
     }
 
     @Test
-    void registerTwice_rotatesTokenInPlace() throws Exception {
-        register(token("old")).andExpect(status().isNoContent());
-        register(token("new")).andExpect(status().isNoContent());
+    void registerTwice_keepsOneRow() throws Exception {
+        register(token("aaa")).andExpect(status().isNoContent());
+        register(token("aaa")).andExpect(status().isNoContent());
 
-        assertThat(deviceTokenRepository.findById(installationId).orElseThrow().getToken())
-                .isEqualTo(token("new"));
         assertThat(deviceTokenRepository.count()).isEqualTo(1);
     }
 
     @Test
-    void registerWithTokenHeldByAnOwnEarlierInstallation_dropsTheStaleRow() throws Exception {
-        String earlierInstallation = UUID.randomUUID().toString();
-        deviceOwnedBy(keycloakId, earlierInstallation, token("shared"));
-
-        register(token("shared")).andExpect(status().isNoContent());
-
-        assertThat(deviceTokenRepository.findById(earlierInstallation)).isEmpty();
-        assertThat(deviceTokenRepository.findById(installationId)).isPresent();
-    }
-
-    @Test
     void registerWithTokenHeldByAnotherUser_isConflict() throws Exception {
-        String otherInstallation = UUID.randomUUID().toString();
-        deviceOwnedBy(UUID.randomUUID().toString(), otherInstallation, token("theirs"));
+        String owner = UUID.randomUUID().toString();
+        deviceOwnedBy(owner, token("theirs"));
 
         register(token("theirs")).andExpect(status().isConflict());
 
-        assertThat(deviceTokenRepository.findById(otherInstallation)).isPresent();
+        assertThat(deviceTokenRepository
+                        .findById(token("theirs"))
+                        .orElseThrow()
+                        .getUser()
+                        .getKeycloakId())
+                .isEqualTo(owner);
     }
 
     @Test
     void unregister_removesTheRow() throws Exception {
         register(token("aaa")).andExpect(status().isNoContent());
 
-        unregister(installationId).andExpect(status().isNoContent());
+        unregister(token("aaa")).andExpect(status().isNoContent());
 
-        assertThat(deviceTokenRepository.findById(installationId)).isEmpty();
+        assertThat(deviceTokenRepository.findById(token("aaa"))).isEmpty();
     }
 
     @Test
-    void unregisterSomeoneElsesInstallation_isNotFound() throws Exception {
-        deviceOwnedBy(UUID.randomUUID().toString(), installationId, token("theirs"));
+    void unregisterSomeoneElsesToken_isNotFound() throws Exception {
+        deviceOwnedBy(UUID.randomUUID().toString(), token("theirs"));
 
-        unregister(installationId).andExpect(status().isNotFound());
+        unregister(token("theirs")).andExpect(status().isNotFound());
 
-        assertThat(deviceTokenRepository.findById(installationId)).isPresent();
+        assertThat(deviceTokenRepository.findById(token("theirs"))).isPresent();
     }
 
     @Test
-    void unregisterUnknownInstallation_isNotFound() throws Exception {
-        unregister(UUID.randomUUID().toString()).andExpect(status().isNotFound());
+    void unregisterUnknownToken_isNotFound() throws Exception {
+        unregister(token("unknown")).andExpect(status().isNotFound());
     }
 
     @TestConfiguration

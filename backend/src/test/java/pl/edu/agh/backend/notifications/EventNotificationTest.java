@@ -117,7 +117,6 @@ class EventNotificationTest {
         }
         deviceTokenRepository.save(DeviceToken.builder()
                 .user(user)
-                .installationId(UUID.randomUUID().toString())
                 .token(token)
                 .platform(DevicePlatform.ANDROID)
                 .build());

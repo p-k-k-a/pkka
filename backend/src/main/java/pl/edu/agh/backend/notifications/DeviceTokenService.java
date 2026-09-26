@@ -17,40 +17,24 @@ public class DeviceTokenService {
     private final CallerUserService callerUserService;
 
     @Transactional
-    public void register(Caller caller, String installationId, RegisterDeviceRequest request) {
+    public void register(Caller caller, String token, RegisterDeviceRequest request) {
         User user = callerUserService.getOrCreate(caller);
-        releaseFromPreviousInstallation(request.token(), installationId, user);
-        String platform = request.platform().name();
-        deviceTokenRepository.insertIfAbsent(user.getId(), installationId, request.token(), platform);
-        deviceTokenRepository.updateByInstallationId(user.getId(), installationId, request.token(), platform);
-    }
-
-    /**
-     * Android hands a reinstalled app the token its previous install had, so the caller's own stale row is
-     * released. A row belonging to somebody else is refused rather than released — otherwise anyone holding a
-     * token could evict that device and redirect its notifications to themselves.
-     */
-    private void releaseFromPreviousInstallation(String token, String installationId, User user) {
-        deviceTokenRepository
-                .findByToken(token)
-                .filter(held -> !held.getInstallationId().equals(installationId))
-                .ifPresent(held -> {
-                    if (!held.getUser().getId().equals(user.getId())) {
-                        throw new DeviceTokenConflictException(token);
-                    }
-                    deviceTokenRepository.delete(held);
-                    deviceTokenRepository.flush();
-                });
+        deviceTokenRepository.insertIfAbsent(
+                token, user.getId(), request.platform().name());
+        DeviceToken device = deviceTokenRepository.findById(token).orElseThrow();
+        if (!device.getUser().getId().equals(user.getId())) {
+            throw new DeviceTokenConflictException(token);
+        }
+        device.setPlatform(request.platform());
     }
 
     @Transactional
-    public void unregister(Caller caller, String installationId) {
-        UUID userId =
-                callerUserService.findId(caller).orElseThrow(() -> new DeviceTokenNotFoundException(installationId));
+    public void unregister(Caller caller, String token) {
+        UUID userId = callerUserService.findId(caller).orElseThrow(() -> new DeviceTokenNotFoundException(token));
         DeviceToken device = deviceTokenRepository
-                .findById(installationId)
+                .findById(token)
                 .filter(candidate -> candidate.getUser().getId().equals(userId))
-                .orElseThrow(() -> new DeviceTokenNotFoundException(installationId));
+                .orElseThrow(() -> new DeviceTokenNotFoundException(token));
         deviceTokenRepository.delete(device);
     }
 }

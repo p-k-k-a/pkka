@@ -63,7 +63,6 @@ class PushReceiptCheckTest {
         user.setKeycloakId(UUID.randomUUID().toString());
         deviceTokenRepository.save(DeviceToken.builder()
                 .user(userRepository.save(user))
-                .installationId(UUID.randomUUID().toString())
                 .token(token)
                 .platform(DevicePlatform.ANDROID)
                 .build());
