@@ -8,7 +8,7 @@ import { CardLinkFooter } from "@/components/content/card-link-footer";
 import { FeaturedCard } from "@/components/content/featured-card";
 import { SectionShell } from "@/components/content/section-shell";
 import { DEFAULT_COVER_IMAGE } from "@/lib/content-images";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { formatPublishedAt } from "@pkka/domain";
 
 type AnnouncementsSectionProps = {
   title?: string;

@@ -2,11 +2,15 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, Calendar, Clock, MapPin } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { eventLocationLabel } from "@/lib/event-labels";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
-import { formatEventDateComma, formatTimeRange } from "@/lib/format-event-datetime";
+import {
+  eventLocationLabel,
+  eventTypeLabelUpper,
+  formatEventDateComma,
+  formatTimeRange,
+} from "@pkka/domain";
 import { cn } from "@/lib/utils";
-import { eventCategoryLabel, type EventSchedule } from "@/components/events/event-location-aside";
+import { type EventSchedule } from "@/components/events/event-location-aside";
 
 export type EventCalendarCardData = EventSchedule & {
   id: string;
@@ -40,8 +44,8 @@ export function EventCalendarCard({
         className,
       )}
     >
-      <span className="bg-navy text-white-text inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-        {eventCategoryLabel(event.type)}
+      <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+        {eventTypeLabelUpper(event.type)}
       </span>
       <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
         {event.title.trim() || "Tytuł wydarzenia"}

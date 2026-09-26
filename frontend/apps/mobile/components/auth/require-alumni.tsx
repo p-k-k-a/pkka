@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth-context";
-import { isVerifiedAlumn } from "@/lib/roles";
 import { useMe } from "@pkka/api";
+import { isVerifiedAlumn } from "@pkka/domain";
 import { Redirect } from "expo-router";
 import { type ReactNode } from "react";
 

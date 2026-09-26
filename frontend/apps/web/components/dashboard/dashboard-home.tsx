@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin } from "@pkka/domain";
 import { AnnouncementsSection } from "@/components/announcements-section";
 import { Skeleton } from "@/components/ui/skeleton";
 

@@ -21,7 +21,7 @@ import { DetailHeader } from "@/components/content/detail-header";
 import { ApplicationSummary } from "@/components/applications/application-summary";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin } from "@pkka/domain";
 
 const APPLICATIONS_PATH = "/dashboard/applications";
 

@@ -10,8 +10,8 @@ import {
   getListEventsQueryKey,
   useDeleteAdminEvent,
   useListAdminEvents,
+  EventTimeframe,
   type AdminEventSummaryResponse,
-  type ListAdminEventsParams,
 } from "@pkka/api";
 import {
   AlertDialog,
@@ -28,13 +28,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
-import { audienceLabel } from "@/lib/event-labels";
+import { audienceLabel, isAdmin } from "@pkka/domain";
 
 const PAGE_SIZE = 20;
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
-
-type TimeframeFilter = NonNullable<ListAdminEventsParams["timeframe"]>;
 
 export function AdminEventsList() {
   const router = useRouter();
@@ -42,7 +39,7 @@ export function AdminEventsList() {
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
-  const [timeframe, setTimeframe] = useState<TimeframeFilter>("ALL");
+  const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.ALL);
   const [eventToDelete, setEventToDelete] = useState<AdminEventSummaryResponse | null>(null);
 
   useEffect(() => {
@@ -101,14 +98,14 @@ export function AdminEventsList() {
             <Tabs
               value={timeframe}
               onValueChange={(value) => {
-                setTimeframe(value as TimeframeFilter);
+                setTimeframe(value as EventTimeframe);
                 setPage(0);
               }}
             >
               <TabsList>
-                <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-                <TabsTrigger value="UPCOMING">Nadchodzące</TabsTrigger>
-                <TabsTrigger value="PAST">Minione</TabsTrigger>
+                <TabsTrigger value={EventTimeframe.ALL}>Wszystkie</TabsTrigger>
+                <TabsTrigger value={EventTimeframe.UPCOMING}>Nadchodzące</TabsTrigger>
+                <TabsTrigger value={EventTimeframe.PAST}>Minione</TabsTrigger>
               </TabsList>
             </Tabs>
             <Button asChild>
@@ -133,7 +130,7 @@ export function AdminEventsList() {
             <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
           ) : events.length === 0 ? (
             <p className="text-muted-foreground">
-              {timeframe === "ALL"
+              {timeframe === EventTimeframe.ALL
                 ? "Brak wydarzeń — utwórz pierwsze."
                 : "Brak wydarzeń w tym zakresie."}
             </p>

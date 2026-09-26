@@ -3,13 +3,12 @@
 import { useState } from "react";
 import {
   ApiError,
-  ApplicationResponseConsentsItem,
   useCreateApplication,
+  type ConsentType,
   type CreateApplicationRequest,
-  type CreateApplicationRequestConsentsItem,
-  type CreateApplicationRequestFaculty,
-  type CreateApplicationRequestMeetingPreferencesItem,
-  type CreateApplicationRequestStudyType,
+  type Faculty,
+  type MeetingPreference,
+  type StudyType,
 } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,32 +18,34 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  graduationYearError,
+  graduationYearMax,
+  hasRequiredConsents,
+  isGraduationYearValid,
+  APPLICATION_CONFLICT_MESSAGE,
+  APPLICATION_SUBMIT_ERROR_MESSAGE,
   CONSENT_OPTIONS,
   FACULTY_OPTIONS,
+  GRADUATION_YEAR_MIN,
   MEETING_PREFERENCE_OPTIONS,
   STUDY_TYPE_OPTIONS,
-} from "@/lib/application-labels";
-
-const REQUIRED_CONSENTS: string[] = [
-  ApplicationResponseConsentsItem.REGULATIONS_PRIVACY,
-  ApplicationResponseConsentsItem.GDPR_DATA_PROCESSING,
-];
+} from "@pkka/domain";
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
 export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | Promise<void> }) {
-  const [faculty, setFaculty] = useState("");
+  const [faculty, setFaculty] = useState<Faculty | "">("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
-  const [studyType, setStudyType] = useState("");
+  const [studyType, setStudyType] = useState<StudyType | "">("");
   const [graduationYear, setGraduationYear] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [interests, setInterests] = useState("");
-  const [meetingPreferences, setMeetingPreferences] = useState<string[]>([]);
+  const [meetingPreferences, setMeetingPreferences] = useState<MeetingPreference[]>([]);
   const [coCreationInterest, setCoCreationInterest] = useState(false);
   const [newsletterSubscription, setNewsletterSubscription] = useState(false);
-  const [consents, setConsents] = useState<string[]>([]);
+  const [consents, setConsents] = useState<ConsentType[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
 
   const { mutate, isPending } = useCreateApplication<ApiError>({
@@ -54,51 +55,48 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
       },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 409) {
-          setFormError(
-            "Masz już aktywny wniosek (w trakcie weryfikacji lub zaakceptowany). Nie możesz złożyć kolejnego.",
-          );
+          setFormError(APPLICATION_CONFLICT_MESSAGE);
         } else {
-          setFormError("Nie udało się wysłać wniosku. Sprawdź dane i spróbuj ponownie.");
+          setFormError(APPLICATION_SUBMIT_ERROR_MESSAGE);
         }
       },
     },
   });
 
-  const currentYear = new Date().getFullYear();
-
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError(null);
 
-    if (!REQUIRED_CONSENTS.every((consent) => consents.includes(consent))) {
+    if (!faculty || !studyType) {
+      setFormError("Wybierz wydział i rodzaj studiów.");
+      return;
+    }
+
+    if (!hasRequiredConsents(consents)) {
       setFormError("Aby złożyć wniosek, musisz zaakceptować wymagane zgody.");
       return;
     }
 
     const parsedGraduationYear = Number.parseInt(graduationYear, 10);
-    if (
-      !Number.isInteger(parsedGraduationYear) ||
-      parsedGraduationYear < 1919 ||
-      parsedGraduationYear > currentYear
-    ) {
-      setFormError(`Podaj prawidłowy rok ukończenia (1919–${currentYear}).`);
+    if (!isGraduationYearValid(parsedGraduationYear)) {
+      setFormError(graduationYearError());
       return;
     }
 
     const payload: CreateApplicationRequest = {
-      faculty: faculty as CreateApplicationRequestFaculty,
+      faculty,
       fieldOfStudy: fieldOfStudy.trim(),
-      studyType: studyType as CreateApplicationRequestStudyType,
+      studyType,
       graduationYear: parsedGraduationYear,
       phoneNumber: phoneNumber.trim(),
       interests: interests
         .split(",")
         .map((interest) => interest.trim())
         .filter(Boolean),
-      meetingPreferences: meetingPreferences as CreateApplicationRequestMeetingPreferencesItem[],
+      meetingPreferences,
       coCreationInterest,
       newsletterSubscription,
-      consents: consents as CreateApplicationRequestConsentsItem[],
+      consents,
     };
 
     mutate({ data: payload });
@@ -116,7 +114,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
               id="faculty"
               required
               value={faculty}
-              onChange={(event) => setFaculty(event.target.value)}
+              onChange={(event) => setFaculty(event.target.value as Faculty)}
             >
               <option value="" disabled>
                 Wybierz wydział
@@ -137,7 +135,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
               id="studyType"
               required
               value={studyType}
-              onChange={(event) => setStudyType(event.target.value)}
+              onChange={(event) => setStudyType(event.target.value as StudyType)}
             >
               <option value="" disabled>
                 Wybierz rodzaj studiów
@@ -166,14 +164,14 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
 
           <div className="space-y-2">
             <Label htmlFor="graduationYear">
-              Rok ukończenia <span className="text-destructive">*</span>
+              Rok ukończenia (lub planowany) <span className="text-destructive">*</span>
             </Label>
             <Input
               id="graduationYear"
               type="number"
               required
-              min={1919}
-              max={currentYear}
+              min={GRADUATION_YEAR_MIN}
+              max={graduationYearMax()}
               step={1}
               placeholder="np. 2022"
               value={graduationYear}
