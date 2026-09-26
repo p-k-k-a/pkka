@@ -41,6 +41,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
                       and e.reminder_lead_time_minutes is not null
                       and e.starts_at > now()
                       and e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute') <= now()
+                      and r.registered_at <= e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute')
                     """, nativeQuery = true)
     List<EventRegistration> findDueForReminder();
 
