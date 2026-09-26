@@ -268,7 +268,7 @@ class EventNotificationTest {
 
     /**
      * Regression: deleting a dead token mid-sweep used to clear the persistence context, silently discarding
-     * every reminderSentAt stamp and re-sending the same reminders every hour.
+     * every reminderSentAt stamp and re-sending the same reminders on every sweep.
      */
     @Test
     void aDeadTokenDuringTheSweep_stillMarksTheReminderSent() {

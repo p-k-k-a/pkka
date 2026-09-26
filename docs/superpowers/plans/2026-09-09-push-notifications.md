@@ -7,7 +7,7 @@ event they registered for. Tapping it opens the event. They can turn pushes off 
 
 **Architecture:** One `device_tokens` row per app installation holds an Expo push token.
 The backend sends through the Expo Push Service over `RestClient`, triggered by a
-`@TransactionalEventListener` on event creation and by an hourly `@Scheduled` sweep for
+`@TransactionalEventListener` on event creation and by a per-minute `@Scheduled` sweep for
 reminders. The mobile app registers its token after login and deletes it on logout or when
 the user turns notifications off.
 
