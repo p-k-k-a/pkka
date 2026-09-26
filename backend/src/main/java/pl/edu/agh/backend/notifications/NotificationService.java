@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.notifications;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -19,6 +20,7 @@ public class NotificationService {
 
     private final DeviceTokenRepository deviceTokenRepository;
     private final ExpoPushClient expoPushClient;
+    private final PushTicketRepository pushTicketRepository;
 
     public void announce(Event event) {
         List<DeviceToken> devices =
@@ -58,6 +60,14 @@ public class NotificationService {
         if (!outcome.unreachableTokens().isEmpty()) {
             deviceTokenRepository.deleteByTokenIn(outcome.unreachableTokens());
         }
+        Instant sentAt = Instant.now();
+        pushTicketRepository.saveAll(outcome.tickets().entrySet().stream()
+                .map(ticket -> PushTicket.builder()
+                        .id(ticket.getKey())
+                        .token(ticket.getValue())
+                        .createdAt(sentAt)
+                        .build())
+                .toList());
         return outcome.delivered();
     }
 }

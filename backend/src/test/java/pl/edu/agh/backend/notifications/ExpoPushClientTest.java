@@ -20,6 +20,7 @@ import org.springframework.web.client.RestClient;
 class ExpoPushClientTest {
 
     private static final String SEND_URL = "https://exp.host/--/api/v2/push/send";
+    private static final String RECEIPTS_URL = "https://exp.host/--/api/v2/push/getReceipts";
 
     private MockRestServiceServer server;
     private ExpoPushClient client;
@@ -86,6 +87,50 @@ class ExpoPushClientTest {
 
         assertThat(outcome.delivered()).isFalse();
         assertThat(outcome.unreachableTokens()).isEmpty();
+        server.verify();
+    }
+
+    @Test
+    void send_remembersWhichTokenEachTicketBelongsTo() {
+        server.expect(requestTo(SEND_URL)).andRespond(withSuccess("""
+                        {"data":[
+                          {"status":"ok","id":"ticket-a"},
+                          {"status":"ok","id":"ticket-b"},
+                          {"status":"error","message":"too big","details":{"error":"MessageTooBig"}}
+                        ]}""", MediaType.APPLICATION_JSON));
+
+        ExpoPushClient.Outcome outcome = client.send(List.of(message("a"), message("b"), message("c")));
+
+        assertThat(outcome.tickets()).containsExactlyInAnyOrderEntriesOf(Map.of("ticket-a", "a", "ticket-b", "b"));
+        server.verify();
+    }
+
+    @Test
+    void fetchReceipts_reportsGoneDevicesAndOnlyTheReceiptsExpoHasReady() {
+        server.expect(requestTo(RECEIPTS_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(jsonPath("$.ids.length()").value(3))
+                .andRespond(withSuccess("""
+                        {"data":{
+                          "ticket-a":{"status":"ok"},
+                          "ticket-b":{"status":"error","message":"gone","details":{"error":"DeviceNotRegistered"}}
+                        }}""", MediaType.APPLICATION_JSON));
+
+        ExpoPushClient.Receipts receipts = client.fetchReceipts(List.of("ticket-a", "ticket-b", "ticket-c"));
+
+        assertThat(receipts.checked()).containsExactlyInAnyOrder("ticket-a", "ticket-b");
+        assertThat(receipts.deviceGone()).containsExactly("ticket-b");
+        server.verify();
+    }
+
+    @Test
+    void fetchReceipts_treatsAFailureAsNothingChecked() {
+        server.expect(requestTo(RECEIPTS_URL)).andRespond(withServerError());
+
+        ExpoPushClient.Receipts receipts = client.fetchReceipts(List.of("ticket-a"));
+
+        assertThat(receipts.checked()).isEmpty();
+        assertThat(receipts.deviceGone()).isEmpty();
         server.verify();
     }
 }
