@@ -20,16 +20,12 @@ import pl.edu.agh.backend.user.User;
 public class DeviceToken {
 
     @Id
-    @Column(name = "installation_id", updatable = false, nullable = false, length = 64)
-    @ToString.Include
-    private String installationId;
+    @Column(name = "token", updatable = false, nullable = false, length = 255)
+    private String token;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(name = "token", nullable = false, unique = true, length = 255)
-    private String token;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "platform", nullable = false, length = 16)
@@ -51,7 +47,7 @@ public class DeviceToken {
         if (!(o instanceof DeviceToken other)) {
             return false;
         }
-        return installationId != null && installationId.equals(other.installationId);
+        return token != null && token.equals(other.token);
     }
 
     @Override

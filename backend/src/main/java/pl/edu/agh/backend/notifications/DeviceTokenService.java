@@ -17,28 +17,23 @@ public class DeviceTokenService {
     private final CallerUserService callerUserService;
 
     @Transactional
-    public void register(Caller caller, String installationId, RegisterDeviceRequest request) {
-        deviceTokenRepository.releaseToken(request.token(), installationId);
-
+    public void register(Caller caller, String token, RegisterDeviceRequest request) {
         User user = callerUserService.getOrCreate(caller);
         DeviceToken device = deviceTokenRepository
-                .findById(installationId)
-                .orElseGet(() ->
-                        DeviceToken.builder().installationId(installationId).build());
+                .findById(token)
+                .orElseGet(() -> DeviceToken.builder().token(token).build());
         device.setUser(user);
-        device.setToken(request.token());
         device.setPlatform(request.platform());
         deviceTokenRepository.save(device);
     }
 
     @Transactional
-    public void unregister(Caller caller, String installationId) {
-        UUID userId =
-                callerUserService.findId(caller).orElseThrow(() -> new DeviceTokenNotFoundException(installationId));
+    public void unregister(Caller caller, String token) {
+        UUID userId = callerUserService.findId(caller).orElseThrow(() -> new DeviceTokenNotFoundException(token));
         DeviceToken device = deviceTokenRepository
-                .findById(installationId)
+                .findById(token)
                 .filter(candidate -> candidate.getUser().getId().equals(userId))
-                .orElseThrow(() -> new DeviceTokenNotFoundException(installationId));
+                .orElseThrow(() -> new DeviceTokenNotFoundException(token));
         deviceTokenRepository.delete(device);
     }
 }

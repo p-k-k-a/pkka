@@ -16,14 +16,14 @@ import pl.edu.agh.backend.notifications.dto.RegisterDeviceRequest;
 import pl.edu.agh.backend.security.Caller;
 
 @RestController
-@RequestMapping("/api/notifications/devices")
+@RequestMapping("/api/notifications/tokens")
 @RequiredArgsConstructor
-@Tag(name = "Push devices", description = "Push tokens, one per app installation")
+@Tag(name = "Push devices", description = "Expo push tokens, one per app installation")
 public class DeviceTokenController {
 
     private final DeviceTokenService deviceTokenService;
 
-    @PutMapping("/{installationId}")
+    @PutMapping("/{token}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Register this device's push token",
@@ -32,27 +32,27 @@ public class DeviceTokenController {
         @ApiResponse(responseCode = "204", description = "Token stored"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Missing token or platform",
+                description = "Missing platform",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public void registerDevice(
-            @PathVariable @Size(max = 64) String installationId,
+            @PathVariable @Size(max = 255) String token,
             @Valid @RequestBody RegisterDeviceRequest request,
             Caller caller) {
-        deviceTokenService.register(caller, installationId, request);
+        deviceTokenService.register(caller, token, request);
     }
 
-    @DeleteMapping("/{installationId}")
+    @DeleteMapping("/{token}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Unregister this device", description = "Call on logout or when notifications are turned off.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Device forgotten"),
         @ApiResponse(
                 responseCode = "404",
-                description = "No such installation for this user",
+                description = "No such token for this user",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public void unregisterDevice(@PathVariable @Size(max = 64) String installationId, Caller caller) {
-        deviceTokenService.unregister(caller, installationId);
+    public void unregisterDevice(@PathVariable @Size(max = 255) String token, Caller caller) {
+        deviceTokenService.unregister(caller, token);
     }
 }
