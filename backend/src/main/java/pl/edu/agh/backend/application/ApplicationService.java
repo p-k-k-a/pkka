@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,9 +21,10 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final CallerUserService callerUserService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public ApplicationResponse create(Caller caller, CreateApplicationRequest request) {
+    public ApplicationResponse create(Caller caller, CreateApplicationRequest request, boolean vouchedByDiscord) {
         User applicant = callerUserService.getOrCreate(caller);
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
@@ -40,10 +42,16 @@ public class ApplicationService {
                 .newsletterSubscription(request.newsletterSubscription())
                 .phoneNumber(request.phoneNumber())
                 .interests(new ArrayList<>(request.interests()))
+                .discordVouched(vouchedByDiscord)
                 .build();
 
         Instant now = Instant.now();
         request.consents().forEach(type -> application.addConsent(type, now));
+
+        if (application.isDiscordVouched()) {
+            application.autoApprove();
+            eventPublisher.publishEvent(new ApplicationApprovedEvent(applicant.getKeycloakId()));
+        }
 
         try {
             return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
