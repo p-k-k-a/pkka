@@ -2,7 +2,6 @@ package pl.edu.agh.backend.notifications;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -21,19 +20,13 @@ import pl.edu.agh.backend.user.User;
 public class DeviceToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
+    @Column(name = "installation_id", updatable = false, nullable = false, length = 64)
     @ToString.Include
-    private UUID id;
+    private String installationId;
 
-    /** Reassigned rather than duplicated when a second account signs in on the same installation. */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(name = "installation_id", nullable = false, unique = true, length = 64)
-    @ToString.Include
-    private String installationId;
 
     @Column(name = "token", nullable = false, unique = true, length = 255)
     private String token;
@@ -58,7 +51,7 @@ public class DeviceToken {
         if (!(o instanceof DeviceToken other)) {
             return false;
         }
-        return id != null && id.equals(other.id);
+        return installationId != null && installationId.equals(other.installationId);
     }
 
     @Override
