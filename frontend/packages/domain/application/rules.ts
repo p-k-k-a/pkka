@@ -20,7 +20,7 @@ export function graduationYearError(): string {
 
 const REQUIRED_CONSENTS: ConsentType[] = ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"];
 
-export function hasRequiredConsents(consents: readonly string[]): boolean {
+export function hasRequiredConsents(consents: readonly ConsentType[]): boolean {
   return REQUIRED_CONSENTS.every((consent) => consents.includes(consent));
 }
 
