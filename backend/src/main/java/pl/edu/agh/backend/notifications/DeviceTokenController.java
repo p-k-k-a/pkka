@@ -25,21 +25,14 @@ public class DeviceTokenController {
 
     @PutMapping("/{installationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Register or update this installation's push token", description = """
-                    The `installationId` is minted by the app on first launch and stays put; the push token
-                    behind it is rotated by the push service and changes. Sending the same id again therefore
-                    updates the token in place rather than adding a device, which makes this safe to call on
-                    every login and on every token rotation.
-
-                    A token already held by another installation of the *same* user is released first — Android
-                    hands the same token to a reinstalled app, and two rows holding it would push twice. A token
-                    held by a different user is refused instead, so nobody can evict someone else's device.
-                    """)
+    @Operation(
+            summary = "Register this device's push token",
+            description = "Idempotent: call on every login and token change.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Token stored"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Malformed push token",
+                description = "Missing token or platform",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(
                 responseCode = "409",
@@ -55,10 +48,7 @@ public class DeviceTokenController {
 
     @DeleteMapping("/{installationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Forget this installation", description = """
-                    Called on logout and when the user turns notifications off — the absence of a row is what
-                    stops the sending, so there is no separate enabled flag to keep in step.
-                    """)
+    @Operation(summary = "Unregister this device", description = "Call on logout or when notifications are turned off.")
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Device forgotten"),
         @ApiResponse(

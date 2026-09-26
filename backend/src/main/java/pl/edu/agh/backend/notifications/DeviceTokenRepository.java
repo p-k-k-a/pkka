@@ -10,16 +10,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-public interface DeviceTokenRepository extends JpaRepository<DeviceToken, UUID> {
-
-    Optional<DeviceToken> findByInstallationId(String installationId);
+public interface DeviceTokenRepository extends JpaRepository<DeviceToken, String> {
 
     Optional<DeviceToken> findByToken(String token);
 
     @Modifying(flushAutomatically = true)
     @Query(value = """
-                    insert into device_tokens (id, user_id, installation_id, token, platform, created_at, updated_at)
-                    values (gen_random_uuid(), :userId, :installationId, :token, :platform, now(), now())
+                    insert into device_tokens (installation_id, user_id, token, platform, created_at, updated_at)
+                    values (:installationId, :userId, :token, :platform, now(), now())
                     on conflict do nothing
                     """, nativeQuery = true)
     void insertIfAbsent(

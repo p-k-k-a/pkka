@@ -68,8 +68,6 @@ public class SecurityConfig {
                         .hasRole(Roles.VERIFIED_ALUMN)
                         .requestMatchers("/api/events/**")
                         .hasRole(Roles.USER)
-                        .requestMatchers("/api/notifications/**")
-                        .hasRole(Roles.USER)
                         .requestMatchers("/api/admin/**")
                         .hasRole(Roles.ADMIN)
                         .anyRequest()

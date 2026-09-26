@@ -91,7 +91,7 @@ class DeviceTokenConcurrentRegistrationTest {
                 registration.get();
             }
 
-            assertThat(deviceTokenRepository.findByInstallationId(installationId))
+            assertThat(deviceTokenRepository.findById(installationId))
                     .hasValueSatisfying(device -> assertThat(device.getToken()).isEqualTo(request.token()));
         }
         assertThat(deviceTokenRepository.count()).isEqualTo(ATTEMPTS);

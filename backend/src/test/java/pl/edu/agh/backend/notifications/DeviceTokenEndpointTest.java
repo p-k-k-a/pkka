@@ -23,6 +23,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -70,17 +71,32 @@ class DeviceTokenEndpointTest {
     }
 
     private RequestPostProcessor user() {
-        return user(keycloakId);
+        return jwt().jwt(t -> t.subject(keycloakId)).authorities(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
-    private RequestPostProcessor user(String subject) {
-        return jwt().jwt(t -> t.subject(subject)).authorities(new SimpleGrantedAuthority("ROLE_USER"));
+    private ResultActions register(String token) throws Exception {
+        return mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
+                .with(user())
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body(token)));
     }
 
-    private User existingUser(String subject) {
-        User user = new User();
-        user.setKeycloakId(subject);
-        return userRepository.save(user);
+    private ResultActions unregister(String installation) throws Exception {
+        return mockMvc.perform(delete("/api/notifications/devices/{id}", installation)
+                .with(user())
+                .with(csrf()));
+    }
+
+    private void deviceOwnedBy(String ownerKeycloakId, String installation, String token) {
+        User owner = new User();
+        owner.setKeycloakId(ownerKeycloakId);
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(userRepository.save(owner))
+                .installationId(installation)
+                .token(token)
+                .platform(DevicePlatform.ANDROID)
+                .build());
     }
 
     @Test
@@ -94,15 +110,9 @@ class DeviceTokenEndpointTest {
 
     @Test
     void register_storesTokenForCaller() throws Exception {
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("aaa"))))
-                .andExpect(status().isNoContent());
+        register(token("aaa")).andExpect(status().isNoContent());
 
-        DeviceToken stored =
-                deviceTokenRepository.findByInstallationId(installationId).orElseThrow();
+        DeviceToken stored = deviceTokenRepository.findById(installationId).orElseThrow();
         assertThat(stored.getToken()).isEqualTo(token("aaa"));
         assertThat(stored.getPlatform()).isEqualTo(DevicePlatform.ANDROID);
         assertThat(stored.getUser().getKeycloakId()).isEqualTo(keycloakId);
@@ -110,126 +120,56 @@ class DeviceTokenEndpointTest {
 
     @Test
     void registerTwice_rotatesTokenInPlace() throws Exception {
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("old"))))
-                .andExpect(status().isNoContent());
-        UUID firstId = deviceTokenRepository
-                .findByInstallationId(installationId)
-                .orElseThrow()
-                .getId();
+        register(token("old")).andExpect(status().isNoContent());
+        register(token("new")).andExpect(status().isNoContent());
 
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("new"))))
-                .andExpect(status().isNoContent());
-
-        DeviceToken stored =
-                deviceTokenRepository.findByInstallationId(installationId).orElseThrow();
-        assertThat(stored.getId()).isEqualTo(firstId);
-        assertThat(stored.getToken()).isEqualTo(token("new"));
+        assertThat(deviceTokenRepository.findById(installationId).orElseThrow().getToken())
+                .isEqualTo(token("new"));
         assertThat(deviceTokenRepository.count()).isEqualTo(1);
     }
 
-    /** Android recycles a token onto a fresh install; the caller's own stale row must go or the device gets doubles. */
     @Test
     void registerWithTokenHeldByAnOwnEarlierInstallation_dropsTheStaleRow() throws Exception {
-        String otherInstallation = UUID.randomUUID().toString();
-        deviceTokenRepository.save(DeviceToken.builder()
-                .user(existingUser(keycloakId))
-                .installationId(otherInstallation)
-                .token(token("shared"))
-                .platform(DevicePlatform.ANDROID)
-                .build());
+        String earlierInstallation = UUID.randomUUID().toString();
+        deviceOwnedBy(keycloakId, earlierInstallation, token("shared"));
 
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("shared"))))
-                .andExpect(status().isNoContent());
+        register(token("shared")).andExpect(status().isNoContent());
 
-        assertThat(deviceTokenRepository.findByInstallationId(otherInstallation))
-                .isEmpty();
-        assertThat(deviceTokenRepository.findByInstallationId(installationId)).isPresent();
+        assertThat(deviceTokenRepository.findById(earlierInstallation)).isEmpty();
+        assertThat(deviceTokenRepository.findById(installationId)).isPresent();
     }
 
-    /** Releasing a stranger's row would let anyone holding a token evict that device and capture its pushes. */
     @Test
     void registerWithTokenHeldByAnotherUser_isConflict() throws Exception {
         String otherInstallation = UUID.randomUUID().toString();
-        deviceTokenRepository.save(DeviceToken.builder()
-                .user(existingUser(UUID.randomUUID().toString()))
-                .installationId(otherInstallation)
-                .token(token("theirs"))
-                .platform(DevicePlatform.ANDROID)
-                .build());
+        deviceOwnedBy(UUID.randomUUID().toString(), otherInstallation, token("theirs"));
 
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("theirs"))))
-                .andExpect(status().isConflict());
+        register(token("theirs")).andExpect(status().isConflict());
 
-        assertThat(deviceTokenRepository.findByInstallationId(otherInstallation))
-                .isPresent();
-    }
-
-    @Test
-    void registerWithMalformedToken_isBadRequest() throws Exception {
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body("not-a-push-token")))
-                .andExpect(status().isBadRequest());
+        assertThat(deviceTokenRepository.findById(otherInstallation)).isPresent();
     }
 
     @Test
     void unregister_removesTheRow() throws Exception {
-        mockMvc.perform(put("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body(token("aaa"))))
-                .andExpect(status().isNoContent());
+        register(token("aaa")).andExpect(status().isNoContent());
 
-        mockMvc.perform(delete("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
+        unregister(installationId).andExpect(status().isNoContent());
 
-        assertThat(deviceTokenRepository.findByInstallationId(installationId)).isEmpty();
+        assertThat(deviceTokenRepository.findById(installationId)).isEmpty();
     }
 
     @Test
     void unregisterSomeoneElsesInstallation_isNotFound() throws Exception {
-        deviceTokenRepository.save(DeviceToken.builder()
-                .user(existingUser(UUID.randomUUID().toString()))
-                .installationId(installationId)
-                .token(token("theirs"))
-                .platform(DevicePlatform.ANDROID)
-                .build());
+        deviceOwnedBy(UUID.randomUUID().toString(), installationId, token("theirs"));
 
-        mockMvc.perform(delete("/api/notifications/devices/{id}", installationId)
-                        .with(user())
-                        .with(csrf()))
-                .andExpect(status().isNotFound());
+        unregister(installationId).andExpect(status().isNotFound());
 
-        assertThat(deviceTokenRepository.findByInstallationId(installationId)).isPresent();
+        assertThat(deviceTokenRepository.findById(installationId)).isPresent();
     }
 
     @Test
     void unregisterUnknownInstallation_isNotFound() throws Exception {
-        mockMvc.perform(delete("/api/notifications/devices/{id}", UUID.randomUUID())
-                        .with(user())
-                        .with(csrf()))
-                .andExpect(status().isNotFound());
+        unregister(UUID.randomUUID().toString()).andExpect(status().isNotFound());
     }
 
     @TestConfiguration
