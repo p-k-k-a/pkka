@@ -1,4 +1,10 @@
-import type { Faculty, MeetingPreference, StudyType } from "@pkka/api";
+import type {
+  ApplicationStatus,
+  ConsentType,
+  Faculty,
+  MeetingPreference,
+  StudyType,
+} from "@pkka/api";
 
 const FACULTY_LABELS: Record<Faculty, string> = {
   WE: "Wydział Elektromechaniczny (1952-1957)",
@@ -22,35 +28,35 @@ const MEETING_PREFERENCE_LABELS: Record<MeetingPreference, string> = {
   HYBRID: "Hybrydowo",
 };
 
-const CONSENT_LABELS: Record<string, string> = {
+const CONSENT_LABELS: Record<ConsentType, string> = {
   REGULATIONS_PRIVACY: "Akceptuję regulamin oraz politykę prywatności",
   GDPR_DATA_PROCESSING: "Wyrażam zgodę na przetwarzanie moich danych osobowych (RODO)",
 };
 
-const STATUS_LABELS: Record<string, string> = {
+const STATUS_LABELS: Record<ApplicationStatus, string> = {
   UNDER_REVIEW: "W trakcie weryfikacji",
   APPROVED: "Zaakceptowany",
   REJECTED: "Odrzucony",
 };
 
-export function facultyLabel(faculty: string): string {
-  return FACULTY_LABELS[faculty as Faculty] ?? faculty;
+export function facultyLabel(faculty: Faculty): string {
+  return FACULTY_LABELS[faculty];
 }
 
-export function studyTypeLabel(studyType: string): string {
-  return STUDY_TYPE_LABELS[studyType as StudyType] ?? studyType;
+export function studyTypeLabel(studyType: StudyType): string {
+  return STUDY_TYPE_LABELS[studyType];
 }
 
-export function meetingPreferenceLabel(preference: string): string {
-  return MEETING_PREFERENCE_LABELS[preference as MeetingPreference] ?? preference;
+export function meetingPreferenceLabel(preference: MeetingPreference): string {
+  return MEETING_PREFERENCE_LABELS[preference];
 }
 
-export function consentLabel(consent: string): string {
-  return CONSENT_LABELS[consent] ?? consent;
+export function consentLabel(consent: ConsentType): string {
+  return CONSENT_LABELS[consent];
 }
 
-export function statusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? status;
+export function statusLabel(status: ApplicationStatus): string {
+  return STATUS_LABELS[status];
 }
 
 type LabelOption<T extends string> = { value: T; label: string };
