@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.notifications;
+package pl.edu.agh.backend.notifications.expo;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,8 @@ class ExpoPushClientTest {
     void setUp() {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        client = new ExpoPushClient(builder, new NotificationProperties("https://exp.host/--/api/v2/push", ""));
+        client = new ExpoPushClient(ExpoRestClientConfig.configure(builder, "https://exp.host/--/api/v2/push", "")
+                .build());
     }
 
     private static ExpoPushMessage message(String token) {
@@ -37,56 +39,36 @@ class ExpoPushClientTest {
     }
 
     @Test
-    void send_reportsOnlyTheTokensExpoSaysAreGone() {
-        server.expect(requestTo(SEND_URL))
-                .andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess("""
-                        {"data":[
-                          {"status":"ok","id":"1"},
-                          {"status":"error","message":"gone","details":{"error":"DeviceNotRegistered"}},
-                          {"status":"error","message":"too big","details":{"error":"MessageTooBig"}}
-                        ]}""", MediaType.APPLICATION_JSON));
-
-        ExpoPushClient.Outcome outcome = client.send(List.of(message("a"), message("b"), message("c")));
-
-        assertThat(outcome.delivered()).isTrue();
-        assertThat(outcome.unreachableTokens()).containsExactly("b");
-        server.verify();
-    }
-
-    /** Guards the index arithmetic: a ticket is positional within its own chunk, not within the whole batch. */
-    @Test
-    void send_mapsADeadTokenInTheSecondChunkToTheRightToken() {
+    void send_mapsTicketsInTheSecondChunkToTheRightTokens() {
         server.expect(requestTo(SEND_URL))
                 .andExpect(jsonPath("$.length()").value(100))
-                .andRespond(withSuccess(okTickets(100), MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(okTickets(100, "first"), MediaType.APPLICATION_JSON));
         server.expect(requestTo(SEND_URL))
                 .andExpect(jsonPath("$.length()").value(20))
-                .andRespond(withSuccess(
-                        """
-                        {"data":[%s{"status":"error","message":"gone","details":{"error":"DeviceNotRegistered"}}]}""".formatted("{\"status\":\"ok\",\"id\":\"x\"},".repeat(19)), MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(okTickets(20, "second"), MediaType.APPLICATION_JSON));
 
-        ExpoPushClient.Outcome outcome = client.send(
+        SendOutcome outcome = client.send(
                 IntStream.range(0, 120).mapToObj(i -> message("token-" + i)).toList());
 
-        assertThat(outcome.unreachableTokens()).containsExactly("token-119");
+        assertThat(outcome.tickets()).hasSize(120).containsEntry("second-19", "token-119");
         server.verify();
     }
 
-    private static String okTickets(int count) {
+    private static String okTickets(int count, String prefix) {
         return """
-                {"data":[%s]}""".formatted(
-                        "{\"status\":\"ok\",\"id\":\"x\"},".repeat(count - 1) + "{\"status\":\"ok\",\"id\":\"x\"}");
+                {"data":[%s]}""".formatted(IntStream.range(0, count)
+                .mapToObj(i -> "{\"status\":\"ok\",\"id\":\"%s-%d\"}".formatted(prefix, i))
+                .collect(Collectors.joining(",")));
     }
 
     @Test
     void send_swallowsATransportFailure() {
         server.expect(requestTo(SEND_URL)).andRespond(withServerError());
 
-        ExpoPushClient.Outcome outcome = client.send(List.of(message("a")));
+        SendOutcome outcome = client.send(List.of(message("a")));
 
         assertThat(outcome.delivered()).isFalse();
-        assertThat(outcome.unreachableTokens()).isEmpty();
+        assertThat(outcome.tickets()).isEmpty();
         server.verify();
     }
 
@@ -99,7 +81,7 @@ class ExpoPushClientTest {
                           {"status":"error","message":"too big","details":{"error":"MessageTooBig"}}
                         ]}""", MediaType.APPLICATION_JSON));
 
-        ExpoPushClient.Outcome outcome = client.send(List.of(message("a"), message("b"), message("c")));
+        SendOutcome outcome = client.send(List.of(message("a"), message("b"), message("c")));
 
         assertThat(outcome.tickets()).containsExactlyInAnyOrderEntriesOf(Map.of("ticket-a", "a", "ticket-b", "b"));
         server.verify();
@@ -116,7 +98,7 @@ class ExpoPushClientTest {
                           "ticket-b":{"status":"error","message":"gone","details":{"error":"DeviceNotRegistered"}}
                         }}""", MediaType.APPLICATION_JSON));
 
-        ExpoPushClient.Receipts receipts = client.fetchReceipts(List.of("ticket-a", "ticket-b", "ticket-c"));
+        Receipts receipts = client.fetchReceipts(List.of("ticket-a", "ticket-b", "ticket-c"));
 
         assertThat(receipts.checked()).containsExactlyInAnyOrder("ticket-a", "ticket-b");
         assertThat(receipts.deviceGone()).containsExactly("ticket-b");
@@ -127,7 +109,7 @@ class ExpoPushClientTest {
     void fetchReceipts_treatsAFailureAsNothingChecked() {
         server.expect(requestTo(RECEIPTS_URL)).andRespond(withServerError());
 
-        ExpoPushClient.Receipts receipts = client.fetchReceipts(List.of("ticket-a"));
+        Receipts receipts = client.fetchReceipts(List.of("ticket-a"));
 
         assertThat(receipts.checked()).isEmpty();
         assertThat(receipts.deviceGone()).isEmpty();

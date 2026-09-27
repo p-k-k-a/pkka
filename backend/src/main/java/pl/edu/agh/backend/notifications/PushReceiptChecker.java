@@ -7,11 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
+import pl.edu.agh.backend.notifications.expo.Receipts;
 
-/**
- * Expo reports an uninstalled app's token as gone only in the receipt, minutes after accepting the send, and keeps
- * receipts for about a day.
- */
 @Component
 @RequiredArgsConstructor
 public class PushReceiptChecker {
@@ -34,15 +32,15 @@ public class PushReceiptChecker {
             return;
         }
 
-        ExpoPushClient.Receipts receipts = expoPushClient.fetchReceipts(
-                ripe.stream().map(PushTicket::getId).toList());
+        Receipts receipts = expoPushClient.fetchReceipts(
+                ripe.stream().map(PushTicket::getTicketId).toList());
         List<String> goneTokens = ripe.stream()
-                .filter(ticket -> receipts.deviceGone().contains(ticket.getId()))
-                .map(PushTicket::getToken)
+                .filter(ticket -> receipts.deviceGone().contains(ticket.getTicketId()))
+                .map(ticket -> ticket.getDevice().getToken())
                 .toList();
+        pushTicketRepository.deleteAllById(receipts.checked());
         if (!goneTokens.isEmpty()) {
             deviceTokenRepository.deleteByTokenIn(goneTokens);
         }
-        pushTicketRepository.deleteAllById(receipts.checked());
     }
 }

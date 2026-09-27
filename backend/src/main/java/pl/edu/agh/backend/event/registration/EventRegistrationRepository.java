@@ -30,10 +30,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     @Query("select r.event.id from EventRegistration r where r.user.id = :userId and r.event.id in :eventIds")
     Set<UUID> findRegisteredEventIds(@Param("userId") UUID userId, @Param("eventIds") Collection<UUID> eventIds);
 
-    /**
-     * Native because the due time is {@code starts_at} minus a per-row interval, which JPQL cannot express.
-     * Waitlisted sign-ups get no reminder once PR #198 lands — add {@code and r.status = 'REGISTERED'} here.
-     */
+    // TODO(#198): add "and r.status = 'REGISTERED'" so waitlisted sign-ups get no reminder.
     @Query(value = """
                     select r.* from event_registrations r
                     join events e on e.id = r.event_id

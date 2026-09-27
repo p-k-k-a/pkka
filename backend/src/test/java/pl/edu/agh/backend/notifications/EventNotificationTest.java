@@ -40,6 +40,9 @@ import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.event.*;
 import pl.edu.agh.backend.event.registration.EventRegistration;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
+import pl.edu.agh.backend.notifications.expo.ExpoPushMessage;
+import pl.edu.agh.backend.notifications.expo.SendOutcome;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
@@ -95,7 +98,7 @@ class EventNotificationTest {
         deviceTokenRepository.deleteAll();
         pushTicketRepository.deleteAll();
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
     }
 
@@ -178,28 +181,17 @@ class EventNotificationTest {
     }
 
     @Test
-    void aTokenExpoCallsGone_isDeleted() {
-        userWithDevice("ExponentPushToken[dead]", false);
-        when(expoPushClient.send(any()))
-                .thenReturn(new ExpoPushClient.Outcome(true, List.of("ExponentPushToken[dead]")));
-
-        adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
-
-        awaitUntil(() -> deviceTokenRepository.findAll().isEmpty());
-    }
-
-    @Test
     void anAcceptedAnnouncement_leavesATicketToCheckForItsReceipt() {
         userWithDevice("ExponentPushToken[attendee]", false);
         when(expoPushClient.send(any()))
-                .thenReturn(
-                        new ExpoPushClient.Outcome(true, List.of(), Map.of("ticket-1", "ExponentPushToken[attendee]")));
+                .thenReturn(new SendOutcome(true, Map.of("ticket-1", "ExponentPushToken[attendee]")));
 
         adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
 
         awaitUntil(() -> pushTicketRepository.existsById("ticket-1"));
         assertThat(pushTicketRepository.findById("ticket-1"))
-                .hasValueSatisfying(ticket -> assertThat(ticket.getToken()).isEqualTo("ExponentPushToken[attendee]"));
+                .hasValueSatisfying(
+                        ticket -> assertThat(ticket.getDevice().getToken()).isEqualTo("ExponentPushToken[attendee]"));
     }
 
     private Event registerFor(Instant startsAt, Integer leadTimeMinutes) {
@@ -242,7 +234,7 @@ class EventNotificationTest {
                 .isTrue();
 
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
         eventReminderScheduler.sendDueReminders();
         verify(expoPushClient, never()).send(any());
     }
@@ -251,7 +243,7 @@ class EventNotificationTest {
     @Test
     void aRefusedSend_leavesTheReminderDueForTheNextSweep() {
         registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
-        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(false, List.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(false, Map.of()));
 
         eventReminderScheduler.sendDueReminders();
 
@@ -260,27 +252,9 @@ class EventNotificationTest {
                         assertThat(registration.getReminderSentAt()).isNull());
 
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new ExpoPushClient.Outcome(true, List.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
         eventReminderScheduler.sendDueReminders();
         verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(any());
-    }
-
-    /**
-     * Regression: deleting a dead token mid-sweep used to clear the persistence context, silently discarding
-     * every reminderSentAt stamp and re-sending the same reminders on every sweep.
-     */
-    @Test
-    void aDeadTokenDuringTheSweep_stillMarksTheReminderSent() {
-        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
-        when(expoPushClient.send(any()))
-                .thenReturn(new ExpoPushClient.Outcome(true, List.of("ExponentPushToken[attendee]")));
-
-        eventReminderScheduler.sendDueReminders();
-
-        assertThat(deviceTokenRepository.findAll()).isEmpty();
-        assertThat(eventRegistrationRepository.findAll())
-                .allSatisfy(registration ->
-                        assertThat(registration.getReminderSentAt()).isNotNull());
     }
 
     @Test

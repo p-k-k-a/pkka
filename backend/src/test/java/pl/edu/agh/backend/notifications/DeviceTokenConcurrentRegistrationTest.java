@@ -68,7 +68,7 @@ class DeviceTokenConcurrentRegistrationTest {
     }
 
     @Test
-    void simultaneousRegistrationsOfOneInstallation_bothSucceedWithASingleRow() throws Exception {
+    void simultaneousRegistrationsOfOneToken_bothSucceedWithASingleRow() throws Exception {
         for (int attempt = 0; attempt < ATTEMPTS; attempt++) {
             String token = "ExponentPushToken[race-%s]".formatted(UUID.randomUUID());
             RegisterDeviceRequest request = new RegisterDeviceRequest(DevicePlatform.ANDROID);

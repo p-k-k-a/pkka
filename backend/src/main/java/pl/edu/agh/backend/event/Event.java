@@ -81,7 +81,6 @@ public class Event {
     @Column(name = "cover_image_url", length = 500)
     private String coverImageUrl;
 
-    /** Minutes before {@link #startsAt} to remind registered users. {@code null} sends no reminder. */
     @Column(name = "reminder_lead_time_minutes")
     private Integer reminderLeadTimeMinutes;
 

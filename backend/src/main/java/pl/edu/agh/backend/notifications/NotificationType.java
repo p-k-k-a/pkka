@@ -1,12 +1,10 @@
 package pl.edu.agh.backend.notifications;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-/**
- * The discriminator the mobile app switches on to pick a route. It never appears in a controller signature, so
- * it is absent from the OpenAPI spec — {@code frontend/packages/domain/notifications.ts} mirrors it by hand.
- */
+@Schema(enumAsRef = true)
 @Getter
 @RequiredArgsConstructor
 public enum NotificationType {

@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.notifications;
+package pl.edu.agh.backend.notifications.expo;
 
 import java.util.Map;
 

@@ -19,10 +19,6 @@ public class EventReminderScheduler {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final NotificationService notificationService;
 
-    /**
-     * Sends everything already due rather than everything inside a one-hour window, so a sweep the server missed
-     * catches up on the next run instead of dropping those reminders for good.
-     */
     @Scheduled(cron = "${app.notifications.reminder-cron:0 * * * * *}")
     @Transactional
     public void sendDueReminders() {

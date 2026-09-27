@@ -5,11 +5,13 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.backend.event.Event;
+import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
+import pl.edu.agh.backend.notifications.expo.ExpoPushMessage;
+import pl.edu.agh.backend.notifications.expo.SendOutcome;
 
 @Service
 @RequiredArgsConstructor
@@ -32,14 +34,13 @@ public class NotificationService {
         push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getId());
     }
 
-    /** Returns false when Expo refused the batch, so the caller can leave the reminder due for the next sweep. */
     public boolean remind(Event event, Collection<UUID> userIds) {
         String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
         return push(
                 deviceTokenRepository.findByUserIdIn(userIds),
                 NotificationType.EVENT_REMINDER,
                 "Przypomnienie",
-                "%s — %s".formatted(event.getTitle(), startsAt),
+                "%s - %s".formatted(event.getTitle(), startsAt),
                 event.getId());
     }
 
@@ -53,18 +54,15 @@ public class NotificationService {
                         title,
                         body,
                         type.getChannelId(),
-                        Map.of("type", type.name(), "targetId", targetId.toString())))
+                        new NotificationPayload(type, targetId).toData()))
                 .toList();
 
-        ExpoPushClient.Outcome outcome = expoPushClient.send(messages);
-        if (!outcome.unreachableTokens().isEmpty()) {
-            deviceTokenRepository.deleteByTokenIn(outcome.unreachableTokens());
-        }
+        SendOutcome outcome = expoPushClient.send(messages);
         Instant sentAt = Instant.now();
         pushTicketRepository.saveAll(outcome.tickets().entrySet().stream()
                 .map(ticket -> PushTicket.builder()
-                        .id(ticket.getKey())
-                        .token(ticket.getValue())
+                        .ticketId(ticket.getKey())
+                        .device(deviceTokenRepository.getReferenceById(ticket.getValue()))
                         .createdAt(sentAt)
                         .build())
                 .toList());

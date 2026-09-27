@@ -14,11 +14,12 @@ import lombok.*;
 public class PushTicket {
 
     @Id
-    @Column(name = "id", nullable = false, length = 64)
-    private String id;
+    @Column(name = "ticket_id", nullable = false, length = 64)
+    private String ticketId;
 
-    @Column(name = "token", nullable = false, length = 255)
-    private String token;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "token", nullable = false)
+    private DeviceToken device;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -31,7 +32,7 @@ public class PushTicket {
         if (!(o instanceof PushTicket other)) {
             return false;
         }
-        return id != null && id.equals(other.id);
+        return ticketId != null && ticketId.equals(other.ticketId);
     }
 
     @Override

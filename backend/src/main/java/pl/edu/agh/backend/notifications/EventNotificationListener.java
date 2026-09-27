@@ -16,11 +16,6 @@ public class EventNotificationListener {
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
 
-    /**
-     * After commit, so an event that failed to save never announces itself, and {@code @Async} so the admin's
-     * request neither waits for Expo nor fails when Expo does. {@code REQUIRES_NEW} keeps the dead-token cleanup
-     * in a transaction of its own rather than one that is already completing.
-     */
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)

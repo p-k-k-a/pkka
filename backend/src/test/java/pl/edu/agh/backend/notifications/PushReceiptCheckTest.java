@@ -25,6 +25,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
+import pl.edu.agh.backend.notifications.expo.Receipts;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
@@ -69,8 +71,11 @@ class PushReceiptCheckTest {
     }
 
     private void ticket(String id, String token, Instant createdAt) {
-        pushTicketRepository.save(
-                PushTicket.builder().id(id).token(token).createdAt(createdAt).build());
+        pushTicketRepository.save(PushTicket.builder()
+                .ticketId(id)
+                .device(deviceTokenRepository.getReferenceById(token))
+                .createdAt(createdAt)
+                .build());
     }
 
     private static Instant minutesAgo(long minutes) {
@@ -84,7 +89,7 @@ class PushReceiptCheckTest {
         ticket("ticket-alive", "ExponentPushToken[alive]", minutesAgo(20));
         ticket("ticket-gone", "ExponentPushToken[gone]", minutesAgo(20));
         when(expoPushClient.fetchReceipts(any()))
-                .thenReturn(new ExpoPushClient.Receipts(Set.of("ticket-alive", "ticket-gone"), Set.of("ticket-gone")));
+                .thenReturn(new Receipts(Set.of("ticket-alive", "ticket-gone"), Set.of("ticket-gone")));
 
         pushReceiptChecker.checkReceipts();
 
@@ -96,16 +101,20 @@ class PushReceiptCheckTest {
 
     @Test
     void aTicketWithoutAReceiptYet_isCheckedAgainNextTime() {
+        device("ExponentPushToken[alive]");
         ticket("ticket-pending", "ExponentPushToken[alive]", minutesAgo(20));
-        when(expoPushClient.fetchReceipts(any())).thenReturn(new ExpoPushClient.Receipts(Set.of(), Set.of()));
+        when(expoPushClient.fetchReceipts(any())).thenReturn(new Receipts(Set.of(), Set.of()));
 
         pushReceiptChecker.checkReceipts();
 
-        assertThat(pushTicketRepository.findAll()).extracting(PushTicket::getId).containsExactly("ticket-pending");
+        assertThat(pushTicketRepository.findAll())
+                .extracting(PushTicket::getTicketId)
+                .containsExactly("ticket-pending");
     }
 
     @Test
     void aTicketYoungerThanFifteenMinutes_isNotCheckedYet() {
+        device("ExponentPushToken[alive]");
         ticket("ticket-fresh", "ExponentPushToken[alive]", minutesAgo(1));
 
         pushReceiptChecker.checkReceipts();
@@ -116,6 +125,7 @@ class PushReceiptCheckTest {
 
     @Test
     void aTicketOlderThanADay_isDroppedWithoutChecking() {
+        device("ExponentPushToken[alive]");
         ticket("ticket-expired", "ExponentPushToken[alive]", minutesAgo(25 * 60));
 
         pushReceiptChecker.checkReceipts();
