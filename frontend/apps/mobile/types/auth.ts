@@ -1,6 +1,5 @@
 export type User = {
   sub: string;
-  role: "user" | "alumni";
 };
 
 export type AuthContextType = {
