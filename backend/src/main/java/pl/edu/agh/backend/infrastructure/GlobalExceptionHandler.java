@@ -16,11 +16,19 @@ import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
+import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DeviceTokenNotFoundException.class)
+    public ProblemDetail handleDeviceTokenNotFound(DeviceTokenNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Device not found");
+        return problem;
+    }
 
     @ExceptionHandler(AlumniNotFoundException.class)
     public ProblemDetail handleAlumniNotFound(AlumniNotFoundException ex) {
