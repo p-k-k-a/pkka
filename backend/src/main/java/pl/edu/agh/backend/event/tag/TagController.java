@@ -13,13 +13,16 @@ import pl.edu.agh.backend.event.tag.dto.TagResponse;
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor
-@Tag(name = "Tags", description = "Available skill tags — requires USER role")
+@Tag(
+        name = "Tags",
+        description = "Available event tags (e.g. \"workshop\", \"networking\") — requires USER role. "
+                + "Alumni skill tags live under /api/user-tags.")
 public class TagController {
 
     private final TagRepository tagRepository;
 
     @GetMapping
-    @Operation(summary = "List all available skill tags")
+    @Operation(summary = "List all available event tags")
     public List<TagResponse> listTags() {
         return tagRepository.findAll().stream()
                 .map(TagResponse::from)

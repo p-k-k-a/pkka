@@ -1,16 +1,22 @@
 import { Text } from "@/components/ui/text";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
+import type { LabelOption } from "@pkka/domain";
 
-type OptionChipsProps = {
-  options: readonly { value: string; label: string }[];
-  value: string[];
-  onChange: (value: string[]) => void;
+type OptionChipsProps<T extends string> = {
+  options: readonly LabelOption<T>[];
+  value: T[];
+  onChange: (value: T[]) => void;
 };
 
-function OptionChips({ options, value, onChange }: OptionChipsProps) {
+function OptionChips<T extends string>({ options, value, onChange }: OptionChipsProps<T>) {
   return (
-    <ToggleGroup type="multiple" variant="outline" value={value} onValueChange={onChange}>
+    <ToggleGroup
+      type="multiple"
+      variant="outline"
+      value={value}
+      onValueChange={(next) => onChange(next as T[])}
+    >
       {options.map((option, index) => {
         const selected = value.includes(option.value);
         return (

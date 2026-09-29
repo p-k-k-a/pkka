@@ -16,6 +16,8 @@ import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
+import pl.edu.agh.backend.post.PostAlreadyPublishedException;
+import pl.edu.agh.backend.post.PostNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +26,20 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleAlumniNotFound(AlumniNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Alumni not found");
+        return problem;
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ProblemDetail handlePostNotFound(PostNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Post not found");
+        return problem;
+    }
+
+    @ExceptionHandler(PostAlreadyPublishedException.class)
+    public ProblemDetail handlePostAlreadyPublished(PostAlreadyPublishedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Post already published");
         return problem;
     }
 

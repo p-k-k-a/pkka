@@ -36,13 +36,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <PublicSessionRedirect>{children}</PublicSessionRedirect>
       </main>
 
-      <footer className="bg-navy text-white-text px-4 py-10 md:px-10 md:py-16">
+      <footer className="bg-band text-band-foreground px-4 py-10 md:px-10 md:py-16">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
             <p className="font-heading text-[23px] font-semibold tracking-tight md:text-[28px]">
               PKKA
             </p>
-            <p className="text-white-text/80 max-w-md text-sm leading-relaxed md:text-base">
+            <p className="text-band-foreground/80 max-w-md text-sm leading-relaxed md:text-base">
               Klub Alumnów Wydziału Informatyki AGH — społeczność absolwentów, mentoring i
               networking.
             </p>
@@ -50,12 +50,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <div className="space-y-2 text-sm md:text-right">
             <Link
               href="/info"
-              className="font-heading text-white-text inline-flex items-center gap-2 hover:underline"
+              className="font-heading text-band-foreground inline-flex items-center gap-2 hover:underline"
             >
               Dowiedz się więcej
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
-            <p className="text-white-text/70">© 2026 Klub Alumnów WI AGH</p>
+            <p className="text-band-foreground/70">© 2026 Klub Alumnów WI AGH</p>
           </div>
         </div>
       </footer>

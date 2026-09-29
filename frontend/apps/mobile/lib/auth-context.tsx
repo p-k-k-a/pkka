@@ -1,4 +1,4 @@
-import { isVerifiedAlumn } from "@/lib/roles";
+import { isVerifiedAlumn } from "@pkka/domain";
 import { AuthContextType, User } from "@/types/auth";
 import { configureApi, logoutTokens, refreshTokens } from "@pkka/api";
 import * as SecureStore from "expo-secure-store";

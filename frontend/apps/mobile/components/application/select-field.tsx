@@ -5,24 +5,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { LabelOption } from "@pkka/domain";
 
-type SelectOption = { value: string; label: string };
-
-type SelectFieldProps = {
-  value: string | null;
-  options: SelectOption[];
+type SelectFieldProps<T extends string> = {
+  value: T | null;
+  options: readonly LabelOption<T>[];
   placeholder: string;
-  onChange: (value: string) => void;
+  onChange: (value: T) => void;
 };
 
-function SelectField({ value, options, placeholder, onChange }: SelectFieldProps) {
+function SelectField<T extends string>({
+  value,
+  options,
+  placeholder,
+  onChange,
+}: SelectFieldProps<T>) {
   const selected = options.find((option) => option.value === value);
 
   return (
     <Select
       value={selected ? { value: selected.value, label: selected.label } : undefined}
       onValueChange={(option) => {
-        if (option) onChange(option.value);
+        if (option) onChange(option.value as T);
       }}
     >
       <SelectTrigger className="h-12">
@@ -40,4 +44,3 @@ function SelectField({ value, options, placeholder, onChange }: SelectFieldProps
 }
 
 export { SelectField };
-export type { SelectOption };

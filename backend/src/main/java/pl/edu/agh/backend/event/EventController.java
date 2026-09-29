@@ -23,12 +23,13 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping
-    @Operation(summary = "List of upcoming events (optional filtering by tags)")
+    @Operation(summary = "List events (upcoming by default, optional past archive and tag filter)")
     public Page<EventListItemResponse> listEvents(
             @RequestParam(required = false) Set<String> tags,
+            @RequestParam(required = false) EventTimeframe timeframe,
             @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Caller caller) {
-        return eventService.list(caller, tags, pageable);
+        return eventService.list(caller, tags, timeframe, pageable);
     }
 
     @GetMapping("/{id}")

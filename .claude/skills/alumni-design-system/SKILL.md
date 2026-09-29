@@ -28,7 +28,7 @@ This skill only says which tokens exist and how to arrange sections.
 Both apps already speak the shadcn base-token contract
 (`background`, `foreground`, `primary`, `secondary`, `muted`, `accent`,
 `destructive`, `border`, `input`, `ring`, `card`, `popover`) plus these
-brand additions: `navy`, `brand-ink`, `white-text`.
+brand additions: `band`, `band-foreground`, `brand-ink`.
 
 | Token                       | Value           | Usage                                                          |
 | --------------------------- | --------------- | -------------------------------------------------------------- |
@@ -36,7 +36,7 @@ brand additions: `navy`, `brand-ink`, `white-text`.
 | `primary-foreground`        | `#1A1A1A`       | text on amber                                                  |
 | `secondary`                 | `#FFFBF2` cream | low-emphasis buttons/cards                                     |
 | `accent`                    | `#0F6AB6` blue  | links, secondary highlights                                    |
-| `navy`                      | `#022749`       | FAQ band, footer band                                          |
+| `band`                      | `#022749`       | FAQ band, footer band (`blue/600` in Figma)                    |
 | `muted`                     | `#EDF1FA`       | default section surface (surface-blue)                         |
 | `foreground` / `ink`        | `#16212F`       | headings                                                       |
 | `muted-foreground` / `body` | `#486284`       | body copy                                                      |
@@ -52,25 +52,50 @@ px in the meantime): `48` landing · `40` display · `33` h1 · `28` h2 ·
 Spacing scale: `2 4 8 12 16 24 32 40 48 64 80 96` (px) — this is NOT a plain
 4/8 multiple past step 6; use the literal scale, don't invent values between.
 
-## Applying the tokens (one-time setup)
+## Two layers: palette and tokens
 
-1. Web: replace `frontend/apps/web/app/globals.css` with
-   `handoff/web-globals.css` from the design project — same shadcn
-   `@theme inline` shape, only values change (oklch, converted from the
-   brand hex palette). Swap `Geist`/`Geist_Mono` in `app/layout.tsx` for
-   `Jost` + `Montserrat` via `next/font/google` (variables
-   `--font-jost` / `--font-montserrat`, referenced by `globals.css`).
-2. Mobile: replace `frontend/apps/mobile/global.css` with
-   `handoff/mobile-global.css` (HSL, same shape). Replace
-   `frontend/apps/mobile/lib/theme.ts` with `handoff/mobile-theme.ts`
-   (mirrors the same HSL values for `useTheme()`/native chrome). Replace
-   `tailwind.config.js` with `handoff/mobile-tailwind.config.js` (adds
-   `fontFamily.heading/sans` + the `navy`/`brand-ink`/`white-text`
-   tokens; everything else is unchanged). Load Jost + Montserrat via
-   `expo-font` in `app/_layout.tsx` and set them as the default via
-   `fontFamily` on the root view or a global `Text` style.
-3. Nothing else changes — every existing shadcn / RNR component already
-   reads these variable names, so re-theming is a values-only swap.
+`frontend/packages/theme/palette.ts` holds the **whole Figma colour system**, ramp by
+ramp, under the same names as the Figma variables: `orange` 050-900, `blue` 050-700,
+`neutralBlue` 100/300/500, `neutral` 100-900, `grey` 00-700. It is the primitive layer —
+colours named after how they look.
+
+**Components never reach for `PALETTE`.** They use the semantic tokens, which are what
+carry light/dark switching. Go to `palette.ts` only when defining a new semantic token,
+and take the value from a ramp instead of inventing one — that is how the app stays on
+the design system.
+
+## Changing a token value
+
+`frontend/packages/theme/design-tokens.ts` (`@pkka/theme`) is the single source of
+truth for every colour and for `--radius`. Values are hex, light and dark; a value
+taken from `PALETTE` is on the Figma system, a literal hex is not.
+
+Edit `design-tokens.ts`. That is the whole workflow — there is no generated CSS and
+no build step to run.
+
+Both apps read the palette through `@pkka/theme/css-vars`'s `cssVars(scheme,
+format)`, which each one injects as `:root` / dark-mode custom properties with
+a Tailwind `addBase` plugin:
+
+- web — `frontend/apps/web/lib/theme-plugin.mts`, loaded by `globals.css` via
+  `@plugin`, format `"hex"`
+- mobile — the `addBase` plugin in `frontend/apps/mobile/tailwind.config.js`,
+  format `"hsl"`
+
+Mobile needs bare `H S% L%` triples because Tailwind v3 resolves opacity
+modifiers (`bg-input/50`) only for `hsl(var(--x))`; `hexToHslTriple` in
+`packages/theme/css-vars.ts` converts at build time. That conversion is the
+one piece to delete when mobile moves to Tailwind v4.
+
+`frontend/apps/mobile/lib/theme.ts` re-exports `THEME` from the same package
+for imperative React Native colour props. Web's `@theme inline` mapping and
+mobile's `tailwind.config.js` colour map stay hand-written, and only need
+touching when a token is added or removed, not when a value changes.
+
+Fonts are separate: web loads Jost + Montserrat via `next/font/google` in
+`app/layout.tsx` (`--font-jost` / `--font-montserrat`). Mobile declares
+`fontFamily.heading/sans` in `tailwind.config.js` but **loads no font file
+yet** — `font-heading` currently falls back to the system face there.
 
 ## Page rhythm — bands of tone
 
@@ -84,17 +109,17 @@ Canonical order seen across the real mockups:
 4. **Highlight** — **`bg-primary`** (amber) band, used once
 5. **Speakers / prelegenci** — `bg-muted`, two-column card + pagination dots
 6. **Stats** — light band, 3–4 big numbers over small labels
-7. **FAQ** — **`bg-navy`** band, accordion + oversized "FAQ" wordmark
-8. **Footer** — `bg-navy`: logos, address columns, social icons, copyright
+7. **FAQ** — **`bg-band`** band, accordion + oversized "FAQ" wordmark
+8. **Footer** — `bg-band`: logos, address columns, social icons, copyright
 
 Rules:
 
-- Amber and navy are accents — one highlight band + FAQ/footer only. Every
+- Amber and the band colour are accents — one highlight band + FAQ/footer only. Every
   other band is white or surface-blue so the accents read.
 - Content column caps at **1280px**, centered.
 - Section vertical padding: `80px` desktop → `40px` mobile. Horizontal:
   `40px` desktop → `16px` mobile.
-- On `bg-navy` / `bg-primary` bands, flip text to `white-text` / dark ink
+- On `bg-band` / `bg-primary` bands, flip text to `band-foreground` / dark ink
   respectively — never use `foreground` unmodified on a dark band.
 
 ## Buttons & tags
@@ -113,7 +138,7 @@ When re-skinning a screen that predates this token system:
 
 1. Confirm the token files above are applied — component code doesn't change.
 2. Swap any hard-coded hex/px in that screen for token utilities
-   (`bg-primary`, `bg-navy`, `text-foreground`, `text-muted-foreground`,
+   (`bg-primary`, `bg-band`, `text-foreground`, `text-muted-foreground`,
    `rounded-lg` (now 5px), the literal spacing scale).
 3. Regroup the screen's content into the band order above if it isn't
    already — one background color per full-width section.
