@@ -1,4 +1,6 @@
 const { hairlineWidth } = require("nativewind/theme");
+const { cssVars } = require("@pkka/theme/css-vars");
+const plugin = require("tailwindcss/plugin");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -45,10 +47,10 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // brand-specific bands (Section tone="navy"/"amber")
-        navy: "hsl(var(--navy))",
+        // brand band surface + its foreground (Section tone)
+        band: "hsl(var(--band))",
         "brand-ink": "hsl(var(--brand-ink))",
-        "white-text": "hsl(var(--white-text))",
+        "band-foreground": "hsl(var(--band-foreground))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -77,5 +79,13 @@ module.exports = {
   future: {
     hoverOnlyWhenSupported: true,
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    plugin(({ addBase }) => {
+      addBase({
+        ":root": cssVars("light", "hsl"),
+        ".dark:root": cssVars("dark", "hsl"),
+      });
+    }),
+  ],
 };
