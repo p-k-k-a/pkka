@@ -50,7 +50,7 @@ public class EventRegistrationController {
                 description = "Already registered, or registration closed",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public EventRegistrationResponse register(@PathVariable UUID eventId, Caller caller) {
+    public EventRegistrationResponse registerForEvent(@PathVariable UUID eventId, Caller caller) {
         return eventRegistrationService.register(eventId, caller);
     }
 
@@ -67,20 +67,20 @@ public class EventRegistrationController {
                 description = "No such event, or the caller is not signed up for it",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public EventRegistrationResponse getOwnRegistration(@PathVariable UUID eventId, Caller caller) {
+    public EventRegistrationResponse getOwnEventRegistration(@PathVariable UUID eventId, Caller caller) {
         return eventRegistrationService.getOwnRegistration(eventId, caller);
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Cancel the current user's registration", description = """
-                    Frees the seat. Before `registrationClosesAt` someone else can claim it; after that
-                    nobody can, but dropping out still keeps the organiser's head count honest, so it stays
-                    allowed. Once the event has started it achieves neither and is rejected with a `reason`
-                    of `EVENT_ALREADY_STARTED`.
+                    Frees the seat, which goes straight to the first person on the waitlist — also after
+                    `registrationClosesAt`, since they signed up while registration was still open. Leaving the
+                    waitlist frees nothing and promotes nobody. Once the event has started cancelling achieves
+                    nothing and is rejected with a `reason` of `EVENT_ALREADY_STARTED`.
                     """)
     @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Seat freed"),
+        @ApiResponse(responseCode = "204", description = "Registration cancelled"),
         @ApiResponse(
                 responseCode = "404",
                 description = "No such event, or the user is not registered for it",
@@ -90,7 +90,7 @@ public class EventRegistrationController {
                 description = "The event has already started",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public void unregister(@PathVariable UUID eventId, Caller caller) {
+    public void cancelEventRegistration(@PathVariable UUID eventId, Caller caller) {
         eventRegistrationService.unregister(eventId, caller);
     }
 }

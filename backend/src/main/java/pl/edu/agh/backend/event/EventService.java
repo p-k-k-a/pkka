@@ -6,24 +6,18 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.dto.EventDetailsResponse;
 import pl.edu.agh.backend.event.dto.EventListItemResponse;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository.OwnRegistration;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +25,8 @@ import pl.edu.agh.backend.user.CallerUserService;
 public class EventService {
 
     private final EventRepository eventRepository;
-    private final EventRegistrationRepository eventRegistrationRepository;
-    private final CallerUserService callerUserService;
+    private final EventLookup eventLookup;
+    private final EventRegistrationService eventRegistrationService;
 
     public Page<EventListItemResponse> list(
             Caller caller, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
@@ -41,43 +35,20 @@ public class EventService {
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
         List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
-        Map<UUID, Long> seatsTaken = seatsTakenByEvent(ids);
-        Map<UUID, EventRegistrationStatus> ownStatus = ownRegistrationsByEvent(caller, ids);
+        Map<UUID, Long> seatsTaken = eventRegistrationService.seatsTakenByEvent(ids);
+        Map<UUID, EventRegistrationStatus> ownStatus = eventRegistrationService.ownStatusByEvent(caller, ids);
 
         return events.map(event -> EventListItemResponse.from(
                 event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
     }
 
     public EventDetailsResponse getDetails(UUID id, Caller caller) {
-        Event event = findVisible(id, caller);
-        EventRegistrationStatus registrationStatus = callerUserService
-                .findId(caller)
-                .flatMap(userId -> eventRegistrationRepository.findStatus(id, userId))
-                .orElse(null);
-        long seatsTaken = eventRegistrationRepository.countByEventIdAndStatus(id, EventRegistrationStatus.REGISTERED);
-        return EventDetailsResponse.from(event, seatsTaken, registrationStatus);
+        Event event = eventLookup.findVisible(id, caller);
+        EventRegistrationStatus registrationStatus =
+                eventRegistrationService.findOwnStatus(id, caller).orElse(null);
+        return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);
     }
 
-    public Event findVisible(UUID id, Caller caller) {
-        return requireVisible(eventRepository.findById(id), id, caller);
-    }
-
-    /** {@code MANDATORY} because a lock taken in a transaction of its own would be released too early. */
-    @Transactional(propagation = Propagation.MANDATORY)
-    public Event findVisibleForUpdate(UUID id, Caller caller) {
-        return requireVisible(eventRepository.findForUpdateById(id), id, caller);
-    }
-
-    /** Not visible is reported as not existing, so the caller cannot probe for hidden events. */
-    private Event requireVisible(Optional<Event> found, UUID id, Caller caller) {
-        Event event = found.orElseThrow(() -> new EventNotFoundException(id));
-        if (!EventVisibility.isVisibleTo(event, caller)) {
-            throw new EventNotFoundException(id);
-        }
-        return event;
-    }
-
-    /** No timeframe means upcoming, so the calendar never opens on the archive. */
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {
         Instant now = Instant.now();
         return switch (timeframe == null ? EventTimeframe.UPCOMING : timeframe) {
@@ -85,27 +56,5 @@ public class EventService {
             case PAST -> startsBeforeOrEqual(now);
             case ALL -> Specification.unrestricted();
         };
-    }
-
-    private Map<UUID, Long> seatsTakenByEvent(List<UUID> eventIds) {
-        if (eventIds.isEmpty()) {
-            return Map.of();
-        }
-        return eventRegistrationRepository
-                .countByEventIdInAndStatus(eventIds, EventRegistrationStatus.REGISTERED)
-                .stream()
-                .collect(Collectors.toMap(EventSeatCount::eventId, EventSeatCount::seatsTaken));
-    }
-
-    /** Anonymous callers have no registrations, so they cost no query here. */
-    private Map<UUID, EventRegistrationStatus> ownRegistrationsByEvent(Caller caller, List<UUID> eventIds) {
-        if (eventIds.isEmpty()) {
-            return Map.of();
-        }
-        return callerUserService
-                .findId(caller)
-                .map(userId -> eventRegistrationRepository.findOwnRegistrations(userId, eventIds).stream()
-                        .collect(Collectors.toMap(OwnRegistration::eventId, OwnRegistration::status)))
-                .orElseGet(Map::of);
     }
 }

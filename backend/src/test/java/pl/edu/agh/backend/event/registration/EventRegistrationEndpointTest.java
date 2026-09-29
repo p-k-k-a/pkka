@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +36,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.event.AdminEventService;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventRepository;
+import pl.edu.agh.backend.event.EventRequest;
 import pl.edu.agh.backend.event.EventType;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
@@ -74,6 +77,9 @@ class EventRegistrationEndpointTest {
 
     @Autowired
     private ApplicationEvents applicationEvents;
+
+    @Autowired
+    private AdminEventService adminEventService;
 
     private String alumnKeycloakId;
 
@@ -380,6 +386,78 @@ class EventRegistrationEndpointTest {
         mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void raisingTheSeatLimit_promotesAsManyAsTheNewSeatsAllow() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+        String first = queue(event);
+        String second = queue(event);
+        String third = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, 3));
+
+        assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, third)).isEqualTo(EventRegistrationStatus.WAITLISTED);
+        assertThat(applicationEvents.stream(RegistrationPromotedEvent.class)).hasSize(2);
+    }
+
+    @Test
+    void liftingTheSeatLimit_promotesTheWholeQueue() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+        String first = queue(event);
+        String second = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, null));
+
+        assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
+    }
+
+    @Test
+    void unregisterAfterTheSeatLimitWasLoweredBelowTheHeadCount_promotesNobody() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 2);
+        registerCaller(event);
+        registerOtherAlumn(event);
+        String queued = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, 1));
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(statusOf(event, queued)).isEqualTo(EventRegistrationStatus.WAITLISTED);
+    }
+
+    /** Signs a fresh alumn up for an event that is already full, returning their Keycloak id. */
+    private String queue(Event event) throws Exception {
+        String keycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(keycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+        return keycloakId;
+    }
+
+    private EventRequest requestWithSeatLimit(Event event, Integer seatLimit) {
+        return new EventRequest(
+                event.getTitle(),
+                null,
+                event.getType(),
+                event.getStartsAt(),
+                event.getEndsAt(),
+                null,
+                null,
+                seatLimit,
+                event.getRegistrationClosesAt(),
+                event.getAudience(),
+                null,
+                Set.of());
     }
 
     private EventRegistrationStatus statusOf(Event event, String keycloakId) {

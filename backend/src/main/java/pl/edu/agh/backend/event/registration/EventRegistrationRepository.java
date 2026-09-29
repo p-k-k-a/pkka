@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,8 +34,8 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
             @Param("registeredAt") Instant registeredAt,
             @Param("id") UUID id);
 
-    Optional<EventRegistration> findFirstByEventIdAndStatusOrderByRegisteredAtAscIdAsc(
-            UUID eventId, EventRegistrationStatus status);
+    List<EventRegistration> findByEventIdAndStatusOrderByRegisteredAtAscIdAsc(
+            UUID eventId, EventRegistrationStatus status, Limit limit);
 
     /** An event nobody signed up for has no row here at all, so a missing entry reads as zero. */
     @Query("""
