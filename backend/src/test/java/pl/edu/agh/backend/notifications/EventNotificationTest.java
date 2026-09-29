@@ -284,6 +284,16 @@ class EventNotificationTest {
         verify(expoPushClient, never()).send(any());
     }
 
+    @Test
+    void aDeletedEvent_isNeverReminded() {
+        Event event = registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        adminEventService.delete(event.getId());
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
     private static void awaitUntil(java.util.function.BooleanSupplier condition) {
         long deadline = System.currentTimeMillis() + SEND_TIMEOUT_MS;
         while (System.currentTimeMillis() < deadline) {

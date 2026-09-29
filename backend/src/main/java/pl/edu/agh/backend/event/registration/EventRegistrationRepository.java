@@ -35,6 +35,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
                     select r.* from event_registrations r
                     join events e on e.id = r.event_id
                     where r.reminder_sent_at is null
+                      and e.deleted_at is null
                       and e.reminder_lead_time_minutes is not null
                       and e.starts_at > now()
                       and e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute') <= now()
