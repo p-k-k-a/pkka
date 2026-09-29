@@ -30,6 +30,19 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     @Query("select r.event.id from EventRegistration r where r.user.id = :userId and r.event.id in :eventIds")
     Set<UUID> findRegisteredEventIds(@Param("userId") UUID userId, @Param("eventIds") Collection<UUID> eventIds);
 
+    // TODO(#198): add "and r.status = 'REGISTERED'" so waitlisted sign-ups get no reminder.
+    @Query(value = """
+                    select r.* from event_registrations r
+                    join events e on e.id = r.event_id
+                    where r.reminder_sent_at is null
+                      and e.deleted_at is null
+                      and e.reminder_lead_time_minutes is not null
+                      and e.starts_at > now()
+                      and e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute') <= now()
+                      and r.registered_at <= e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute')
+                    """, nativeQuery = true)
+    List<EventRegistration> findDueForReminder();
+
     interface EventSeatCount {
         UUID getEventId();
 

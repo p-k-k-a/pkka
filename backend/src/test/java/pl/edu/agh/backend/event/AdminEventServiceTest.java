@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -44,6 +45,9 @@ class AdminEventServiceTest {
 
     @Mock
     private CallerUserService callerUserService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AdminEventService adminEventService;
@@ -96,6 +100,7 @@ class AdminEventServiceTest {
                 Instant.parse("2026-08-31T22:00:00Z"),
                 Audience.PUBLIC,
                 null,
+                null,
                 Set.of("ai"));
 
         AdminEventResponse response = adminEventService.create(ADMIN, request);
@@ -106,6 +111,7 @@ class AdminEventServiceTest {
         assertThat(captor.getValue().getAuthor()).isSameAs(author);
         assertThat(response.title()).isEqualTo("Warsztat AI");
         assertThat(response.tags()).containsExactlyInAnyOrder("ai");
+        verify(eventPublisher).publishEvent(new EventCreatedEvent(response.id()));
     }
 
     @Test
@@ -123,6 +129,7 @@ class AdminEventServiceTest {
                 null,
                 null,
                 Audience.PUBLIC,
+                null,
                 null,
                 Set.of("nope"));
 

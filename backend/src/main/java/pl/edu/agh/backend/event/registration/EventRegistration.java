@@ -45,6 +45,9 @@ public class EventRegistration {
     @ToString.Include
     private Instant registeredAt;
 
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
