@@ -36,7 +36,7 @@ INSERT INTO events (
      date_trunc('day', now()) + interval '7 days' + interval '18 hours',
      date_trunc('day', now()) + interval '7 days' + interval '21 hours',
      NULL, 'Kraków, ul. Reymonta 19, sala A',
-     80, date_trunc('day', now()) + interval '6 days' + interval '20 hours',
+     9, date_trunc('day', now()) + interval '6 days' + interval '20 hours',
      'ALL_ALUMNI', 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=450&fit=crop',
      now(), now(), 0),
 
