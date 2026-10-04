@@ -14,6 +14,7 @@ import {
   getListEventOccupancyQueryKey,
   getListEventsQueryKey,
   getGetEventStatisticsQueryKey,
+  getListEventRegistrationsQueryKey,
   useCreateAdminEvent,
   useListTags,
   useUpdateAdminEvent,
@@ -118,6 +119,7 @@ export function EventForm({ event }: EventFormProps) {
     queryClient.invalidateQueries({ queryKey: getListEventOccupancyQueryKey() });
     if (event) {
       queryClient.invalidateQueries({ queryKey: getGetEventStatisticsQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getListEventRegistrationsQueryKey(event.id) });
       queryClient.invalidateQueries({ queryKey: getGetAdminEventQueryKey(event.id) });
       queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) });
     }

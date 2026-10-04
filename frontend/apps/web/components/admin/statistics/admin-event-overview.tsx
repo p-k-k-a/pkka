@@ -27,6 +27,7 @@ import { useAuth } from "@/lib/auth-context";
 import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-registrations-chart";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
+import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
@@ -275,6 +276,8 @@ export function AdminEventOverview({ id }: { id: string }) {
             </div>
           </>
         )}
+
+        <EventRegistrants eventId={event.id} eventTitle={event.title} />
       </div>
     </div>
   );
