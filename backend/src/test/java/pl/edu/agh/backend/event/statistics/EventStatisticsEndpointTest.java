@@ -187,6 +187,19 @@ class EventStatisticsEndpointTest {
     }
 
     @Test
+    void seatsHeldAfterTheLimitDroppedToZeroReadAsOverTheLimit() throws Exception {
+        Event event = upcomingEvent(4);
+        signUp(event);
+        signUp(event);
+        jdbcTemplate.update("UPDATE events SET seat_limit = 0 WHERE id = ?", event.getId());
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
+                .andExpect(jsonPath("$.registered").value(2))
+                .andExpect(jsonPath("$.occupancyPercent").value(200));
+    }
+
+    @Test
     void dailySeriesRunsFromPublicationToTodayWithEmptyDaysFilledIn() throws Exception {
         Event event = upcomingEvent(50);
         Instant now = Instant.now();

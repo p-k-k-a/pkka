@@ -21,10 +21,11 @@ public interface RegistrationActivityRepository extends JpaRepository<Registrati
     @Query("""
             select a.event.id as eventId, a.type as type, count(a) as count
             from RegistrationActivity a
-            where a.event.id in :eventIds
+            where a.event.id in :eventIds and a.type in :types
             group by a.event.id, a.type
             """)
-    List<ActivityCount> countByEventIdInGroupedByType(@Param("eventIds") Collection<UUID> eventIds);
+    List<ActivityCount> countByEventIdInAndTypeIn(
+            @Param("eventIds") Collection<UUID> eventIds, @Param("types") Collection<RegistrationActivityType> types);
 
     record ActivityOccurrence(RegistrationActivityType type, Instant occurredAt) {}
 

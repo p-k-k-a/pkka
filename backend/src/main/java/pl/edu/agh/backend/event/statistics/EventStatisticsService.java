@@ -90,11 +90,9 @@ public class EventStatisticsService {
         Map<UUID, Long> registered = seatCounts(ids, EventRegistrationStatus.REGISTERED);
         Map<UUID, Long> waitlisted = seatCounts(ids, EventRegistrationStatus.WAITLISTED);
         Map<UUID, Long> cancellations = new HashMap<>();
-        for (ActivityCount row : registrationActivityRepository.countByEventIdInGroupedByType(ids)) {
-            if (row.type() == RegistrationActivityType.CANCELLED
-                    || row.type() == RegistrationActivityType.LEFT_WAITLIST) {
-                cancellations.merge(row.eventId(), row.count(), Long::sum);
-            }
+        for (ActivityCount row : registrationActivityRepository.countByEventIdInAndTypeIn(
+                ids, List.of(RegistrationActivityType.CANCELLED, RegistrationActivityType.LEFT_WAITLIST))) {
+            cancellations.merge(row.eventId(), row.count(), Long::sum);
         }
 
         return events.stream()
@@ -168,9 +166,9 @@ public class EventStatisticsService {
         if (seatLimit == null) {
             return null;
         }
-        if (seatLimit == 0) {
+        if (seatLimit == 0 && registered == 0) {
             return 100;
         }
-        return (int) Math.round(registered * 100.0 / seatLimit);
+        return (int) Math.round(registered * 100.0 / Math.max(seatLimit, 1));
     }
 }
