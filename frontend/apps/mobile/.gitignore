@@ -17,6 +17,9 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+# FCM V1 service account key - can send pushes as us, never commit
+*fcm*private*.json
+*-service-account*.json
 
 # Metro
 .metro-health-check*

@@ -1,7 +1,8 @@
+import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import "@/global.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { configureNotificationHandler, useNotificationRouting } from "@/lib/notifications";
 import { NAV_THEME } from "@/lib/theme";
-import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import { createQueryClient } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
@@ -14,6 +15,7 @@ import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const queryClient = createQueryClient();
+configureNotificationHandler();
 
 focusManager.setEventListener((handleFocus) => {
   const subscription = AppState.addEventListener("change", (state) =>
@@ -24,6 +26,7 @@ focusManager.setEventListener((handleFocus) => {
 
 export default function RootLayout() {
   const colorScheme: "light" | "dark" = "light";
+  useNotificationRouting();
 
   return (
     <KeyboardProvider>
