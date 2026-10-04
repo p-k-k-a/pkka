@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const PLOT_HEIGHT = 220;
 const MAX_TICKS = 6;
 const MIN_LABEL_GAP = 18;
+const MAX_DAYS_WITH_GAPS = 45;
 
 function dayLabel(date: string, pattern: string) {
   return format(parseISO(date), pattern, { locale: pl });
@@ -58,6 +59,7 @@ type DailyRegistrationsChartProps = {
 
 export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) {
   const [active, setActive] = useState<number | null>(null);
+  const [announce, setAnnounce] = useState(false);
   const descriptionId = useId();
 
   const maxUp = Math.max(0, ...days.map((day) => day.signUps));
@@ -100,6 +102,7 @@ export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) 
               : null;
     if (next === null) return;
     event.preventDefault();
+    setAnnounce(true);
     setActive(next);
   };
 
@@ -135,7 +138,7 @@ export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) 
           ) : null}
         </div>
 
-        <div className="min-w-0 flex-1">
+        <div className="@container min-w-0 flex-1">
           <div
             role="group"
             tabIndex={0}
@@ -144,14 +147,22 @@ export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) 
             aria-describedby={descriptionId}
             className="focus-visible:ring-ring/50 relative cursor-crosshair rounded-sm outline-none focus-visible:ring-3"
             style={{ height: PLOT_HEIGHT }}
-            onPointerMove={pickFromPointer}
+            onPointerMove={(event) => {
+              setAnnounce(false);
+              pickFromPointer(event);
+            }}
             onPointerLeave={() => setActive(null)}
             onFocus={() => setActive((current) => current ?? days.length - 1)}
             onBlur={() => setActive(null)}
             onKeyDown={moveWithKeys}
           >
             <div className="border-border absolute inset-x-0 border-t" style={{ top: upHeight }} />
-            <div className="absolute inset-0 flex gap-[2px]">
+            <div
+              className={cn(
+                "absolute inset-0 flex overflow-hidden",
+                days.length <= MAX_DAYS_WITH_GAPS && "gap-[2px]",
+              )}
+            >
               {days.map((day, index) => (
                 <div
                   key={day.date}
@@ -217,7 +228,11 @@ export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) 
             {ticks.map((index) => (
               <span
                 key={index}
-                className="absolute whitespace-nowrap"
+                className={cn(
+                  "absolute whitespace-nowrap",
+                  index === 0 && index !== days.length - 1 && "hidden @3xs:inline",
+                  index !== 0 && index !== days.length - 1 && "hidden @md:inline",
+                )}
                 style={{
                   left: edgeLeft(index, days.length),
                   transform: edgeTransform(index, days.length),
@@ -230,7 +245,7 @@ export function DailyRegistrationsChart({ days }: DailyRegistrationsChartProps) 
         </div>
       </div>
 
-      <p id={descriptionId} className="sr-only" aria-live="polite">
+      <p id={descriptionId} className="sr-only" aria-live={announce ? "polite" : "off"}>
         {activeDay
           ? `${dayLabel(activeDay.date, "EEEE, d MMMM")}: ${signUpsLabel(activeDay.signUps)}, ${cancellationsLabel(activeDay.cancellations)}.`
           : `Od ${dayLabel(days[0].date, "d MMMM")} do ${dayLabel(days[days.length - 1].date, "d MMMM")}: ${signUpsLabel(totalSignUps)}, ${cancellationsLabel(totalCancellations)}.`}

@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { ArrowLeft, CalendarClock, MapPin, Pencil, Users } from "lucide-react";
-import { useGetAdminEvent, useGetEventStatistics, type EventStatisticsResponse } from "@pkka/api";
+import {
+  type ApiError,
+  useGetAdminEvent,
+  useGetEventStatistics,
+  type EventStatisticsResponse,
+} from "@pkka/api";
 import {
   audienceLabel,
   eventLocationLabel,
@@ -113,13 +118,17 @@ export function AdminEventOverview({ id }: { id: string }) {
 
   const event = eventQuery.data?.data;
   if (eventQuery.isError || !event) {
+    const apiError = eventQuery.error as unknown as ApiError | null;
+    const notFound = apiError?.status === 404;
     return (
       <div className="px-4 py-16 text-center">
         <h1 className="font-heading text-foreground mb-2 text-[28px] font-semibold">
-          Nie znaleziono wydarzenia
+          {notFound ? "Nie znaleziono wydarzenia" : "Nie udało się załadować wydarzenia"}
         </h1>
         <p className="text-muted-foreground mb-8">
-          To wydarzenie nie istnieje albo zostało usunięte.
+          {notFound
+            ? "To wydarzenie nie istnieje albo zostało usunięte."
+            : "Spróbuj odświeżyć stronę za chwilę."}
         </p>
         <Button asChild variant="outline">
           <Link href={ADMIN_EVENTS_PATH}>
