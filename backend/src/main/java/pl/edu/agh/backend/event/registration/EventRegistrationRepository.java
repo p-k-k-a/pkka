@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,9 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     Optional<EventRegistration> findByEventIdAndUserId(UUID eventId, UUID userId);
 
     long countByEventIdAndStatus(UUID eventId, EventRegistrationStatus status);
+
+    @EntityGraph(attributePaths = "user")
+    List<EventRegistration> findByEventIdOrderByRegisteredAtAscIdAsc(UUID eventId);
 
     @Query("select r.status from EventRegistration r where r.event.id = :eventId and r.user.id = :userId")
     Optional<EventRegistrationStatus> findStatus(@Param("eventId") UUID eventId, @Param("userId") UUID userId);
