@@ -26,6 +26,8 @@
   --color-band: var(--band);
   --color-brand-ink: var(--brand-ink);
   --color-band-foreground: var(--band-foreground);
+  --color-chart-1: var(--chart1);
+  --color-chart-2: var(--chart2);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 3px);
