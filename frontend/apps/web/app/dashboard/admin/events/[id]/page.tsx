@@ -1,10 +1,10 @@
-import { EventEditor } from "@/components/admin/event-editor";
+import { AdminEventOverview } from "@/components/admin/statistics/admin-event-overview";
 
-type DashboardEditEventPageProps = {
+type DashboardAdminEventPageProps = {
   params: Promise<{ id: string }>;
 };
 
-export default async function DashboardEditEventPage({ params }: DashboardEditEventPageProps) {
+export default async function DashboardAdminEventPage({ params }: DashboardAdminEventPageProps) {
   const { id } = await params;
-  return <EventEditor id={id} />;
+  return <AdminEventOverview id={id} />;
 }

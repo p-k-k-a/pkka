@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   getListAdminEventsQueryKey,
+  getListEventOccupancyQueryKey,
   getListEventsQueryKey,
   useDeleteAdminEvent,
   useListAdminEvents,
@@ -59,6 +60,7 @@ export function AdminEventsList() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAdminEventsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListEventOccupancyQueryKey() });
         setEventToDelete(null);
       },
     },
@@ -108,12 +110,20 @@ export function AdminEventsList() {
                 <TabsTrigger value={EventTimeframe.PAST}>Minione</TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button asChild>
-              <Link href={`${ADMIN_EVENTS_PATH}/new`}>
-                <Plus data-icon="inline-start" />
-                Nowe wydarzenie
-              </Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild variant="outline">
+                <Link href={`${ADMIN_EVENTS_PATH}/statistics`}>
+                  <ChartColumn data-icon="inline-start" />
+                  Porównaj obłożenie
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href={`${ADMIN_EVENTS_PATH}/new`}>
+                  <Plus data-icon="inline-start" />
+                  Nowe wydarzenie
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -149,11 +159,17 @@ export function AdminEventsList() {
                     event={item}
                     footer={
                       <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
-                        <span className="text-muted-foreground mr-auto text-xs font-semibold tracking-widest uppercase">
+                        <span className="text-muted-foreground w-full text-xs font-semibold tracking-widest uppercase">
                           {audienceLabel(item.audience)}
                         </span>
                         <Button asChild variant="outline" size="sm">
                           <Link href={`${ADMIN_EVENTS_PATH}/${item.id}`}>
+                            <ChartColumn data-icon="inline-start" />
+                            Statystyki
+                          </Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`${ADMIN_EVENTS_PATH}/${item.id}/edit`}>
                             <Pencil data-icon="inline-start" />
                             Edytuj
                           </Link>
