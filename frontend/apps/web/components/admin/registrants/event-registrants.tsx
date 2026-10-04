@@ -21,10 +21,10 @@ const COLLAPSED_ROWS = 10;
 
 function normalize(text: string) {
   return text
+    .toLowerCase()
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
-    .replace(/ł/g, "l")
-    .toLowerCase();
+    .replace(/ł/g, "l");
 }
 
 function matches(registration: AdminEventRegistrationResponse, query: string) {
@@ -94,12 +94,14 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
       <div className="flex flex-wrap items-end justify-between gap-4 px-6 pt-6 pb-4">
         <div className="space-y-1">
           <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-            Zapisani · {seated}
+            Zapisani{isLoading || isError ? "" : ` · ${seated}`}
           </h2>
           <p className="text-muted-foreground text-sm">
-            {queued > 0
-              ? `Oraz ${queued} ${pluralPl(queued, "osoba", "osoby", "osób")} na liście rezerwowej, w kolejności awansu.`
-              : "Nikt nie czeka na liście rezerwowej."}
+            {isLoading || isError
+              ? "Osoby zapisane na wydarzenie i lista rezerwowa."
+              : queued > 0
+                ? `Oraz ${queued} ${pluralPl(queued, "osoba", "osoby", "osób")} na liście rezerwowej, w kolejności awansu.`
+                : "Nikt nie czeka na liście rezerwowej."}
           </p>
         </div>
         <div className="flex w-full flex-wrap gap-3 sm:w-auto">
