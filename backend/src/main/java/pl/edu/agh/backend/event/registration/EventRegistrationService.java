@@ -29,6 +29,7 @@ public class EventRegistrationService {
 
     private final EventLookup eventLookup;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final RegistrationActivityRepository registrationActivityRepository;
     private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
@@ -62,6 +63,8 @@ public class EventRegistrationService {
         } catch (DataIntegrityViolationException ex) {
             throw EventRegistrationConflictException.alreadyRegistered(eventId);
         }
+        recordActivity(
+                event, user, takesASeat ? RegistrationActivityType.SIGNED_UP : RegistrationActivityType.WAITLISTED);
 
         return toResponse(registration, event, seatsTaken + (takesASeat ? 1 : 0));
     }
@@ -91,6 +94,8 @@ public class EventRegistrationService {
                 .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
         boolean freedASeat = registration.getStatus() == EventRegistrationStatus.REGISTERED;
         eventRegistrationRepository.delete(registration);
+        recordActivity(
+                event, user, freedASeat ? RegistrationActivityType.CANCELLED : RegistrationActivityType.LEFT_WAITLIST);
 
         if (freedASeat) {
             fillFreeSeats(event);
@@ -122,6 +127,7 @@ public class EventRegistrationService {
                         event.getId(), EventRegistrationStatus.WAITLISTED, freeSeats)
                 .forEach(next -> {
                     next.setStatus(EventRegistrationStatus.REGISTERED);
+                    recordActivity(event, next.getUser(), RegistrationActivityType.PROMOTED);
                     eventPublisher.publishEvent(new RegistrationPromotedEvent(
                             event.getId(), next.getUser().getId()));
                 });
@@ -163,6 +169,15 @@ public class EventRegistrationService {
                 .map(userId -> eventRegistrationRepository.findOwnRegistrations(userId, eventIds).stream()
                         .collect(Collectors.toMap(OwnRegistration::eventId, OwnRegistration::status)))
                 .orElseGet(Map::of);
+    }
+
+    private void recordActivity(Event event, User user, RegistrationActivityType type) {
+        registrationActivityRepository.save(RegistrationActivity.builder()
+                .event(event)
+                .user(user)
+                .type(type)
+                .occurredAt(Instant.now(clock))
+                .build());
     }
 
     private EventRegistrationResponse toResponse(EventRegistration registration, Event event, long seatsTaken) {

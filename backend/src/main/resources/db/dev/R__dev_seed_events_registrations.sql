@@ -35,3 +35,32 @@ FROM (VALUES
 CROSS JOIN LATERAL generate_series(e.first_user, e.last_user) AS s(n)
 JOIN users u ON u.id = ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid
 ON CONFLICT DO NOTHING;
+
+-- The statistics screen reads history from this log; seeded sign-ups bypass the service that writes it.
+INSERT INTO event_registration_activities (id, event_id, user_id, type, occurred_at)
+SELECT md5('activity' || r.id::text)::uuid,
+       r.event_id,
+       r.user_id,
+       CASE r.status WHEN 'WAITLISTED' THEN 'WAITLISTED' ELSE 'SIGNED_UP' END,
+       r.registered_at
+FROM event_registrations r
+WHERE r.event_id IN (
+    '22222222-2222-2222-2222-222222222201', '22222222-2222-2222-2222-222222222202',
+    '22222222-2222-2222-2222-222222222207', '22222222-2222-2222-2222-222222222208')
+  -- A database that already held these sign-ups got them from the V22 backfill under random ids.
+  AND NOT EXISTS (
+      SELECT 1 FROM event_registration_activities a
+      WHERE a.event_id = r.event_id AND a.user_id = r.user_id AND a.occurred_at = r.registered_at)
+ON CONFLICT DO NOTHING;
+
+-- People who signed up for the AI workshop and later dropped out, so cancellations show up per day.
+INSERT INTO event_registration_activities (id, event_id, user_id, type, occurred_at)
+SELECT md5(a.kind || '22222222-2222-2222-2222-222222222201' || s.n)::uuid,
+       '22222222-2222-2222-2222-222222222201'::uuid,
+       ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid,
+       a.kind,
+       now() - ((26 - s.n) * interval '1 day') + a.later
+FROM generate_series(19, 24) AS s(n)
+CROSS JOIN (VALUES ('SIGNED_UP', interval '0 hours'), ('CANCELLED', interval '1 day 3 hours')) AS a(kind, later)
+JOIN users u ON u.id = ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid
+ON CONFLICT DO NOTHING;
