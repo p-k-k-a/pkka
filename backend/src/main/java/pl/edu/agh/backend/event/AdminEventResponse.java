@@ -25,6 +25,10 @@ public record AdminEventResponse(
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String coverImageUrl,
+
+        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
+        Integer reminderLeadTimeMinutes,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Set<String> tags,
 
         @Schema(description = "Admin who created the event; absent for events that predate authorship tracking")
@@ -48,6 +52,7 @@ public record AdminEventResponse(
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
                 event.getCoverImageUrl(),
+                event.getReminderLeadTimeMinutes(),
                 event.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
                 event.getAuthor() == null ? null : event.getAuthor().getDisplayName(),
                 event.getCreatedAt(),

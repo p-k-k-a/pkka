@@ -19,12 +19,13 @@ public class DeviceTokenService {
     @Transactional
     public void register(Caller caller, String token, RegisterDeviceRequest request) {
         User user = callerUserService.getOrCreate(caller);
-        DeviceToken device = deviceTokenRepository
-                .findById(token)
-                .orElseGet(() -> DeviceToken.builder().token(token).build());
-        device.setUser(user);
+        deviceTokenRepository.insertIfAbsent(
+                token, user.getId(), request.platform().name());
+        DeviceToken device = deviceTokenRepository.findById(token).orElseThrow();
+        if (!device.getUser().getId().equals(user.getId())) {
+            throw new DeviceTokenConflictException(token);
+        }
         device.setPlatform(request.platform());
-        deviceTokenRepository.save(device);
     }
 
     @Transactional
