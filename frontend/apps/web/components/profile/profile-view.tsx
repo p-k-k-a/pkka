@@ -23,7 +23,6 @@ import { DiscordIcon } from "@pkka/icons/web";
 import { getProfileContacts } from "@pkka/domain";
 
 const EDIT_HREF = "/dashboard/profile/edit";
-const DIRECTORY_HREF = "/dashboard/alumni";
 
 /**
  * The viewer's own profile (`/api/profiles/me`) and another alumn's public profile
@@ -32,7 +31,7 @@ const DIRECTORY_HREF = "/dashboard/alumni";
  */
 type ProfileViewProps =
   | { variant: "own"; profile: ProfileResponse }
-  | { variant: "alumn"; profile: AlumniProfileResponse };
+  | { variant: "alumn"; profile: AlumniProfileResponse; directoryHref: string };
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
@@ -45,8 +44,9 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ProfileView({ variant, profile }: ProfileViewProps) {
-  const isOwn = variant === "own";
+export function ProfileView(props: ProfileViewProps) {
+  const { profile } = props;
+  const isOwn = props.variant === "own";
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
   const contacts = getProfileContacts(profile);
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
@@ -86,7 +86,9 @@ export function ProfileView({ variant, profile }: ProfileViewProps) {
   return (
     <div className="bg-background px-4 py-10 md:px-10 md:py-20">
       <div className="mx-auto max-w-[1280px]">
-        {isOwn ? null : <DetailBackLink href={DIRECTORY_HREF} label="Wróć do katalogu" />}
+        {props.variant === "alumn" ? (
+          <DetailBackLink href={props.directoryHref} label="Wróć do katalogu" />
+        ) : null}
 
         <div
           className={`grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px] ${isOwn ? "" : "mt-10"}`}

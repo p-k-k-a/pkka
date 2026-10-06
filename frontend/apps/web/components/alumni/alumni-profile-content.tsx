@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { ApiError, useGetAlumniProfile } from "@pkka/api";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 function AlumniProfileSkeleton() {
   return (
@@ -29,6 +31,9 @@ function AlumniProfileSkeleton() {
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
+  // The card passes the directory's criteria along, so going back restores them.
+  const searchParams = useSearchParams().toString();
+  const directoryHref = `${ALUMNI_DIRECTORY_HREF}${searchParams ? `?${searchParams}` : ""}`;
 
   if (isPending) return <AlumniProfileSkeleton />;
 
@@ -62,12 +67,12 @@ export function AlumniProfileContent({ id }: { id: string }) {
             </Button>
           )}
           <Button asChild variant="ghost">
-            <Link href="/dashboard/alumni">Wróć do katalogu</Link>
+            <Link href={directoryHref}>Wróć do katalogu</Link>
           </Button>
         </div>
       </div>
     );
   }
 
-  return <ProfileView variant="alumn" profile={profile} />;
+  return <ProfileView variant="alumn" profile={profile} directoryHref={directoryHref} />;
 }

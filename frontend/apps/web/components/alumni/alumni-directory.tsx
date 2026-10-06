@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import { useListAlumni } from "@pkka/api";
 import {
   ALUMNI_SORT_OPTIONS,
-  DEFAULT_ALUMNI_SORT,
-  EMPTY_ALUMNI_FILTERS,
   buildAlumniParams,
   type AlumniFilters,
   type AlumniSortOption,
@@ -18,16 +17,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { parseAlumniSearchParams, toAlumniSearchString } from "@/lib/alumni-search-params";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function AlumniDirectory() {
-  const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_ALUMNI_FILTERS);
-  const [sort, setSort] = useState<AlumniSortOption>(DEFAULT_ALUMNI_SORT);
-  const [page, setPage] = useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  // The URL is read once: afterwards the state drives the URL, not the other way round.
+  const [initial] = useState(() => parseAlumniSearchParams(searchParams));
+  const [query, setQuery] = useState(initial.query);
+  const [filters, setFilters] = useState<AlumniFilters>(initial.filters);
+  const [sort, setSort] = useState<AlumniSortOption>(initial.sort);
+  const [page, setPage] = useState(initial.page);
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Kept in the URL so the criteria survive a visit to a profile and can be shared.
+  const search = toAlumniSearchString({ query: debouncedQuery, filters, sort, page });
+  const currentSearch = searchParams.toString();
+  useEffect(() => {
+    if (search !== (currentSearch ? `?${currentSearch}` : "")) {
+      router.replace(`${pathname}${search}`, { scroll: false });
+    }
+  }, [search, currentSearch, pathname, router]);
 
   const { data, isPending, isError, isPlaceholderData, refetch } = useListAlumni(
     { ...buildAlumniParams(debouncedQuery, filters, sort), page },
@@ -38,6 +53,13 @@ export function AlumniDirectory() {
   const alumni = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
+
+  function goToPage(next: number) {
+    setPage(next);
+    // Instant on purpose: a smooth scroll gets cut short when the shorter next page
+    // replaces the current one mid-animation.
+    resultsRef.current?.scrollIntoView({ block: "start" });
+  }
 
   // Any change to the criteria starts again from the first page.
   function updateFilters(next: AlumniFilters) {
@@ -112,7 +134,7 @@ export function AlumniDirectory() {
             <AlumniFiltersPanel value={filters} onChange={updateFilters} />
           </aside>
 
-          <div className="flex flex-col gap-6">
+          <div ref={resultsRef} className="flex scroll-mt-6 flex-col gap-6">
             {isPending ? (
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -137,7 +159,7 @@ export function AlumniDirectory() {
                   className={`grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 xl:grid-cols-3 ${isPlaceholderData ? "opacity-60" : ""}`}
                 >
                   {alumni.map((alumn) => (
-                    <AlumniCard key={alumn.id} alumn={alumn} />
+                    <AlumniCard key={alumn.id} alumn={alumn} search={search} />
                   ))}
                 </div>
                 {totalPages > 1 ? (
@@ -147,7 +169,7 @@ export function AlumniDirectory() {
                       variant="outline"
                       size="sm"
                       disabled={page <= 0 || isPlaceholderData}
-                      onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                      onClick={() => goToPage(Math.max(0, page - 1))}
                     >
                       <ArrowLeft data-icon="inline-start" />
                       Poprzednia
@@ -160,7 +182,7 @@ export function AlumniDirectory() {
                       variant="outline"
                       size="sm"
                       disabled={page >= totalPages - 1 || isPlaceholderData}
-                      onClick={() => setPage((prev) => prev + 1)}
+                      onClick={() => goToPage(page + 1)}
                     >
                       Następna
                       <ArrowRight data-icon="inline-end" />

@@ -3,11 +3,18 @@ import { ArrowRight, Briefcase, GraduationCap, Sparkles } from "lucide-react";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 const VISIBLE_TAGS = 3;
 
 // Mirrors EventCalendarCard: flat muted tile, band chip, icon rows, "read more" footer.
-export function AlumniCard({ alumn }: { alumn: AlumniListItemResponse }) {
+type AlumniCardProps = {
+  alumn: AlumniListItemResponse;
+  /** The directory's current `?…`, carried to the profile so its back link can return to it. */
+  search?: string;
+};
+
+export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
   const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" · ");
   const tags = alumn.tags.map((tag) => tag.name);
@@ -17,7 +24,7 @@ export function AlumniCard({ alumn }: { alumn: AlumniListItemResponse }) {
 
   return (
     <Link
-      href={`/dashboard/alumni/${alumn.id}`}
+      href={`${ALUMNI_DIRECTORY_HREF}/${alumn.id}${search}`}
       className="group focus-visible:ring-ring block h-full rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0">
