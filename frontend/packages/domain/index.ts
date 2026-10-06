@@ -1,4 +1,5 @@
 export * from "./application/rules";
+export * from "./events/registration";
 export * from "./format/datetime";
 export * from "./labels/application";
 export * from "./labels/events";

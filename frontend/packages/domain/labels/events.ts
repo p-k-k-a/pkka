@@ -1,9 +1,14 @@
-import { Audience, EventType } from "@pkka/api";
+import { Audience, EventRegistrationStatus, EventType } from "@pkka/api";
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   ONLINE: "Online",
   IN_PERSON: "Stacjonarnie",
   HYBRID: "Hybrydowo",
+};
+
+const REGISTRATION_STATUS_LABELS_UPPER: Record<EventRegistrationStatus, string> = {
+  REGISTERED: "ZAPISANO",
+  WAITLISTED: "LISTA REZERWOWA",
 };
 
 const AUDIENCE_LABELS: Record<Audience, string> = {
@@ -14,6 +19,10 @@ const AUDIENCE_LABELS: Record<Audience, string> = {
 
 export function eventTypeLabelUpper(type: EventType) {
   return EVENT_TYPE_LABELS[type].toUpperCase();
+}
+
+export function registrationStatusLabelUpper(status: EventRegistrationStatus) {
+  return REGISTRATION_STATUS_LABELS_UPPER[status];
 }
 
 export function audienceLabel(audience: Audience) {
