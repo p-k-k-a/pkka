@@ -3,6 +3,7 @@ package pl.edu.agh.backend.event;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,7 +37,9 @@ public record EventRequest(
 
         @Size(max = 500) String coverImageUrl,
 
-        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder") @Min(1)
+        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
+        @Min(1)
+        @Max(7 * 24 * 60)
         Integer reminderLeadTimeMinutes,
 
         Set<@NotBlank @Size(max = 32) String> tags) {
