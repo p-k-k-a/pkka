@@ -1,29 +1,14 @@
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useListAlumniInfinite, type AlumniListItemResponse } from "@pkka/api";
-import {
-  buildAlumniParams,
-  type AlumniFilters,
-  type AlumniSortOption as SortOption,
-} from "@pkka/domain";
+import { buildAlumniParams, type AlumniFilters, type AlumniSortOption } from "@pkka/domain";
 import { useMemo } from "react";
-
-export {
-  ALUMNI_YEAR_MAX as YEAR_MAX,
-  ALUMNI_YEAR_MIN as YEAR_MIN,
-  ALUMNI_SORT_OPTIONS as SORT_OPTIONS,
-  countActiveAlumniFilters as countActiveFilters,
-  DEFAULT_ALUMNI_SORT as DEFAULT_SORT,
-  EMPTY_ALUMNI_FILTERS as EMPTY_FILTERS,
-  type AlumniFilters,
-  type AlumniSortOption as SortOption,
-} from "@pkka/domain";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
 type UseAlumniDirectoryArgs = {
   query: string;
   filters: AlumniFilters;
-  sort: SortOption;
+  sort: AlumniSortOption;
 };
 
 export function useAlumniDirectory({ query, filters, sort }: UseAlumniDirectoryArgs) {
