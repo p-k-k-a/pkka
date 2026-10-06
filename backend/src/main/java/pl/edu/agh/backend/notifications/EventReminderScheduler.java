@@ -3,6 +3,7 @@ package pl.edu.agh.backend.notifications;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,11 @@ public class EventReminderScheduler {
             List<UUID> userIds = group.stream()
                     .map(registration -> registration.getUser().getId())
                     .toList();
-            if (notificationService.remind(group.getFirst().getEvent(), userIds)) {
-                group.forEach(registration -> registration.setReminderSentAt(sentAt));
-            }
+            Set<UUID> unreached = notificationService.remind(group.getFirst().getEvent(), userIds);
+            group.stream()
+                    .filter(registration ->
+                            !unreached.contains(registration.getUser().getId()))
+                    .forEach(registration -> registration.setReminderSentAt(sentAt));
         });
     }
 }

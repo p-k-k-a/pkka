@@ -5,7 +5,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.backend.event.Event;
@@ -34,19 +37,28 @@ public class NotificationService {
         push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getId());
     }
 
-    public boolean remind(Event event, Collection<UUID> userIds) {
+    public Set<UUID> remind(Event event, Collection<UUID> userIds) {
         String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
-        return push(
-                deviceTokenRepository.findByUserIdIn(userIds),
+        List<DeviceToken> devices = deviceTokenRepository.findByUserIdIn(userIds);
+        Set<String> refusedTokens = push(
+                devices,
                 NotificationType.EVENT_REMINDER,
                 "Przypomnienie",
                 "%s - %s".formatted(event.getTitle(), startsAt),
                 event.getId());
+        Map<UUID, List<DeviceToken>> devicesByUser = devices.stream()
+                .collect(Collectors.groupingBy(device -> device.getUser().getId()));
+        return devicesByUser.entrySet().stream()
+                .filter(entry ->
+                        entry.getValue().stream().allMatch(device -> refusedTokens.contains(device.getToken())))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 
-    private boolean push(List<DeviceToken> devices, NotificationType type, String title, String body, UUID targetId) {
+    private Set<String> push(
+            List<DeviceToken> devices, NotificationType type, String title, String body, UUID targetId) {
         if (devices.isEmpty()) {
-            return true;
+            return Set.of();
         }
         List<ExpoPushMessage> messages = devices.stream()
                 .map(device -> new ExpoPushMessage(
@@ -66,6 +78,6 @@ public class NotificationService {
                         .createdAt(sentAt)
                         .build())
                 .toList());
-        return outcome.delivered();
+        return outcome.refusedTokens();
     }
 }

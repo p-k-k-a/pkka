@@ -99,7 +99,7 @@ class EventNotificationTest {
         deviceTokenRepository.deleteAll();
         pushTicketRepository.deleteAll();
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
     }
 
@@ -185,7 +185,7 @@ class EventNotificationTest {
     void anAcceptedAnnouncement_leavesATicketToCheckForItsReceipt() {
         userWithDevice("ExponentPushToken[attendee]", false);
         when(expoPushClient.send(any()))
-                .thenReturn(new SendOutcome(true, Map.of("ticket-1", "ExponentPushToken[attendee]")));
+                .thenReturn(new SendOutcome(Map.of("ticket-1", "ExponentPushToken[attendee]"), Set.of()));
 
         adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
 
@@ -205,8 +205,13 @@ class EventNotificationTest {
 
     private Event registerFor(
             Instant startsAt, Integer leadTimeMinutes, Instant registeredAt, EventRegistrationStatus status) {
-        User user = userWithDevice("ExponentPushToken[attendee]", false);
-        Event event = eventRepository.save(Event.builder()
+        Event event = saveEvent(startsAt, leadTimeMinutes);
+        register(event, userWithDevice("ExponentPushToken[attendee]", false), registeredAt, status);
+        return event;
+    }
+
+    private Event saveEvent(Instant startsAt, Integer leadTimeMinutes) {
+        return eventRepository.save(Event.builder()
                 .title("Warsztaty")
                 .type(EventType.ONLINE)
                 .startsAt(startsAt)
@@ -214,6 +219,9 @@ class EventNotificationTest {
                 .audience(Audience.PUBLIC)
                 .reminderLeadTimeMinutes(leadTimeMinutes)
                 .build());
+    }
+
+    private void register(Event event, User user, Instant registeredAt, EventRegistrationStatus status) {
         EventRegistration registration = eventRegistrationRepository.save(EventRegistration.builder()
                 .event(event)
                 .user(user)
@@ -223,7 +231,6 @@ class EventNotificationTest {
                 "update event_registrations set registered_at = ? where id = ?",
                 Timestamp.from(registeredAt),
                 registration.getId());
-        return event;
     }
 
     @Test
@@ -243,7 +250,7 @@ class EventNotificationTest {
                 .isTrue();
 
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
         eventReminderScheduler.sendDueReminders();
         verify(expoPushClient, never()).send(any());
     }
@@ -252,7 +259,7 @@ class EventNotificationTest {
     @Test
     void aRefusedSend_leavesTheReminderDueForTheNextSweep() {
         registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
-        when(expoPushClient.send(any())).thenReturn(new SendOutcome(false, Map.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of("ExponentPushToken[attendee]")));
 
         eventReminderScheduler.sendDueReminders();
 
@@ -261,9 +268,48 @@ class EventNotificationTest {
                         assertThat(registration.getReminderSentAt()).isNull());
 
         reset(expoPushClient);
-        when(expoPushClient.send(any())).thenReturn(new SendOutcome(true, Map.of()));
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
         eventReminderScheduler.sendDueReminders();
         verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(any());
+    }
+
+    @Test
+    void aPartlyRefusedSend_retriesOnlyTheUsersItMissed() {
+        Event event = saveEvent(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        Instant dayAgo = Instant.now().minus(1, ChronoUnit.DAYS);
+        register(
+                event, userWithDevice("ExponentPushToken[reached]", false), dayAgo, EventRegistrationStatus.REGISTERED);
+        register(event, userWithDevice("ExponentPushToken[missed]", false), dayAgo, EventRegistrationStatus.REGISTERED);
+        when(expoPushClient.send(any()))
+                .thenReturn(new SendOutcome(
+                        Map.of("ticket-1", "ExponentPushToken[reached]"), Set.of("ExponentPushToken[missed]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        assertThat(captureSentMessages()).extracting(ExpoPushMessage::to).containsExactly("ExponentPushToken[missed]");
+    }
+
+    @Test
+    void aUserWithOneAcceptedDevice_isNotRemindedAgain() {
+        Event event = saveEvent(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        User user = userWithDevice("ExponentPushToken[phone]", false);
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user)
+                .token("ExponentPushToken[tablet]")
+                .platform(DevicePlatform.ANDROID)
+                .build());
+        register(event, user, Instant.now().minus(1, ChronoUnit.DAYS), EventRegistrationStatus.REGISTERED);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of("ExponentPushToken[tablet]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        verify(expoPushClient, never()).send(any());
     }
 
     @Test

@@ -27,13 +27,23 @@ public class ExpoPushClient {
 
     public SendOutcome send(List<ExpoPushMessage> messages) {
         Map<String, String> tickets = new HashMap<>();
-        boolean delivered = true;
+        Set<String> refusedTokens = new HashSet<>();
         for (List<ExpoPushMessage> chunk : chunks(messages, MAX_MESSAGES_PER_REQUEST)) {
-            SendOutcome outcome = sendChunk(chunk);
-            delivered &= outcome.delivered();
-            tickets.putAll(outcome.tickets());
+            ExpoPushResponse response = post("/send", chunk, ExpoPushResponse.class);
+            if (response == null || response.data() == null) {
+                chunk.forEach(message -> refusedTokens.add(message.to()));
+                continue;
+            }
+            for (int i = 0; i < Math.min(response.data().size(), chunk.size()); i++) {
+                ExpoPushTicket ticket = response.data().get(i);
+                if (!ticket.ok()) {
+                    log.warn("Expo could not deliver a notification: {}", ticket.message());
+                } else if (ticket.id() != null) {
+                    tickets.put(ticket.id(), chunk.get(i).to());
+                }
+            }
         }
-        return new SendOutcome(delivered, tickets);
+        return new SendOutcome(tickets, refusedTokens);
     }
 
     public Receipts fetchReceipts(List<String> ticketIds) {
@@ -52,23 +62,6 @@ public class ExpoPushClient {
             });
         }
         return new Receipts(checked, deviceGone);
-    }
-
-    private SendOutcome sendChunk(List<ExpoPushMessage> chunk) {
-        ExpoPushResponse response = post("/send", chunk, ExpoPushResponse.class);
-        if (response == null || response.data() == null) {
-            return SendOutcome.refused();
-        }
-        Map<String, String> tickets = new HashMap<>();
-        for (int i = 0; i < Math.min(response.data().size(), chunk.size()); i++) {
-            ExpoPushTicket ticket = response.data().get(i);
-            if (!ticket.ok()) {
-                log.warn("Expo could not deliver a notification: {}", ticket.message());
-            } else if (ticket.id() != null) {
-                tickets.put(ticket.id(), chunk.get(i).to());
-            }
-        }
-        return new SendOutcome(true, tickets);
     }
 
     private <T> T post(String path, Object body, Class<T> responseType) {

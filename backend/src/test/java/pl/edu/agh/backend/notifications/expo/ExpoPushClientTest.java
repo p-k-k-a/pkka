@@ -54,6 +54,21 @@ class ExpoPushClientTest {
         server.verify();
     }
 
+    @Test
+    void send_reportsOnlyTheTokensOfTheRefusedChunk() {
+        server.expect(requestTo(SEND_URL)).andRespond(withSuccess(okTickets(100, "first"), MediaType.APPLICATION_JSON));
+        server.expect(requestTo(SEND_URL)).andRespond(withServerError());
+
+        SendOutcome outcome = client.send(
+                IntStream.range(0, 120).mapToObj(i -> message("token-" + i)).toList());
+
+        assertThat(outcome.tickets()).hasSize(100);
+        assertThat(outcome.refusedTokens())
+                .containsExactlyInAnyOrderElementsOf(
+                        IntStream.range(100, 120).mapToObj(i -> "token-" + i).toList());
+        server.verify();
+    }
+
     private static String okTickets(int count, String prefix) {
         return """
                 {"data":[%s]}""".formatted(IntStream.range(0, count)
@@ -67,7 +82,7 @@ class ExpoPushClientTest {
 
         SendOutcome outcome = client.send(List.of(message("a")));
 
-        assertThat(outcome.delivered()).isFalse();
+        assertThat(outcome.refusedTokens()).containsExactly("a");
         assertThat(outcome.tickets()).isEmpty();
         server.verify();
     }
