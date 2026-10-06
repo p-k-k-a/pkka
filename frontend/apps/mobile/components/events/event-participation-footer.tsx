@@ -8,6 +8,7 @@ import {
   getListEventsQueryKey,
   useCancelEventRegistration,
   useRegisterForEvent,
+  EventRegistrationStatus,
   type EventDetailsResponse,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,16 +19,11 @@ import { View } from "react-native";
 
 type ActiveSheet = "calendar" | "leave" | null;
 // In ideal world we would have this enum from the backend from openapi but I don't want to do that myself and I don't want to wait for backend to be updated so let's stick with it
-type ConflictReason =
-  | "ALREADY_REGISTERED"
-  | "REGISTRATION_CLOSED"
-  | "NO_SEATS_LEFT"
-  | "EVENT_ALREADY_STARTED";
+type ConflictReason = "ALREADY_REGISTERED" | "REGISTRATION_CLOSED" | "EVENT_ALREADY_STARTED";
 
 const CONFLICT_MESSAGES: Record<ConflictReason, string> = {
   ALREADY_REGISTERED: "Jesteś już zapisany na to wydarzenie.",
   REGISTRATION_CLOSED: "Rejestracja na to wydarzenie została zamknięta.",
-  NO_SEATS_LEFT: "Brak wolnych miejsc.",
   EVENT_ALREADY_STARTED: "Wydarzenie już się rozpoczęło.",
 };
 
@@ -52,6 +48,8 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
 
   const register = useRegisterForEvent();
   const unregister = useCancelEventRegistration();
+  const waitlisted = event.registrationStatus === EventRegistrationStatus.WAITLISTED;
+  const full = event.seatLimit != null && event.seatsTaken >= event.seatLimit;
   const pending = register.isPending || unregister.isPending;
 
   const refresh = () =>
@@ -63,9 +61,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onJoin = async () => {
     setError(null);
     try {
-      const { data: registration } = await register.mutateAsync({ eventId: event.id });
+      const response = await register.mutateAsync({ eventId: event.id });
       await refresh();
-      if (registration.status === "REGISTERED") setSheet("calendar");
+      if (response.status === 201 && response.data.status === EventRegistrationStatus.REGISTERED) {
+        setSheet("calendar");
+      }
     } catch (e) {
       setError(errorMessage(e, "join"));
       await refresh();
@@ -118,17 +118,25 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
             <Text>Zaloguj się, aby dołączyć</Text>
           </Button>
         </>
+      ) : waitlisted ? (
+        <>
+          <Text className="text-muted-foreground text-center text-sm">
+            Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje.
+          </Text>
+          <Button
+            variant="outline"
+            className="w-full active:bg-muted"
+            disabled={pending}
+            onPress={() => setSheet("leave")}
+          >
+            <Text className="group-active:text-foreground">Opuść listę rezerwową</Text>
+          </Button>
+        </>
       ) : event.registrationStatus ? (
         <>
-          {event.registrationStatus === "WAITLISTED" ? (
-            <Text className="text-muted-foreground text-center text-xs font-semibold">
-              Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje.
-            </Text>
-          ) : (
-            <Button className="w-full" onPress={onAddToCalendar}>
-              <Text>Dodaj do kalendarza</Text>
-            </Button>
-          )}
+          <Button className="w-full" onPress={onAddToCalendar}>
+            <Text>Dodaj do kalendarza</Text>
+          </Button>
           <Button
             variant="outline"
             className="w-full active:bg-muted"
@@ -140,7 +148,13 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
         </>
       ) : (
         <Button className="w-full" disabled={pending} onPress={onJoin}>
-          <Text>{pending ? "Zapisywanie..." : "Dołącz do wydarzenia"}</Text>
+          <Text>
+            {pending
+              ? "Zapisywanie..."
+              : full
+                ? "Zapisz się na listę rezerwową"
+                : "Dołącz do wydarzenia"}
+          </Text>
         </Button>
       )}
 
@@ -170,13 +184,21 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
       <BottomSheet visible={sheet === "leave"} onClose={() => setSheet(null)}>
         <View className="gap-1">
           <Text variant="h3" className="text-2xl font-bold">
-            Opuścić wydarzenie?
+            {waitlisted ? "Opuścić listę rezerwową?" : "Opuścić wydarzenie?"}
           </Text>
-          <Text className="text-muted-foreground text-sm">Twoje miejsce zostanie zwolnione.</Text>
+          <Text className="text-muted-foreground text-sm">
+            {waitlisted ? "Stracisz swoje miejsce w kolejce." : "Twoje miejsce zostanie zwolnione."}
+          </Text>
         </View>
         <View className="mt-6 gap-3">
           <Button variant="destructive" className="w-full" disabled={pending} onPress={onLeave}>
-            <Text>{pending ? "Opuszczanie..." : "Opuść wydarzenie"}</Text>
+            <Text>
+              {pending
+                ? "Opuszczanie..."
+                : waitlisted
+                  ? "Opuść listę rezerwową"
+                  : "Opuść wydarzenie"}
+            </Text>
           </Button>
           <Button
             variant="outline"
