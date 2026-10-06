@@ -9,8 +9,10 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import pl.edu.agh.backend.event.dto.EventDetailsResponse;
+import pl.edu.agh.backend.event.dto.EventListItemResponse;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/public/events")
@@ -21,17 +23,18 @@ public class EventController {
     private final EventService eventService;
 
     @GetMapping
-    @Operation(summary = "List of upcoming events (optional filtering by tags)")
-    public Page<EventListItemDto> listEvents(
+    @Operation(summary = "List events (upcoming by default, optional past archive and tag filter)")
+    public Page<EventListItemResponse> listEvents(
             @RequestParam(required = false) Set<String> tags,
+            @RequestParam(required = false) EventTimeframe timeframe,
             @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
-            Authentication authentication) {
-        return eventService.list(authentication, tags, pageable).map(EventListItemDto::from);
+            Caller caller) {
+        return eventService.list(caller, tags, timeframe, pageable);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Details of a single event")
-    public EventDetailsDto getEventById(@PathVariable UUID id, Authentication authentication) {
-        return EventDetailsDto.from(eventService.findById(id, authentication));
+    public EventDetailsResponse getEventById(@PathVariable UUID id, Caller caller) {
+        return eventService.getDetails(id, caller);
     }
 }

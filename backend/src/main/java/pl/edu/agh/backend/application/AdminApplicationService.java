@@ -5,24 +5,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserPrincipalExtractor;
-import pl.edu.agh.backend.user.UserProvisioningService;
-import pl.edu.agh.backend.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
 public class AdminApplicationService {
 
     private final ApplicationRepository applicationRepository;
-    private final UserRepository userRepository;
-    private final UserPrincipalExtractor principalExtractor;
-    private final UserProvisioningService userProvisioningService;
+    private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -41,8 +35,8 @@ public class AdminApplicationService {
     }
 
     @Transactional
-    public ApplicationResponse approve(Authentication authentication, UUID applicationId) {
-        User reviewer = resolveReviewer(authentication);
+    public ApplicationResponse approve(Caller caller, UUID applicationId) {
+        User reviewer = callerUserService.getOrCreate(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
@@ -54,22 +48,12 @@ public class AdminApplicationService {
     }
 
     @Transactional
-    public ApplicationResponse reject(Authentication authentication, UUID applicationId, String reason) {
-        User reviewer = resolveReviewer(authentication);
+    public ApplicationResponse reject(Caller caller, UUID applicationId, String reason) {
+        User reviewer = callerUserService.getOrCreate(caller);
         Application application =
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
         application.reject(reviewer, reason);
         return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
-    }
-
-    private User resolveReviewer(Authentication authentication) {
-        var info = principalExtractor
-                .extract(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-        userProvisioningService.provisionIfAbsent(info);
-        return userRepository
-                .findByKeycloakId(info.keycloakId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     }
 }

@@ -17,6 +17,14 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @EntityGraph(attributePaths = "author")
     Optional<Post> findBySlugAndStatus(String slug, PostStatus status);
 
+    /** Admin view - every post regardless of status, newest first. */
+    @EntityGraph(attributePaths = "author")
+    Page<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    /** Admin view filtered by status, newest first. */
+    @EntityGraph(attributePaths = "author")
+    Page<Post> findAllByStatusOrderByCreatedAtDesc(PostStatus status, Pageable pageable);
+
     /** Get post by slug regardless of status (admin panel). */
     Optional<Post> findBySlug(String slug);
 

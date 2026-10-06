@@ -4,52 +4,57 @@ import static pl.edu.agh.backend.event.EventSpecifications.*;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.EnumSet;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.event.dto.EventDetailsResponse;
+import pl.edu.agh.backend.event.dto.EventListItemResponse;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
+import pl.edu.agh.backend.security.Caller;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class EventService {
 
-    private static final String ROLE_VERIFIED_ALUMN = "ROLE_VERIFIED_ALUMN";
-
     private final EventRepository eventRepository;
+    private final EventLookup eventLookup;
+    private final EventRegistrationService eventRegistrationService;
 
-    public Page<Event> list(Authentication authentication, Collection<String> tagNames, Pageable pageable) {
-        Specification<Event> spec = Specification.where(startsAfter(Instant.now()))
-                .and(audienceIn(visibleAudiences(authentication)))
-                .and(hasAnyTag(tagNames));
+    public Page<EventListItemResponse> list(
+            Caller caller, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
+        Specification<Event> spec = Specification.allOf(
+                inTimeframe(timeframe), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
 
-        return eventRepository.findAll(spec, pageable);
+        Page<Event> events = eventRepository.findAll(spec, pageable);
+        List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
+        Map<UUID, Long> seatsTaken = eventRegistrationService.seatsTakenByEvent(ids);
+        Map<UUID, EventRegistrationStatus> ownStatus = eventRegistrationService.ownStatusByEvent(caller, ids);
+
+        return events.map(event -> EventListItemResponse.from(
+                event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
     }
 
-    public Event findById(UUID id, Authentication authentication) {
-        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-        if (!visibleAudiences(authentication).contains(event.getAudience())) {
-            throw new EventNotFoundException(id);
-        }
-        return event;
+    public EventDetailsResponse getDetails(UUID id, Caller caller) {
+        Event event = eventLookup.findVisible(id, caller);
+        EventRegistrationStatus registrationStatus =
+                eventRegistrationService.findOwnStatus(id, caller).orElse(null);
+        return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);
     }
 
-    private Set<Audience> visibleAudiences(Authentication authentication) {
-        Set<Audience> audiences = EnumSet.of(Audience.PUBLIC);
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && authentication.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .anyMatch(ROLE_VERIFIED_ALUMN::equals)) {
-            audiences.add(Audience.ALL_ALUMNI);
-        }
-        return audiences;
+    private Specification<Event> inTimeframe(EventTimeframe timeframe) {
+        Instant now = Instant.now();
+        return switch (timeframe == null ? EventTimeframe.UPCOMING : timeframe) {
+            case UPCOMING -> startsAfter(now);
+            case PAST -> startsBeforeOrEqual(now);
+            case ALL -> Specification.unrestricted();
+        };
     }
 }

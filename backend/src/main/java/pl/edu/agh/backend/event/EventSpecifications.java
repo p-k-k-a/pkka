@@ -5,12 +5,17 @@ import java.time.Instant;
 import java.util.Collection;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
+import pl.edu.agh.backend.event.tag.Tag;
 
 @UtilityClass
 public class EventSpecifications {
 
     public Specification<Event> startsAfter(Instant dateTime) {
         return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
+    }
+
+    public Specification<Event> startsBeforeOrEqual(Instant dateTime) {
+        return (root, query, cb) -> dateTime == null ? null : cb.lessThanOrEqualTo(root.get("startsAt"), dateTime);
     }
 
     public Specification<Event> audienceIn(Collection<Audience> audiences) {

@@ -58,7 +58,7 @@ const readCookie = (name: string): string | null => {
 const parseBody = async <T>(res: Response): Promise<T> => {
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("content-type") ?? "";
-  if (ct.includes("application/json")) return (await res.json()) as T;
+  if (/^application\/(.+\+)?json\b/i.test(ct)) return (await res.json()) as T;
   return (await res.text()) as T;
 };
 

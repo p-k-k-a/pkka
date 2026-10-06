@@ -10,29 +10,19 @@ import { useAuth } from "@/lib/auth-context";
 
 function ProfileSkeleton() {
   return (
-    <div className="flex flex-col">
-      <section className="bg-navy">
-        <div className="mx-auto flex max-w-[1280px] items-center gap-6 px-4 py-10 md:px-10 md:py-16">
-          <Skeleton className="bg-white-text/10 size-24 rounded-full md:size-28" />
-          <div className="flex flex-col gap-3">
-            <Skeleton className="bg-white-text/10 h-4 w-28" />
-            <Skeleton className="bg-white-text/10 h-8 w-64" />
-            <Skeleton className="bg-white-text/10 h-4 w-40" />
+    <div className="px-4 py-10 md:px-10 md:py-20">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-6">
+          <Skeleton className="h-6 w-32 rounded-lg" />
+          <div className="flex items-center gap-6">
+            <Skeleton className="size-24 rounded-full" />
+            <Skeleton className="h-12 w-full max-w-md rounded-lg" />
           </div>
+          <Skeleton className="h-12 w-40 rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
         </div>
-      </section>
-      <section className="bg-background">
-        <div className="mx-auto grid max-w-[1280px] gap-6 px-4 py-10 md:px-10 md:py-12 lg:grid-cols-3">
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            <Skeleton className="h-40 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-          </div>
-          <div className="flex flex-col gap-6">
-            <Skeleton className="h-48 rounded-xl" />
-            <Skeleton className="h-36 rounded-xl" />
-          </div>
-        </div>
-      </section>
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
     </div>
   );
 }
@@ -72,5 +62,5 @@ export function ProfileContent() {
     );
   }
 
-  return <ProfileView profile={data.data} />;
+  return <ProfileView variant="own" profile={data.data} />;
 }

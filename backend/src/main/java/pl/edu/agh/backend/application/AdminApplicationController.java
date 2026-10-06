@@ -11,7 +11,6 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/admin/applications")
@@ -49,8 +49,8 @@ public class AdminApplicationController {
     @ApiResponse(responseCode = "200", description = "Application approved")
     @ApiResponse(responseCode = "404", description = "Application not found", content = @Content)
     @ApiResponse(responseCode = "409", description = "Application is not under review", content = @Content)
-    public ApplicationResponse approve(@PathVariable UUID id, Authentication authentication) {
-        return adminApplicationService.approve(authentication, id);
+    public ApplicationResponse approve(@PathVariable UUID id, Caller caller) {
+        return adminApplicationService.approve(caller, id);
     }
 
     @PostMapping("/{id}/reject")
@@ -61,8 +61,8 @@ public class AdminApplicationController {
     public ApplicationResponse reject(
             @PathVariable UUID id,
             @Valid @RequestBody(required = false) RejectApplicationRequest request,
-            Authentication authentication) {
+            Caller caller) {
         String reason = request == null ? null : request.reason();
-        return adminApplicationService.reject(authentication, id, reason);
+        return adminApplicationService.reject(caller, id, reason);
     }
 }

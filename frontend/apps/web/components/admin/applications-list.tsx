@@ -4,16 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { ListAdminApplicationsStatus, useListAdminApplications } from "@pkka/api";
+import { ApplicationStatus, useListAdminApplications } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { StatusBadge } from "@/components/applications/status-badge";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
-import { facultyLabel, studyTypeLabel } from "@/lib/application-labels";
-import { formatPublishedAt } from "@/lib/format-published-at";
+import { facultyLabel, formatPublishedAt, isAdmin, studyTypeLabel } from "@pkka/domain";
 
 const PAGE_SIZE = 20;
 
@@ -34,7 +32,7 @@ export function ApplicationsList() {
     isLoading: isListLoading,
     isError,
   } = useListAdminApplications(
-    { status: ListAdminApplicationsStatus.UNDER_REVIEW, page, size: PAGE_SIZE },
+    { status: ApplicationStatus.UNDER_REVIEW, page, size: PAGE_SIZE },
     { query: { enabled: admin } },
   );
 

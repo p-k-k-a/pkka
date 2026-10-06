@@ -23,6 +23,8 @@ class PostDataInitializer implements ApplicationRunner {
         User author = userRepository.findAll().stream().findFirst().orElseGet(() -> {
             var u = new User();
             u.setKeycloakId("00000000-0000-0000-0000-000000000001");
+            u.setFirstName("Redakcja");
+            u.setLastName("Klubu Alumna");
             return userRepository.save(u);
         });
 

@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import type { TagResponse } from "@pkka/api";
+import type { UserTagResponse } from "@pkka/api";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, TextInput, View } from "react-native";
@@ -14,7 +14,7 @@ const MAX_TAGS = 20;
 const LIST_MAX_HEIGHT = 288;
 
 type TagPickerProps = {
-  options: TagResponse[];
+  options: UserTagResponse[];
   value: string[];
   onChange: (ids: string[] | ((prev: string[]) => string[])) => void;
   loading?: boolean;

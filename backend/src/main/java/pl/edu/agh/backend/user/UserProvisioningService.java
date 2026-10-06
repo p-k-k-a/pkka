@@ -21,9 +21,9 @@ public class UserProvisioningService {
      * call on hot request paths that only need the row to satisfy foreign keys.
      */
     @Transactional
-    public User provisionIfAbsent(UserPrincipalExtractor.UserPrincipalInfo info) {
-        User user = userRepository.findByKeycloakId(info.keycloakId()).orElseGet(() -> createUser(info.keycloakId()));
-        log.debug("User provisioning check completed keycloakId={} userId={}", info.keycloakId(), user.getId());
+    public User getOrCreate(String keycloakId) {
+        User user = userRepository.findByKeycloakId(keycloakId).orElseGet(() -> createUser(keycloakId));
+        log.debug("User provisioning check completed keycloakId={} userId={}", keycloakId, user.getId());
         return user;
     }
 

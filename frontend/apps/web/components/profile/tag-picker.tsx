@@ -8,16 +8,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
-const MAX_TAGS = 20;
-
 type TagPickerProps = {
   availableTags: UserTagResponse[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  /** Caps the selection and shows a counter; leave out for an unlimited picker. */
+  max?: number;
   disabled?: boolean;
+  placeholder?: string;
 };
 
-export function TagPicker({ availableTags, selectedIds, onChange, disabled }: TagPickerProps) {
+export function TagPicker({
+  availableTags,
+  selectedIds,
+  onChange,
+  max,
+  disabled,
+  placeholder = "Szukaj tagów, np. Java, Cloud…",
+}: TagPickerProps) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -39,9 +47,10 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
   }, [availableTags, selectedIds, query]);
 
   const isOpen = isFocused && matches.length > 0;
+  const isFull = max !== undefined && selectedIds.length >= max;
 
   function addTag(id: string) {
-    if (disabled || selectedIds.includes(id) || selectedIds.length >= MAX_TAGS) return;
+    if (disabled || isFull || selectedIds.includes(id)) return;
     onChange([...selectedIds, id]);
     setQuery("");
   }
@@ -99,8 +108,8 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Szukaj tagów, np. Java, Cloud…"
-              disabled={disabled || selectedIds.length >= MAX_TAGS}
+              placeholder={placeholder}
+              disabled={disabled || isFull}
               autoComplete="off"
               onKeyDown={(event) => {
                 // The picker lives inside a form — Enter picks the first match
@@ -147,9 +156,11 @@ export function TagPicker({ availableTags, selectedIds, onChange, disabled }: Ta
         ) : (
           <span />
         )}
-        <span className="text-muted-foreground text-[13px]">
-          {selectedIds.length}/{MAX_TAGS}
-        </span>
+        {max !== undefined ? (
+          <span className="text-muted-foreground text-[13px]">
+            {selectedIds.length}/{max}
+          </span>
+        ) : null}
       </div>
     </div>
   );

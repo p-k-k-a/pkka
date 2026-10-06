@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/applications")
@@ -27,16 +27,15 @@ public class ApplicationController {
             responseCode = "409",
             description = "The user already has an application under review",
             content = @Content)
-    public ApplicationResponse createApplication(
-            @Valid @RequestBody CreateApplicationRequest request, Authentication authentication) {
-        return applicationService.create(authentication, request);
+    public ApplicationResponse createApplication(@Valid @RequestBody CreateApplicationRequest request, Caller caller) {
+        return applicationService.create(caller, request);
     }
 
     @GetMapping("/me")
     @Operation(summary = "Get the current user's application")
     @ApiResponse(responseCode = "200", description = "The user's most recent application")
     @ApiResponse(responseCode = "404", description = "The user has no application", content = @Content)
-    public ApplicationResponse getMine(Authentication authentication) {
-        return applicationService.getMine(authentication);
+    public ApplicationResponse getMine(Caller caller) {
+        return applicationService.getMine(caller);
     }
 }

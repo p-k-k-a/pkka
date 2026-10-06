@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@/lib/profile-links";
+import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +15,7 @@ import {
   getGetMyTagsQueryKey,
   useGetMyProfile,
   useGetMyTags,
-  useListTags,
+  useListUserTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
@@ -112,7 +112,7 @@ function IdentityRow({
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const queryClient = useQueryClient();
 
-  const availableTagsQuery = useListTags();
+  const availableTagsQuery = useListUserTags();
   const myTagsQuery = useGetMyTags();
   const updateMyTags = useUpdateMyTags();
   const updateMyProfile = useUpdateMyProfile();
