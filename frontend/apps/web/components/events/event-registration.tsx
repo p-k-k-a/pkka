@@ -14,7 +14,8 @@ import {
   type EventDetailsResponse,
 } from "@pkka/api";
 import {
-  eventRegistrationConflictMessage,
+  eventRegistrationErrorMessage,
+  type EventRegistrationAction,
   formatSeatsRemaining,
   isEventFull,
   isEventRegistrationClosed,
@@ -34,26 +35,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
 import { buildEventIcs, downloadIcs, icsFileName } from "@/lib/ics";
-
-type Action = "join" | "leave";
-
-function errorMessage(error: unknown, action: Action) {
-  if (error instanceof ApiError) {
-    if (error.status === 401) return "Sesja wygasła. Zaloguj się ponownie.";
-    const conflict = eventRegistrationConflictMessage(
-      (error.body as { reason?: unknown } | null)?.reason,
-    );
-    if (conflict) return conflict;
-    if (error.status === 404) {
-      return action === "leave"
-        ? "Nie jesteś zapisany na to wydarzenie."
-        : "Nie znaleziono wydarzenia.";
-    }
-  }
-  return action === "join"
-    ? "Nie udało się zapisać na wydarzenie. Spróbuj ponownie."
-    : "Nie udało się wypisać z wydarzenia. Spróbuj ponownie.";
-}
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -91,9 +72,9 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   // A toast rather than an inline line: when the event has just started, the refetch
   // unmounts this component and an inline error would vanish with it.
-  const showError = (error: unknown, action: Action) => {
+  const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
-    toast.error(errorMessage(error, action), {
+    toast.error(eventRegistrationErrorMessage(error, action), {
       action: sessionExpired ? { label: "Zaloguj się", onClick: loginWithKeycloak } : undefined,
     });
   };

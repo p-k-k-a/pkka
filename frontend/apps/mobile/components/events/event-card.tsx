@@ -1,9 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
-import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
+import {
+  eventTypeLabelUpper,
+  formatEventDateLong,
+  formatSeatsCompact,
+  registrationStatusLabelUpper,
+} from "@pkka/domain";
 import { THEME } from "@/lib/theme";
-import { EventRegistrationStatus, EventType, type EventListItemResponse } from "@pkka/api";
+import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -54,11 +59,7 @@ function EventCard({ event }: EventCardProps) {
         ) : null}
         {registrationStatus ? (
           <Badge variant="secondary">
-            <Text>
-              {registrationStatus === EventRegistrationStatus.WAITLISTED
-                ? "LISTA REZERWOWA"
-                : "ZAPISANO"}
-            </Text>
+            <Text>{registrationStatusLabelUpper(registrationStatus)}</Text>
           </Badge>
         ) : null}
       </View>
