@@ -67,7 +67,11 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   const addToCalendar = () => {
     const url = `${window.location.origin}${eventDetailHref(event.id)}`;
-    downloadIcs(icsFileName(event.title), buildEventIcs({ ...event, url }));
+    try {
+      downloadIcs(icsFileName(event.title), buildEventIcs({ ...event, url }));
+    } catch {
+      toast.error("Nie udało się przygotować pliku kalendarza.");
+    }
   };
 
   // A toast rather than an inline line: when the event has just started, the refetch
