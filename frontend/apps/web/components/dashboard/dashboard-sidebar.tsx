@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck } from "lucide-react";
+import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,6 +27,12 @@ const userItems: SidebarItem[] = [
     label: "Wydarzenia",
     icon: CalendarDays,
     match: (pathname) => pathname.startsWith("/dashboard/events"),
+  },
+  {
+    href: "/dashboard/alumni",
+    label: "Alumni",
+    icon: Users,
+    match: (pathname) => pathname.startsWith("/dashboard/alumni"),
   },
   {
     href: "/dashboard/verification",
@@ -61,9 +67,14 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
 
+  // Verification is offered until it succeeds, the directory only after it does.
   const items = admin
     ? adminItems
-    : userItems.filter((item) => item.href !== "/dashboard/verification" || !isVerified);
+    : userItems.filter((item) => {
+        if (item.href === "/dashboard/verification") return !isVerified;
+        if (item.href === "/dashboard/alumni") return isVerified;
+        return true;
+      });
 
   return (
     <aside className="bg-muted border-background sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto border-r">
