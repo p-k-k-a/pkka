@@ -55,7 +55,7 @@ public class AdminMaterialController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a material from an external URL")
     @ApiResponse(responseCode = "201", description = "Material created")
-    public AdminMaterialResponse createMaterial(@Valid @RequestBody CreateMaterialRequest request) {
+    public AdminMaterialResponse createMaterial(@Valid @RequestBody MaterialRequest request) {
         return adminMaterialService.create(request);
     }
 
@@ -63,8 +63,7 @@ public class AdminMaterialController {
     @Operation(summary = "Update a material")
     @ApiResponse(responseCode = "200", description = "Material updated")
     @ApiResponse(responseCode = "404", description = "Material not found", content = @Content)
-    public AdminMaterialResponse updateMaterial(
-            @PathVariable UUID id, @Valid @RequestBody UpdateMaterialRequest request) {
+    public AdminMaterialResponse updateMaterial(@PathVariable UUID id, @Valid @RequestBody MaterialRequest request) {
         return adminMaterialService.update(id, request);
     }
 

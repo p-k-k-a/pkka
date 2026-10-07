@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
-public record CreateMaterialRequest(
+public record MaterialRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 300)
         String title,
 

@@ -36,14 +36,14 @@ public class AdminMaterialService {
     }
 
     @Transactional
-    public AdminMaterialResponse create(CreateMaterialRequest request) {
+    public AdminMaterialResponse create(MaterialRequest request) {
         Material material = new Material();
         apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
         return AdminMaterialResponse.from(materialRepository.saveAndFlush(material));
     }
 
     @Transactional
-    public AdminMaterialResponse update(UUID id, UpdateMaterialRequest request) {
+    public AdminMaterialResponse update(UUID id, MaterialRequest request) {
         Material material = materialRepository.findById(id).orElseThrow(MaterialNotFoundException::new);
         apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
         return AdminMaterialResponse.from(materialRepository.saveAndFlush(material));
