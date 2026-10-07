@@ -1,4 +1,3 @@
-import { isVerifiedAlumn } from "@pkka/domain";
 import { AuthContextType, User } from "@/types/auth";
 import { configureApi, logoutTokens, refreshTokens } from "@pkka/api";
 import * as SecureStore from "expo-secure-store";
@@ -10,9 +9,6 @@ export const AuthContext = createContext<null | AuthContextType>(null);
 
 type decodedJwtType = {
   sub: string;
-  realm_access: {
-    roles: string[];
-  };
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -20,11 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
-    const roles = decoded["realm_access"]?.["roles"] ?? [];
-    setUser({
-      sub: decoded["sub"],
-      role: isVerifiedAlumn(roles) ? "alumni" : "user",
-    });
+    setUser({ sub: decoded["sub"] });
 
     await SecureStore.setItemAsync("at", at);
     await SecureStore.setItemAsync("rt", rt);

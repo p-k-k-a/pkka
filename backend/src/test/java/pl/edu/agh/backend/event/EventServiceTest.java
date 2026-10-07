@@ -1,13 +1,13 @@
 package pl.edu.agh.backend.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -18,11 +18,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.security.Roles;
-import pl.edu.agh.backend.user.CallerUserService;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -31,10 +29,10 @@ class EventServiceTest {
     private EventRepository eventRepository;
 
     @Mock
-    private EventRegistrationRepository eventRegistrationRepository;
+    private EventLookup eventLookup;
 
     @Mock
-    private CallerUserService callerUserService;
+    private EventRegistrationService eventRegistrationService;
 
     @InjectMocks
     private EventService eventService;
@@ -52,65 +50,38 @@ class EventServiceTest {
                 .build();
         when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(publicEvent)));
-        when(eventRegistrationRepository.countByEventIdIn(List.of(eventId))).thenReturn(List.of(seatCount(eventId, 3)));
+        when(eventRegistrationService.seatsTakenByEvent(List.of(eventId))).thenReturn(Map.of(eventId, 3L));
+        when(eventRegistrationService.ownStatusByEvent(Caller.anonymous(), List.of(eventId)))
+                .thenReturn(Map.of());
 
         var page = eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);
-        assertThat(page.getContent().getFirst().registered()).isFalse();
-        // An anonymous caller has no row to look registrations up against, so none are fetched.
-        verify(callerUserService).findId(Caller.anonymous());
+        assertThat(page.getContent().getFirst().registrationStatus()).isNull();
     }
 
     @Test
-    void findVisibleHidesAlumniOnlyEventFromAnonymousUser() {
+    void getDetailsReportsHeldSeatsAndTheCallersOwnStatus() {
         UUID id = UUID.randomUUID();
-        Event alumniEvent = Event.builder()
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
                 .id(id)
-                .title("Alumni only")
+                .title("Networking")
                 .type(EventType.IN_PERSON)
                 .startsAt(Instant.now().plusSeconds(3600))
                 .endsAt(Instant.now().plusSeconds(7200))
-                .audience(Audience.ALL_ALUMNI)
+                .seatLimit(5)
+                .audience(Audience.PUBLIC)
                 .build();
-        when(eventRepository.findById(id)).thenReturn(java.util.Optional.of(alumniEvent));
+        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(5L);
+        when(eventRegistrationService.findOwnStatus(id, caller))
+                .thenReturn(Optional.of(EventRegistrationStatus.WAITLISTED));
 
-        assertThatThrownBy(() -> eventService.findVisible(id, Caller.anonymous()))
-                .isInstanceOf(EventNotFoundException.class);
-    }
+        var details = eventService.getDetails(id, caller);
 
-    @Test
-    void findVisibleAllowsVerifiedAlumnToSeeAlumniOnlyEvent() {
-        UUID id = UUID.randomUUID();
-        Event alumniEvent = Event.builder()
-                .id(id)
-                .title("Alumni only")
-                .type(EventType.IN_PERSON)
-                .startsAt(Instant.now().plusSeconds(3600))
-                .endsAt(Instant.now().plusSeconds(7200))
-                .audience(Audience.ALL_ALUMNI)
-                .build();
-        when(eventRepository.findById(id)).thenReturn(java.util.Optional.of(alumniEvent));
-
-        Caller alumn = new Caller("sub", Set.of(Roles.VERIFIED_ALUMN));
-
-        Event found = eventService.findVisible(id, alumn);
-
-        assertThat(found.getAudience()).isEqualTo(Audience.ALL_ALUMNI);
-    }
-
-    private static EventSeatCount seatCount(UUID eventId, long seatsTaken) {
-        return new EventSeatCount() {
-            @Override
-            public UUID getEventId() {
-                return eventId;
-            }
-
-            @Override
-            public long getSeatsTaken() {
-                return seatsTaken;
-            }
-        };
+        assertThat(details.seatsTaken()).isEqualTo(5);
+        assertThat(details.registrationStatus()).isEqualTo(EventRegistrationStatus.WAITLISTED);
     }
 }

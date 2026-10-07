@@ -74,7 +74,7 @@ class EventRegistrationConcurrencyTest {
     }
 
     @Test
-    void concurrentRegistrations_neverOversellTheEvent() throws Exception {
+    void concurrentRegistrations_neverOversellTheEventAndQueueTheRest() throws Exception {
         event = eventRepository.save(Event.builder()
                 .title("Concurrency test event")
                 .type(EventType.IN_PERSON)
@@ -96,31 +96,83 @@ class EventRegistrationConcurrencyTest {
         CountDownLatch startLine = new CountDownLatch(1);
         ExecutorService pool = Executors.newFixedThreadPool(CONTENDERS);
         try {
-            List<Future<Boolean>> attempts = new ArrayList<>();
+            List<Future<EventRegistrationStatus>> attempts = new ArrayList<>();
             for (Caller caller : callers) {
                 attempts.add(pool.submit(() -> {
                     startLine.await();
-                    try {
-                        eventRegistrationService.register(event.getId(), caller);
-                        return true;
-                    } catch (EventRegistrationConflictException ex) {
-                        assertThat(ex.getReason()).isEqualTo(EventRegistrationConflictException.Reason.NO_SEATS_LEFT);
-                        return false;
-                    }
+                    return eventRegistrationService
+                            .register(event.getId(), caller)
+                            .status();
                 }));
             }
             startLine.countDown();
 
             long seatsTaken = 0;
-            for (Future<Boolean> attempt : attempts) {
-                if (attempt.get(30, TimeUnit.SECONDS)) {
+            long queued = 0;
+            for (Future<EventRegistrationStatus> attempt : attempts) {
+                if (attempt.get(30, TimeUnit.SECONDS) == EventRegistrationStatus.REGISTERED) {
                     seatsTaken++;
+                } else {
+                    queued++;
                 }
             }
 
             assertThat(seatsTaken).isEqualTo(SEAT_LIMIT);
-            assertThat(eventRegistrationRepository.countByEventId(event.getId()))
+            assertThat(queued).isEqualTo(CONTENDERS - SEAT_LIMIT);
+            assertThat(eventRegistrationRepository.countByEventIdAndStatus(
+                            event.getId(), EventRegistrationStatus.REGISTERED))
                     .isEqualTo(SEAT_LIMIT);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
+    void concurrentCancellations_promoteExactlyOneQueuedUserPerFreedSeat() throws Exception {
+        event = eventRepository.save(Event.builder()
+                .title("Concurrent cancellations")
+                .type(EventType.IN_PERSON)
+                .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
+                .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))
+                .seatLimit(SEAT_LIMIT)
+                .audience(Audience.PUBLIC)
+                .build());
+
+        List<Caller> holders = new ArrayList<>();
+        for (int i = 0; i < SEAT_LIMIT * 2; i++) {
+            User user = new User();
+            user.setKeycloakId(UUID.randomUUID().toString());
+            contenders.add(userRepository.save(user));
+            Caller caller = verifiedAlumn(user.getKeycloakId());
+            if (eventRegistrationService.register(event.getId(), caller).status()
+                    == EventRegistrationStatus.REGISTERED) {
+                holders.add(caller);
+            }
+        }
+        assertThat(holders).hasSize(SEAT_LIMIT);
+
+        CountDownLatch startLine = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(SEAT_LIMIT);
+        try {
+            List<Future<?>> cancellations = new ArrayList<>();
+            for (Caller holder : holders) {
+                cancellations.add(pool.submit(() -> {
+                    startLine.await();
+                    eventRegistrationService.unregister(event.getId(), holder);
+                    return null;
+                }));
+            }
+            startLine.countDown();
+            for (Future<?> cancellation : cancellations) {
+                cancellation.get(30, TimeUnit.SECONDS);
+            }
+
+            assertThat(eventRegistrationRepository.countByEventIdAndStatus(
+                            event.getId(), EventRegistrationStatus.REGISTERED))
+                    .isEqualTo(SEAT_LIMIT);
+            assertThat(eventRegistrationRepository.countByEventIdAndStatus(
+                            event.getId(), EventRegistrationStatus.WAITLISTED))
+                    .isZero();
         } finally {
             pool.shutdownNow();
         }
