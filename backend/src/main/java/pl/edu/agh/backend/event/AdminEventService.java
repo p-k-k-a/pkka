@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.security.Caller;
@@ -26,7 +26,7 @@ public class AdminEventService {
 
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
-    private final EventRegistrationRepository eventRegistrationRepository;
+    private final EventRegistrationService eventRegistrationService;
     private final CallerUserService callerUserService;
 
     @Transactional(readOnly = true)
@@ -66,9 +66,13 @@ public class AdminEventService {
         return respond(eventRepository.saveAndFlush(event));
     }
 
+    /**
+     * Locks the event row like a sign-up does, because a raised seat limit hands seats to the waitlist and
+     * that must not interleave with sign-ups and cancellations counting the same seats.
+     */
     @Transactional
     public AdminEventResponse update(UUID id, EventRequest request) {
-        Event event = findOrThrow(id);
+        Event event = eventRepository.findForUpdateById(id).orElseThrow(() -> new EventNotFoundException(id));
         event.setTitle(request.title());
         event.setFullDescription(request.fullDescription());
         event.setType(request.type());
@@ -87,7 +91,9 @@ public class AdminEventService {
         }
         tags.clear();
         tags.addAll(resolveTags(request.tags()));
-        return respond(eventRepository.saveAndFlush(event));
+        Event saved = eventRepository.saveAndFlush(event);
+        eventRegistrationService.fillFreeSeats(saved);
+        return respond(saved);
     }
 
     @Transactional
@@ -96,7 +102,7 @@ public class AdminEventService {
     }
 
     private AdminEventResponse respond(Event event) {
-        return AdminEventResponse.from(event, eventRegistrationRepository.countByEventId(event.getId()));
+        return AdminEventResponse.from(event, eventRegistrationService.seatsTaken(event.getId()));
     }
 
     private Event findOrThrow(UUID id) {

@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/text";
-import { formatPublishedAt } from "@/lib/utils";
+import { formatPublishedAtCompact } from "@pkka/domain";
 import type { PostResponse } from "@pkka/api";
 import { ScrollView, View } from "react-native";
 
@@ -17,7 +17,7 @@ export function BlogPostView({ post }: BlogPostViewProps) {
       <View className="gap-6 px-5 pt-5">
         <View className="gap-2">
           <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {formatPublishedAt(post.publishedAt)}
+            {formatPublishedAtCompact(post.publishedAt)}
           </Text>
           <Text variant="h1" className="text-left text-3xl leading-tight">
             {post.title}

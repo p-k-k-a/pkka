@@ -11,13 +11,13 @@ import { useAuth } from "@/lib/auth-context";
 function ProfileSkeleton() {
   return (
     <div className="flex flex-col">
-      <section className="bg-navy">
+      <section className="bg-band">
         <div className="mx-auto flex max-w-[1280px] items-center gap-6 px-4 py-10 md:px-10 md:py-16">
-          <Skeleton className="bg-white-text/10 size-24 rounded-full md:size-28" />
+          <Skeleton className="bg-band-foreground/10 size-24 rounded-full md:size-28" />
           <div className="flex flex-col gap-3">
-            <Skeleton className="bg-white-text/10 h-4 w-28" />
-            <Skeleton className="bg-white-text/10 h-8 w-64" />
-            <Skeleton className="bg-white-text/10 h-4 w-40" />
+            <Skeleton className="bg-band-foreground/10 h-4 w-28" />
+            <Skeleton className="bg-band-foreground/10 h-8 w-64" />
+            <Skeleton className="bg-band-foreground/10 h-4 w-40" />
           </div>
         </div>
       </section>
