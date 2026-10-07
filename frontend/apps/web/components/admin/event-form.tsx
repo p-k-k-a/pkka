@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -18,6 +18,8 @@ import {
   type AdminEventResponse,
   type EventRequest,
 } from "@pkka/api";
+import { FieldLabel } from "@/components/admin/field-label";
+import { SectionTitle } from "@/components/content/section-title";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,28 +51,6 @@ function parseSeatLimit(value: string) {
   if (!trimmed) return undefined;
   const parsed = Number(trimmed);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
-}
-
-function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: ReactNode }) {
-  return (
-    <Label
-      htmlFor={htmlFor}
-      className="text-accent text-xs font-semibold tracking-widest uppercase"
-    >
-      {children}
-    </Label>
-  );
-}
-
-function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="relative inline-block">
-      <span className="bg-muted absolute inset-x-0 bottom-0 h-3" aria-hidden="true" />
-      <h2 className="text-accent relative text-xs font-semibold tracking-widest uppercase">
-        {children}
-      </h2>
-    </div>
-  );
 }
 
 export function EventForm({ event }: EventFormProps) {
