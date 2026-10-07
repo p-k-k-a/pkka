@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.topic;
+package pl.edu.agh.backend.ticket;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -16,16 +16,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import pl.edu.agh.backend.user.User;
 
 @Entity
-@Table(name = "topic_proposals")
+@Table(name = "tickets")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TopicProposal {
+public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private TicketCategory category;
 
     @NotBlank
     @Size(max = 300)
@@ -36,18 +41,17 @@ public class TopicProposal {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @NotBlank
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String rationale;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private TicketStatus status = TicketStatus.OPEN;
+
+    @Column(name = "admin_response", columnDefinition = "TEXT")
+    private String adminResponse;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
-
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private TopicProposalStatus status = TopicProposalStatus.PENDING;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -56,4 +60,11 @@ public class TopicProposal {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public Ticket(User author, TicketCategory category, String title, String description) {
+        this.author = author;
+        this.category = category;
+        this.title = title;
+        this.description = description;
+    }
 }

@@ -19,7 +19,7 @@ import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentExceptio
 import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
-import pl.edu.agh.backend.topic.TopicProposalNotFoundException;
+import pl.edu.agh.backend.ticket.TicketNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -103,10 +103,10 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(TopicProposalNotFoundException.class)
-    public ProblemDetail handleTopicProposalNotFound(TopicProposalNotFoundException ex) {
+    @ExceptionHandler(TicketNotFoundException.class)
+    public ProblemDetail handleTicketNotFound(TicketNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-        problem.setTitle("Topic proposal not found");
+        problem.setTitle("Ticket not found");
         return problem;
     }
 
