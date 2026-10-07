@@ -1,5 +1,7 @@
 package pl.edu.agh.backend.event.registration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -12,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,15 +28,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.event.AdminEventService;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventRepository;
+import pl.edu.agh.backend.event.EventRequest;
 import pl.edu.agh.backend.event.EventType;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
@@ -46,6 +53,7 @@ import pl.edu.agh.backend.user.UserRepository;
 @Testcontainers
 @Transactional
 @Import(EventRegistrationEndpointTest.TestSecurityBeans.class)
+@RecordApplicationEvents
 class EventRegistrationEndpointTest {
 
     @Container
@@ -66,6 +74,12 @@ class EventRegistrationEndpointTest {
 
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
+
+    @Autowired
+    private AdminEventService adminEventService;
 
     private String alumnKeycloakId;
 
@@ -95,16 +109,22 @@ class EventRegistrationEndpointTest {
         User caller = new User();
         caller.setKeycloakId(alumnKeycloakId);
         caller = userRepository.save(caller);
-        eventRegistrationRepository.save(
-                EventRegistration.builder().event(event).user(caller).build());
+        eventRegistrationRepository.save(EventRegistration.builder()
+                .event(event)
+                .user(caller)
+                .status(EventRegistrationStatus.REGISTERED)
+                .build());
     }
 
     private void registerOtherAlumn(Event event) {
         User other = new User();
         other.setKeycloakId(UUID.randomUUID().toString());
         other = userRepository.save(other);
-        eventRegistrationRepository.save(
-                EventRegistration.builder().event(event).user(other).build());
+        eventRegistrationRepository.save(EventRegistration.builder()
+                .event(event)
+                .user(other)
+                .status(EventRegistrationStatus.REGISTERED)
+                .build());
     }
 
     private RequestPostProcessor alumn() {
@@ -173,6 +193,8 @@ class EventRegistrationEndpointTest {
                         .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.eventId").value(event.getId().toString()))
+                .andExpect(jsonPath("$.status").value("REGISTERED"))
+                .andExpect(jsonPath("$.waitlistPosition").doesNotExist())
                 .andExpect(jsonPath("$.seatsTaken").value(2))
                 .andExpect(jsonPath("$.seatLimit").value(10))
                 .andExpect(jsonPath("$.registeredAt").exists());
@@ -180,7 +202,7 @@ class EventRegistrationEndpointTest {
         mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.seatsTaken").value(2))
-                .andExpect(jsonPath("$.registered").value(true));
+                .andExpect(jsonPath("$.registrationStatus").value("REGISTERED"));
     }
 
     @Test
@@ -212,15 +234,35 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void registerForFullEvent_isRejectedAsNoSeatsLeft() throws Exception {
+    void registerForFullEvent_joinsTheWaitlist() throws Exception {
         Event event = newEvent(Audience.PUBLIC, 1);
         registerOtherAlumn(event);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.reason").value("NO_SEATS_LEFT"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"))
+                .andExpect(jsonPath("$.waitlistPosition").value(1))
+                .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void registerBehindSomeoneAlreadyQueuing_reportsTheNextPlaceInLine() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(UUID.randomUUID().toString()))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.waitlistPosition").value(1));
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.waitlistPosition").value(2));
     }
 
     @Test
@@ -268,36 +310,162 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void unregister_freesTheSeatForSomeoneElse() throws Exception {
+    void unregister_promotesTheFirstPersonQueuing() throws Exception {
         Event event = newEvent(Audience.PUBLIC, 1);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REGISTERED"));
 
-        String otherKeycloakId = UUID.randomUUID().toString();
+        String queuedKeycloakId = UUID.randomUUID().toString();
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
-                        .with(alumn(otherKeycloakId))
+                        .with(alumn(queuedKeycloakId))
                         .with(csrf()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.reason").value("NO_SEATS_LEFT"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
 
         mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
-                        .with(alumn(otherKeycloakId))
-                        .with(csrf()))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.seatsTaken").value(1));
-
+        assertThat(statusOf(event, queuedKeycloakId)).isEqualTo(EventRegistrationStatus.REGISTERED);
         mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.seatsTaken").value(1))
-                .andExpect(jsonPath("$.registered").value(false));
+                .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void unregister_announcesThePromotion() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerCaller(event);
+
+        String queuedKeycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(queuedKeycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+        UUID queuedUserId =
+                userRepository.findByKeycloakId(queuedKeycloakId).orElseThrow().getId();
+
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(applicationEvents.stream(RegistrationPromotedEvent.class))
+                .containsExactly(new RegistrationPromotedEvent(event.getId(), queuedUserId));
+    }
+
+    @Test
+    void unregisterWhileOnlyQueuing_promotesNobody() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.waitlistPosition").value(1));
+
+        String behindKeycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(behindKeycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.waitlistPosition").value(2));
+
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(statusOf(event, behindKeycloakId)).isEqualTo(EventRegistrationStatus.WAITLISTED);
+        mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void raisingTheSeatLimit_promotesAsManyAsTheNewSeatsAllow() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+        String first = queue(event);
+        String second = queue(event);
+        String third = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, 3));
+
+        assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, third)).isEqualTo(EventRegistrationStatus.WAITLISTED);
+        assertThat(applicationEvents.stream(RegistrationPromotedEvent.class)).hasSize(2);
+    }
+
+    @Test
+    void liftingTheSeatLimit_promotesTheWholeQueue() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+        String first = queue(event);
+        String second = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, null));
+
+        assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
+        assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
+    }
+
+    @Test
+    void unregisterAfterTheSeatLimitWasLoweredBelowTheHeadCount_promotesNobody() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 2);
+        registerCaller(event);
+        registerOtherAlumn(event);
+        String queued = queue(event);
+
+        adminEventService.update(event.getId(), requestWithSeatLimit(event, 1));
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(statusOf(event, queued)).isEqualTo(EventRegistrationStatus.WAITLISTED);
+    }
+
+    /** Signs a fresh alumn up for an event that is already full, returning their Keycloak id. */
+    private String queue(Event event) throws Exception {
+        String keycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(keycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+        return keycloakId;
+    }
+
+    private EventRequest requestWithSeatLimit(Event event, Integer seatLimit) {
+        return new EventRequest(
+                event.getTitle(),
+                null,
+                event.getType(),
+                event.getStartsAt(),
+                event.getEndsAt(),
+                null,
+                null,
+                seatLimit,
+                event.getRegistrationClosesAt(),
+                event.getAudience(),
+                null,
+                Set.of());
+    }
+
+    private EventRegistrationStatus statusOf(Event event, String keycloakId) {
+        UUID userId = userRepository.findByKeycloakId(keycloakId).orElseThrow().getId();
+        return eventRegistrationRepository
+                .findByEventIdAndUserId(event.getId(), userId)
+                .orElseThrow()
+                .getStatus();
     }
 
     @Test
@@ -336,6 +504,75 @@ class EventRegistrationEndpointTest {
                         .with(alumn())
                         .with(csrf()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ownRegistration_reportsAHeldSeat() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10);
+        registerCaller(event);
+
+        mockMvc.perform(get("/api/events/{id}/registration", event.getId()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REGISTERED"))
+                .andExpect(jsonPath("$.waitlistPosition").doesNotExist())
+                .andExpect(jsonPath("$.seatsTaken").value(1))
+                .andExpect(jsonPath("$.seatLimit").value(10));
+    }
+
+    @Test
+    void ownRegistration_reportsHowFarDownTheQueueTheCallerIs() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(UUID.randomUUID().toString()))
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/events/{id}/registration", event.getId()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"))
+                .andExpect(jsonPath("$.waitlistPosition").value(2))
+                .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void ownRegistrationWithoutSigningUp_isNotFound() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10);
+
+        mockMvc.perform(get("/api/events/{id}/registration", event.getId()).with(alumn()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ownRegistration_doesNotCreateAUserRowForACallerWithoutOne() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10);
+        String strangerKeycloakId = UUID.randomUUID().toString();
+
+        mockMvc.perform(get("/api/events/{id}/registration", event.getId()).with(alumn(strangerKeycloakId)))
+                .andExpect(status().isNotFound());
+
+        assertThat(userRepository.findByKeycloakId(strangerKeycloakId)).isEmpty();
+    }
+
+    @Test
+    void eventDetails_tellAQueuedSignUpApartFromAHeldSeat() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.registrationStatus").value("WAITLISTED"))
+                .andExpect(jsonPath("$.seatsTaken").value(1));
     }
 
     @Test
@@ -383,10 +620,10 @@ class EventRegistrationEndpointTest {
                         .with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2))
-                .andExpect(jsonPath("$.content[?(@.id=='%s')].registered".formatted(signedUpFor.getId()))
-                        .value(true))
-                .andExpect(jsonPath("$.content[?(@.id=='%s')].registered".formatted(notSignedUpFor.getId()))
-                        .value(false));
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].registrationStatus".formatted(signedUpFor.getId()))
+                        .value(contains("REGISTERED")))
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].registrationStatus".formatted(notSignedUpFor.getId()))
+                        .value(contains(nullValue())));
     }
 
     @Test
@@ -402,7 +639,7 @@ class EventRegistrationEndpointTest {
         mockMvc.perform(get("/api/public/events").param("tags", tag.getName()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].seatsTaken").value(1))
-                .andExpect(jsonPath("$.content[0].registered").value(false));
+                .andExpect(jsonPath("$.content[0].registrationStatus").doesNotExist());
     }
 
     @Test
@@ -413,7 +650,7 @@ class EventRegistrationEndpointTest {
         mockMvc.perform(get("/api/public/events/{id}", event.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.seatsTaken").value(1))
-                .andExpect(jsonPath("$.registered").value(false));
+                .andExpect(jsonPath("$.registrationStatus").doesNotExist());
     }
 
     @TestConfiguration

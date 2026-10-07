@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
 import { THEME } from "@/lib/theme";
-import { EventType, type EventListItemResponse } from "@pkka/api";
+import { EventRegistrationStatus, EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Link2, MapPin } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -13,7 +13,7 @@ type EventCardProps = {
 };
 
 function EventCard({ event }: EventCardProps) {
-  const { id, title, startsAt, type, location, seatLimit, seatsTaken } = event;
+  const { id, title, startsAt, type, location, seatLimit, seatsTaken, registrationStatus } = event;
   const seatsLabel = formatSeatsCompact(seatLimit, seatsTaken);
   const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
@@ -50,6 +50,15 @@ function EventCard({ event }: EventCardProps) {
         {seatsLabel ? (
           <Badge variant="outline">
             <Text>{seatsLabel}</Text>
+          </Badge>
+        ) : null}
+        {registrationStatus ? (
+          <Badge variant="secondary">
+            <Text>
+              {registrationStatus === EventRegistrationStatus.WAITLISTED
+                ? "LISTA REZERWOWA"
+                : "ZAPISANO"}
+            </Text>
           </Badge>
         ) : null}
       </View>
