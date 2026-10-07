@@ -6,7 +6,7 @@ import { useGetAdminEvent } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventForm } from "@/components/admin/event-form";
 import { useAuth } from "@/lib/auth-context";
-import { isAdmin } from "@/lib/roles";
+import { isAdmin } from "@pkka/domain";
 
 type EventEditorProps = {
   id?: string;

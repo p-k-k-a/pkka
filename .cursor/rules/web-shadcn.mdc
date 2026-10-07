@@ -23,8 +23,8 @@ npx shadcn@latest add <component>     # e.g. button, card, accordion, dialog
 ```
 
 Lands in `components/ui/`. It already resolves to the brand tokens once
-`app/globals.css` carries the Klub Alumnów values (see `alumni-design-system`
-skill) — no manual color overrides needed on a freshly-added component.
+the `@plugin` in `app/globals.css` carries the Klub Alumnów values (see
+`alumni-design-system`) — no manual color overrides on a freshly-added component.
 
 ## Path aliases
 
@@ -57,7 +57,7 @@ composed by the page.
   component accepts a `className` override, so conflicting utilities
   resolve correctly instead of both landing in the class string.
 - **Never hand-write hex/px colors.** Use the token classes:
-  `bg-primary text-primary-foreground`, `bg-navy text-white-text`,
+  `bg-primary text-primary-foreground`, `bg-band text-band-foreground`,
   `text-foreground`, `text-muted-foreground`, `border-border`. These flip
   automatically with the existing dark-mode toggle (`theme-toggle.tsx` +
   the inline script in `layout.tsx`).
@@ -78,15 +78,23 @@ import { Calendar, MapPin } from "lucide-react";
 ## Data layer
 
 `@pkka/api` (Orval-generated, typed from the backend OpenAPI spec) +
-`@tanstack/react-query`. `lib/query-client.ts` already wires the client;
+`@tanstack/react-query`. `lib/query-client.ts` already wires the client via
+`createQueryClient()` from `@pkka/api`;
 wrap new data-bound routes the same way `events-list.tsx` /
 `announcements-section.tsx` do — fetch in a client component with a
 generated hook, branch on loading/error, render the presentational piece.
 
+`@pkka/domain` holds the logic shared with the mobile app: Polish label maps
+(faculty, study type, event type, application status), date formatting, role
+predicates, profile contact/URL rules, application form rules. Look there
+before writing a label map or a date helper; if a new one would suit both
+apps, add it there rather than in `lib/`. `@pkka/theme` owns the colour
+tokens — see the `alumni-design-system` skill.
+
 ## Gotchas
 
 - Don't bypass `cn()` — you lose tailwind-merge's conflict resolution.
-- Don't add a component's colors by hand — fix `globals.css` tokens
+- Don't add a component's colors by hand — fix `packages/theme/design-tokens.ts`
   instead so every consumer of that token updates together.
 - Don't introduce a font outside Jost/Montserrat/Geist Mono (code blocks).
 - Keep comments to non-obvious "why", matching the repo-wide convention.

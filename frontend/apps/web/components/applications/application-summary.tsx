@@ -1,11 +1,11 @@
 import type { ApplicationResponse } from "@pkka/api";
 import {
+  consentLabel,
   facultyLabel,
+  formatDateTime,
   meetingPreferenceLabel,
   studyTypeLabel,
-  consentLabel,
-} from "@/lib/application-labels";
-import { formatDateTime } from "@/lib/format-date-time";
+} from "@pkka/domain";
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (

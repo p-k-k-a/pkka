@@ -3,3 +3,11 @@ thesis.yaml
 **/.idea
 **/package-lock.json
 .pnpm-store/
+
+# Turborepo writes its cache to the repository root when a task runs from a
+# git worktree, so it lands outside frontend/.gitignore's reach.
+.turbo/
+
+# Claude Code local state. skills/ is tracked and shared; these are not.
+.claude/worktrees/
+.claude/settings.local.json

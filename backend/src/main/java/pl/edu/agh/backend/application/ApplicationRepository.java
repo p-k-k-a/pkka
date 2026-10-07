@@ -19,4 +19,6 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Page<Application> findByStatusOrderByCreatedAtDesc(ApplicationStatus status, Pageable pageable);
 
     boolean existsByApplicantIdAndStatusIn(UUID applicantId, List<ApplicationStatus> statuses);
+
+    boolean existsByApplicantKeycloakIdAndStatus(String keycloakId, ApplicationStatus status);
 }
