@@ -1,11 +1,12 @@
+import { PostStatus } from "@pkka/api";
 import { Badge } from "@/components/ui/badge";
 
 type PostStatusBadgeProps = {
-  status: "DRAFT" | "PUBLISHED";
+  status: PostStatus;
 };
 
 export function PostStatusBadge({ status }: PostStatusBadgeProps) {
-  if (status === "PUBLISHED") {
+  if (status === PostStatus.PUBLISHED) {
     return <Badge>Opublikowany</Badge>;
   }
   return <Badge variant="outline">Szkic</Badge>;

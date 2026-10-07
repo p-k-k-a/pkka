@@ -1,12 +1,12 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { DiscordIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
-  ApplicationResponseStatus,
+  ApplicationStatus,
   ProfileResponse,
   useGetMine,
   useGetMyProfile,
@@ -26,7 +26,7 @@ type StatusConfig = {
   description: string;
 };
 
-const STATUS_CONFIG: Record<"UNDER_REVIEW" | "APPROVED" | "REJECTED", StatusConfig> = {
+const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
   UNDER_REVIEW: {
     dotClass: "bg-yellow-500",
     badgeClass: "border-yellow-500",
@@ -124,7 +124,7 @@ function ApplicationStatusView({
   rejectionReason,
   colors,
 }: {
-  status: "UNDER_REVIEW" | "APPROVED" | "REJECTED";
+  status: ApplicationStatus;
   rejectionReason?: string | null;
   colors: ReturnType<typeof useTheme>["colors"];
 }) {
@@ -144,14 +144,14 @@ function ApplicationStatusView({
           {cfg.heading}
         </Text>
         <Text className="text-muted-foreground text-sm leading-6">{cfg.description}</Text>
-        {status === "REJECTED" && rejectionReason ? (
+        {status === ApplicationStatus.REJECTED && rejectionReason ? (
           <Text className="text-muted-foreground text-sm leading-6 italic">
             Powód: {rejectionReason}
           </Text>
         ) : null}
       </View>
 
-      {status === "REJECTED" ? (
+      {status === ApplicationStatus.REJECTED ? (
         <View className="gap-3 mt-2">
           <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
             <ClipboardList size={18} color={colors.background} />
@@ -197,13 +197,7 @@ export function UserPanel() {
   const loadFailed = isError && !missingApplication;
 
   const application = data?.data;
-  const status = application?.status;
-  const knownStatus =
-    status === ApplicationResponseStatus.UNDER_REVIEW ||
-    status === ApplicationResponseStatus.APPROVED ||
-    status === ApplicationResponseStatus.REJECTED
-      ? (status as "UNDER_REVIEW" | "APPROVED" | "REJECTED")
-      : null;
+  const isApproved = application?.status === ApplicationStatus.APPROVED;
 
   const {
     data: profileData,
@@ -211,7 +205,7 @@ export function UserPanel() {
     isLoading: profilePending,
     isError: profileError,
     refetch: refetchProfile,
-  } = useGetMyProfile({ query: { enabled: knownStatus === "APPROVED" } });
+  } = useGetMyProfile({ query: { enabled: isApproved } });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -233,9 +227,9 @@ export function UserPanel() {
         <ActivityIndicator />
       ) : loadFailed ? (
         <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
-      ) : !application || !knownStatus ? (
+      ) : !application ? (
         <NoApplicationView colors={colors} />
-      ) : knownStatus === "APPROVED" ? (
+      ) : isApproved ? (
         <AlumniProfileSection
           profile={profileData?.data}
           isPending={profilePending && !refreshing}
@@ -243,7 +237,7 @@ export function UserPanel() {
         />
       ) : (
         <ApplicationStatusView
-          status={knownStatus}
+          status={application.status}
           rejectionReason={application.rejectionReason}
           colors={colors}
         />

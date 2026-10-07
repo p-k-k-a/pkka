@@ -22,7 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.server.ResponseStatusException;
-import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.security.Caller;
@@ -40,7 +40,7 @@ class AdminEventServiceTest {
     private TagRepository tagRepository;
 
     @Mock
-    private EventRegistrationRepository eventRegistrationRepository;
+    private EventRegistrationService eventRegistrationService;
 
     @Mock
     private CallerUserService callerUserService;
@@ -71,7 +71,7 @@ class AdminEventServiceTest {
                 .tags(new HashSet<>())
                 .build();
         when(eventRepository.findById(id)).thenReturn(Optional.of(event));
-        when(eventRegistrationRepository.countByEventId(id)).thenReturn(7L);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(7L);
 
         assertThat(adminEventService.get(id).seatsTaken()).isEqualTo(7);
     }

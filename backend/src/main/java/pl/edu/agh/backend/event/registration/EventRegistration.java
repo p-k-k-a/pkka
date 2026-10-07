@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.event.registration;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.*;
@@ -39,6 +40,12 @@ public class EventRegistration {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     private User user;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    @ToString.Include
+    private EventRegistrationStatus status;
 
     @CreatedDate
     @Column(name = "registered_at", nullable = false, updatable = false)

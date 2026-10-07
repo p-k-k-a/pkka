@@ -29,7 +29,8 @@ drop in cleanly.
   enabled (see `frontend/apps/mobile/app.json`).
 - **expo-router 6** — file-based routing under `app/`.
 - **NativeWind 4** — Tailwind classes on React Native. Config in
-  `tailwind.config.js`, CSS vars in `global.css`, Metro/Babel wired in
+  `tailwind.config.js` — which also injects the colour CSS vars via an
+  `addBase` plugin — Metro/Babel wired in
   `metro.config.js` and `babel.config.js`.
 - **React Native Reusables (RNR)** via the shadcn CLI — config in
   `components.json` (style `new-york`, aliases pre-set). Components land in
@@ -45,7 +46,14 @@ drop in cleanly.
   `QueryClientProvider` in `app/_layout.tsx` when the first network screen
   arrives.
 - **`@pkka/api`** (workspace package) — Orval-generated OpenAPI clients. This
-  is where data fetching hooks live.
+  is where data fetching hooks live, plus `createQueryClient()`.
+- **`@pkka/domain`** (workspace package) — platform-agnostic logic shared with
+  web: Polish label maps (faculty, study type, event type, application status),
+  date formatting, role predicates, profile contact/URL rules, application form
+  rules. Look here before writing a label map or a date helper; if a new one
+  would suit both apps, add it here rather than in `lib/`.
+- **`@pkka/theme`** (workspace package) — the colour tokens. `tailwind.config.js`
+  turns them into CSS vars; see the `alumni-design-system` skill.
 
 ## Path aliases (use these — don't reach with `../../`)
 
@@ -136,7 +144,7 @@ variants — it picks the right primitives and Tailwind classes for mobile.
 **Theme tokens come from Tailwind classes**, not raw colors:
 `bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`,
 `bg-primary text-primary-foreground`, etc. These resolve via CSS variables
-in `global.css`, which means light/dark mode switching is free.
+injected by `tailwind.config.js`, which means light/dark switching is free.
 
 ## Theming — two layers, know which to reach for
 
@@ -145,7 +153,7 @@ one matters:
 
 1. **Tailwind / NativeWind classes** — use for anything you can style with
    `className`. Tokens like `bg-primary`, `text-muted-foreground` resolve via
-   the CSS vars in `global.css`, so they automatically follow light/dark
+   the CSS vars injected by `tailwind.config.js`, so they follow light/dark
    mode. This is the default for ~95% of styling.
 
 2. **`useTheme()` from `@react-navigation/native`** — use for native chrome
@@ -242,8 +250,8 @@ app/(tabs)/{index,events,login}.tsx   tab screens
 components/ui/text.tsx       canonical RNR pattern reference — read this first
 lib/utils.ts                 cn() helper (clsx + tailwind-merge)
 lib/theme.ts                 THEME (raw tokens) + NAV_THEME (React Navigation)
-global.css                   CSS vars for light + dark
-tailwind.config.js           token → CSS var bindings + animations
+global.css                   Tailwind directives only
+tailwind.config.js           token → CSS var bindings, palette plugin, animations
 components.json              shadcn CLI config (aliases, style: new-york)
 app.json                     New Arch, typed routes, React Compiler flags
 metro.config.js              NativeWind Metro plugin wiring

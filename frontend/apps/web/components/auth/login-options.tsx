@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { DiscordIcon } from "@/components/auth/discord-icon";
+import { DiscordIcon } from "@pkka/icons/web";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 

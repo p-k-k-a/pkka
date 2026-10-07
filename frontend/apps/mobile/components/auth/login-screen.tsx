@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { DiscordIcon } from "@/components/ui/svg-icons";
+import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import * as WebBrowser from "expo-web-browser";

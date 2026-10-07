@@ -1,5 +1,8 @@
 package pl.edu.agh.backend.application;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true)
 public enum Faculty {
     WE("Wydział Elektromechaniczny (1952-1957)"),
     WEGH("Wydział Elektrotechniki Górniczej i Hutniczej (1957-1975)"),
