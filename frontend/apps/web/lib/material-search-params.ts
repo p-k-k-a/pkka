@@ -4,6 +4,8 @@ import { isMaterialType } from "@pkka/domain";
 export const MATERIALS_HREF = "/dashboard/materials";
 
 export type MaterialsState = {
+  /** Trimmed; "" means no search. */
+  query: string;
   type: MaterialType | null;
   eventId: string | null;
   /** Zero-based, like the API; the URL shows it one-based. */
@@ -22,6 +24,7 @@ export function parseMaterialsSearchParams(params: ReadableSearchParams): Materi
   const page = Number(params.get("page"));
 
   return {
+    query: params.get("q")?.trim() ?? "",
     type: isMaterialType(type) ? type : null,
     eventId: eventId && UUID.test(eventId) ? eventId : null,
     page: Number.isInteger(page) && page > 1 ? page - 1 : 0,
@@ -29,9 +32,11 @@ export function parseMaterialsSearchParams(params: ReadableSearchParams): Materi
 }
 
 /** `?…` for the given state, or "" when everything is at its default. */
-export function toMaterialsSearchString({ type, eventId, page }: MaterialsState) {
+export function toMaterialsSearchString({ query, type, eventId, page }: MaterialsState) {
   const params = new URLSearchParams();
+  const trimmedQuery = query.trim();
 
+  if (trimmedQuery) params.set("q", trimmedQuery);
   if (type) params.set("type", type);
   if (eventId) params.set("event", eventId);
   if (page > 0) params.set("page", String(page + 1));
@@ -41,5 +46,5 @@ export function toMaterialsSearchString({ type, eventId, page }: MaterialsState)
 }
 
 export function eventMaterialsHref(eventId: string) {
-  return `${MATERIALS_HREF}${toMaterialsSearchString({ type: null, eventId, page: 0 })}`;
+  return `${MATERIALS_HREF}${toMaterialsSearchString({ query: "", type: null, eventId, page: 0 })}`;
 }

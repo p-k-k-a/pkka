@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CalendarDays, X } from "lucide-react";
 import { useGetEventById, useListMaterials } from "@pkka/api";
 import { MATERIALS_PAGE_SIZE } from "@pkka/domain";
 import { MaterialCard } from "@/components/materials/material-card";
+import { MaterialSearchInput } from "@/components/materials/material-search-input";
 import { MaterialTypeTabs } from "@/components/materials/material-type-tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,19 +43,19 @@ export function MaterialsLibrary() {
   const searchParams = useSearchParams();
   // The URL is the only source of truth, so any link to this page (the sidebar, the
   // event page) sets the filters, and they survive a reload or a shared link.
-  const { type, eventId, page } = parseMaterialsSearchParams(searchParams);
+  const { query, type, eventId, page } = parseMaterialsSearchParams(searchParams);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const update = useCallback(
     (next: Partial<MaterialsState>) => {
-      const search = toMaterialsSearchString({ type, eventId, page, ...next });
+      const search = toMaterialsSearchString({ query, type, eventId, page, ...next });
       router.replace(`${pathname}${search}`, { scroll: false });
     },
-    [pathname, router, type, eventId, page],
+    [pathname, router, query, type, eventId, page],
   );
 
   // Rewrites a hand-edited URL to its canonical form, dropping anything malformed.
-  const canonicalSearch = toMaterialsSearchString({ type, eventId, page });
+  const canonicalSearch = toMaterialsSearchString({ query, type, eventId, page });
   const currentSearch = searchParams.toString();
   useEffect(() => {
     if (canonicalSearch !== (currentSearch ? `?${currentSearch}` : "")) {
@@ -66,6 +67,7 @@ export function MaterialsLibrary() {
     {
       size: MATERIALS_PAGE_SIZE,
       page,
+      ...(query ? { q: query } : {}),
       ...(type ? { type } : {}),
       ...(eventId ? { eventId } : {}),
     },
@@ -76,7 +78,7 @@ export function MaterialsLibrary() {
   const materials = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
-  const filtered = type !== null || eventId !== null;
+  const filtered = query !== "" || type !== null || eventId !== null;
 
   // A stale or shared ?page= past the end lands on the last page instead of an empty one.
   const pageOutOfRange = pageData !== undefined && materials.length === 0 && page > 0;
@@ -90,7 +92,7 @@ export function MaterialsLibrary() {
   }
 
   function clearFilters() {
-    update({ type: null, eventId: null, page: 0 });
+    update({ query: "", type: null, eventId: null, page: 0 });
   }
 
   return (
@@ -109,6 +111,12 @@ export function MaterialsLibrary() {
               nowej karcie.
             </p>
           </div>
+
+          <MaterialSearchInput
+            id="materials-search"
+            value={query}
+            onCommit={(next) => update({ query: next, page: 0 })}
+          />
 
           <div className="flex flex-wrap items-center gap-3">
             <MaterialTypeTabs value={type} onChange={(next) => update({ type: next, page: 0 })} />

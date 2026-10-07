@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ADMIN_MATERIALS_PATH } from "@/components/admin/material-form";
 import { MaterialCard } from "@/components/materials/material-card";
+import { MaterialSearchInput } from "@/components/materials/material-search-input";
 import { MaterialTypeTabs } from "@/components/materials/material-type-tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,6 +38,7 @@ export function AdminMaterialsList() {
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
+  const [query, setQuery] = useState("");
   const [type, setType] = useState<MaterialType | null>(null);
   const [materialToDelete, setMaterialToDelete] = useState<AdminMaterialResponse | null>(null);
 
@@ -51,8 +53,9 @@ export function AdminMaterialsList() {
     isLoading: isListLoading,
     isError,
   } = useListAdminMaterials(
-    { page, size: MATERIALS_PAGE_SIZE, ...(type ? { type } : {}) },
-    { query: { enabled: admin } },
+    { page, size: MATERIALS_PAGE_SIZE, ...(query ? { q: query } : {}), ...(type ? { type } : {}) },
+    // Keeps the cards on screen while a new search or page loads.
+    { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
 
   const deleteMaterial = useDeleteAdminMaterial({
@@ -99,6 +102,14 @@ export function AdminMaterialsList() {
             Dodawaj linki do nagrań, slajdów i innych materiałów, a potem przypisuj je do wydarzeń.
             Zweryfikowani alumni widzą te same karty w zakładce „Materiały”.
           </p>
+          <MaterialSearchInput
+            id="admin-materials-search"
+            value={query}
+            onCommit={(next) => {
+              setQuery(next);
+              setPage(0);
+            }}
+          />
           <div className="flex flex-wrap items-center justify-between gap-4">
             <MaterialTypeTabs
               value={type}
@@ -129,7 +140,11 @@ export function AdminMaterialsList() {
             <p className="text-destructive font-medium">Nie udało się załadować materiałów.</p>
           ) : materials.length === 0 ? (
             <p className="text-muted-foreground">
-              {type === null ? "Brak materiałów — dodaj pierwszy." : "Brak materiałów tego typu."}
+              {query
+                ? "Brak materiałów pasujących do wyszukiwania."
+                : type === null
+                  ? "Brak materiałów — dodaj pierwszy."
+                  : "Brak materiałów tego typu."}
             </p>
           ) : (
             <div className="space-y-8">
