@@ -20,8 +20,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { parseAlumniSearchParams, toAlumniSearchString } from "@/lib/alumni-search-params";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 export function AlumniDirectory() {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,7 +30,7 @@ export function AlumniDirectory() {
   const [filters, setFilters] = useState<AlumniFilters>(initial.filters);
   const [sort, setSort] = useState<AlumniSortOption>(initial.sort);
   const [page, setPage] = useState(initial.page);
-  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const debouncedQuery = useDebouncedValue(query);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Kept in the URL so the criteria survive a visit to a profile and can be shared.
