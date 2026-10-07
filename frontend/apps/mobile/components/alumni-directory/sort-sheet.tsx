@@ -1,20 +1,20 @@
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { SORT_OPTIONS, type SortOption } from "@/lib/alumni-directory";
+import { ALUMNI_SORT_OPTIONS, type AlumniSortOption } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 
 type SortSheetProps = {
   visible: boolean;
-  value: SortOption;
+  value: AlumniSortOption;
   onClose: () => void;
-  onApply: (value: SortOption) => void;
+  onApply: (value: AlumniSortOption) => void;
 };
 
 export function SortSheet({ visible, value, onClose, onApply }: SortSheetProps) {
-  const [draft, setDraft] = useState<SortOption>(value);
+  const [draft, setDraft] = useState<AlumniSortOption>(value);
 
   // Seed the draft from the applied sort only on open (see FilterSheet).
   useEffect(() => {
@@ -34,7 +34,7 @@ export function SortSheet({ visible, value, onClose, onApply }: SortSheetProps) 
       </View>
 
       <View className="my-4">
-        {SORT_OPTIONS.map((option) => {
+        {ALUMNI_SORT_OPTIONS.map((option) => {
           const selected = draft === option.value;
           return (
             <Pressable

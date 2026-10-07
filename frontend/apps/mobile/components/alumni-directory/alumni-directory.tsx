@@ -4,14 +4,14 @@ import { SortSheet } from "@/components/alumni-directory/sort-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useAlumniDirectory } from "@/lib/alumni-directory";
 import {
-  countActiveFilters,
-  DEFAULT_SORT,
-  EMPTY_FILTERS,
-  useAlumniDirectory,
+  countActiveAlumniFilters,
+  DEFAULT_ALUMNI_SORT,
+  EMPTY_ALUMNI_FILTERS,
   type AlumniFilters,
-  type SortOption,
-} from "@/lib/alumni-directory";
+  type AlumniSortOption,
+} from "@pkka/domain";
 import { THEME } from "@/lib/theme";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
 import { useCallback, useState } from "react";
@@ -22,14 +22,14 @@ type ActiveSheet = "filter" | "sort" | null;
 export function AlumniDirectory() {
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_FILTERS);
-  const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);
+  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_ALUMNI_FILTERS);
+  const [sort, setSort] = useState<AlumniSortOption>(DEFAULT_ALUMNI_SORT);
   const [sheet, setSheet] = useState<ActiveSheet>(null);
 
   const { alumni, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useAlumniDirectory({ query, filters, sort });
 
-  const activeCount = countActiveFilters(filters);
+  const activeCount = countActiveAlumniFilters(filters);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
