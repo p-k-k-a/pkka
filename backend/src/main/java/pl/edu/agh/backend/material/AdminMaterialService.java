@@ -20,8 +20,10 @@ public class AdminMaterialService {
     private final EventRepository eventRepository;
 
     @Transactional(readOnly = true)
-    public Page<AdminMaterialResponse> list(Optional<MaterialType> type, Optional<UUID> eventId, Pageable pageable) {
+    public Page<AdminMaterialResponse> list(
+            String q, Optional<MaterialType> type, Optional<UUID> eventId, Pageable pageable) {
         Specification<Material> spec = Specification.allOf(
+                MaterialSpecifications.matchesQuery(q),
                 MaterialSpecifications.hasType(type.orElse(null)),
                 MaterialSpecifications.hasEventId(eventId.orElse(null)));
         return materialRepository.findAll(spec, pageable).map(AdminMaterialResponse::from);

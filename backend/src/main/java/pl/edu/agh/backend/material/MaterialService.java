@@ -18,8 +18,9 @@ public class MaterialService {
 
     @Transactional(readOnly = true)
     public Page<MaterialResponse> list(
-            Optional<MaterialType> type, Optional<UUID> eventId, Pageable pageable, Caller caller) {
+            String q, Optional<MaterialType> type, Optional<UUID> eventId, Pageable pageable, Caller caller) {
         Specification<Material> spec = Specification.allOf(
+                MaterialSpecifications.matchesQuery(q),
                 MaterialSpecifications.hasType(type.orElse(null)),
                 MaterialSpecifications.hasEventId(eventId.orElse(null)),
                 MaterialSpecifications.visibleTo(caller));
