@@ -35,7 +35,7 @@ public class AdminMaterialController {
 
     @GetMapping
     @Operation(summary = "List materials with pagination and optional filters")
-    public Page<AdminMaterialResponse> listMaterials(
+    public Page<AdminMaterialResponse> listAdminMaterials(
             @RequestParam(required = false) MaterialType type,
             @RequestParam(required = false) UUID eventId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -47,7 +47,7 @@ public class AdminMaterialController {
     @Operation(summary = "Get a single material")
     @ApiResponse(responseCode = "200", description = "Material details")
     @ApiResponse(responseCode = "404", description = "Material not found", content = @Content)
-    public AdminMaterialResponse getMaterial(@PathVariable UUID id) {
+    public AdminMaterialResponse getAdminMaterial(@PathVariable UUID id) {
         return adminMaterialService.get(id);
     }
 
@@ -55,7 +55,7 @@ public class AdminMaterialController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a material from an external URL")
     @ApiResponse(responseCode = "201", description = "Material created")
-    public AdminMaterialResponse createMaterial(@Valid @RequestBody MaterialRequest request) {
+    public AdminMaterialResponse createAdminMaterial(@Valid @RequestBody MaterialRequest request) {
         return adminMaterialService.create(request);
     }
 
@@ -63,7 +63,8 @@ public class AdminMaterialController {
     @Operation(summary = "Update a material")
     @ApiResponse(responseCode = "200", description = "Material updated")
     @ApiResponse(responseCode = "404", description = "Material not found", content = @Content)
-    public AdminMaterialResponse updateMaterial(@PathVariable UUID id, @Valid @RequestBody MaterialRequest request) {
+    public AdminMaterialResponse updateAdminMaterial(
+            @PathVariable UUID id, @Valid @RequestBody MaterialRequest request) {
         return adminMaterialService.update(id, request);
     }
 
@@ -72,7 +73,7 @@ public class AdminMaterialController {
     @Operation(summary = "Delete a material permanently")
     @ApiResponse(responseCode = "204", description = "Material deleted")
     @ApiResponse(responseCode = "404", description = "Material not found", content = @Content)
-    public void deleteMaterial(@PathVariable UUID id) {
+    public void deleteAdminMaterial(@PathVariable UUID id) {
         adminMaterialService.delete(id);
     }
 }
