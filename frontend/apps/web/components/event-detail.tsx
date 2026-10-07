@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { EventLocationAside } from "@/components/events/event-location-aside";
+import { EventMaterialsSection } from "@/components/materials/event-materials-section";
 import { ProseContent } from "@/components/content/prose-content";
+import { SectionTitle } from "@/components/content/section-title";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 import { useAuth } from "@/lib/auth-context";
@@ -100,15 +102,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
               <section className="mt-16 space-y-6">
                 {event.fullDescription ? (
                   <>
-                    <div className="relative inline-block">
-                      <span
-                        className="bg-muted absolute inset-x-0 bottom-0 h-3"
-                        aria-hidden="true"
-                      />
-                      <h2 className="text-accent relative text-xs font-semibold tracking-widest uppercase">
-                        O wydarzeniu
-                      </h2>
-                    </div>
+                    <SectionTitle>O wydarzeniu</SectionTitle>
                     <ProseContent
                       content={event.fullDescription}
                       className="text-muted-foreground max-w-2xl"
@@ -126,6 +120,8 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
                 ) : null}
               </section>
             ) : null}
+
+            {variant === "dashboard" ? <EventMaterialsSection eventId={event.id} /> : null}
           </div>
 
           <EventLocationAside event={event} className="lg:sticky lg:top-24" />

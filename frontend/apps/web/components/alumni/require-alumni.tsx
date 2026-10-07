@@ -6,8 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 
+type RequireAlumniProps = {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+};
+
 /** The alumni endpoints answer 403 to anyone without the VERIFIED_ALUMN role. */
-export function RequireAlumni({ children }: { children: React.ReactNode }) {
+export function RequireAlumni({
+  children,
+  title = "Katalog dostępny dla zweryfikowanych alumnów",
+  description = "Po zatwierdzeniu wniosku zobaczysz profile innych absolwentów i będziesz mógł się z nimi skontaktować.",
+}: RequireAlumniProps) {
   // isLoading, not isPending: the application query stays pending forever when
   // it is disabled for admins.
   const { isAuthLoading, isLoading, isVerified } = useVerificationStatus();
@@ -26,12 +36,9 @@ export function RequireAlumni({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-[720px] flex-col items-start gap-4">
           <Lock className="text-muted-foreground size-6" aria-hidden="true" />
           <h1 className="font-heading text-foreground text-[28px] leading-tight font-semibold">
-            Katalog dostępny dla zweryfikowanych alumnów
+            {title}
           </h1>
-          <p className="text-muted-foreground leading-relaxed">
-            Po zatwierdzeniu wniosku zobaczysz profile innych absolwentów i będziesz mógł się z nimi
-            skontaktować.
-          </p>
+          <p className="text-muted-foreground leading-relaxed">{description}</p>
           <Button asChild size="xl" className="font-bold">
             <Link href="/dashboard/verification">
               Zweryfikuj się

@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Inbox,
+  Library,
+  Megaphone,
+  Newspaper,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,6 +43,12 @@ const userItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/alumni"),
   },
   {
+    href: "/dashboard/materials",
+    label: "Materiały",
+    icon: Library,
+    match: (pathname) => pathname.startsWith("/dashboard/materials"),
+  },
+  {
     href: "/dashboard/verification",
     label: "Zweryfikuj się",
     icon: ShieldCheck,
@@ -61,18 +75,26 @@ const adminItems: SidebarItem[] = [
     icon: CalendarDays,
     match: (pathname) => pathname.startsWith("/dashboard/admin/events"),
   },
+  {
+    href: "/dashboard/admin/materials",
+    label: "Materiały",
+    icon: Library,
+    match: (pathname) => pathname.startsWith("/dashboard/admin/materials"),
+  },
 ];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
 
-  // Verification is offered until it succeeds, the directory only after it does.
+  // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni") return isVerified;
+        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
+          return isVerified;
+        }
         return true;
       });
 
