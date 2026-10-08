@@ -16,6 +16,7 @@ import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
+import pl.edu.agh.backend.material.MaterialNotFoundException;
 import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
@@ -147,6 +148,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleSurveyHasSubmissions(SurveyHasSubmissionsException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Survey has submissions");
+        return problem;
+    }
+
+    @ExceptionHandler(MaterialNotFoundException.class)
+    public ProblemDetail handleMaterialNotFound(MaterialNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Material not found");
         return problem;
     }
 
