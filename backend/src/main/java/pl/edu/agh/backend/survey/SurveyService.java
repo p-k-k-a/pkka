@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.survey;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -22,11 +23,12 @@ public class SurveyService {
     private final SurveyRepository surveyRepository;
     private final SurveySubmissionRepository surveySubmissionRepository;
     private final CallerUserService callerUserService;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public Page<SurveyResponse> listActive(Pageable pageable) {
         return surveyRepository
-                .findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus.ACTIVE, Instant.now(), pageable)
+                .findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus.ACTIVE, Instant.now(clock), pageable)
                 .map(SurveyResponse::from);
     }
 
@@ -61,7 +63,7 @@ public class SurveyService {
         SurveySubmission submission = new SurveySubmission();
         submission.setSurvey(survey);
         submission.setUser(user);
-        submission.setSubmittedAt(Instant.now());
+        submission.setSubmittedAt(Instant.now(clock));
 
         Set<UUID> answeredQuestionIds = new HashSet<>();
         for (SubmitSurveyRequest.AnswerInput answerInput : request.answers()) {
@@ -93,7 +95,7 @@ public class SurveyService {
     }
 
     private void ensureActive(Survey survey) {
-        if (survey.getStatus() != SurveyStatus.ACTIVE || !survey.getEndsAt().isAfter(Instant.now())) {
+        if (survey.getStatus() != SurveyStatus.ACTIVE || !survey.getEndsAt().isAfter(Instant.now(clock))) {
             throw new SurveyNotActiveException();
         }
     }

@@ -20,6 +20,7 @@ import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
 import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
+import pl.edu.agh.backend.survey.InvalidSurveyException;
 import pl.edu.agh.backend.survey.SurveyAlreadySubmittedException;
 import pl.edu.agh.backend.survey.SurveyHasSubmissionsException;
 import pl.edu.agh.backend.survey.SurveyNotActiveException;
@@ -132,6 +133,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidSurveyAnswer(InvalidSurveyAnswerException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problem.setTitle("Invalid survey answer");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidSurveyException.class)
+    public ProblemDetail handleInvalidSurvey(InvalidSurveyException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid survey");
         return problem;
     }
 

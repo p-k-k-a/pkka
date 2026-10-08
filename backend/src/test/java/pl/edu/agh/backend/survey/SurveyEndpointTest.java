@@ -145,6 +145,35 @@ class SurveyEndpointTest {
     }
 
     @Test
+    void rejectsInvalidSurveyDefinitionsAsInvalidSurvey() throws Exception {
+        Instant future = Instant.now().plus(7, ChronoUnit.DAYS);
+        Instant past = Instant.now().minus(1, ChronoUnit.DAYS);
+
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Uwagi","type":"TEXT","options":["Nie powinno tu być"]}
+                """, "Text questions cannot have options");
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Język?","type":"SINGLE_CHOICE","options":[]}
+                """, "Choice questions require at least one option");
+        assertInvalidSurvey(past, "ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """, "Active surveys must end in the future");
+    }
+
+    private void assertInvalidSurvey(Instant endsAt, String status, String question, String detail) throws Exception {
+        mockMvc.perform(post("/api/admin/surveys")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Ankieta","endsAt":"%s","status":"%s","questions":[%s]}
+                                """.formatted(endsAt, status, question)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid survey"))
+                .andExpect(jsonPath("$.detail").value(detail));
+    }
+
+    @Test
     void enforcesRoles() throws Exception {
         mockMvc.perform(get("/api/alumni/surveys")).andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asUser()))

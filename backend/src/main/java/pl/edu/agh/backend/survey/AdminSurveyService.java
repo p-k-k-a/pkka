@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.survey;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ public class AdminSurveyService {
 
     private final SurveyRepository surveyRepository;
     private final SurveySubmissionRepository surveySubmissionRepository;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public Page<AdminSurveyListItemResponse> list(Pageable pageable) {
@@ -147,17 +149,22 @@ public class AdminSurveyService {
     }
 
     private void validateStatusAndEndDate(SurveyStatus status, Instant endsAt) {
-        if (status == SurveyStatus.ACTIVE && !endsAt.isAfter(Instant.now())) {
-            throw new InvalidSurveyAnswerException("Active surveys must end in the future");
+        if (status == SurveyStatus.ACTIVE && !endsAt.isAfter(Instant.now(clock))) {
+            throw new InvalidSurveyException("Active surveys must end in the future");
         }
     }
 
     private void validateQuestionRequest(SurveyQuestionRequest questionRequest) {
+        boolean hasOptions =
+                questionRequest.options() != null && !questionRequest.options().isEmpty();
         if (questionRequest.type() == QuestionType.TEXT) {
+            if (hasOptions) {
+                throw new InvalidSurveyException("Text questions cannot have options");
+            }
             return;
         }
-        if (questionRequest.options() == null || questionRequest.options().isEmpty()) {
-            throw new InvalidSurveyAnswerException("Choice questions require at least one option");
+        if (!hasOptions) {
+            throw new InvalidSurveyException("Choice questions require at least one option");
         }
     }
 }
