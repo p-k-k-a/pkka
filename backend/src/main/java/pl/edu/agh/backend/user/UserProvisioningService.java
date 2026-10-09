@@ -15,6 +15,7 @@ public class UserProvisioningService {
 
     private final UserRepository userRepository;
     private final KeycloakUserService keycloakUserService;
+    private final UserInserter userInserter;
 
     /**
      * Ensures a local user row exists for the given Keycloak subject. No external calls — safe to
@@ -50,15 +51,16 @@ public class UserProvisioningService {
         }
     }
 
+    /** Reads the row back in the caller's transaction, so callers always get a managed entity. */
     private User createUser(String keycloakId) {
+        log.info("Provisioning new user keycloakId={}", keycloakId);
         try {
-            log.info("Provisioning new user keycloakId={}", keycloakId);
-            User user = new User();
-            user.setKeycloakId(keycloakId);
-            return userRepository.save(user);
+            userInserter.insert(keycloakId);
         } catch (DataIntegrityViolationException ex) {
-            // Another concurrent request created the user; re-load and continue.
-            return userRepository.findByKeycloakId(keycloakId).orElseThrow(() -> ex);
+            log.debug("User keycloakId={} was provisioned concurrently", keycloakId);
         }
+        return userRepository
+                .findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new IllegalStateException("User " + keycloakId + " missing after insert"));
     }
 }
