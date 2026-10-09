@@ -23,6 +23,7 @@ jobs:
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       backend: ${{ steps.filter.outputs.backend }}
+      openapi: ${{ steps.filter.outputs.openapi }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +33,12 @@ jobs:
           filters: |
             frontend:
               - 'frontend/**'
+              - 'backend/openapi.json'
               - '.github/workflows/ci.yml'
+            # @pkka/api is generated from this file, but it lies outside the Turborepo
+            # workspace, so turbo's affected filter can't see it change
+            openapi:
+              - 'backend/openapi.json'
             backend:
               - 'backend/**'
               - '.github/workflows/ci.yml'
@@ -81,11 +87,11 @@ jobs:
         run: pnpm run format:check
 
       - name: Lint, typecheck, build (affected)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && needs.changes.outputs.openapi != 'true'
         run: pnpm exec turbo run lint typecheck build --filter='[origin/${{ github.base_ref }}]'
 
       - name: Lint, typecheck, build (full)
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' || needs.changes.outputs.openapi == 'true'
         run: pnpm exec turbo run lint typecheck build
 
   backend:
