@@ -70,6 +70,21 @@ class TicketEndpointTest {
     }
 
     @Test
+    void unknownSortPropertyIsABadRequest() throws Exception {
+        // the alumn list goes through a derived query, the admin list through a Specification;
+        // the alumn needs a ticket first, or there's no user row and no query runs at all
+        submit(ALUMN_SUBJECT, "OTHER", "Cokolwiek");
+        mockMvc.perform(get("/api/alumni/tickets")
+                        .param("sort", "bogus,desc")
+                        .with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid sort"));
+        mockMvc.perform(get("/api/admin/tickets").param("sort", "bogus").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid sort"));
+    }
+
+    @Test
     void alumnSubmitsAndSeesAdminReply() throws Exception {
         UUID id = submit(ALUMN_SUBJECT, "TOPIC_PROPOSAL", "Temat AI");
 
