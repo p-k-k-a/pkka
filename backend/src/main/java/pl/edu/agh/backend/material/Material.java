@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.springframework.data.annotation.CreatedDate;
@@ -59,6 +60,17 @@ public class Material {
     @JoinColumn(name = "event_id")
     @NotFound(action = NotFoundAction.IGNORE)
     private Event event;
+
+    /**
+     * Audience of the linked event, read straight from SQL so that it stays known after the event
+     * is soft-deleted — {@link #event} turns {@code null} then, which would otherwise make the
+     * material look unlinked and visible to everyone. {@code null} only when no event is linked.
+     */
+    @Formula("(select e.audience from events e where e.id = event_id)")
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @SuppressWarnings("UnusedVariable") // read by name in MaterialSpecifications.visibleTo
+    private String eventAudience;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

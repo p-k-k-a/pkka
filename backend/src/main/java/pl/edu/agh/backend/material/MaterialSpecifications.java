@@ -1,13 +1,11 @@
 package pl.edu.agh.backend.material;
 
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import java.util.Set;
+import jakarta.persistence.criteria.Path;
+import java.util.List;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.springframework.data.jpa.domain.Specification;
 import pl.edu.agh.backend.event.Audience;
-import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventVisibility;
 import pl.edu.agh.backend.security.Caller;
 
@@ -29,15 +27,16 @@ public class MaterialSpecifications {
      * EventVisibility#isVisibleTo}), so alumni-only or group-restricted events don't leak their
      * materials to callers who couldn't see the event itself.
      *
-     * <p>The join to {@code event} must be explicit and LEFT: a plain {@code root.get("event")}
-     * path expression lets Hibernate pick an INNER join, which would silently drop every
-     * material that has no linked event at all before the OR-condition below is even evaluated.
+     * <p>Filters on {@code Material.eventAudience} rather than a join to {@code event}: the join
+     * would apply {@code Event}'s soft-delete restriction, so a deleted event's materials would
+     * come back as unlinked and visible to everyone.
      */
     public Specification<Material> visibleTo(Caller caller) {
-        Set<Audience> visibleAudiences = EventVisibility.audiencesOf(caller);
+        List<String> visibleAudiences =
+                EventVisibility.audiencesOf(caller).stream().map(Audience::name).toList();
         return (root, query, cb) -> {
-            Join<Material, Event> event = root.join("event", JoinType.LEFT);
-            return cb.or(cb.isNull(event.get("id")), event.get("audience").in(visibleAudiences));
+            Path<String> eventAudience = root.get("eventAudience");
+            return cb.or(cb.isNull(eventAudience), eventAudience.in(visibleAudiences));
         };
     }
 }
