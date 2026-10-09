@@ -17,9 +17,9 @@ public interface MaterialRepository extends JpaRepository<Material, UUID>, JpaSp
 
     /**
      * {@code event} is a to-one association, so fetch-joining it here does not multiply result
-     * rows the way a collection join would; unlike the survey question/option collections (see
-     * SurveyRepository), this fetch join is safe to combine with {@link Pageable} because
-     * pagination still happens with a real SQL LIMIT/OFFSET on the {@code materials} table.
+     * rows the way a collection join would; unlike a collection fetch join, it is safe to combine
+     * with {@link Pageable} because pagination still happens with a real SQL LIMIT/OFFSET on the
+     * {@code materials} table.
      */
     @EntityGraph(attributePaths = "event")
     @Override

@@ -20,7 +20,12 @@ public final class JwtTestSupport {
     }
 
     public static RequestPostProcessor asVerifiedAlumn() {
+        return asVerifiedAlumn(UUID.randomUUID().toString());
+    }
+
+    public static RequestPostProcessor asVerifiedAlumn(String keycloakId) {
         return SecurityMockMvcRequestPostProcessors.jwt()
+                .jwt(jwt -> jwt.subject(keycloakId))
                 .authorities(new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
     }
 

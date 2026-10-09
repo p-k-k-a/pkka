@@ -93,7 +93,17 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /**
+     * Users provisioned on first authenticated write (see {@code CallerUserService#getOrCreate})
+     * may not have filled in their profile yet, so firstName/lastName can both be null. Falling
+     * through to email, then a fixed placeholder, avoids rendering the literal string "null
+     * null" to API consumers.
+     */
     public String getDisplayName() {
-        return (firstName + " " + lastName).trim();
+        String full = ((firstName == null ? "" : firstName) + " " + (lastName == null ? "" : lastName)).trim();
+        if (!full.isEmpty()) {
+            return full;
+        }
+        return email != null && !email.isBlank() ? email : "Alumn";
     }
 }
