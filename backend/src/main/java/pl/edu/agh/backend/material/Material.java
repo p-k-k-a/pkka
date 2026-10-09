@@ -3,7 +3,6 @@ package pl.edu.agh.backend.material;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +17,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import pl.edu.agh.backend.event.Event;
+import pl.edu.agh.backend.infrastructure.validation.HttpUrl;
 
 @Entity
 @Table(name = "materials")
@@ -46,7 +46,7 @@ public class Material {
 
     @NotBlank
     @Size(max = 2000)
-    @Pattern(regexp = "^https?://.+", message = "url must start with http:// or https://")
+    @HttpUrl
     @Column(nullable = false, length = 2000)
     private String url;
 
