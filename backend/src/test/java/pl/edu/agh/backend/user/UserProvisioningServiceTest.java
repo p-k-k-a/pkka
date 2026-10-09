@@ -3,6 +3,7 @@ package pl.edu.agh.backend.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,6 +27,9 @@ class UserProvisioningServiceTest {
     @Mock
     private KeycloakUserService keycloakUserService;
 
+    @Mock
+    private UserInserter userInserter;
+
     @InjectMocks
     private UserProvisioningService provisioningService;
 
@@ -38,18 +42,21 @@ class UserProvisioningServiceTest {
         User result = provisioningService.getOrCreate("kc-1");
 
         assertThat(result).isSameAs(existing);
-        verify(userRepository, never()).save(any());
+        verify(userInserter, never()).insert(any());
     }
 
     @Test
     void getOrCreateCreatesUserWhenMissing() {
-        when(userRepository.findByKeycloakId("kc-new")).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        User created = new User();
+        created.setKeycloakId("kc-new");
+        when(userRepository.findByKeycloakId("kc-new"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(created));
 
         User result = provisioningService.getOrCreate("kc-new");
 
-        assertThat(result.getKeycloakId()).isEqualTo("kc-new");
-        verify(userRepository).save(any(User.class));
+        assertThat(result).isSameAs(created);
+        verify(userInserter).insert("kc-new");
     }
 
     @Test
@@ -60,7 +67,9 @@ class UserProvisioningServiceTest {
         when(userRepository.findByKeycloakId("kc-race"))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(racedUser));
-        when(userRepository.save(any(User.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        doThrow(new DataIntegrityViolationException("duplicate"))
+                .when(userInserter)
+                .insert("kc-race");
 
         User result = provisioningService.getOrCreate("kc-race");
 
@@ -104,13 +113,16 @@ class UserProvisioningServiceTest {
 
     @Test
     void syncIdentityIgnoresNullClaimsAndCreatesUserWhenMissing() {
-        when(userRepository.findByKeycloakId("kc-new")).thenReturn(Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        User created = new User();
+        created.setKeycloakId("kc-new");
+        when(userRepository.findByKeycloakId("kc-new"))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(created));
         when(keycloakUserService.fetchDiscordId("kc-new")).thenReturn(Optional.empty());
 
         provisioningService.syncIdentityFromClaims("kc-new", null, null, null);
 
-        verify(userRepository).save(any(User.class));
+        verify(userInserter).insert("kc-new");
         verify(keycloakUserService).fetchDiscordId(eq("kc-new"));
     }
 }

@@ -21,14 +21,21 @@ public class OpenApiDumper implements ApplicationListener<ApplicationReadyEvent>
     private static final Logger log = LoggerFactory.getLogger(OpenApiDumper.class);
     private static final Path DUMP_PATH = Path.of("openapi.json");
 
-    @Value("${server.port:8080}")
-    private int port;
-
     @Value("${springdoc.api-docs.path:/v3/api-docs}")
     private String apiDocsPath;
 
+    /**
+     * Asks the server this context actually started. {@code local.server.port} only exists once a real web
+     * server is bound, so a {@code @SpringBootTest} with a mock environment skips the dump instead of
+     * scraping whatever else listens on 8080 — possibly another branch — and overwriting the spec with it.
+     */
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
+        Integer port = event.getApplicationContext().getEnvironment().getProperty("local.server.port", Integer.class);
+        if (port == null) {
+            log.debug("No web server bound, not dumping the OpenAPI spec");
+            return;
+        }
         URI uri = URI.create("http://localhost:" + port + apiDocsPath);
 
         try (HttpClient client = HttpClient.newHttpClient()) {

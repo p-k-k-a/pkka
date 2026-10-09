@@ -62,23 +62,26 @@ const parseBody = async <T>(res: Response): Promise<T> => {
   return (await res.text()) as T;
 };
 
-export const refreshTokens = async (): Promise<string> => {
-  if (refreshingTokenPromise) return refreshingTokenPromise;
+// The shared promise must be claimed synchronously: awaiting getRefreshToken() before claiming it
+// let concurrent 401s each start a refresh with the same refresh token, and with refresh-token
+// rotation the losers fail and log the user out.
+export const refreshTokens = (): Promise<string> => {
+  refreshingTokenPromise ??= (async () => {
+    try {
+      const rt = await getRefreshToken();
 
-  const rt = await getRefreshToken();
+      if (!rt) {
+        await onUnauthenticated();
+        throw new Error("No refresh token");
+      }
 
-  if (!rt) {
-    await onUnauthenticated();
-    throw new Error("No refresh token");
-  }
+      return await performTokenRefresh(rt);
+    } finally {
+      refreshingTokenPromise = null;
+    }
+  })();
 
-  refreshingTokenPromise = performTokenRefresh(rt);
-
-  try {
-    return await refreshingTokenPromise;
-  } finally {
-    refreshingTokenPromise = null;
-  }
+  return refreshingTokenPromise;
 };
 
 const performTokenRefresh = async (rt: string): Promise<string> => {

@@ -205,6 +205,43 @@ class MaterialEndpointTest {
                 .andExpect(jsonPath("$.content[0].eventId").doesNotExist());
     }
 
+    @Test
+    void keepsMaterialOfSoftDeletedSpecificGroupEventHidden() throws Exception {
+        String eventBody = mockMvc.perform(post("/api/admin/events")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(eventRequestBody("SPECIFIC_GROUP")))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID eventId = UUID.fromString(JsonPath.read(eventBody, "$.id"));
+
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Nagranie grupowe","type":"RECORDING","url":"https://example.com/a","eventId":"%s"}
+                                """.formatted(eventId)))
+                .andExpect(status().isCreated());
+
+        // See materialSurvivesLinkedEventBeingSoftDeleted for why the session is cleared.
+        entityManager.clear();
+
+        mockMvc.perform(delete("/api/admin/events/{id}", eventId)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        // Once the event is soft-deleted the material no longer resolves its event, but it must
+        // not fall back to "unlinked, visible to everyone".
+        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
+
     private static String eventRequestBody(String audience) {
         Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
         Instant end = start.plus(1, ChronoUnit.HOURS);

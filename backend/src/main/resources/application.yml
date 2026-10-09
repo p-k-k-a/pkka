@@ -87,6 +87,11 @@ app:
     success-url: ${WEB_SUCCESS_URL:http://localhost:3000/dashboard}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL:http://localhost:3000/}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  notifications:
+    expo:
+      # Off in dev so local runs and tests never call Expo; set EXPO_PUSH_ENABLED=true to try real pushes
+      enabled: ${EXPO_PUSH_ENABLED:false}
+      access-token: ${EXPO_ACCESS_TOKEN:}
 
 # Keycloak Admin Client
 keycloak:
@@ -195,6 +200,11 @@ app:
     success-url: ${WEB_SUCCESS_URL}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS}
+  notifications:
+    expo:
+      enabled: ${EXPO_PUSH_ENABLED:true}
+      # Only needed when "Enhanced push security" is on in the Expo project
+      access-token: ${EXPO_ACCESS_TOKEN:}
 
 # Keycloak Admin Client
 keycloak:

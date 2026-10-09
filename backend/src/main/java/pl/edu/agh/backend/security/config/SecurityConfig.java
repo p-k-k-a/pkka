@@ -1,6 +1,8 @@
 package pl.edu.agh.backend.security.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -13,13 +15,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
@@ -64,6 +70,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
                         .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
+                // CsrfFilter runs before authentication and reports through this handler, so without it
+                // an anonymous POST/PUT/DELETE would get 403 for a missing CSRF token instead of 401
+                .exceptionHandling(e -> e.accessDeniedHandler(SecurityConfig::challengeAnonymousOrDeny))
                 .addFilterAfter(
                         new ApprovedAlumnRoleFilter(applicationRepository), BearerTokenAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth.requestMatchers("/api/public/**")
@@ -178,6 +187,20 @@ public class SecurityConfig {
                 .map(r -> new SimpleGrantedAuthority(
                         Roles.ROLE_PREFIX + r.toUpperCase(Locale.ROOT).replace("-", "_")))
                 .collect(Collectors.toUnmodifiableSet());
+    }
+
+    /**
+     * A request nobody has authenticated is told to authenticate (401) rather than that it is forbidden — CSRF
+     * protection only matters once there is a session to ride on. Authenticated callers still get 403.
+     */
+    static void challengeAnonymousOrDeny(
+            HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex) throws IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+        } else {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+        }
     }
 
     /**
