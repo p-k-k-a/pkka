@@ -834,6 +834,14 @@ GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
     <h3>Utwórz rolę verified-alumn</h3>
     <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>verified-alumn</code> → Save.</p>
 
+    <h3>Utwórz rolę user i ustaw ją jako domyślną</h3>
+    <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>user</code> → Save.</p>
+    <p>Sidebar → <strong>Realm settings</strong> → zakładka <strong>User registration</strong> → <strong>Default roles</strong> → <strong>Assign role</strong> → <strong>Filter by realm roles</strong> → zaznacz <code>user</code> → Assign.</p>
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      Backend sprawdza każdą rolę osobno — <code>admin</code> ani <code>verified-alumn</code> <strong>nie</strong> obejmują <code>user</code>. Większość endpointów (np. <code>/api/events/**</code>, <code>/api/profiles/**</code>) wymaga <code>user</code>, więc konto bez niej dostanie 403, nawet z rolą <code>verified-alumn</code>.<br><br>
+      Default roles działają tylko dla kont tworzonych <strong>po</strong> tej zmianie. Kontom założonym wcześniej nadaj <code>user</code> ręcznie: <strong>Users</strong> → [konto] → <strong>Role mapping</strong> → <strong>Assign role</strong>.
+    </div></div>
+
     <h3>Rola broker.read-token dla użytkownika</h3>
     <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord. <strong>Service account nie jest do tego potrzebny.</strong></p>
 
