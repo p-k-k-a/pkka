@@ -94,7 +94,14 @@ public class SurveyService {
         }
     }
 
+    /**
+     * A draft was never published, so it is reported as missing — like a hidden event — and its id can't be
+     * probed for. A closed or expired survey was public once, so it gets the more useful "not active".
+     */
     private void ensureActive(Survey survey) {
+        if (survey.getStatus() == SurveyStatus.DRAFT) {
+            throw new SurveyNotFoundException();
+        }
         if (survey.getStatus() != SurveyStatus.ACTIVE || !survey.getEndsAt().isAfter(Instant.now(clock))) {
             throw new SurveyNotActiveException();
         }

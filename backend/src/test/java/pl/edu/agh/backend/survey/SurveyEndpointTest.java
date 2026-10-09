@@ -194,12 +194,13 @@ class SurveyEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
+        // an unpublished draft is reported as missing, so its id can't be probed for
         mockMvc.perform(get("/api/alumni/surveys/{id}", surveyId).with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(submit(surveyId, """
                         {"answers":[{"questionId":"%s","value":"Coś"}]}
-                        """.formatted(questionId))).andExpect(status().isConflict());
+                        """.formatted(questionId))).andExpect(status().isNotFound());
     }
 
     @Test

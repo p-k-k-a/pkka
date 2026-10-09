@@ -38,8 +38,8 @@ public class SurveyController {
     @GetMapping("/{id}")
     @Operation(summary = "Get an active survey with questions")
     @ApiResponse(responseCode = "200", description = "Survey details")
-    @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    @ApiResponse(responseCode = "409", description = "Survey is not active", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Survey not found or still a draft", content = @Content)
+    @ApiResponse(responseCode = "409", description = "Survey is closed or has ended", content = @Content)
     public SurveyResponse getActiveSurvey(@PathVariable UUID id) {
         return surveyService.getActive(id);
     }
@@ -48,8 +48,8 @@ public class SurveyController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Submit answers for an active survey")
     @ApiResponse(responseCode = "201", description = "Survey submitted")
-    @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    @ApiResponse(responseCode = "409", description = "Survey already submitted or not active", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Survey not found or still a draft", content = @Content)
+    @ApiResponse(responseCode = "409", description = "Survey already submitted, closed or ended", content = @Content)
     public SubmitSurveyResponse submitSurvey(
             @PathVariable UUID id, @Valid @RequestBody SubmitSurveyRequest request, Caller caller) {
         return surveyService.submit(id, caller, request);
