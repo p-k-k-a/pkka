@@ -51,6 +51,16 @@ async function ensureChannels(): Promise<void> {
   });
 }
 
+export type PushStatus = "off" | "on" | "blocked";
+
+export async function getNotificationPermissionStatus(): Promise<PushStatus> {
+  if (!(await isPushEnabled())) return "off";
+
+  const { granted, canAskAgain } = await Notifications.getPermissionsAsync();
+  if (granted) return "on";
+  return canAskAgain ? "off" : "blocked";
+}
+
 async function ensurePermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
