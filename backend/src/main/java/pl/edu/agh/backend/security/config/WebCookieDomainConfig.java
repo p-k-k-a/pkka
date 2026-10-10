@@ -32,9 +32,6 @@ public class WebCookieDomainConfig {
         return repository;
     }
 
-    // Logout deletes a cookie by sending it again, already expired. The browser only replaces the
-    // stored cookie if the domain matches, so XSRF-TOKEN is expired with the configured domain and
-    // JSESSIONID, which never has one, without a domain.
     @Bean
     public LogoutHandler webCookieClearingLogoutHandler() {
         return new CookieClearingLogoutHandler(expired(SESSION_COOKIE, ""), expired(CSRF_COOKIE, domain));
