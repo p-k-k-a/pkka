@@ -1,41 +1,22 @@
 # Releasing
 
-A release is a `vX.Y.Z` tag. Pushing it builds the backend image and deploys the web app to
-Vercel (pkka.me). The backend is then deployed on the VM by hand. The mobile app is not part
-of this flow yet.
+We version the project with [Semantic Versioning](https://semver.org/) and keep a
+[changelog](CHANGELOG.md) in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+format. Until the first stable release, versions stay below 1.0.0, starting at 0.1.0.
 
-## In every PR: add a changelog entry
+## Changelog
 
-If users will notice the change, add one line to [CHANGELOG.md](CHANGELOG.md) under
-`## Unreleased`, in the matching section, with the PR link:
+When your PR changes something users will notice, add a line under `## Unreleased` in
+`CHANGELOG.md`, in the right section (`Added`, `Changed`, `Fixed`, `Removed`), with a link to
+the PR. Internal changes like refactors, tests or CI don't need an entry.
 
-```md
-### Added
+## Making a release
 
-- Waitlist for full events [#198](https://github.com/p-k-k-a/pkka/pull/198)
-```
-
-Sections, from [Keep a Changelog](https://keepachangelog.com/en/1.1.0/): `Added`, `Changed`,
-`Deprecated`, `Removed`, `Fixed`, `Security`. Write for users, not for developers. Refactors,
-CI and test-only changes need no entry.
-
-## Cutting a release (about 15 minutes)
-
-1. **Pick the version.** Follow [Semantic Versioning](https://semver.org/). Until the
-   first stable release, versions stay at `0.y.z`, starting with `0.1.0`:
-
-   | Unreleased contains                            | Before 1.0.0  | From 1.0.0    |
-   | ---------------------------------------------- | ------------- | ------------- |
-   | a change that breaks the API or the mobile app | 0.4.2 → 0.5.0 | 1.4.2 → 2.0.0 |
-   | anything under `Added`                         | 0.4.2 → 0.5.0 | 1.4.2 → 1.5.0 |
-   | only `Fixed`                                   | 0.4.2 → 0.4.3 | 1.4.2 → 1.4.3 |
-
-2. **Open the release PR.** On a branch from `main`, edit `CHANGELOG.md`: rename
-   `## Unreleased` to `## X.Y.Z`, and add a new, empty `## Unreleased` above it.
-
-   Title the PR `chore: release vX.Y.Z` and merge it.
-
-3. **Tag the merge commit:**
+1. Decide the version. While we're below 1.0.0, bump the minor version (0.1.0 → 0.2.0) for new
+   features or breaking changes, and the patch version (0.1.0 → 0.1.1) for fixes only.
+2. Open a PR titled `chore: release vX.Y.Z` that renames `## Unreleased` in `CHANGELOG.md` to
+   `## X.Y.Z` and adds a new, empty `## Unreleased` above it. Merge it.
+3. Tag the merge commit on `main` and push the tag:
 
    ```bash
    git switch main && git pull
@@ -43,50 +24,26 @@ CI and test-only changes need no entry.
    git push origin vX.Y.Z
    ```
 
-   The tag starts two workflows (watch them under **Actions**):
-   - **Build & publish backend image:** `ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z` and `:latest`;
-   - **Deploy web to Vercel:** pkka.me goes live with this version.
+   This builds the backend image (`ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z`) and deploys the web
+   app to Vercel. You can follow both in the Actions tab.
 
-4. **Write the GitHub release.** Go to **Releases → Draft a new release**, pick the tag, and
-   paste that version's section from `CHANGELOG.md` as the description. Or from the terminal:
+4. Create a GitHub release for the tag and paste that version's changelog section as the
+   description.
+5. Deploy the backend on the server with `./deploy.sh vX.Y.Z` from `pkka-infra/deploy`. It
+   backs up the database before switching to the new image.
 
-   ```bash
-   gh release create vX.Y.Z --title vX.Y.Z --notes "<paste the section>"
-   ```
-
-5. **Deploy the backend on the VM.** This step is manual because it backs up the database
-   first:
-
-   ```bash
-   cd pkka-infra/deploy
-   ./deploy.sh vX.Y.Z
-   ```
-
-   If the release needs new environment variables, add them to `.env` first.
-
-6. **Check production.** Open https://pkka.me, log in, and do one thing that writes data, for
-   example sign up for an event.
-
-The web app goes live in step 3, before the backend in step 5. If a release changes the API in
-a way the old backend cannot serve, run step 5 straight after step 3, or ship the backend
-change in an earlier release.
+The web app goes live in step 3, before the backend. If the new web app depends on a backend
+change, deploy the backend right after tagging.
 
 ## Rolling back
 
-- **Web:** in the Vercel dashboard, open the project's **Deployments**, pick the previous
-  production deployment and promote it. Or run **Actions → Deploy web to Vercel** with the
-  previous tag selected.
-- **Backend:** run `./deploy.sh <previous tag>` on the VM. If the bad release ran a Flyway
-  migration, rolling the image back does not undo it. Restore the database from the dump that
-  `deploy.sh` made before the release (`pkka-infra/deploy/restore.sh`).
+For the web app, promote the previous production deployment in the Vercel dashboard. For the
+backend, run `./deploy.sh` with the previous tag. A database migration is not undone by
+rolling back the image; restore the backup made before the release instead (see
+`pkka-infra/deploy/restore.sh`).
 
-## Redeploying a version
+## Setup
 
-Run **Build & publish backend image** or **Deploy web to Vercel** from the Actions tab and
-select the tag as the ref.
-
-## One-time setup
-
-In **Settings → Secrets and variables → Actions**, add `VERCEL_TOKEN`, `VERCEL_ORG_ID` and
-`VERCEL_PROJECT_ID`. The two IDs are in `.vercel/project.json` after running
+The Vercel deploy needs three repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID` and
+`VERCEL_PROJECT_ID`. You can find the two IDs in `.vercel/project.json` after running
 `npx vercel link` in `frontend/apps/web`.
