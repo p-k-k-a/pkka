@@ -1,0 +1,46 @@
+name: Deploy web to Vercel
+
+# Production for pkka.me is released by tag, like the backend image (deploy.yml).
+# Vercel's Git integration still builds a preview for every other branch; it skips
+# main because of frontend/apps/web/vercel.json.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@62.7.0
+
+      # Downloads the project settings (root directory, install and build commands)
+      # and the production environment variables, so the build matches Vercel's.
+      - name: Pull production settings
+        run: vercel pull --yes --environment=production
+
+      - name: Build
+        run: vercel build --prod
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod
