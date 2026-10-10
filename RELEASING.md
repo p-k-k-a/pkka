@@ -1,44 +1,63 @@
 # Releasing
 
-A release publishes the backend image to GHCR and the web app to Vercel (pkka.me), both
-at the same version. Release notes and [CHANGELOG.md](CHANGELOG.md) are written for you
-from the titles of merged PRs.
+A release is a `vX.Y.Z` tag. Pushing it builds the backend image and deploys the web app to
+Vercel (pkka.me). The backend is then deployed on the VM by hand. The mobile app is not part
+of this flow yet.
 
-The mobile app is not part of this flow yet.
+## In every PR: add a changelog entry
 
-## How versions and notes are made
+If users will notice the change, add one line to [CHANGELOG.md](CHANGELOG.md) under
+`## Unreleased`, in the matching section, with the PR link:
 
-PRs are squash-merged, so each PR title becomes one commit on `main`. CI already checks
-that titles follow [Conventional Commits](https://www.conventionalcommits.org/). The type
-decides the next version and where the change shows up in the notes:
+```md
+### Added
 
-| PR title                                                    | Next version         | Changelog section                 |
-| ----------------------------------------------------------- | -------------------- | --------------------------------- |
-| `fix(web): …`                                               | patch: 1.2.0 → 1.2.1 | Bug Fixes                         |
-| `feat(backend): …`                                          | minor: 1.2.0 → 1.3.0 | Features                          |
-| `feat!: …` (any type with `!`)                              | major: 1.2.0 → 2.0.0 | Breaking changes                  |
-| `perf: …`, `revert: …`                                      | patch                | Performance Improvements, Reverts |
-| `refactor`, `docs`, `test`, `ci`, `build`, `chore`, `style` | none on their own    | hidden                            |
+- Waitlist for full events [#198](https://github.com/p-k-k-a/pkka/pull/198)
+```
 
-Write the PR title for the people who will read the release notes: it is copied into the
-changelog word for word.
+Sections, from [Keep a Changelog](https://keepachangelog.com/en/1.1.0/): `Added`, `Changed`,
+`Deprecated`, `Removed`, `Fixed`, `Security`. Write for users, not for developers. Refactors,
+CI and test-only changes need no entry.
 
-## Release step by step
+## Cutting a release (about 15 minutes)
 
-1. **Merge PRs into `main` as usual.** After each merge, the
-   [Release workflow](.github/workflows/release.yml) runs
-   [release-please](https://github.com/googleapis/release-please). It opens, or updates, a PR
-   titled `chore(main): release X.Y.Z`. That PR bumps `version.txt` and
-   `.release-please-manifest.json` and adds the new section to `CHANGELOG.md`.
-2. **Review the release PR.** Check that the version and the notes are what you expect.
-   To change an entry, see [Fixing the notes](#fixing-the-notes).
-3. **Merge the release PR when you want to ship.** Follow the run under **Actions →
-   Release**. It:
-   - creates the tag `vX.Y.Z` and a GitHub release with the same notes;
-   - builds `ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z` (and `:latest`);
-   - deploys the web app to Vercel production.
-4. **Deploy the backend on the VM.** This step stays manual on purpose, because it takes a
-   database backup first:
+1. **Pick the version.** Follow [Semantic Versioning](https://semver.org/) from the
+   `Unreleased` entries:
+
+   | Unreleased contains                                     | Bump  | Example       |
+   | ------------------------------------------------------- | ----- | ------------- |
+   | a change that breaks existing clients (API, mobile app) | major | 1.4.2 → 2.0.0 |
+   | anything under `Added`                                  | minor | 1.4.2 → 1.5.0 |
+   | only `Fixed`                                            | patch | 1.4.2 → 1.4.3 |
+
+2. **Open the release PR.** On a branch from `main`, edit `CHANGELOG.md`:
+   - rename `## Unreleased [(diff)](…/compare/vPREV...HEAD)` to
+     `## X.Y.Z [(diff)](https://github.com/p-k-k-a/pkka/compare/vPREV...vX.Y.Z)`;
+   - add a new, empty `## Unreleased [(diff)](https://github.com/p-k-k-a/pkka/compare/vX.Y.Z...HEAD)` above it.
+
+   Title the PR `chore: release vX.Y.Z` and merge it.
+
+3. **Tag the merge commit:**
+
+   ```bash
+   git switch main && git pull
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+   The tag starts two workflows (watch them under **Actions**):
+   - **Build & publish backend image:** `ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z` and `:latest`;
+   - **Deploy web to Vercel:** pkka.me goes live with this version.
+
+4. **Write the GitHub release.** Go to **Releases → Draft a new release**, pick the tag, and
+   paste that version's section from `CHANGELOG.md` as the description. Or from the terminal:
+
+   ```bash
+   gh release create vX.Y.Z --title vX.Y.Z --notes "<paste the section>"
+   ```
+
+5. **Deploy the backend on the VM.** This step is manual because it backs up the database
+   first:
 
    ```bash
    cd pkka-infra/deploy
@@ -47,56 +66,29 @@ changelog word for word.
 
    If the release needs new environment variables, add them to `.env` first.
 
-5. **Check production.** Open https://pkka.me, log in, and try one action that writes data,
-   for example signing up for an event.
+6. **Check production.** Open https://pkka.me, log in, and do one thing that writes data, for
+   example sign up for an event.
 
-The web app goes live in step 3, before the backend in step 4. If a release changes the API
-in a way the old backend cannot serve, run step 4 straight after the merge, or ship the
-backend change in an earlier release.
+The web app goes live in step 3, before the backend in step 5. If a release changes the API in
+a way the old backend cannot serve, run step 5 straight after step 3, or ship the backend
+change in an earlier release.
 
 ## Rolling back
 
 - **Web:** in the Vercel dashboard, open the project's **Deployments**, pick the previous
-  production deployment and promote it (Instant Rollback). Or run **Actions → Deploy web to
-  Vercel** on the previous tag.
-- **Backend:** `./deploy.sh <previous tag>` on the VM. If the bad release ran a Flyway
-  migration, rolling the image back does not undo it; restore the database from the dump
-  `deploy.sh` made before the release (see `pkka-infra/deploy/restore.sh`).
+  production deployment and promote it. Or run **Actions → Deploy web to Vercel** with the
+  previous tag selected.
+- **Backend:** run `./deploy.sh <previous tag>` on the VM. If the bad release ran a Flyway
+  migration, rolling the image back does not undo it. Restore the database from the dump that
+  `deploy.sh` made before the release (`pkka-infra/deploy/restore.sh`).
 
-## Fixing the notes
+## Redeploying a version
 
-- **Before the release PR is merged:** open the original, already merged PR and add this
-  to its description:
-
-  ```
-  BEGIN_COMMIT_OVERRIDE
-  fix(web): the corrected title
-  END_COMMIT_OVERRIDE
-  ```
-
-  On its next run, release-please uses that text instead of the squash commit message and
-  regenerates the release PR. Edits made directly in the release PR are not reliable: it is
-  regenerated after every merge to `main`.
-
-- **After the release:** edit the GitHub release text, and fix `CHANGELOG.md` in a normal PR.
-- **Forcing a version:** merge a commit whose body contains `Release-As: 2.0.0`, for
-  example `git commit --allow-empty -m "chore: release 2.0.0" -m "Release-As: 2.0.0"`.
-
-## Releasing without the release PR
-
-To redeploy an existing version, run the workflow by hand from the Actions tab:
-**Build & publish backend image** or **Deploy web to Vercel**, with the tag selected as the
-ref. Pushing a `v*` tag by hand also starts both workflows, but it skips the changelog, so
-prefer the release PR.
+Run **Build & publish backend image** or **Deploy web to Vercel** from the Actions tab and
+select the tag as the ref.
 
 ## One-time setup
 
-- **Settings → Actions → General → Workflow permissions:** enable _Allow GitHub Actions to
-  create and approve pull requests_, so release-please can open its PR.
-- **Settings → Secrets and variables → Actions:** add `VERCEL_TOKEN`, `VERCEL_ORG_ID` and
-  `VERCEL_PROJECT_ID`. The two IDs are in `.vercel/project.json` after running
-  `npx vercel link` in `frontend/apps/web`.
-
-The release PR is opened with GitHub's built-in token, so CI does not run on it on its own.
-It only changes `version.txt`, the manifest and the changelog, so that is safe to merge
-without checks.
+In **Settings → Secrets and variables → Actions**, add `VERCEL_TOKEN`, `VERCEL_ORG_ID` and
+`VERCEL_PROJECT_ID`. The two IDs are in `.vercel/project.json` after running
+`npx vercel link` in `frontend/apps/web`.
