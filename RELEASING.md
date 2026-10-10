@@ -18,8 +18,10 @@ the PR. Internal changes like refactors, tests or CI don't need an entry.
    `## X.Y.Z` and adds a new, empty `## Unreleased` above it. Merge it.
 3. Create a GitHub release: on the Releases page, click **Draft a new release**, type the new
    tag `vX.Y.Z` (target `main`), and paste that version's changelog section as the description.
-   Publishing the release builds the backend image (`ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z`)
-   and deploys the web app to Vercel. You can follow both in the Actions tab.
+   Publishing the release builds the backend image (`ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z`),
+   deploys the web app to Vercel and starts the Android build on EAS. You can follow them in the
+   Actions tab. The Android build itself runs on Expo's servers and can take a while on the
+   free plan; the APK shows up on expo.dev when it's done, and you can attach it to the release.
 4. Deploy the backend on the server with `./deploy.sh vX.Y.Z` from `pkka-infra/deploy`. It
    backs up the database before switching to the new image.
 
@@ -38,3 +40,13 @@ rolling back the image; restore the backup made before the release instead (see
 The Vercel deploy needs three repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID` and
 `VERCEL_PROJECT_ID`. You can find the two IDs in `.vercel/project.json` after running
 `npx vercel link` in `frontend/apps/web`.
+
+The Android build needs an Expo account and, once:
+
+1. In `frontend/apps/mobile`, run `npx eas-cli init` and commit the `projectId` it adds to
+   `app.json`.
+2. Run `npx eas-cli credentials -p android` and let EAS generate and keep the signing key. Every
+   future APK must be signed with it, or users can't update the app.
+3. Create an access token on expo.dev and add it as the `EXPO_TOKEN` repository secret.
+
+The free Expo plan includes 15 Android builds a month.

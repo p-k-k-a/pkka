@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 24.8.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "production": {
+      "pnpm": "10.33.0",
+      "autoIncrement": true,
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "OPENAPI_INPUT": "../../../backend/openapi.json",
+        "EXPO_PUBLIC_API_URL": "https://api.pkka.me",
+        "EXPO_PUBLIC_KEYCLOAK_URL": "https://api.pkka.me/oauth2/authorization/keycloak-mobile",
+        "EXPO_PUBLIC_DISCORD_URL": "https://api.pkka.me/oauth2/authorization/keycloak-mobile?idp=discord"
+      }
+    }
+  }
+}
