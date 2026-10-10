@@ -12,13 +12,13 @@ PRs are squash-merged, so each PR title becomes one commit on `main`. CI already
 that titles follow [Conventional Commits](https://www.conventionalcommits.org/). The type
 decides the next version and where the change shows up in the notes:
 
-| PR title                                                    | Next version         | Changelog section    |
-| ----------------------------------------------------------- | -------------------- | -------------------- |
-| `fix(web): …`                                               | patch: 1.2.0 → 1.2.1 | Bug Fixes            |
-| `feat(backend): …`                                          | minor: 1.2.0 → 1.3.0 | Features             |
-| `feat!: …` (any type with `!`)                              | major: 1.2.0 → 2.0.0 | Breaking changes     |
-| `perf: …`, `revert: …`                                      | patch                | Performance, Reverts |
-| `refactor`, `docs`, `test`, `ci`, `build`, `chore`, `style` | none on their own    | hidden               |
+| PR title                                                    | Next version         | Changelog section                 |
+| ----------------------------------------------------------- | -------------------- | --------------------------------- |
+| `fix(web): …`                                               | patch: 1.2.0 → 1.2.1 | Bug Fixes                         |
+| `feat(backend): …`                                          | minor: 1.2.0 → 1.3.0 | Features                          |
+| `feat!: …` (any type with `!`)                              | major: 1.2.0 → 2.0.0 | Breaking changes                  |
+| `perf: …`, `revert: …`                                      | patch                | Performance Improvements, Reverts |
+| `refactor`, `docs`, `test`, `ci`, `build`, `chore`, `style` | none on their own    | hidden                            |
 
 Write the PR title for the people who will read the release notes: it is copied into the
 changelog word for word.
