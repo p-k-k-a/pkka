@@ -457,6 +457,7 @@ class EventRegistrationEndpointTest {
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
                 null,
+                null,
                 Set.of());
     }
 

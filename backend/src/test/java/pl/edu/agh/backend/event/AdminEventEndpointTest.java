@@ -185,6 +185,32 @@ class AdminEventEndpointTest {
     }
 
     @Test
+    void acceptsAReminderUpToAWeekBeforeTheStart() throws Exception {
+        Instant start = Instant.now().plus(10, ChronoUnit.DAYS);
+        Instant end = start.plus(2, ChronoUnit.HOURS);
+        String reminderJson = """
+                {
+                  "title": "Przypomnienie",
+                  "type": "ONLINE",
+                  "startsAt": "%s",
+                  "endsAt": "%s",
+                  "audience": "PUBLIC",
+                  "reminderLeadTimeMinutes": %d,
+                  "tags": []
+                }
+                """;
+
+        createEvent(reminderJson.formatted(start, end, 7 * 24 * 60));
+
+        mockMvc.perform(post("/api/admin/events")
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(reminderJson.formatted(start, end, 7 * 24 * 60 + 1)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void rejectsUnknownTags() throws Exception {
         Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
         Instant end = start.plus(2, ChronoUnit.HOURS);
