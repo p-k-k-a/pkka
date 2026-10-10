@@ -47,12 +47,13 @@ The Vercel deploy needs three repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID
 `VERCEL_PROJECT_ID`. You can find the two IDs in `.vercel/project.json` after running
 `npx vercel link` in `frontend/apps/web`.
 
-The Android build needs an Expo account and, once:
+The Android build uses the `pkka` Expo project (its id is in `frontend/apps/mobile/app.json`).
+It needs, once:
 
-1. In `frontend/apps/mobile`, run `npx eas-cli init` and commit the `projectId` it adds to
-   `app.json`.
-2. Run `npx eas-cli credentials -p android` and let EAS generate and keep the signing key. Every
-   future APK must be signed with it, or users can't update the app.
-3. Create an access token on expo.dev and add it as the `EXPO_TOKEN` repository secret.
+1. `npx eas-cli credentials -p android` in `frontend/apps/mobile`, to let EAS generate and keep
+   the signing key. Every future APK must be signed with it, or users can't update the app.
+2. An Expo access token, added as the `EXPO_TOKEN` repository secret. Create it at
+   https://expo.dev/settings/access-tokens, or as a robot user of the `pkka` organization so it
+   isn't tied to one person.
 
 The free Expo plan includes 15 Android builds a month.
