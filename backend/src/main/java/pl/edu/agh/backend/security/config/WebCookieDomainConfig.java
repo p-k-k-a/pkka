@@ -9,10 +9,8 @@ import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 // The web app (pkka.me) reads the CSRF cookie in the browser and copies it into a header for the
-// API (api.pkka.me), so in production that cookie is scoped to the shared parent domain. The
-// session cookie stays host-only: the browser already sends it to the API, and widening it would
-// also send it to the web host. Left empty (local dev, where cookies ignore the port), the CSRF
-// cookie stays host-only as well.
+// API (api.pkka.me), so in production that cookie is scoped to the shared parent domain. Left
+// empty (local dev, where cookies ignore the port), it stays host-only.
 @Configuration
 public class WebCookieDomainConfig {
 
