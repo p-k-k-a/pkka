@@ -21,19 +21,17 @@ CI and test-only changes need no entry.
 
 ## Cutting a release (about 15 minutes)
 
-1. **Pick the version.** Follow [Semantic Versioning](https://semver.org/) from the
-   `Unreleased` entries:
+1. **Pick the version.** Follow [Semantic Versioning](https://semver.org/). Until the
+   first stable release, versions stay at `0.y.z`, starting with `0.1.0`:
 
-   | Unreleased contains                                     | Bump  | Example       |
-   | ------------------------------------------------------- | ----- | ------------- |
-   | a change that breaks existing clients (API, mobile app) | major | 1.4.2 → 2.0.0 |
-   | anything under `Added`                                  | minor | 1.4.2 → 1.5.0 |
-   | only `Fixed`                                            | patch | 1.4.2 → 1.4.3 |
+   | Unreleased contains                            | Before 1.0.0  | From 1.0.0    |
+   | ---------------------------------------------- | ------------- | ------------- |
+   | a change that breaks the API or the mobile app | 0.4.2 → 0.5.0 | 1.4.2 → 2.0.0 |
+   | anything under `Added`                         | 0.4.2 → 0.5.0 | 1.4.2 → 1.5.0 |
+   | only `Fixed`                                   | 0.4.2 → 0.4.3 | 1.4.2 → 1.4.3 |
 
-2. **Open the release PR.** On a branch from `main`, edit `CHANGELOG.md`:
-   - rename `## Unreleased [(diff)](…/compare/vPREV...HEAD)` to
-     `## X.Y.Z [(diff)](https://github.com/p-k-k-a/pkka/compare/vPREV...vX.Y.Z)`;
-   - add a new, empty `## Unreleased [(diff)](https://github.com/p-k-k-a/pkka/compare/vX.Y.Z...HEAD)` above it.
+2. **Open the release PR.** On a branch from `main`, edit `CHANGELOG.md`: rename
+   `## Unreleased` to `## X.Y.Z`, and add a new, empty `## Unreleased` above it.
 
    Title the PR `chore: release vX.Y.Z` and merge it.
 
