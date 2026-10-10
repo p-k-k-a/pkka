@@ -1,8 +1,8 @@
 name: Deploy web to Vercel
 
-# Production for pkka.me is released by tag, like the backend image (deploy.yml).
-# Vercel's Git integration still builds a preview for every other branch; it skips
-# main because of frontend/apps/web/vercel.json.
+# pkka.me is released by tag, like the backend image (deploy.yml). This is the only
+# way the web app reaches Vercel: frontend/apps/web/vercel.json turns off Vercel's
+# own deployments on push, including previews, which could not reach the API anyway.
 
 on:
   push:
