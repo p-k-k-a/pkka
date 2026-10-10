@@ -1,17 +1,21 @@
 name: Deploy web to Vercel
 
-# pkka.me is released by tag, like the backend image (deploy.yml). This is the only
-# way the web app reaches Vercel: frontend/apps/web/vercel.json turns off Vercel's
-# own deployments on push, including previews, which could not reach the API anyway.
+# Deploys pkka.me for a release (see RELEASING.md). This is the only way the web app
+# reaches Vercel: frontend/apps/web/vercel.json turns off Vercel's own deployments on
+# push, including previews, which could not reach the API anyway.
 
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-
-concurrency:
-  group: deploy-web-production
-  cancel-in-progress: false
+  # Called by release.yml: a tag pushed by release-please with GITHUB_TOKEN does not
+  # trigger the push event above.
+  workflow_call:
+    inputs:
+      tag:
+        description: Release tag to deploy, e.g. v1.2.0
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -20,12 +24,17 @@ jobs:
   deploy:
     name: Deploy production
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-web-production
+      cancel-in-progress: false
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-node@v4
         with:
