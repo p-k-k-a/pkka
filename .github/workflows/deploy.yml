@@ -1,8 +1,8 @@
 name: Build & publish backend image
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:

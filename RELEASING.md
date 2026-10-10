@@ -16,24 +16,15 @@ the PR. Internal changes like refactors, tests or CI don't need an entry.
    features or breaking changes, and the patch version (0.1.0 → 0.1.1) for fixes only.
 2. Open a PR titled `chore: release vX.Y.Z` that renames `## Unreleased` in `CHANGELOG.md` to
    `## X.Y.Z` and adds a new, empty `## Unreleased` above it. Merge it.
-3. Tag the merge commit on `main` and push the tag:
-
-   ```bash
-   git switch main && git pull
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
-   ```
-
-   This builds the backend image (`ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z`) and deploys the web
-   app to Vercel. You can follow both in the Actions tab.
-
-4. Create a GitHub release for the tag and paste that version's changelog section as the
-   description.
-5. Deploy the backend on the server with `./deploy.sh vX.Y.Z` from `pkka-infra/deploy`. It
+3. Create a GitHub release: on the Releases page, click **Draft a new release**, type the new
+   tag `vX.Y.Z` (target `main`), and paste that version's changelog section as the description.
+   Publishing the release builds the backend image (`ghcr.io/p-k-k-a/pkka-backend:vX.Y.Z`)
+   and deploys the web app to Vercel. You can follow both in the Actions tab.
+4. Deploy the backend on the server with `./deploy.sh vX.Y.Z` from `pkka-infra/deploy`. It
    backs up the database before switching to the new image.
 
 The web app goes live in step 3, before the backend. If the new web app depends on a backend
-change, deploy the backend right after tagging.
+change, deploy the backend right after publishing the release.
 
 ## Rolling back
 
