@@ -7,7 +7,6 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockServletContext;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 
@@ -35,25 +34,7 @@ class WebCookieDomainConfigTest {
     }
 
     @Test
-    void sessionCookieIsScopedToConfiguredDomain() throws Exception {
-        MockServletContext servletContext = new MockServletContext();
-
-        new WebCookieDomainConfig("pkka.me").sessionCookieDomainInitializer().onStartup(servletContext);
-
-        assertThat(servletContext.getSessionCookieConfig().getDomain()).isEqualTo("pkka.me");
-    }
-
-    @Test
-    void sessionCookieIsHostOnlyWhenNoDomainIsConfigured() throws Exception {
-        MockServletContext servletContext = new MockServletContext();
-
-        new WebCookieDomainConfig("").sessionCookieDomainInitializer().onStartup(servletContext);
-
-        assertThat(servletContext.getSessionCookieConfig().getDomain()).isNull();
-    }
-
-    @Test
-    void logoutClearsBothCookiesOnConfiguredDomain() {
+    void logoutClearsCsrfCookieOnConfiguredDomainAndSessionCookieOnApiHost() {
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         new WebCookieDomainConfig("pkka.me")
@@ -62,8 +43,7 @@ class WebCookieDomainConfigTest {
 
         assertThat(response.getCookies())
                 .extracting(Cookie::getName, Cookie::getDomain, Cookie::getMaxAge, Cookie::getPath)
-                .containsExactlyInAnyOrder(
-                        tuple("JSESSIONID", "pkka.me", 0, "/"), tuple("XSRF-TOKEN", "pkka.me", 0, "/"));
+                .containsExactlyInAnyOrder(tuple("JSESSIONID", null, 0, "/"), tuple("XSRF-TOKEN", "pkka.me", 0, "/"));
     }
 
     @Test

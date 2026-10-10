@@ -46,14 +46,14 @@ class WebCookieDomainIntegrationTest {
     }
 
     @Test
-    void logoutExpiresSessionAndCsrfCookiesOnConfiguredDomain() throws Exception {
+    void logoutExpiresCsrfCookieOnConfiguredDomainAndSessionCookieOnApiHost() throws Exception {
         List<String> setCookies =
                 mockMvc.perform(get("/logout")).andReturn().getResponse().getHeaders("Set-Cookie");
 
         assertThat(setCookies)
                 .anySatisfy(cookie -> assertThat(cookie)
                         .startsWith("JSESSIONID=")
-                        .contains("Domain=pkka.me")
+                        .doesNotContain("Domain=")
                         .contains("Max-Age=0"))
                 .anySatisfy(cookie -> assertThat(cookie)
                         .startsWith("XSRF-TOKEN=")
