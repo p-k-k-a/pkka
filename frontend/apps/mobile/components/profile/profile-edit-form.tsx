@@ -13,6 +13,7 @@ import {
   ApiError,
   getGetMyProfileQueryKey,
   getGetMyTagsQueryKey,
+  getListUserTagsQueryKey,
   useGetMyProfile,
   useGetMyTags,
   useListUserTags,
@@ -139,18 +140,19 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       showName: profile.visibility.name,
       showEmail: profile.visibility.email,
       showDiscord: profile.visibility.discord,
-      tagIds: [] as string[],
+      tagNames: [] as string[],
     },
     onSubmit: async ({ value }) => {
       setSubmitError(null);
       if (seededTagsRef.current) {
         try {
-          await updateMyTags.mutateAsync({ data: { tagIds: value.tagIds } });
+          await updateMyTags.mutateAsync({ data: { names: value.tagNames } });
           queryClient.invalidateQueries({ queryKey: getGetMyTagsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListUserTagsQueryKey() });
         } catch (saveException) {
           setSubmitError(
             saveException instanceof ApiError && saveException.status === 400
-              ? "Któraś z wybranych umiejętności jest nieaktualna. Odśwież i spróbuj ponownie."
+              ? "Któraś z umiejętności ma niedozwoloną nazwę. Popraw ją i spróbuj ponownie."
               : "Nie udało się zapisać umiejętności. Spróbuj ponownie.",
           );
           return;
@@ -189,7 +191,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
   // Seed the picker with the user's saved tags once they load
   useEffect(() => {
     if (seededTagsRef.current || !myTagsQuery.isSuccess) return;
-    form.setFieldValue("tagIds", myTagsQuery.data?.data?.map((tag) => tag.id) ?? []);
+    form.setFieldValue("tagNames", myTagsQuery.data?.data?.map((tag) => tag.name) ?? []);
     seededTagsRef.current = true;
   }, [myTagsQuery.isSuccess, myTagsQuery.data, form]);
 
@@ -295,12 +297,12 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
       <FormSection
         title="Umiejętności"
-        description="Wybierz technologie i obszary, w których się specjalizujesz."
+        description="Wybierz technologie i obszary, w których się specjalizujesz. Jeśli czegoś brakuje na liście, dodaj własną."
       >
-        <form.Field name="tagIds">
+        <form.Field name="tagNames">
           {(field) => (
             <TagPicker
-              options={availableTags}
+              catalog={availableTags}
               value={field.state.value}
               onChange={field.handleChange}
               loading={tagsLoading}

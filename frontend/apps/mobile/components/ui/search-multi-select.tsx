@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Search, X } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react-native";
 import { useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, TextInput, View } from "react-native";
 
@@ -30,6 +30,12 @@ type SearchMultiSelectProps = {
   listMaxHeight?: number;
   /** Uppercase the selected chips, as the profile form does for skills. */
   uppercaseChips?: boolean;
+  /** How many options to list before anything is typed; omit to list them all. */
+  idleLimit?: number;
+  /** Lets the typed text be added as a new option when no option has that label. */
+  onCreate?: (label: string) => void;
+  /** Explains why the typed text cannot be created, or null when it can. */
+  createError?: (label: string) => string | null;
 };
 
 /**
@@ -47,6 +53,9 @@ export function SearchMultiSelect({
   emptyText = "Brak wyników.",
   listMaxHeight = LIST_MAX_HEIGHT,
   uppercaseChips = false,
+  idleLimit,
+  onCreate,
+  createError,
 }: SearchMultiSelectProps) {
   const theme = useThemeColors();
   const [query, setQuery] = useState("");
@@ -58,14 +67,22 @@ export function SearchMultiSelect({
     [options, value],
   );
 
+  const typed = query.trim().replace(/\s+/g, " ");
+  const needle = typed.toLowerCase();
+
   const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return needle
-      ? options.filter((option) => option.label.toLowerCase().includes(needle))
-      : options;
-  }, [options, query]);
+    if (needle) return options.filter((option) => option.label.toLowerCase().includes(needle));
+    return idleLimit === undefined ? options : options.slice(0, idleLimit);
+  }, [options, needle, idleLimit]);
 
   const atMax = max !== undefined && value.length >= max;
+  const hasMoreWhenIdle = !needle && filtered.length < options.length;
+  const canCreate =
+    onCreate !== undefined &&
+    needle !== "" &&
+    !atMax &&
+    !options.some((option) => option.label.toLowerCase() === needle);
+  const createProblem = canCreate ? (createError?.(typed) ?? null) : null;
 
   // Compute from `prev` (the freshest value) rather than the captured `value`
   // prop, so a memoized onPress closure can never act on a stale snapshot.
@@ -148,7 +165,7 @@ export function SearchMultiSelect({
       {atMax && maxHint ? <Text className="text-muted-foreground text-xs">{maxHint}</Text> : null}
 
       {open ? (
-        filtered.length === 0 ? (
+        filtered.length === 0 && !canCreate ? (
           <View className="border-border rounded-md border px-3 py-4">
             <Text className="text-muted-foreground text-sm">{emptyText}</Text>
           </View>
@@ -183,6 +200,36 @@ export function SearchMultiSelect({
                   </Pressable>
                 );
               })}
+              {canCreate && createProblem ? (
+                <View className={cn("px-3 py-3", filtered.length > 0 && "border-border border-t")}>
+                  <Text className="text-muted-foreground text-sm">{createProblem}</Text>
+                </View>
+              ) : canCreate ? (
+                <Pressable
+                  onPress={() => {
+                    onCreate(typed);
+                    setQuery("");
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Dodaj: ${typed}`}
+                  className={cn(
+                    "flex-row items-center gap-3 px-3 py-3 active:bg-muted",
+                    filtered.length > 0 && "border-border border-t",
+                  )}
+                >
+                  <Plus size={18} color={theme.primary} />
+                  <Text className="text-foreground flex-1 text-sm font-semibold">
+                    Dodaj „{typed}”
+                  </Text>
+                </Pressable>
+              ) : null}
+              {hasMoreWhenIdle ? (
+                <View className="border-border border-t px-3 py-3">
+                  <Text className="text-muted-foreground text-xs">
+                    Wpisz nazwę, aby znaleźć pozostałe.
+                  </Text>
+                </View>
+              ) : null}
             </ScrollView>
           </View>
         )
