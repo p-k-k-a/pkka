@@ -16,11 +16,28 @@ import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
+import pl.edu.agh.backend.material.MaterialNotFoundException;
+import pl.edu.agh.backend.notifications.DeviceTokenConflictException;
+import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DeviceTokenConflictException.class)
+    public ProblemDetail handleDeviceTokenConflict(DeviceTokenConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Device token already registered");
+        return problem;
+    }
+
+    @ExceptionHandler(DeviceTokenNotFoundException.class)
+    public ProblemDetail handleDeviceTokenNotFound(DeviceTokenNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Device not found");
+        return problem;
+    }
 
     @ExceptionHandler(AlumniNotFoundException.class)
     public ProblemDetail handleAlumniNotFound(AlumniNotFoundException ex) {
@@ -91,6 +108,13 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY, "Failed to update user role in identity provider");
         problem.setTitle("Identity provider error");
+        return problem;
+    }
+
+    @ExceptionHandler(MaterialNotFoundException.class)
+    public ProblemDetail handleMaterialNotFound(MaterialNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Material not found");
         return problem;
     }
 

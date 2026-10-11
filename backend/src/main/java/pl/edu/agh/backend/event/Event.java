@@ -81,6 +81,9 @@ public class Event {
     @Column(name = "cover_image_url", length = 500)
     private String coverImageUrl;
 
+    @Column(name = "reminder_lead_time_minutes")
+    private Integer reminderLeadTimeMinutes;
+
     /** The admin who created the event; absent for events that predate authorship tracking. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id")
