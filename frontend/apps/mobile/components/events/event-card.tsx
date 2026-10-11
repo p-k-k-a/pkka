@@ -26,7 +26,7 @@ function EventCard({ event }: EventCardProps) {
           </Text>
         </View>
         {registrationStatus ? (
-          <View className="border-border rounded-lg border px-3 py-1">
+          <View className="border-muted-foreground/25 dark:border-input rounded-lg border px-3 py-1">
             <Text className="text-foreground text-[11px] font-semibold uppercase tracking-widest">
               {registrationStatus === EventRegistrationStatus.WAITLISTED
                 ? "LISTA REZERWOWA"
