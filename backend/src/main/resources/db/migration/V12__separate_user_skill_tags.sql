@@ -3,10 +3,12 @@
 -- constraint. This gives alumni skill tags their own catalog table.
 
 CREATE TABLE user_skill_tags (
-    id   UUID PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
-    CONSTRAINT uk_user_skill_tags_name UNIQUE (name)
+    id         UUID PRIMARY KEY,
+    name       VARCHAR(32) NOT NULL,
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL
 );
+
+CREATE UNIQUE INDEX uk_user_skill_tags_name ON user_skill_tags (lower(name));
 
 -- Move the IT skill tag catalog rows originally seeded by V9__user_profile_tags.sql into the new,
 -- dedicated catalog, preserving their ids so the existing user_tags FK repointed below keeps working.
@@ -65,3 +67,14 @@ WHERE id IN (
     'cccc0014-cccc-cccc-cccc-cccccccccccc',
     'cccc0015-cccc-cccc-cccc-cccccccccccc'
 );
+
+INSERT INTO user_skill_tags (id, name)
+SELECT gen_random_uuid(), name
+FROM unnest(ARRAY[
+    'C', 'C++', 'C#', 'Rust', 'Swift', 'PHP', 'Ruby', 'Scala', 'SQL', 'R',
+    'React', 'React Native', 'Angular', 'Vue', 'Node.js', 'Spring', '.NET', 'Django', 'Android', 'iOS', 'Flutter',
+    'AWS', 'Azure', 'GCP', 'Docker', 'Kubernetes', 'Linux', 'CI/CD', 'Networking',
+    'Data Science', 'AI', 'Big Data', 'Databases',
+    'Fullstack', 'QA', 'UX/UI', 'Product Management', 'Project Management', 'Team Leadership', 'Architecture',
+    'Game Development', 'Blockchain', 'IoT', 'Agile', 'Startups', 'Research'
+]) AS name;
