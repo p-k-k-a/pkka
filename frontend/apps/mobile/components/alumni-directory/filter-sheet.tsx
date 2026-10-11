@@ -4,6 +4,7 @@ import { RangeSlider } from "@/components/ui/range-slider";
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
 import { EMPTY_FILTERS, YEAR_MAX, YEAR_MIN, type AlumniFilters } from "@/lib/alumni-directory";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
@@ -28,6 +29,7 @@ function HeaderText({ children }: { children: ReactNode }) {
 }
 
 export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetProps) {
+  const theme = useThemeColors();
   const [draft, setDraft] = useState<AlumniFilters>(value);
   // The sheet keeps its children mounted while closed, so the pickers would
   // otherwise reopen still holding the previous search text and expanded list.
@@ -115,7 +117,9 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
               draft.mentorOnly ? "border-primary bg-primary" : "border-muted-foreground/40",
             )}
           >
-            {draft.mentorOnly ? <Check size={14} color="white" strokeWidth={3} /> : null}
+            {draft.mentorOnly ? (
+              <Check size={14} color={theme.primaryForeground} strokeWidth={3} />
+            ) : null}
           </View>
           <Text className="text-foreground text-base">Tylko chętni do mentoringu</Text>
         </Pressable>
