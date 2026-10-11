@@ -45,6 +45,10 @@ async function ensureChannels(): Promise<void> {
     name: "Nowe wydarzenia",
     importance: Notifications.AndroidImportance.DEFAULT,
   });
+  await Notifications.setNotificationChannelAsync("registrations", {
+    name: "Twoje zapisy",
+    importance: Notifications.AndroidImportance.HIGH,
+  });
   await Notifications.setNotificationChannelAsync("reminders", {
     name: "Przypomnienia",
     importance: Notifications.AndroidImportance.HIGH,
