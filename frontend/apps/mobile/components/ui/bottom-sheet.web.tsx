@@ -1,4 +1,4 @@
-import { useThemeColors } from "@/lib/theme";
+import { SCRIM_BACKDROP, useThemeColors } from "@/lib/theme";
 import { type ReactNode } from "react";
 import { Modal, Pressable, View } from "react-native";
 
@@ -18,7 +18,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
       <Pressable
         accessibilityLabel="Zamknij"
         onPress={onClose}
-        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
+        style={{ flex: 1, backgroundColor: SCRIM_BACKDROP, justifyContent: "flex-end" }}
       >
         <Pressable
           onPress={(e) => e.stopPropagation()}

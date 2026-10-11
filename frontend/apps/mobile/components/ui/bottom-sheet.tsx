@@ -1,4 +1,4 @@
-import { useThemeColors } from "@/lib/theme";
+import { SCRIM_COLOR, useThemeColors } from "@/lib/theme";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useEffect, useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
@@ -30,7 +30,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         setIndex(next);
         if (next === 0) onClose();
       }}
-      scrimColor="black"
+      scrimColor={SCRIM_COLOR}
       scrimOpacities={SCRIM_OPACITIES}
       surface={
         <View
