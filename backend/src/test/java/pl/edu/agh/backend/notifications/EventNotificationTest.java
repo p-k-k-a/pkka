@@ -2,6 +2,7 @@ package pl.edu.agh.backend.notifications;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +32,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -40,6 +44,7 @@ import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.event.*;
 import pl.edu.agh.backend.event.registration.EventRegistration;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
 import pl.edu.agh.backend.notifications.expo.ExpoPushMessage;
@@ -74,6 +79,12 @@ class EventNotificationTest {
     private EventRegistrationRepository eventRegistrationRepository;
 
     @Autowired
+    private EventRegistrationService eventRegistrationService;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    @Autowired
     private EventRepository eventRepository;
 
     @Autowired
@@ -91,6 +102,8 @@ class EventNotificationTest {
     /** The announcement is @Async, so assertions wait for the executor rather than racing it. */
     private static final long SEND_TIMEOUT_MS = 5000;
 
+    private static final long QUIET_PERIOD_MS = 500;
+
     private Caller admin;
 
     @BeforeEach
@@ -103,10 +116,14 @@ class EventNotificationTest {
         admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
     }
 
-    private User userWithDevice(String token, boolean approvedAlumn) {
+    private User saveUser() {
         User user = new User();
         user.setKeycloakId(UUID.randomUUID().toString());
-        user = userRepository.save(user);
+        return userRepository.save(user);
+    }
+
+    private User userWithDevice(String token, boolean approvedAlumn) {
+        User user = saveUser();
         if (approvedAlumn) {
             applicationRepository.save(Application.builder()
                     .applicant(user)
@@ -360,6 +377,79 @@ class EventNotificationTest {
         eventReminderScheduler.sendDueReminders();
 
         verify(expoPushClient, never()).send(any());
+    }
+
+    private Event fullEventHeldBy(User seatHolder) {
+        Event event = eventRepository.save(Event.builder()
+                .title("Warsztaty")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
+                .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))
+                .audience(Audience.PUBLIC)
+                .seatLimit(1)
+                .build());
+        register(event, seatHolder, Instant.now().minus(1, ChronoUnit.DAYS), EventRegistrationStatus.REGISTERED);
+        return event;
+    }
+
+    private void waitlist(Event event, User user) {
+        register(event, user, Instant.now().minus(1, ChronoUnit.HOURS), EventRegistrationStatus.WAITLISTED);
+    }
+
+    private void giveUpSeat(Event event, User seatHolder) {
+        eventRegistrationService.unregister(event.getId(), new Caller(seatHolder.getKeycloakId(), Set.of()));
+    }
+
+    @Test
+    void aFreedSeat_tellsTheNextPersonOnTheWaitlist() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        waitlist(event, userWithDevice("ExponentPushToken[waiting]", false));
+
+        giveUpSeat(event, seatHolder);
+
+        List<ExpoPushMessage> sent = captureSentMessages();
+        assertThat(sent).hasSize(1);
+        ExpoPushMessage message = sent.getFirst();
+        String startsAt = DateTimeFormatter.ofPattern("dd.MM 'o' HH:mm")
+                .format(event.getStartsAt().atZone(ZoneId.of("Europe/Warsaw")));
+        assertThat(message.to()).isEqualTo("ExponentPushToken[waiting]");
+        assertThat(message.channelId()).isEqualTo("registrations");
+        assertThat(message.title()).isEqualTo("Zwolniło się miejsce");
+        assertThat(message.body())
+                .isEqualTo("Zostałeś automatycznie zapisany na wydarzenie „Warsztaty”, %s".formatted(startsAt));
+        assertThat(message.data())
+                .containsEntry("type", "REGISTRATION_PROMOTED")
+                .containsEntry("targetId", event.getId().toString());
+    }
+
+    @Test
+    void aPromotedUserWithoutADevice_getsNoPush() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        User waiting = saveUser();
+        waitlist(event, waiting);
+
+        giveUpSeat(event, seatHolder);
+
+        assertThat(eventRegistrationRepository.findByEventIdAndUserId(event.getId(), waiting.getId()))
+                .hasValueSatisfying(registration ->
+                        assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED));
+        verify(expoPushClient, after(QUIET_PERIOD_MS).never()).send(any());
+    }
+
+    @Test
+    void aRolledBackPromotion_tellsNobody() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        waitlist(event, userWithDevice("ExponentPushToken[waiting]", false));
+
+        transactionTemplate.executeWithoutResult(transaction -> {
+            giveUpSeat(event, seatHolder);
+            transaction.setRollbackOnly();
+        });
+
+        verify(expoPushClient, after(QUIET_PERIOD_MS).never()).send(any());
     }
 
     private static void awaitUntil(java.util.function.BooleanSupplier condition) {
