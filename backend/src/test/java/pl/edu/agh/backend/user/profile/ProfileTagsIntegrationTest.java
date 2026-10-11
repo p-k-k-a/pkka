@@ -193,12 +193,12 @@ class ProfileTagsIntegrationTest {
 
     @Test
     void updateMyTagsRejectsNamesWithDisallowedCharacters() throws Exception {
-        for (String name : List.of("<script>", "+++", "x".repeat(33))) {
+        for (String name : List.of("\"<script>\"", "\"+++\"", "\"%s\"".formatted("x".repeat(33)), "null")) {
             mockMvc.perform(put("/api/profiles/me/tags")
                             .with(JwtTestSupport.asUser(user.getKeycloakId()))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"names\": [\"%s\"]}".formatted(name)))
+                            .content("{\"names\": [%s]}".formatted(name)))
                     .andExpect(status().isBadRequest());
         }
         assertThat(catalogNames()).doesNotContain("<script>", "+++");

@@ -46,7 +46,7 @@ public record EventRequest(
         Integer reminderLeadTimeMinutes,
 
         @Schema(description = "Lower-cased on save; names not in the catalog are created")
-        Set<@Pattern(regexp = TagNames.PATTERN) String> tags) {
+        Set<@NotNull @Pattern(regexp = TagNames.PATTERN) String> tags) {
 
     public EventRequest {
         title = trimToNull(title);

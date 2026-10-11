@@ -13,7 +13,6 @@ const MAX_SUGGESTIONS = 8;
 
 type EventTagPickerProps = {
   catalog: TagResponse[];
-  /** Selected tag names; a name missing from the catalog is created on save. */
   selected: string[];
   onChange: (names: string[]) => void;
 };
@@ -82,8 +81,8 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
               onKeyDown={(event) => {
                 if (event.key !== "Enter") return;
                 event.preventDefault();
-                if (available.includes(typed) || canCreate) add(typed);
-                else if (matches[0]) add(matches[0]);
+                if (typed === "" || problem) return;
+                add(available.includes(typed) || canCreate ? typed : (matches[0] ?? typed));
               }}
             />
           </div>

@@ -98,7 +98,7 @@ public class ProfileService {
     @Transactional
     public List<UserTagResponse> updateTags(String keycloakId, Set<UUID> tagIds, Set<String> names) {
         User user = loadWithTags(keycloakId);
-        Set<UserTag> next = new HashSet<>(userTagRepository.findAllById(tagIds));
+        Set<UserTag> next = new HashSet<>(userTagRepository.findForShareByIdIn(tagIds));
         if (next.size() != tagIds.size()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag IDs are invalid");
         }
@@ -114,6 +114,7 @@ public class ProfileService {
         user.getTags().clear();
         user.getTags().addAll(next);
         if (!removedIds.isEmpty()) {
+            userTagRepository.lockUserCreated(removedIds);
             userTagRepository.deleteUnusedUserCreated(removedIds);
         }
 
@@ -130,7 +131,7 @@ public class ProfileService {
         Map<String, String> nameByKey = new LinkedHashMap<>();
         names.forEach(name -> nameByKey.putIfAbsent(TagNames.key(name), name));
 
-        List<UserTag> existing = userTagRepository.findByNameKeyIn(nameByKey.keySet());
+        List<UserTag> existing = userTagRepository.findForShareByNameKeyIn(nameByKey.keySet());
         if (existing.size() == nameByKey.size()) {
             return existing;
         }
@@ -141,7 +142,11 @@ public class ProfileService {
                 userTagRepository.insertIfAbsent(UUID.randomUUID(), name, user.getId());
             }
         });
-        return userTagRepository.findByNameKeyIn(nameByKey.keySet());
+        List<UserTag> resolved = userTagRepository.findForShareByNameKeyIn(nameByKey.keySet());
+        if (resolved.size() != nameByKey.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag names are not supported");
+        }
+        return resolved;
     }
 
     private User loadWithTags(String keycloakId) {

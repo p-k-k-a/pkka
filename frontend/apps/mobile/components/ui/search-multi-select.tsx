@@ -30,11 +30,8 @@ type SearchMultiSelectProps = {
   listMaxHeight?: number;
   /** Uppercase the selected chips, as the profile form does for skills. */
   uppercaseChips?: boolean;
-  /** How many options to list before anything is typed; omit to list them all. */
   idleLimit?: number;
-  /** Lets the typed text be added as a new option when no option has that label. */
   onCreate?: (label: string) => void;
-  /** Explains why the typed text cannot be created, or null when it can. */
   createError?: (label: string) => string | null;
 };
 

@@ -83,7 +83,7 @@ class AdminEventServiceTest {
     void createPersistsResolvedTagsAndStampsAuthor() {
         Tag ai = Tag.builder().name("ai").build();
         User author = new User();
-        when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
+        when(tagRepository.findForShareByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

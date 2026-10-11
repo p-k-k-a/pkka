@@ -1,16 +1,22 @@
 package pl.edu.agh.backend.user;
 
+import jakarta.persistence.LockModeType;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface UserTagRepository extends JpaRepository<UserTag, UUID> {
 
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    List<UserTag> findForShareByIdIn(Collection<UUID> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select t from UserTag t where lower(t.name) in :keys")
-    List<UserTag> findByNameKeyIn(Collection<String> keys);
+    List<UserTag> findForShareByNameKeyIn(Collection<String> keys);
 
     @Query("""
             select new pl.edu.agh.backend.user.UserTagCatalogResponse(t.id, t.name, (
@@ -27,6 +33,11 @@ public interface UserTagRepository extends JpaRepository<UserTag, UUID> {
                     + "on conflict do nothing",
             nativeQuery = true)
     void insertIfAbsent(UUID id, String name, UUID createdBy);
+
+    @Query(
+            value = "select id from user_skill_tags where id in :ids and created_by is not null for update",
+            nativeQuery = true)
+    List<UUID> lockUserCreated(Collection<UUID> ids);
 
     @Modifying(flushAutomatically = true)
     @Query(

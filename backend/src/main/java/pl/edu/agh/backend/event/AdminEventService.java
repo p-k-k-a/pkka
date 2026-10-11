@@ -13,8 +13,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
@@ -101,7 +103,7 @@ public class AdminEventService {
         tags.clear();
         tags.addAll(findOrCreateTags(() -> callerUserService.getOrCreate(caller), request.tags()));
         Event saved = eventRepository.saveAndFlush(event);
-        tagRepository.deleteUnusedAdminCreated();
+        dropUnusedTags();
         eventRegistrationService.fillFreeSeats(saved);
         return respond(saved);
     }
@@ -109,7 +111,7 @@ public class AdminEventService {
     @Transactional
     public void delete(UUID id) {
         eventRepository.delete(findOrThrow(id));
-        tagRepository.deleteUnusedAdminCreated();
+        dropUnusedTags();
     }
 
     private AdminEventResponse respond(Event event) {
@@ -124,7 +126,7 @@ public class AdminEventService {
         if (names == null || names.isEmpty()) {
             return Set.of();
         }
-        Set<Tag> existing = tagRepository.findByNameIn(names);
+        Set<Tag> existing = tagRepository.findForShareByNameIn(names);
         if (existing.size() == names.size()) {
             return existing;
         }
@@ -133,6 +135,15 @@ public class AdminEventService {
         names.stream()
                 .filter(name -> !existingNames.contains(name))
                 .forEach(name -> tagRepository.insertIfAbsent(UUID.randomUUID(), name, creatorId));
-        return tagRepository.findByNameIn(names);
+        Set<Tag> resolved = tagRepository.findForShareByNameIn(names);
+        if (resolved.size() != names.size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag names are not supported");
+        }
+        return resolved;
+    }
+
+    private void dropUnusedTags() {
+        tagRepository.lockAdminCreated();
+        tagRepository.deleteUnusedAdminCreated();
     }
 }

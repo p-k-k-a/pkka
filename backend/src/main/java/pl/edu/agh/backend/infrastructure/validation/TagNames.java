@@ -6,9 +6,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class TagNames {
 
-    public static final int MAX_LENGTH = 32;
-
-    /** Up to 32 letters, digits, spaces and {@code + # . - /}, with at least one letter or digit. */
     public static final String PATTERN = "^(?=.*[\\p{L}\\p{N}])[\\p{L}\\p{N}+#./ -]{1,32}$";
 
     public String normalize(String raw) {
@@ -16,6 +13,6 @@ public class TagNames {
     }
 
     public String key(String name) {
-        return name.toLowerCase(Locale.ROOT);
+        return name == null ? null : name.toLowerCase(Locale.ROOT);
     }
 }

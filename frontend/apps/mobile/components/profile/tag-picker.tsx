@@ -9,7 +9,6 @@ const IDLE_LIMIT = 20;
 
 type TagPickerProps = {
   catalog: UserTagCatalogResponse[];
-  /** Selected tag names; a name missing from the catalog is created on save. */
   value: string[];
   onChange: (names: string[] | ((prev: string[]) => string[])) => void;
   loading?: boolean;

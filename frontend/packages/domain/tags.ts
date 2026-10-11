@@ -1,5 +1,4 @@
 const TAG_NAME_MAX_LENGTH = 32;
-// Letters, digits, spaces and + # . - / only, with at least one letter or digit.
 const TAG_NAME_PATTERN = /^(?=.*[\p{L}\p{N}])[\p{L}\p{N}+#./ -]+$/u;
 
 export function normalizeTagName(raw: string): string {
