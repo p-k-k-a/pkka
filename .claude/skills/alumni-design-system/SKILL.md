@@ -104,8 +104,8 @@ tailwind-merge lets `font-heading` override the base.
 
 - Colours come from semantic tokens only: `className` utilities for views/text,
   `useThemeColors()` from `lib/theme.ts` for imperative props (lucide icons,
-  sheet surfaces, tab bar). Never `THEME.light.*` or a hex literal — ESLint
-  (`no-restricted-syntax` in `apps/mobile/eslint.config.js`) rejects both.
+  sheet surfaces, tab bar). Avoid `THEME.light.*` and hex literals for anything
+  that should follow the scheme.
 - Dark tokens collide: `card` = `muted` = `secondary` = `popover` (`#2e4058`)
   and `background` = `band` (`#011125`). A `bg-muted` element on a card, or a
   `bg-band` chip on the page, disappears in dark — pick the surface against

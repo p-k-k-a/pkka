@@ -4,9 +4,6 @@ import { useColorScheme } from "nativewind";
 
 export { THEME };
 
-export const SCRIM_COLOR = "#000000";
-export const SCRIM_BACKDROP = "rgba(0, 0, 0, 0.4)";
-
 export type ColorScheme = "light" | "dark";
 
 export function useAppColorScheme(): ColorScheme {
