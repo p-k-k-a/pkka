@@ -50,7 +50,7 @@ export function ProfileView(props: ProfileViewProps) {
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
   const contacts = getProfileContacts(profile);
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
-  const role = [profile.currentPosition, profile.company].filter(Boolean).join(" · ");
+  const role = [profile.currentPosition, profile.company].filter(Boolean).join(" @ ");
   const nameHidden = isOwn && !profile.visibility.name && fullName.length > 0;
 
   // Someone else's empty section is just noise, while the owner gets a nudge to fill it.
@@ -58,29 +58,33 @@ export function ProfileView(props: ProfileViewProps) {
   const showSkills = isOwn || profile.tags.length > 0;
   const hasStudies = Boolean(profile.fieldOfStudy || profile.graduationYear || alumnSinceYear);
 
-  // Same single primary CTA as an event's "Zapisz się": edit for the owner,
-  // the most direct contact channel for everyone else.
-  const primaryAction = isOwn ? (
+  // The owner edits; everyone else gets every direct channel the alumn shares.
+  const primaryActions = isOwn ? (
     <Button asChild size="xl">
       <Link href={EDIT_HREF}>
         Edytuj profil
         <ArrowRight data-icon="inline-end" />
       </Link>
     </Button>
-  ) : contacts.discordUrl ? (
-    <Button asChild size="xl">
-      <a href={contacts.discordUrl} target="_blank" rel="noopener noreferrer">
-        <DiscordIcon className="size-5" />
-        Napisz na Discordzie
-      </a>
-    </Button>
-  ) : contacts.email ? (
-    <Button asChild size="xl">
-      <a href={`mailto:${contacts.email}`}>
-        <Mail data-icon="inline-start" />
-        Napisz e-mail
-      </a>
-    </Button>
+  ) : contacts.discordUrl || contacts.email ? (
+    <>
+      {contacts.discordUrl ? (
+        <Button asChild size="xl">
+          <a href={contacts.discordUrl} target="_blank" rel="noopener noreferrer">
+            <DiscordIcon className="size-5" />
+            Napisz na Discordzie
+          </a>
+        </Button>
+      ) : null}
+      {contacts.email ? (
+        <Button asChild size="xl" variant={contacts.discordUrl ? "outline" : "default"}>
+          <a href={`mailto:${contacts.email}`}>
+            <Mail data-icon="inline-start" />
+            Napisz e-mail
+          </a>
+        </Button>
+      ) : null}
+    </>
   ) : null;
 
   return (
@@ -131,7 +135,9 @@ export function ProfileView(props: ProfileViewProps) {
               </div>
             </div>
 
-            {primaryAction ? <div className="mt-8">{primaryAction}</div> : null}
+            {primaryActions ? (
+              <div className="mt-8 flex flex-wrap gap-3">{primaryActions}</div>
+            ) : null}
 
             {showBio ? (
               <section className="mt-16 space-y-6">

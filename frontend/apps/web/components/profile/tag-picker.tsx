@@ -15,17 +15,9 @@ type TagPickerProps = {
   /** Caps the selection and shows a counter; leave out for an unlimited picker. */
   max?: number;
   disabled?: boolean;
-  placeholder?: string;
 };
 
-export function TagPicker({
-  availableTags,
-  selectedIds,
-  onChange,
-  max,
-  disabled,
-  placeholder = "Szukaj tagów, np. Java, Cloud…",
-}: TagPickerProps) {
+export function TagPicker({ availableTags, selectedIds, onChange, max, disabled }: TagPickerProps) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -108,7 +100,7 @@ export function TagPicker({
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={placeholder}
+              placeholder="Wyszukaj umiejętności…"
               disabled={disabled || isFull}
               autoComplete="off"
               onKeyDown={(event) => {

@@ -60,8 +60,8 @@ export function AlumniDirectory() {
   }
 
   // Any change to the criteria starts again from the first page.
-  function updateFilters(next: AlumniFilters) {
-    setFilters(next);
+  function updateFilters(nextFilters: AlumniFilters) {
+    setFilters(nextFilters);
     setPage(0);
   }
 

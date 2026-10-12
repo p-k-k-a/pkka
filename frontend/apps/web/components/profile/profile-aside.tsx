@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 
-/** Side panel styled like an event's "Lokalizacja i czas" aside. */
 export function ProfileAside({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <aside className="border-accent border-l-2 pl-6">

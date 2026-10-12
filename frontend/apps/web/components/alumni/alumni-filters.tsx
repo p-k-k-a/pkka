@@ -88,7 +88,6 @@ export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps)
             availableTags={tagsQuery.data?.data ?? []}
             selectedIds={value.tagIds}
             onChange={(tagIds) => onChange({ ...value, tagIds })}
-            placeholder="Wyszukaj umiejętności…"
           />
         )}
       </div>

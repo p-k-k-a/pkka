@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, GraduationCap, Sparkles } from "lucide-react";
+import { ArrowRight, Briefcase, GraduationCap, Tags } from "lucide-react";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 const VISIBLE_TAGS = 3;
 
-// Mirrors EventCalendarCard: flat muted tile, band chip, icon rows, "read more" footer.
 type AlumniCardProps = {
   alumn: AlumniListItemResponse;
   /** The directory's current `?…`, carried to the profile so its back link can return to it. */
@@ -16,7 +15,7 @@ type AlumniCardProps = {
 
 export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
-  const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" · ");
+  const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" @ ");
   const tags = alumn.tags.map((tag) => tag.name);
   const tagsLabel =
     tags.slice(0, VISIBLE_TAGS).join(", ") +
@@ -57,7 +56,7 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
             ) : null}
             {tagsLabel ? (
               <li className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <Tags className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>{tagsLabel}</span>
               </li>
             ) : null}
