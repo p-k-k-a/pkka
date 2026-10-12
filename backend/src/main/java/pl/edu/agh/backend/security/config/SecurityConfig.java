@@ -62,7 +62,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
-                        .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
+                        .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout")
+                        .ignoringRequestMatchers("/api/public/discord/interactions"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .addFilterAfter(
                         new ApprovedAlumnRoleFilter(applicationRepository), BearerTokenAuthenticationFilter.class)

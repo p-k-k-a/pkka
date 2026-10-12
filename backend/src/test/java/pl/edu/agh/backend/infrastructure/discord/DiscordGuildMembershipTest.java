@@ -1,12 +1,14 @@
 package pl.edu.agh.backend.infrastructure.discord;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -25,29 +27,33 @@ class DiscordGuildMembershipTest {
     private static final String MEMBER_URI =
             "https://discord.com/api/v10/guilds/" + GUILD_ID + "/members/" + DISCORD_ID;
 
+    private final DiscordGuildSettingsRepository guildSettings = mock(DiscordGuildSettingsRepository.class);
+
     private MockRestServiceServer server;
     private DiscordGuildMembership membership;
 
     @BeforeEach
     void setUp() {
-        membership = membershipFor(new DiscordProperties(GUILD_ID, BOT_TOKEN, List.of(ALUMN_ROLE)));
+        membership = membershipFor(BOT_TOKEN);
+        given(guildSettings.findFirstBy())
+                .willReturn(Optional.of(new DiscordGuildSettings(GUILD_ID, null, ALUMN_ROLE)));
     }
 
     @Test
-    void memberHoldingAnAcceptedRoleIsVouchedFor() {
+    void memberHoldingTheAlumnRoleIsVouchedFor() {
         expectMember(HttpStatus.OK, """
                 {"roles": ["%s", "%s"]}""".formatted(OTHER_ROLE, ALUMN_ROLE));
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isTrue();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isTrue();
         server.verify();
     }
 
     @Test
-    void memberWithoutAnyAcceptedRoleIsNotVouchedFor() {
+    void memberWithoutTheAlumnRoleIsNotVouchedFor() {
         expectMember(HttpStatus.OK, """
                 {"roles": ["%s"]}""".formatted(OTHER_ROLE));
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
     }
 
     @Test
@@ -55,37 +61,44 @@ class DiscordGuildMembershipTest {
         expectMember(HttpStatus.NOT_FOUND, """
                 {"message": "Unknown Member", "code": 10007}""");
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
     }
 
     @Test
     void rateLimitedDiscordIsNotVouchedForRatherThanFailingTheSubmission() {
         server.expect(requestTo(MEMBER_URI)).andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
     }
 
     @Test
     void unreachableDiscordIsNotVouchedForRatherThanFailingTheSubmission() {
         server.expect(requestTo(MEMBER_URI)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
     }
 
     @Test
-    void noAcceptedRolesConfiguredVouchesForNobody() {
-        membership = membershipFor(new DiscordProperties(GUILD_ID, BOT_TOKEN, null));
-        expectMember(HttpStatus.OK, """
-                {"roles": ["%s"]}""".formatted(ALUMN_ROLE));
+    void beforeTheBotIsSetUpNothingIsAskedOfDiscordAtAll() {
+        given(guildSettings.findFirstBy()).willReturn(Optional.empty());
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
+        server.verify();
+    }
+
+    @Test
+    void aGuildWithoutAnAlumnRoleVouchesForNobody() {
+        given(guildSettings.findFirstBy()).willReturn(Optional.of(new DiscordGuildSettings(GUILD_ID, null, null)));
+
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
+        server.verify();
     }
 
     @Test
     void withoutABotTokenNothingIsAskedOfDiscordAtAll() {
-        membership = membershipFor(new DiscordProperties(GUILD_ID, "", List.of(ALUMN_ROLE)));
+        membership = membershipFor("");
 
-        assertThat(membership.holdsAcceptedRole(DISCORD_ID)).isFalse();
+        assertThat(membership.holdsAlumnRole(DISCORD_ID)).isFalse();
         server.verify();
     }
 
@@ -95,15 +108,15 @@ class DiscordGuildMembershipTest {
                 .andExpect(header("Authorization", "Bot " + BOT_TOKEN))
                 .andRespond(withSuccess("{\"roles\": []}", MediaType.APPLICATION_JSON));
 
-        membership.holdsAcceptedRole(DISCORD_ID);
+        membership.holdsAlumnRole(DISCORD_ID);
 
         server.verify();
     }
 
-    private DiscordGuildMembership membershipFor(DiscordProperties properties) {
+    private DiscordGuildMembership membershipFor(String botToken) {
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        return new DiscordGuildMembership(builder.build(), properties);
+        return new DiscordGuildMembership(builder.build(), new DiscordProperties(botToken, null, null), guildSettings);
     }
 
     private void expectMember(HttpStatus status, String body) {

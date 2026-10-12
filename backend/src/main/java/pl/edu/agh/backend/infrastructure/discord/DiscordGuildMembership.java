@@ -3,6 +3,7 @@ package pl.edu.agh.backend.infrastructure.discord;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -17,29 +18,40 @@ public class DiscordGuildMembership {
 
     private final RestClient restClient;
     private final DiscordProperties discord;
+    private final DiscordGuildSettingsRepository guildSettings;
 
-    public DiscordGuildMembership(@Qualifier("discordRestClient") RestClient restClient, DiscordProperties discord) {
+    public DiscordGuildMembership(
+            @Qualifier("discordRestClient") RestClient restClient,
+            DiscordProperties discord,
+            DiscordGuildSettingsRepository guildSettings) {
         this.restClient = restClient;
         this.discord = discord;
+        this.guildSettings = guildSettings;
     }
 
-    public boolean holdsAcceptedRole(String discordId) {
-        if (!discord.isConfigured()) {
-            log.debug("Discord guild or bot token is not configured, vouching for nobody");
+    public boolean holdsAlumnRole(String discordId) {
+        if (!discord.hasBotToken()) {
+            log.debug("Discord bot token is not configured, vouching for nobody");
+            return false;
+        }
+        Optional<DiscordGuildSettings> guild = guildSettings.findFirstBy();
+        Optional<String> alumnRoleId = guild.flatMap(DiscordGuildSettings::getAlumnRoleId);
+        if (guild.isEmpty() || alumnRoleId.isEmpty()) {
+            log.debug("No Discord guild or alumn role is set, vouching for nobody");
             return false;
         }
         try {
-            return guildRoles(discordId).stream().anyMatch(discord.acceptedRoleIds()::contains);
+            return guildRoles(guild.get().getGuildId(), discordId).contains(alumnRoleId.get());
         } catch (RestClientException ex) {
             log.warn("Discord could not be asked about {}, vouching for nobody: {}", discordId, ex.getMessage());
             return false;
         }
     }
 
-    private List<String> guildRoles(String discordId) {
+    private List<String> guildRoles(String guildId, String discordId) {
         return restClient
                 .get()
-                .uri(GUILD_MEMBER_URI, discord.guildId(), discordId)
+                .uri(GUILD_MEMBER_URI, guildId, discordId)
                 .header(AUTHORIZATION, "Bot " + discord.botToken())
                 .exchange(
                         (request, response) -> switch (response.getStatusCode().value()) {
