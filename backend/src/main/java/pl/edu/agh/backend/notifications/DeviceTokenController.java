@@ -33,6 +33,10 @@ public class DeviceTokenController {
         @ApiResponse(
                 responseCode = "400",
                 description = "Missing platform",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "409",
+                description = "Token belongs to another user",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public void registerDevice(
