@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CalendarPlus, CircleCheck, Hourglass } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarPlus,
+  CircleCheck,
+  Download,
+  Hourglass,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -17,6 +24,7 @@ import {
   eventRegistrationErrorMessage,
   type EventRegistrationAction,
   formatSeatsRemaining,
+  googleCalendarUrl,
   isEventFull,
   isEventRegistrationClosed,
 } from "@pkka/domain";
@@ -31,6 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
@@ -47,6 +56,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const { isAuthenticated, isLoading: isAuthLoading, loginWithKeycloak } = useAuth();
   const queryClient = useQueryClient();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   // Covers the refetch as well as the request: until fresh data arrives the buttons still
   // show the old state, and a second click would hit 409 or 404.
   const [pending, setPending] = useState(false);
@@ -65,10 +75,26 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
       queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() }),
     ]);
 
-  const addToCalendar = () => {
-    const url = `${window.location.origin}${eventDetailHref(event.id)}`;
+  // Built on click, not during render: the page URL needs `window`.
+  const eventPageUrl = () => `${window.location.origin}${eventDetailHref(event.id)}`;
+
+  const openGoogleCalendar = () => {
+    const url = googleCalendarUrl({
+      ...event,
+      details: `Szczegóły wydarzenia: ${eventPageUrl()}`,
+    });
+    setCalendarOpen(false);
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } else {
+      toast.error("Nie udało się otworzyć Kalendarza Google.");
+    }
+  };
+
+  const downloadCalendarFile = () => {
+    setCalendarOpen(false);
     try {
-      downloadIcs(icsFileName(event.title), buildEventIcs({ ...event, url }));
+      downloadIcs(icsFileName(event.title), buildEventIcs({ ...event, url: eventPageUrl() }));
     } catch {
       toast.error("Nie udało się przygotować pliku kalendarza.");
     }
@@ -88,9 +114,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
     try {
       const { data: registration } = await register.mutateAsync({ eventId: event.id });
       if (registration.status === EventRegistrationStatus.REGISTERED) {
-        toast.success("Zapisano Cię na wydarzenie.", {
-          action: { label: "Dodaj do kalendarza", onClick: addToCalendar },
-        });
+        toast.success("Zapisano Cię na wydarzenie.");
       } else {
         toast.success("Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje.");
       }
@@ -144,10 +168,24 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
         </p>
         <div className="flex flex-wrap gap-3">
           {waitlisted ? null : (
-            <Button size="xl" className="gap-2" onClick={addToCalendar}>
-              <CalendarPlus data-icon="inline-start" />
-              Dodaj do kalendarza
-            </Button>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button size="xl" className="gap-2">
+                  <CalendarPlus data-icon="inline-start" />
+                  Dodaj do kalendarza
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64 gap-1 p-1">
+                <Button variant="ghost" className="justify-start" onClick={openGoogleCalendar}>
+                  <ArrowUpRight data-icon="inline-start" />
+                  Kalendarz Google
+                </Button>
+                <Button variant="ghost" className="justify-start" onClick={downloadCalendarFile}>
+                  <Download data-icon="inline-start" />
+                  Plik .ics (Apple, Outlook)
+                </Button>
+              </PopoverContent>
+            </Popover>
           )}
           <Button
             size="xl"
