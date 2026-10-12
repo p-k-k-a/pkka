@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@pkka/domain";
-import { AnnouncementsSection } from "@/components/announcements-section";
+import { AnnouncementsSection, AnnouncementsSkeleton } from "@/components/announcements-section";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function DashboardHome() {
@@ -20,21 +20,14 @@ export function DashboardHome() {
 
   if (isLoading || admin) {
     return (
-      <div className="mx-auto max-w-7xl px-6 py-12 md:py-16">
-        <Skeleton className="mb-10 h-10 w-64" />
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className={`h-64 rounded-[24px] ${i === 0 ? "md:col-span-2 md:h-80" : ""}`}
-            />
-          ))}
+      <div className="px-4 py-10 md:px-10 md:py-20">
+        <div className="mx-auto max-w-[1280px]">
+          <Skeleton className="mb-10 h-10 w-64 rounded-lg" />
+          <AnnouncementsSkeleton />
         </div>
       </div>
     );
   }
 
-  return (
-    <AnnouncementsSection title="Aktualności" announcementBasePath="/dashboard/announcements" />
-  );
+  return <AnnouncementsSection variant="dashboard" />;
 }
