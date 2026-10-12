@@ -45,7 +45,7 @@ const adminItems: SidebarItem[] = [
   },
   {
     href: "/dashboard/posts",
-    label: "Blog",
+    label: "Aktualności",
     icon: Newspaper,
     match: (pathname) => pathname.startsWith("/dashboard/posts"),
   },
