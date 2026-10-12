@@ -85,8 +85,10 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   };
 
   return (
-    <View className="border-border bg-background gap-3 border-t px-5 py-4">
-      {error ? <Text className="text-destructive text-xs font-semibold">{error}</Text> : null}
+    <View className="border-border bg-card gap-3 border-t px-5 py-4">
+      {error ? (
+        <Text className="text-destructive dark:text-foreground text-xs font-semibold">{error}</Text>
+      ) : null}
 
       {!user ? (
         <>
@@ -104,11 +106,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           </Text>
           <Button
             variant="outline"
-            className="w-full active:bg-muted"
+            className="w-full"
             disabled={pending}
             onPress={() => setSheet("leave")}
           >
-            <Text className="group-active:text-foreground">Opuść listę rezerwową</Text>
+            <Text>Opuść listę rezerwową</Text>
           </Button>
         </>
       ) : event.registrationStatus ? (
@@ -118,11 +120,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           </Button>
           <Button
             variant="outline"
-            className="w-full active:bg-muted"
+            className="w-full"
             disabled={pending}
             onPress={() => setSheet("leave")}
           >
-            <Text className="group-active:text-foreground">Opuść wydarzenie</Text>
+            <Text>Opuść wydarzenie</Text>
           </Button>
         </>
       ) : (
@@ -150,12 +152,8 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           <Button className="w-full" onPress={onAddToCalendar}>
             <Text>Dodaj do kalendarza</Text>
           </Button>
-          <Button
-            variant="outline"
-            className="w-full active:bg-muted"
-            onPress={() => setSheet(null)}
-          >
-            <Text className="group-active:text-foreground">Nie teraz</Text>
+          <Button variant="outline" className="w-full" onPress={() => setSheet(null)}>
+            <Text>Nie teraz</Text>
           </Button>
         </View>
       </BottomSheet>
@@ -179,12 +177,8 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
                   : "Opuść wydarzenie"}
             </Text>
           </Button>
-          <Button
-            variant="outline"
-            className="w-full active:bg-muted"
-            onPress={() => setSheet(null)}
-          >
-            <Text className="group-active:text-foreground">Anuluj</Text>
+          <Button variant="outline" className="w-full" onPress={() => setSheet(null)}>
+            <Text>Anuluj</Text>
           </Button>
         </View>
       </BottomSheet>
