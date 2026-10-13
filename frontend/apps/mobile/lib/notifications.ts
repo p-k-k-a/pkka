@@ -22,7 +22,7 @@ const projectId =
 
 const NOTIFICATION_TYPES: readonly string[] = Object.values(NotificationType);
 
-export function parseNotificationPayload(data: unknown): NotificationPayload | null {
+function parseNotificationPayload(data: unknown): NotificationPayload | null {
   if (typeof data !== "object" || data === null) return null;
 
   const { type, targetId } = data as Record<string, unknown>;
