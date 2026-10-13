@@ -12,7 +12,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.BatchSize;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -47,13 +46,10 @@ public class Survey {
     private SurveyStatus status = SurveyStatus.DRAFT;
 
     /**
-     * {@code @BatchSize} instead of a fetch-join {@code @EntityGraph} on paginated queries: a
-     * collection fetch-join multiplies the row count returned by SQL, so Hibernate has to apply
-     * LIMIT/OFFSET in memory after the join, defeating real pagination once there are enough
-     * surveys/questions. Batch-loading runs a second `WHERE survey_id IN (...)` query for the
-     * page's ids instead, keeping the first query's LIMIT/OFFSET on the database.
+     * Lazy on purpose and not batch-fetched: the questions are only needed together with a single
+     * survey (see the {@code @EntityGraph} on {@link SurveyRepository#findById}). Queries that return
+     * a page of surveys must not touch this collection, otherwise each row triggers its own query.
      */
-    @BatchSize(size = 20)
     @OneToMany(mappedBy = "survey", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<SurveyQuestion> questions = new ArrayList<>();
