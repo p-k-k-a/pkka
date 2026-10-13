@@ -4,19 +4,23 @@ import { Text } from "@/components/ui/text";
 import {
   getNotificationPermissionStatus,
   registerForPushNotifications,
-  setPushEnabled,
-  unregisterFromPushNotifications,
+  switchPushNotifications,
   type PushStatus,
 } from "@/lib/notifications";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { AppState, Linking, Pressable, View } from "react-native";
 
+const SWITCH_KEY = ["push-switch"];
+
 export function NotificationToggle() {
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<PushStatus>("off");
-  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     const sync = async () => {
+      if (queryClient.isMutating({ mutationKey: SWITCH_KEY }) > 0) return;
+
       const current = await getNotificationPermissionStatus();
       setStatus(current);
       if (current === "on") await registerForPushNotifications();
@@ -27,24 +31,16 @@ export function NotificationToggle() {
       if (state === "active") void sync();
     });
     return () => subscription.remove();
-  }, []);
+  }, [queryClient]);
 
-  const toggle = async (next: boolean) => {
-    setPending(true);
-    setStatus(next ? "on" : "off");
-    try {
-      await setPushEnabled(next);
-      if (!next) return await unregisterFromPushNotifications();
+  const toggle = useMutation({
+    mutationKey: SWITCH_KEY,
+    mutationFn: switchPushNotifications,
+    onSuccess: (next) => setStatus(next),
+    onError: (error) => console.warn("Push toggle failed:", error),
+  });
 
-      if ((await registerForPushNotifications()) === "registered") return;
-
-      const blocked = (await getNotificationPermissionStatus()) === "blocked";
-      if (!blocked) await setPushEnabled(false);
-      setStatus(blocked ? "blocked" : "off");
-    } finally {
-      setPending(false);
-    }
-  };
+  const checked = toggle.isPending ? toggle.variables : status !== "off";
 
   return (
     <View className="gap-4">
@@ -58,14 +54,20 @@ export function NotificationToggle() {
           </Text>
         </View>
         <Switch
-          checked={status !== "off"}
-          disabled={pending}
+          checked={checked}
+          disabled={toggle.isPending}
           accessibilityLabel="Powiadomienia push"
-          onCheckedChange={(next) =>
-            void toggle(next).catch((error) => console.warn("Push toggle failed:", error))
-          }
+          onCheckedChange={(next) => toggle.mutate(next)}
         />
       </View>
+
+      {toggle.isError ? (
+        <Text className="text-destructive dark:text-foreground text-xs font-semibold">
+          {toggle.variables
+            ? "Nie udało się włączyć powiadomień. Spróbuj ponownie."
+            : "Nie udało się wyłączyć powiadomień. Spróbuj ponownie."}
+        </Text>
+      ) : null}
 
       {status === "blocked" ? (
         <Pressable
