@@ -1,9 +1,7 @@
 package pl.edu.agh.backend.security.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
 
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -31,32 +29,6 @@ class WebCookieDomainConfigTest {
         String setCookie = savedCsrfCookie(new WebCookieDomainConfig("pkka.me"));
 
         assertThat(setCookie).doesNotContain("HttpOnly");
-    }
-
-    @Test
-    void logoutClearsCsrfCookieOnConfiguredDomainAndSessionCookieOnApiHost() {
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        new WebCookieDomainConfig("pkka.me")
-                .webCookieClearingLogoutHandler()
-                .logout(new MockHttpServletRequest(), response, null);
-
-        assertThat(response.getCookies())
-                .extracting(Cookie::getName, Cookie::getDomain, Cookie::getMaxAge, Cookie::getPath)
-                .containsExactlyInAnyOrder(tuple("JSESSIONID", null, 0, "/"), tuple("XSRF-TOKEN", "pkka.me", 0, "/"));
-    }
-
-    @Test
-    void logoutClearsHostOnlyCookiesWhenNoDomainIsConfigured() {
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        new WebCookieDomainConfig("")
-                .webCookieClearingLogoutHandler()
-                .logout(new MockHttpServletRequest(), response, null);
-
-        assertThat(response.getCookies())
-                .extracting(Cookie::getName, Cookie::getDomain, Cookie::getMaxAge)
-                .containsExactlyInAnyOrder(tuple("JSESSIONID", null, 0), tuple("XSRF-TOKEN", null, 0));
     }
 
     private static String savedCsrfCookie(WebCookieDomainConfig config) {

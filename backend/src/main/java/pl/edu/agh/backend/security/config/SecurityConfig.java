@@ -33,7 +33,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
@@ -100,8 +99,7 @@ public class SecurityConfig {
             OAuth2AuthorizationRequestResolver discordBypassResolver,
             BffAuthenticationSuccessHandler bffHandler,
             JwtDecoder jwtDecoder,
-            CookieCsrfTokenRepository csrfTokenRepository,
-            LogoutHandler webCookieClearingLogoutHandler) {
+            CookieCsrfTokenRepository csrfTokenRepository) {
 
         OidcClientInitiatedLogoutSuccessHandler oidcLogout =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
@@ -132,7 +130,7 @@ public class SecurityConfig {
                                 PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout"))
                         .logoutSuccessHandler(oidcLogout)
                         .invalidateHttpSession(true)
-                        .addLogoutHandler(webCookieClearingLogoutHandler));
+                        .deleteCookies("JSESSIONID"));
 
         return http.build();
     }
