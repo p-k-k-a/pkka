@@ -103,9 +103,9 @@ keycloak:
 
 # Discord
 discord:
-  guild-id: ${DISCORD_GUILD_ID:}
   bot-token: ${DISCORD_BOT_TOKEN:}
-  accepted-role-ids: ${DISCORD_ACCEPTED_ROLE_IDS:}
+  application-id: ${DISCORD_APPLICATION_ID:}
+  public-key: ${DISCORD_PUBLIC_KEY:}
 
 # Server
 server:
@@ -217,9 +217,9 @@ keycloak:
   verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE}
 
 discord:
-  guild-id: ${DISCORD_GUILD_ID:}
   bot-token: ${DISCORD_BOT_TOKEN:}
-  accepted-role-ids: ${DISCORD_ACCEPTED_ROLE_IDS:}
+  application-id: ${DISCORD_APPLICATION_ID:}
+  public-key: ${DISCORD_PUBLIC_KEY:}
 
 springdoc:
   api-docs:

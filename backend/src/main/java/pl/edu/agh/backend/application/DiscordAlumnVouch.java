@@ -21,7 +21,7 @@ public class DiscordAlumnVouch {
         return userRepository
                 .findByKeycloakId(caller.keycloakId())
                 .map(User::getDiscordId)
-                .map(guildMembership::holdsAcceptedRole)
+                .map(guildMembership::holdsAlumnRole)
                 .orElse(false);
     }
 }
