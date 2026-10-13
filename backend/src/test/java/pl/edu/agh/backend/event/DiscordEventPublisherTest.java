@@ -114,7 +114,8 @@ class DiscordEventPublisherTest {
         assertThat(embed.getValue().fields())
                 .extracting(DiscordEmbed.Field::name, DiscordEmbed.Field::value)
                 .contains(
-                        tuple("Gdzie", "D17, sala 1.38"),
+                        tuple("Forma", "Stacjonarnie"),
+                        tuple("Miejsce", "D17, sala 1.38"),
                         tuple("Link", "[Zobacz na stronie](" + EVENT_PAGES + id + ")"));
         awaitUntil(() -> postRepository.existsById(id));
         assertThat(postRepository.findById(id)).hasValueSatisfying(post -> {

@@ -84,7 +84,7 @@ VALUES ('<id serwera>', '<id kanału>', '<id roli>');
 
 Utwórz w panelu admina wydarzenie dla odbiorców **publiczne** albo **wszyscy alumni**:
 
-- na kanale pojawia się embed (Kiedy, Gdzie, Link na `WEB_BASE_URL/events/{id}`),
+- na kanale pojawia się embed (Termin, Forma, Miejsce przy wydarzeniu stacjonarnym lub hybrydowym, Link na `WEB_BASE_URL/events/{id}`),
 - edycja wydarzenia edytuje wiadomość, zmiana odbiorców na grupę albo usunięcie wydarzenia ją usuwa,
 - wydarzenie dla grupy nie trafia na Discorda,
 - baza: `SELECT * FROM event_discord_posts;`

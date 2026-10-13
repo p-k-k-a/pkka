@@ -93,8 +93,11 @@ public class DiscordEventPublisher {
     private DiscordEmbed announcement(Event event) {
         List<DiscordEmbed.Field> fields = new ArrayList<>();
         fields.add(new DiscordEmbed.Field(
-                "Kiedy", "<t:%d:F>".formatted(event.getStartsAt().getEpochSecond())));
-        place(event).ifPresent(place -> fields.add(new DiscordEmbed.Field("Gdzie", place)));
+                "Termin", "<t:%d:F>".formatted(event.getStartsAt().getEpochSecond())));
+        fields.add(new DiscordEmbed.Field("Forma", form(event.getType())));
+        Optional.ofNullable(event.getLocation())
+                .filter(location -> !location.isBlank() && event.getType() != EventType.ONLINE)
+                .ifPresent(location -> fields.add(new DiscordEmbed.Field("Miejsce", location)));
         if (!webBaseUrl.isBlank()) {
             fields.add(new DiscordEmbed.Field("Link", "[Zobacz na stronie](%s)".formatted(eventPage(event))));
         }
@@ -107,12 +110,11 @@ public class DiscordEventPublisher {
                 .toUriString();
     }
 
-    private static Optional<String> place(Event event) {
-        Optional<String> location = Optional.ofNullable(event.getLocation()).filter(text -> !text.isBlank());
-        return switch (event.getType()) {
-            case ONLINE -> Optional.of("Online");
-            case IN_PERSON -> location;
-            case HYBRID -> Optional.of(location.map(text -> text + " i online").orElse("Na miejscu i online"));
+    private static String form(EventType type) {
+        return switch (type) {
+            case ONLINE -> "Online";
+            case IN_PERSON -> "Stacjonarnie";
+            case HYBRID -> "Hybrydowo";
         };
     }
 }
