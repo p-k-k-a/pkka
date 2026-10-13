@@ -112,7 +112,7 @@ class DiscordInteractionEndpointTest {
         setUpOn(GUILD_ID, CHANNEL_ID, ALUMN_ROLE);
 
         interact(command(OTHER_GUILD_ID, role(BOT_ROLE)))
-                .andExpect(jsonPath("$.data.content").value(containsString("innym serwerze")));
+                .andExpect(jsonPath("$.data.content").value(containsString("another server")));
 
         assertThat(settings()).containsEntry("guild_id", GUILD_ID).containsEntry("alumn_role_id", ALUMN_ROLE);
     }
@@ -129,10 +129,10 @@ class DiscordInteractionEndpointTest {
     void aRoleDiscordManagesForABotCannotBeTheAlumnRole() throws Exception {
         String botRole = """
                 {"type": 2, "guild_id": "%s", "member": {"user": {"id": "%s"}},
-                 "data": {"name": "konfiguracja", "options": [%s],
+                 "data": {"name": "setup", "options": [%s],
                           "resolved": {"roles": {"%s": {"id": "%s", "managed": true}}}}}""".formatted(GUILD_ID, ADMIN_ID, role(BOT_ROLE), BOT_ROLE, BOT_ROLE);
 
-        interact(botRole).andExpect(jsonPath("$.data.content").value(containsString("rolę bota")));
+        interact(botRole).andExpect(jsonPath("$.data.content").value(containsString("a bot's role")));
 
         assertThat(settingsCount()).isZero();
     }
@@ -142,7 +142,7 @@ class DiscordInteractionEndpointTest {
         when(discordMessages.post(any(), any())).thenReturn(Optional.empty());
 
         interact(command(GUILD_ID, channel(CHANNEL_ID)))
-                .andExpect(jsonPath("$.data.content").value(containsString("nie może pisać")));
+                .andExpect(jsonPath("$.data.content").value(containsString("can't post in")));
 
         assertThat(settingsCount()).isZero();
     }
@@ -187,15 +187,15 @@ class DiscordInteractionEndpointTest {
     private static String command(String guildId, String... options) {
         return """
                 {"type": 2, "guild_id": "%s", "member": {"user": {"id": "%s"}},
-                 "data": {"name": "konfiguracja", "options": [%s]}}""".formatted(guildId, ADMIN_ID, String.join(", ", options));
+                 "data": {"name": "setup", "options": [%s]}}""".formatted(guildId, ADMIN_ID, String.join(", ", options));
     }
 
     private static String channel(String channelId) {
-        return "{\"name\": \"kanal\", \"type\": 7, \"value\": \"%s\"}".formatted(channelId);
+        return "{\"name\": \"channel\", \"type\": 7, \"value\": \"%s\"}".formatted(channelId);
     }
 
     private static String role(String roleId) {
-        return "{\"name\": \"rola\", \"type\": 8, \"value\": \"%s\"}".formatted(roleId);
+        return "{\"name\": \"role\", \"type\": 8, \"value\": \"%s\"}".formatted(roleId);
     }
 
     private void setUpOn(String guildId, String channelId, String roleId) {

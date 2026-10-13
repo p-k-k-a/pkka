@@ -31,7 +31,7 @@ class DiscordCommandRegistrationTest {
                 .andExpect(method(HttpMethod.PUT))
                 .andExpect(header("Authorization", "Bot " + BOT_TOKEN))
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].name").value("konfiguracja"))
+                .andExpect(jsonPath("$[0].name").value("setup"))
                 .andExpect(jsonPath("$[0].default_member_permissions").value("8"))
                 .andExpect(jsonPath("$[0].contexts[0]").value(0))
                 .andRespond(withSuccess("[]", MediaType.APPLICATION_JSON));

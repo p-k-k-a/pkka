@@ -14,7 +14,7 @@ import tools.jackson.databind.JsonNode;
 @Slf4j
 class DiscordSetupCommand {
 
-    static final String NAME = "konfiguracja";
+    static final String NAME = "setup";
 
     private static final int CHANNEL_OPTION = 7;
     private static final int ROLE_OPTION = 8;
@@ -28,7 +28,7 @@ class DiscordSetupCommand {
             "name",
             NAME,
             "description",
-            "Kanał ogłoszeń wydarzeń i rola absolwenta",
+            "Set the event announcement channel and the alumni role",
             "default_member_permissions",
             "8",
             "contexts",
@@ -39,23 +39,22 @@ class DiscordSetupCommand {
                             "type",
                             CHANNEL_OPTION,
                             "name",
-                            "kanal",
+                            "channel",
                             "description",
-                            "Kanał, na którym bot ogłasza wydarzenia",
+                            "Channel the bot announces events in",
                             "channel_types",
                             List.of(TEXT_CHANNEL, ANNOUNCEMENT_CHANNEL)),
                     Map.of(
                             "type", ROLE_OPTION,
-                            "name", "rola",
-                            "description", "Rola, której posiadacze są absolwentami")));
+                            "name", "role",
+                            "description", "Role held by alumni")));
 
     private static final DiscordEmbed CHANNEL_CONFIRMATION =
             new DiscordEmbed(null, "Tu będą pojawiać się ogłoszenia wydarzeń z platformy.", List.of());
 
-    private static final String OTHER_SERVER = "Bot jest już skonfigurowany na innym serwerze.";
-    private static final String NOT_A_PLAIN_ROLE = "Wybierz rolę nadawaną absolwentom, a nie @everyone ani rolę bota.";
-    private static final String CHANNEL_PERMISSIONS =
-            "Daj mu tam: Wyświetlanie kanału, Wysyłanie wiadomości i Osadzanie linków.";
+    private static final String OTHER_SERVER = "This bot is already set up on another server.";
+    private static final String NOT_A_PLAIN_ROLE = "Pick the role given to alumni, not @everyone or a bot's role.";
+    private static final String CHANNEL_PERMISSIONS = "Give me View Channel, Send Messages and Embed Links there.";
 
     private final DiscordGuildSettingsRepository guildSettings;
     private final DiscordMessages messages;
@@ -63,8 +62,8 @@ class DiscordSetupCommand {
     Map<String, Object> handle(JsonNode interaction) {
         String guildId = interaction.path("guild_id").asString();
         JsonNode data = interaction.path("data");
-        Optional<String> channelId = option(data, "kanal");
-        Optional<String> roleId = option(data, "rola");
+        Optional<String> channelId = option(data, "channel");
+        Optional<String> roleId = option(data, "role");
 
         Optional<DiscordGuildSettings> current = guildSettings.findFirstBy();
         if (current.isPresent() && !current.get().getGuildId().equals(guildId)) {
@@ -78,7 +77,7 @@ class DiscordSetupCommand {
         }
         if (channelId.isPresent()
                 && messages.post(channelId.get(), CHANNEL_CONFIRMATION).isEmpty()) {
-            return reply("Bot nie może pisać na <#" + channelId.get() + ">. " + CHANNEL_PERMISSIONS);
+            return reply("I can't post in <#" + channelId.get() + ">. " + CHANNEL_PERMISSIONS);
         }
 
         DiscordGuildSettings settings = current.orElseGet(() -> new DiscordGuildSettings(guildId, null, null));
@@ -115,11 +114,11 @@ class DiscordSetupCommand {
     private static String describe(Optional<DiscordGuildSettings> settings) {
         String channel = settings.flatMap(DiscordGuildSettings::getAnnouncementsChannelId)
                 .map(id -> "<#" + id + ">")
-                .orElse("nie ustawiono");
+                .orElse("not set");
         String role = settings.flatMap(DiscordGuildSettings::getAlumnRoleId)
                 .map(id -> "<@&" + id + ">")
-                .orElse("nie ustawiono");
-        return "Kanał ogłoszeń: %s\nRola absolwenta: %s".formatted(channel, role);
+                .orElse("not set");
+        return "Announcement channel: %s\nAlumni role: %s".formatted(channel, role);
     }
 
     private static Map<String, Object> reply(String content) {

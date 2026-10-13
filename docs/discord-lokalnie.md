@@ -1,10 +1,10 @@
-# Discord lokalnie: weryfikacja i `/konfiguracja`
+# Discord lokalnie: weryfikacja i `/setup`
 
 Backend rozmawia z Discordem na dwa sposoby:
 
-- **wychodząco** (token bota): sprawdza role członka przy wniosku, a przy `/konfiguracja` wysyła potwierdzenie na kanał.
+- **wychodząco** (token bota): sprawdza role członka przy wniosku, a przy `/setup` wysyła potwierdzenie na kanał.
   Działa z każdego komputera, bez niczego dodatkowego.
-- **przychodząco** (webhook): Discord wysyła `/konfiguracja` na `POST /api/public/discord/interactions`.
+- **przychodząco** (webhook): Discord wysyła `/setup` na `POST /api/public/discord/interactions`.
   Discord musi dosięgnąć tego adresu po HTTPS, więc lokalnie potrzebny jest tunel (krok 4).
 
 ## 1. Dev-aplikacja Discord (raz)
@@ -30,9 +30,9 @@ DISCORD_PUBLIC_KEY=...
 
 ## 3. Backend
 
-Uruchom backend z IDE albo `./gradlew bootRun` w katalogu `backend`. W logu ma się pojawić `Registered /konfiguracja with Discord`.
+Uruchom backend z IDE albo `./gradlew bootRun` w katalogu `backend`. W logu ma się pojawić `Registered /setup with Discord`.
 
-## 4. Tunel (tylko do `/konfiguracja`)
+## 4. Tunel (tylko do `/setup`)
 
 ```bash
 cd backend
@@ -62,12 +62,12 @@ podpisane żądanie — zapis przejdzie tylko, jeśli backend działa i ma popra
 
 Adres tunelu zmienia się przy każdym starcie — po restarcie wpisz go w portalu ponownie.
 
-## 5. `/konfiguracja`
+## 5. `/setup`
 
-- `/konfiguracja kanal:#ogloszenia rola:@Absolwent` → na kanale wiadomość potwierdzająca, u ciebie odpowiedź
+- `/setup channel:#ogloszenia role:@Absolwent` → na kanale wiadomość potwierdzająca, u ciebie odpowiedź
   widoczna tylko dla ciebie. Komendy nie widać? Odśwież klienta Discorda (Ctrl+R).
-- `/konfiguracja` bez opcji pokazuje bieżące ustawienia.
-- Odmowy: `rola:@everyone`, kanał, na którym bot nie ma uprawnień.
+- `/setup` bez opcji pokazuje bieżące ustawienia.
+- Odmowy: `role:@everyone`, kanał, na którym bot nie ma uprawnień.
 - Baza: `SELECT * FROM discord_settings;`
 
 ## Bez tunelu
@@ -83,7 +83,7 @@ VALUES ('<id serwera>', '<id kanału>', '<id roli>');
 ## 6. Weryfikacja przy wniosku
 
 - Użytkownik musi być zalogowany **przez Discorda** (IdP w Keycloaku) — wtedy backend zna jego `discordId`.
-- To konto Discord musi być na serwerze testowym i mieć rolę ustawioną w `/konfiguracja`.
+- To konto Discord musi być na serwerze testowym i mieć rolę ustawioną w `/setup`.
 - Złożony wniosek alumna od razu przechodzi na zaakceptowany, a użytkownik dostaje `verified-alumn`
   (Keycloak → *Users* → *Role mapping*; do nowego tokena trzeba się przelogować).
 - Bez roli wniosek zostaje w kolejce do ręcznej oceny. Powód widać w logu (DEBUG na profilu dev).
