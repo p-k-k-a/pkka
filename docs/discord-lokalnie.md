@@ -1,8 +1,8 @@
-# Discord lokalnie: weryfikacja i `/setup`
+# Discord lokalnie: ogłoszenia, weryfikacja i `/setup`
 
 Backend rozmawia z Discordem na dwa sposoby:
 
-- **wychodząco** (token bota): sprawdza role członka przy wniosku, a przy `/setup` wysyła potwierdzenie na kanał.
+- **wychodząco** (token bota): publikuje, edytuje i usuwa ogłoszenia wydarzeń, sprawdza role członka przy wniosku.
   Działa z każdego komputera, bez niczego dodatkowego.
 - **przychodząco** (webhook): Discord wysyła `/setup` na `POST /api/public/discord/interactions`.
   Discord musi dosięgnąć tego adresu po HTTPS, więc lokalnie potrzebny jest tunel (krok 4).
@@ -72,7 +72,7 @@ Adres tunelu zmienia się przy każdym starcie — po restarcie wpisz go w porta
 
 ## Bez tunelu
 
-Weryfikację da się sprawdzić bez kroku 4 — wystarczy wstawić konfigurację ręcznie (ID skopiujesz
+Ogłoszenia i weryfikację da się sprawdzić bez kroku 4 — wystarczy wstawić konfigurację ręcznie (ID skopiujesz
 po włączeniu *Tryb dewelopera* w Discordzie: prawy przycisk → *Kopiuj ID*):
 
 ```sql
@@ -80,7 +80,16 @@ INSERT INTO discord_settings (guild_id, announcements_channel_id, alumn_role_id)
 VALUES ('<id serwera>', '<id kanału>', '<id roli>');
 ```
 
-## 6. Weryfikacja przy wniosku
+## 6. Ogłoszenia wydarzeń
+
+Utwórz w panelu admina wydarzenie dla odbiorców **publiczne** albo **wszyscy alumni**:
+
+- na kanale pojawia się embed (Kiedy, Gdzie, Link na `WEB_BASE_URL/events/{id}`),
+- edycja wydarzenia edytuje wiadomość, zmiana odbiorców na grupę albo usunięcie wydarzenia ją usuwa,
+- wydarzenie dla grupy nie trafia na Discorda,
+- baza: `SELECT * FROM event_discord_posts;`
+
+## 7. Weryfikacja przy wniosku
 
 - Użytkownik musi być zalogowany **przez Discorda** (IdP w Keycloaku) — wtedy backend zna jego `discordId`.
 - To konto Discord musi być na serwerze testowym i mieć rolę ustawioną w `/setup`.

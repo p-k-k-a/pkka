@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.infrastructure.discord;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -33,6 +34,7 @@ class DiscordMessagesTest {
 
     private static final String CHANNEL_MESSAGES_URI =
             "https://discord.com/api/v10/channels/" + CHANNEL_ID + "/messages";
+    private static final String MESSAGE_URI = CHANNEL_MESSAGES_URI + "/" + MESSAGE_ID;
 
     private static final DiscordEmbed EMBED = new DiscordEmbed("Warsztaty", "Opis", List.of());
 
@@ -96,10 +98,57 @@ class DiscordMessagesTest {
     }
 
     @Test
+    void anEditReplacesTheEmbedOfTheMessageInPlace() {
+        server.expect(requestTo(MESSAGE_URI))
+                .andExpect(method(HttpMethod.PATCH))
+                .andExpect(header("Authorization", "Bot " + BOT_TOKEN))
+                .andExpect(jsonPath("$.embeds[0].title").value("Warsztaty"))
+                .andRespond(withSuccess("{\"id\": \"%s\"}".formatted(MESSAGE_ID), MediaType.APPLICATION_JSON));
+
+        messages.edit(CHANNEL_ID, MESSAGE_ID, EMBED);
+
+        server.verify();
+    }
+
+    @Test
+    void anEditDiscordRefusesIsNotThrown() {
+        server.expect(requestTo(MESSAGE_URI)).andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThatCode(() -> messages.edit(CHANNEL_ID, MESSAGE_ID, EMBED)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void aDeletedMessageIsGone() {
+        server.expect(requestTo(MESSAGE_URI))
+                .andExpect(method(HttpMethod.DELETE))
+                .andExpect(header("Authorization", "Bot " + BOT_TOKEN))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        assertThat(messages.delete(CHANNEL_ID, MESSAGE_ID)).isTrue();
+        server.verify();
+    }
+
+    @Test
+    void aMessageAlreadyDeletedByHandCountsAsGone() {
+        server.expect(requestTo(MESSAGE_URI)).andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThat(messages.delete(CHANNEL_ID, MESSAGE_ID)).isTrue();
+    }
+
+    @Test
+    void aMessageDiscordFailedToDeleteIsNotGone() {
+        server.expect(requestTo(MESSAGE_URI)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        assertThat(messages.delete(CHANNEL_ID, MESSAGE_ID)).isFalse();
+    }
+
+    @Test
     void withoutABotTokenNothingIsSentToDiscordAtAll() {
         messages = messagesFor("");
 
         assertThat(messages.post(CHANNEL_ID, EMBED)).isEmpty();
+        messages.edit(CHANNEL_ID, MESSAGE_ID, EMBED);
+        assertThat(messages.delete(CHANNEL_ID, MESSAGE_ID)).isFalse();
         server.verify();
     }
 
