@@ -32,8 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (loggingOut.current) return;
     loggingOut.current = true;
     try {
-      await unregisterFromPushNotifications();
-      await logoutTokens();
+      await unregisterFromPushNotifications().catch((error) =>
+        console.warn("Push unregistration failed:", error),
+      );
+      await logoutTokens().catch((error) => console.warn("Token revocation failed:", error));
       setUser(null);
       await SecureStore.deleteItemAsync("at");
       await SecureStore.deleteItemAsync("rt");
