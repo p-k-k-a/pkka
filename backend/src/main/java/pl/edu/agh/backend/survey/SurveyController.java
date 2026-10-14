@@ -31,7 +31,8 @@ public class SurveyController {
 
     @GetMapping
     @Operation(summary = "List active surveys that have not yet ended")
-    public Page<SurveyResponse> listActiveSurveys(@ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+    public Page<SurveyListItemResponse> listActiveSurveys(
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return surveyService.listActive(pageable);
     }
 

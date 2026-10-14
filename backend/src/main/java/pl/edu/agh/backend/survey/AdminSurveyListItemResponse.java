@@ -13,13 +13,13 @@ public record AdminSurveyListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) int questionCount,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt) {
 
-    static AdminSurveyListItemResponse from(Survey survey) {
+    static AdminSurveyListItemResponse from(Survey survey, int questionCount) {
         return new AdminSurveyListItemResponse(
                 survey.getId(),
                 survey.getTitle(),
                 survey.getEndsAt(),
                 survey.getStatus(),
-                survey.getQuestions().size(),
+                questionCount,
                 survey.getCreatedAt());
     }
 }

@@ -1,5 +1,7 @@
 package pl.edu.agh.backend.survey;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -9,9 +11,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -44,8 +50,16 @@ class SurveyEndpointTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
+    private static final String TWO_CHOICE_QUESTIONS = """
+            {"content":"Język?","type":"SINGLE_CHOICE","options":["Java","Kotlin"]},
+            {"content":"Technologie?","type":"MULTI_CHOICE","options":["Spring","Quarkus","Go"]}
+            """;
+
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Autowired
     private SurveyRepository surveyRepository;
@@ -312,6 +326,89 @@ class SurveyEndpointTest {
 
         mockMvc.perform(get("/api/admin/surveys/{id}", surveyId).with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void alumniListOmitsQuestions() throws Exception {
+        createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Ankieta"))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$.content[0].questions").doesNotExist());
+    }
+
+    @Test
+    void adminListShowsQuestionCountPerSurvey() throws Exception {
+        createSurvey("DRAFT", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        createSurvey("DRAFT", """
+                {"content":"Język?","type":"SINGLE_CHOICE","options":["Java","Kotlin"]},
+                {"content":"Technologie?","type":"MULTI_CHOICE","options":["Spring","Quarkus"]},
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        // the API requires at least one question, so a survey without any has to be seeded directly
+        Survey withoutQuestions = new Survey();
+        withoutQuestions.setTitle("Pusta ankieta");
+        withoutQuestions.setEndsAt(Instant.now().plus(7, ChronoUnit.DAYS));
+        withoutQuestions.setStatus(SurveyStatus.DRAFT);
+        surveyRepository.saveAndFlush(withoutQuestions);
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/admin/surveys").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.content[*].questionCount", containsInAnyOrder(0, 1, 3)));
+    }
+
+    @Test
+    void listEndpointsRunTheSameNumberOfStatementsRegardlessOfPageSize() throws Exception {
+        RequestPostProcessor alumn = JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT);
+        RequestPostProcessor admin = JwtTestSupport.asAdmin(ADMIN_SUBJECT);
+        statistics().setStatisticsEnabled(true);
+        try {
+            createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+            createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+            // warm up: the first request may lazily create the caller's user row, which is not what is measured
+            statementsFor("/api/alumni/surveys", alumn);
+            statementsFor("/api/admin/surveys", admin);
+            long alumniWithTwoSurveys = statementsFor("/api/alumni/surveys", alumn);
+            long adminWithTwoSurveys = statementsFor("/api/admin/surveys", admin);
+            // guards against the equality below holding vacuously if the instrumentation stopped counting
+            assertThat(alumniWithTwoSurveys).isPositive();
+            assertThat(adminWithTwoSurveys).isPositive();
+
+            for (int i = 0; i < 8; i++) {
+                createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+            }
+
+            // Survey.questions is not batch-fetched, so touching it per row would add statements per survey
+            assertThat(statementsFor("/api/alumni/surveys", alumn)).isEqualTo(alumniWithTwoSurveys);
+            assertThat(statementsFor("/api/admin/surveys", admin)).isEqualTo(adminWithTwoSurveys);
+        } finally {
+            statistics().setStatisticsEnabled(false);
+        }
+    }
+
+    private Statistics statistics() {
+        return entityManager
+                .getEntityManagerFactory()
+                .unwrap(SessionFactory.class)
+                .getStatistics();
+    }
+
+    /** Runs the request against a cold persistence context and returns how many SQL statements it cost. */
+    private long statementsFor(String url, RequestPostProcessor auth) throws Exception {
+        entityManager.flush();
+        entityManager.clear();
+        statistics().clear();
+        mockMvc.perform(get(url).with(auth)).andExpect(status().isOk());
+        return statistics().getPrepareStatementCount();
     }
 
     private String createSurvey(String status, String questionsJson) throws Exception {

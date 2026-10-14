@@ -26,10 +26,10 @@ public class SurveyService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public Page<SurveyResponse> listActive(Pageable pageable) {
+    public Page<SurveyListItemResponse> listActive(Pageable pageable) {
         return surveyRepository
                 .findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus.ACTIVE, Instant.now(clock), pageable)
-                .map(SurveyResponse::from);
+                .map(SurveyListItemResponse::from);
     }
 
     @Transactional(readOnly = true)

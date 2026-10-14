@@ -20,7 +20,17 @@ public class AdminSurveyService {
 
     @Transactional(readOnly = true)
     public Page<AdminSurveyListItemResponse> list(Pageable pageable) {
-        return surveyRepository.findAllByOrderByCreatedAtDesc(pageable).map(AdminSurveyListItemResponse::from);
+        Page<Survey> surveys = surveyRepository.findAllByOrderByCreatedAtDesc(pageable);
+        List<UUID> ids = surveys.getContent().stream().map(Survey::getId).toList();
+        // One grouped COUNT for the whole page instead of initialising Survey.questions per row.
+        Map<UUID, Long> questionCounts = ids.isEmpty()
+                ? Map.of()
+                : surveyRepository.countQuestionsBySurveyIdIn(ids).stream()
+                        .collect(Collectors.toMap(
+                                SurveyRepository.SurveyQuestionCount::surveyId,
+                                SurveyRepository.SurveyQuestionCount::questionCount));
+        return surveys.map(survey -> AdminSurveyListItemResponse.from(
+                survey, questionCounts.getOrDefault(survey.getId(), 0L).intValue()));
     }
 
     @Transactional(readOnly = true)
