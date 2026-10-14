@@ -27,10 +27,8 @@ public interface SurveyRepository extends JpaRepository<Survey, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Survey> findForUpdateById(UUID id);
 
-    // Deliberately no @EntityGraph on the collection here: a fetch-join would multiply rows and
-    // force Hibernate to paginate in memory. Survey.questions uses @BatchSize instead, so the
-    // page of surveys is still selected with a real SQL LIMIT/OFFSET, and questions are then
-    // batch-loaded for just that page.
+    // Survey lists don't need the questions, so there is deliberately no @EntityGraph here and
+    // callers must not touch Survey.questions for the rows of a page.
     Page<Survey> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     Page<Survey> findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus status, Instant now, Pageable pageable);
