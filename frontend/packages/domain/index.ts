@@ -1,3 +1,4 @@
+export * from "./alumni/directory";
 export * from "./application/rules";
 export * from "./format/datetime";
 export * from "./labels/application";
