@@ -25,9 +25,8 @@ public class TicketService {
     }
 
     /**
-     * A verified-alumn token with no local {@link User} row yet (provisioned lazily on first write
-     * via {@link CallerUserService#getOrCreate}) is authenticated and authorized — they simply have
-     * zero tickets, so the result is an empty page rather than 401/404.
+     * Only looks the caller up and never provisions a user row: a caller without a local {@link User}
+     * row cannot have submitted a ticket, so they get an empty page rather than 401/404.
      */
     @Transactional(readOnly = true)
     public Page<TicketResponse> listMine(Caller caller, Pageable pageable) {

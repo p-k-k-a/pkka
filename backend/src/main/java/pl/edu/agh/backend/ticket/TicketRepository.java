@@ -11,15 +11,19 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecificationExecutor<Ticket> {
 
-    @EntityGraph(attributePaths = "author")
+    // Both users are to-one associations, so fetch-joining them keeps the SQL LIMIT/OFFSET of the
+    // page and avoids a query per row when the DTO reads the display names.
+    @EntityGraph(attributePaths = {"author", "respondedBy"})
     @Override
     Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
 
-    @EntityGraph(attributePaths = "author")
+    @EntityGraph(attributePaths = {"author", "respondedBy"})
     @Override
     Optional<Ticket> findById(UUID id);
 
+    @EntityGraph(attributePaths = "respondedBy")
     Page<Ticket> findAllByAuthorId(UUID authorId, Pageable pageable);
 
+    @EntityGraph(attributePaths = "respondedBy")
     Optional<Ticket> findByIdAndAuthorId(UUID id, UUID authorId);
 }

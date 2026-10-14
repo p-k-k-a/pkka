@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/admin/tickets")
@@ -52,7 +53,8 @@ public class AdminTicketController {
     @ApiResponse(responseCode = "200", description = "Ticket updated")
     @ApiResponse(responseCode = "400", description = "Validation failed", content = @Content)
     @ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content)
-    public AdminTicketResponse patchTicket(@PathVariable UUID id, @Valid @RequestBody UpdateTicketRequest request) {
-        return adminTicketService.update(id, request);
+    public AdminTicketResponse patchTicket(
+            @PathVariable UUID id, @Valid @RequestBody UpdateTicketRequest request, Caller caller) {
+        return adminTicketService.update(caller, id, request);
     }
 }

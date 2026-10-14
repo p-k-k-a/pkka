@@ -53,6 +53,11 @@ public class Ticket {
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
+    /** The admin who wrote the current {@link #adminResponse}; null until someone has replied. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "responded_by_id")
+    private User respondedBy;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

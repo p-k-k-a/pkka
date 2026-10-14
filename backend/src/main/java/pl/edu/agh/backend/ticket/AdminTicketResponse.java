@@ -12,6 +12,10 @@ public record AdminTicketResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String description,
         @Schema(requiredMode = RequiredMode.REQUIRED) TicketStatus status,
         String adminResponse,
+
+        @Schema(description = "Display name of the admin who wrote the reply; null until there is one")
+        String respondedByDisplayName,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID authorId,
         @Schema(requiredMode = RequiredMode.REQUIRED) String authorDisplayName,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
@@ -25,6 +29,7 @@ public record AdminTicketResponse(
                 ticket.getDescription(),
                 ticket.getStatus(),
                 ticket.getAdminResponse(),
+                ticket.getRespondedBy() == null ? null : ticket.getRespondedBy().getDisplayName(),
                 ticket.getAuthor().getId(),
                 ticket.getAuthor().getDisplayName(),
                 ticket.getCreatedAt(),

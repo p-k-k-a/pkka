@@ -8,12 +8,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
 @RequiredArgsConstructor
 public class AdminTicketService {
 
     private final TicketRepository ticketRepository;
+    private final CallerUserService callerUserService;
 
     @Transactional(readOnly = true)
     public Page<AdminTicketResponse> list(
@@ -30,11 +33,12 @@ public class AdminTicketService {
     }
 
     @Transactional
-    public AdminTicketResponse update(UUID id, UpdateTicketRequest request) {
+    public AdminTicketResponse update(Caller caller, UUID id, UpdateTicketRequest request) {
         Ticket ticket = ticketRepository.findById(id).orElseThrow(TicketNotFoundException::new);
         ticket.setStatus(request.status());
         if (request.adminResponse() != null) {
             ticket.setAdminResponse(request.adminResponse());
+            ticket.setRespondedBy(callerUserService.getOrCreate(caller));
         }
         return AdminTicketResponse.from(ticketRepository.saveAndFlush(ticket));
     }
