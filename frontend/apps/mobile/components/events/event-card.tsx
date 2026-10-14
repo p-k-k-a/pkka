@@ -1,7 +1,12 @@
 import { Text } from "@/components/ui/text";
-import { eventTypeLabelUpper, formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
+import {
+  eventTypeLabelUpper,
+  formatEventDateLong,
+  formatSeatsCompact,
+  registrationStatusLabelUpper,
+} from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { EventRegistrationStatus, EventType, type EventListItemResponse } from "@pkka/api";
+import { EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Calendar, Link2, MapPin, Users } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -28,9 +33,7 @@ function EventCard({ event }: EventCardProps) {
         {registrationStatus ? (
           <View className="border-muted-foreground/25 dark:border-input rounded-lg border px-3 py-1">
             <Text className="text-foreground text-[11px] font-semibold uppercase tracking-widest">
-              {registrationStatus === EventRegistrationStatus.WAITLISTED
-                ? "LISTA REZERWOWA"
-                : "ZAPISANO"}
+              {registrationStatusLabelUpper(registrationStatus)}
             </Text>
           </View>
         ) : null}

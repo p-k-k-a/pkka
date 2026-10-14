@@ -1,15 +1,13 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { useGetEventById } from "@pkka/api";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { EventLocationAside } from "@/components/events/event-location-aside";
+import { EventRegistration } from "@/components/events/event-registration";
 import { ProseContent } from "@/components/content/prose-content";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
-import { useAuth } from "@/lib/auth-context";
 
 type EventDetailProps = {
   id: string;
@@ -17,7 +15,6 @@ type EventDetailProps = {
 };
 
 export function EventDetail({ id, variant = "public" }: EventDetailProps) {
-  const { isAuthenticated, loginWithKeycloak } = useAuth();
   const { data: response, isLoading, isError, isFetching } = useGetEventById(id);
   const event = response?.data;
   const archived = isEventPast(event?.startsAt);
@@ -77,22 +74,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
             </h1>
             {archived ? null : (
               <div className="mt-8">
-                {isAuthenticated ? (
-                  <div className="space-y-2">
-                    <Button size="xl" className="gap-2" disabled>
-                      Zapisz się
-                      <ArrowRight data-icon="inline-end" />
-                    </Button>
-                    <p className="text-muted-foreground text-xs">
-                      Rejestracja na wydarzenie wkrótce dostępna.
-                    </p>
-                  </div>
-                ) : (
-                  <Button size="xl" className="gap-2" onClick={loginWithKeycloak}>
-                    Zapisz się
-                    <ArrowRight data-icon="inline-end" />
-                  </Button>
-                )}
+                <EventRegistration event={event} />
               </div>
             )}
 
