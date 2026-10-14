@@ -12,6 +12,7 @@ import {
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
+import { byTagPopularity } from "@pkka/domain";
 import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
@@ -24,6 +25,7 @@ type FilterSheetProps = {
 };
 
 const SHEET_LIST_MAX_HEIGHT = 216;
+const TAG_IDLE_LIMIT = 20;
 
 function HeaderText({ children }: { children: ReactNode }) {
   return (
@@ -43,8 +45,12 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
 
   const tagsQuery = useListUserTags();
   const tagOptions = useMemo<SelectOption[]>(
-    () => (tagsQuery.data?.data ?? []).map((tag) => ({ id: tag.id, label: tag.name })),
-    [tagsQuery.data],
+    () =>
+      (tagsQuery.data?.data ?? [])
+        .filter((tag) => tag.usageCount > 0 || draft.tagIds.includes(tag.id))
+        .sort(byTagPopularity)
+        .map((tag) => ({ id: tag.id, label: tag.name })),
+    [tagsQuery.data, draft.tagIds],
   );
 
   useEffect(() => {
@@ -102,6 +108,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
             }
             placeholder="Wyszukaj umiejętności..."
             listMaxHeight={SHEET_LIST_MAX_HEIGHT}
+            idleLimit={TAG_IDLE_LIMIT}
             uppercaseChips
           />
         )}

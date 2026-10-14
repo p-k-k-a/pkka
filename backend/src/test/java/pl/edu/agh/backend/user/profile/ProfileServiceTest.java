@@ -59,9 +59,9 @@ class ProfileServiceTest {
         user.setKeycloakId("kc-1");
         UUID tagId = UUID.randomUUID();
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(userTagRepository.findAllById(Set.of(tagId))).thenReturn(List.of());
+        when(userTagRepository.findForShareByIdIn(Set.of(tagId))).thenReturn(List.of());
 
-        assertThatThrownBy(() -> profileService.updateTags("kc-1", Set.of(tagId)))
+        assertThatThrownBy(() -> profileService.updateTags("kc-1", Set.of(tagId), Set.of()))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> {
                     ResponseStatusException rse = (ResponseStatusException) ex;
@@ -76,9 +76,9 @@ class ProfileServiceTest {
         UserTag tag = UserTag.builder().name("Java").build();
         tag.setId(UUID.randomUUID());
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(userTagRepository.findAllById(Set.of(tag.getId()))).thenReturn(List.of(tag));
+        when(userTagRepository.findForShareByIdIn(Set.of(tag.getId()))).thenReturn(List.of(tag));
 
-        var tags = profileService.updateTags("kc-1", Set.of(tag.getId()));
+        var tags = profileService.updateTags("kc-1", Set.of(tag.getId()), Set.of());
 
         assertThat(tags).hasSize(1);
         assertThat(tags.getFirst().name()).isEqualTo("Java");

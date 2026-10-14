@@ -44,6 +44,7 @@ import pl.edu.agh.backend.event.EventRequest;
 import pl.edu.agh.backend.event.EventType;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
@@ -396,7 +397,7 @@ class EventRegistrationEndpointTest {
         String second = queue(event);
         String third = queue(event);
 
-        adminEventService.update(event.getId(), requestWithSeatLimit(event, 3));
+        adminEventService.update(Caller.anonymous(), event.getId(), requestWithSeatLimit(event, 3));
 
         assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
         assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
@@ -411,7 +412,7 @@ class EventRegistrationEndpointTest {
         String first = queue(event);
         String second = queue(event);
 
-        adminEventService.update(event.getId(), requestWithSeatLimit(event, null));
+        adminEventService.update(Caller.anonymous(), event.getId(), requestWithSeatLimit(event, null));
 
         assertThat(statusOf(event, first)).isEqualTo(EventRegistrationStatus.REGISTERED);
         assertThat(statusOf(event, second)).isEqualTo(EventRegistrationStatus.REGISTERED);
@@ -424,7 +425,7 @@ class EventRegistrationEndpointTest {
         registerOtherAlumn(event);
         String queued = queue(event);
 
-        adminEventService.update(event.getId(), requestWithSeatLimit(event, 1));
+        adminEventService.update(Caller.anonymous(), event.getId(), requestWithSeatLimit(event, 1));
         mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))

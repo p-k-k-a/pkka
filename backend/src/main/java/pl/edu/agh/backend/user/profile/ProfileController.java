@@ -46,15 +46,15 @@ public class ProfileController {
     }
 
     @PutMapping("/tags")
-    @Operation(summary = "Replace own tags (full replacement of the assigned set)")
+    @Operation(summary = "Replace own tags, creating any named tag that is not in the catalog yet")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(
                 responseCode = "400",
-                description = "One or more tag IDs do not exist",
+                description = "Unknown tag ID, invalid tag name or more than 20 tags",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(caller.requireKeycloakId(), request.tagIds());
+        return profileService.updateTags(caller.requireKeycloakId(), request.tagIds(), request.names());
     }
 }

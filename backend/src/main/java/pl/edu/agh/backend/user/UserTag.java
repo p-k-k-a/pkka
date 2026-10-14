@@ -14,9 +14,7 @@ import lombok.*;
  * {@code name} across two unrelated concepts and lets each catalog evolve independently.
  */
 @Entity
-@Table(
-        name = "user_skill_tags",
-        uniqueConstraints = @UniqueConstraint(name = "uk_user_skill_tags_name", columnNames = "name"))
+@Table(name = "user_skill_tags")
 @Getter
 @Setter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

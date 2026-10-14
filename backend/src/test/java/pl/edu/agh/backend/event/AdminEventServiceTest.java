@@ -22,7 +22,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
@@ -84,7 +83,7 @@ class AdminEventServiceTest {
     void createPersistsResolvedTagsAndStampsAuthor() {
         Tag ai = Tag.builder().name("ai").build();
         User author = new User();
-        when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
+        when(tagRepository.findForShareByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -112,28 +111,6 @@ class AdminEventServiceTest {
         assertThat(response.title()).isEqualTo("Warsztat AI");
         assertThat(response.tags()).containsExactlyInAnyOrder("ai");
         verify(eventPublisher).publishEvent(new EventCreatedEvent(response.id()));
-    }
-
-    @Test
-    void createRejectsUnknownTags() {
-        when(tagRepository.findByNameIn(Set.of("nope"))).thenReturn(Set.of());
-
-        EventRequest request = new EventRequest(
-                "Warsztat",
-                null,
-                EventType.ONLINE,
-                Instant.parse("2026-09-01T17:00:00Z"),
-                Instant.parse("2026-09-01T19:00:00Z"),
-                null,
-                null,
-                null,
-                null,
-                Audience.PUBLIC,
-                null,
-                null,
-                Set.of("nope"));
-
-        assertThatThrownBy(() -> adminEventService.create(ADMIN, request)).isInstanceOf(ResponseStatusException.class);
     }
 
     @Test

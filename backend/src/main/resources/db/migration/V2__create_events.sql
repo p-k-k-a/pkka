@@ -1,8 +1,22 @@
 CREATE TABLE tags (
-                      id   UUID PRIMARY KEY,
-                      name VARCHAR(32) NOT NULL,
-                      CONSTRAINT uk_tags_name UNIQUE (name)
+                      id         UUID PRIMARY KEY,
+                      name       VARCHAR(32) NOT NULL,
+                      created_by UUID REFERENCES users(id) ON DELETE SET NULL
 );
+
+CREATE UNIQUE INDEX uk_tags_name ON tags (lower(name));
+
+INSERT INTO tags (id, name) VALUES
+    ('11111111-1111-1111-1111-111111111101', 'networking'),
+    ('11111111-1111-1111-1111-111111111102', 'technology'),
+    ('11111111-1111-1111-1111-111111111103', 'career'),
+    ('11111111-1111-1111-1111-111111111104', 'social'),
+    ('11111111-1111-1111-1111-111111111105', 'workshop'),
+    ('11111111-1111-1111-1111-111111111106', 'ai'),
+    ('11111111-1111-1111-1111-111111111107', 'startup'),
+    ('11111111-1111-1111-1111-111111111108', 'conference'),
+    ('11111111-1111-1111-1111-111111111109', 'alumni'),
+    ('11111111-1111-1111-1111-111111111110', 'online');
 
 CREATE TABLE events (
                         id                      UUID PRIMARY KEY,

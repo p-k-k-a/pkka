@@ -1,16 +1,3 @@
-INSERT INTO tags (id, name) VALUES
-    ('11111111-1111-1111-1111-111111111101', 'networking'),
-    ('11111111-1111-1111-1111-111111111102', 'technology'),
-    ('11111111-1111-1111-1111-111111111103', 'career'),
-    ('11111111-1111-1111-1111-111111111104', 'social'),
-    ('11111111-1111-1111-1111-111111111105', 'workshop'),
-    ('11111111-1111-1111-1111-111111111106', 'ai'),
-    ('11111111-1111-1111-1111-111111111107', 'startup'),
-    ('11111111-1111-1111-1111-111111111108', 'conference'),
-    ('11111111-1111-1111-1111-111111111109', 'alumni'),
-    ('11111111-1111-1111-1111-111111111110', 'online')
-ON CONFLICT (id) DO NOTHING;
-
 INSERT INTO events (
     id, title, full_description, type, starts_at, ends_at, transmission_url,
     location, seat_limit, registration_closes_at, audience, cover_image_url,

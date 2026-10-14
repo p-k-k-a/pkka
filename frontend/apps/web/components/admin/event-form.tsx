@@ -12,15 +12,16 @@ import {
   getGetEventByIdQueryKey,
   getListAdminEventsQueryKey,
   getListEventsQueryKey,
+  getListTagsQueryKey,
   useCreateAdminEvent,
   useListTags,
   useUpdateAdminEvent,
   type AdminEventResponse,
   type EventRequest,
 } from "@pkka/api";
+import { EventTagPicker } from "@/components/admin/event-tag-picker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -124,6 +125,7 @@ export function EventForm({ event }: EventFormProps) {
   const onSaved = () => {
     queryClient.invalidateQueries({ queryKey: getListAdminEventsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() });
     if (event) {
       queryClient.invalidateQueries({ queryKey: getGetAdminEventQueryKey(event.id) });
       queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) });
@@ -185,12 +187,6 @@ export function EventForm({ event }: EventFormProps) {
     } else {
       createEvent.mutate({ data: payload });
     }
-  };
-
-  const toggleTag = (name: string) => {
-    setSelectedTags((current) =>
-      current.includes(name) ? current.filter((tag) => tag !== name) : [...current, name],
-    );
   };
 
   return (
@@ -320,24 +316,11 @@ export function EventForm({ event }: EventFormProps) {
 
             <section className="space-y-4">
               <SectionTitle>Tagi wydarzenia</SectionTitle>
-              {catalogTags.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Brak tagów w katalogu.</p>
-              ) : (
-                <div className="flex flex-wrap gap-3">
-                  {catalogTags.map((tag) => (
-                    <div key={tag.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`event-tag-${tag.id}`}
-                        checked={selectedTags.includes(tag.name)}
-                        onCheckedChange={() => toggleTag(tag.name)}
-                      />
-                      <Label htmlFor={`event-tag-${tag.id}`} className="text-sm font-normal">
-                        #{tag.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <EventTagPicker
+                catalog={catalogTags}
+                selected={selectedTags}
+                onChange={setSelectedTags}
+              />
             </section>
           </div>
 
