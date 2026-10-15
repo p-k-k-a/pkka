@@ -1,59 +1,55 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { CardLinkFooter } from "@/components/content/card-link-footer";
 
 type FeaturedCardProps = {
   href: string;
   imageSrc: string;
   imageAlt: string;
-  meta: React.ReactNode;
+  label: string;
   title: string;
-  cta: React.ReactNode;
-  ctaAlign?: "start" | "end";
-  imageOverlay?: React.ReactNode;
-  children?: React.ReactNode;
+  meta: React.ReactNode;
+  cta: string;
+  className?: string;
 };
 
 export function FeaturedCard({
   href,
   imageSrc,
   imageAlt,
-  meta,
+  label,
   title,
+  meta,
   cta,
-  ctaAlign = "end",
-  imageOverlay,
-  children,
+  className,
 }: FeaturedCardProps) {
   return (
     <Link
       href={href}
-      className="group focus-visible:ring-ring flex rounded-[24px] focus-visible:ring-2 focus-visible:outline-none md:col-span-2"
+      className={`group focus-visible:ring-ring block rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none ${className ?? ""}`}
     >
-      <Card className="border-border/70 bg-card text-card-foreground hover:bg-muted/30 flex w-full flex-col overflow-hidden rounded-[24px] border p-0 shadow-sm transition-all duration-300 hover:shadow-md md:flex-row">
-        <div className="bg-muted relative aspect-[4/3] w-full shrink-0 overflow-hidden md:aspect-auto md:w-[50%]">
+      <Card className="bg-muted flex h-full flex-col gap-0 overflow-hidden rounded-none p-0 shadow-none ring-0 md:flex-row">
+        <div className="relative aspect-[4/3] w-full shrink-0 md:aspect-auto md:min-h-80 md:w-1/2">
           <Image
             src={imageSrc}
             alt={imageAlt}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            sizes="(max-width: 768px) 100vw, 640px"
+            className="object-cover"
             priority
           />
-          {imageOverlay}
         </div>
 
-        <div className="flex flex-1 flex-col justify-between p-8 md:p-10">
-          <div className="space-y-4">
-            {meta}
-            <CardTitle className="text-foreground group-hover:text-primary text-2xl leading-tight font-extrabold transition-colors md:text-3xl">
-              {title}
-            </CardTitle>
-            {children}
-          </div>
-
-          <CardLinkFooter align={ctaAlign}>{cta}</CardLinkFooter>
+        <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
+          <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+            {label}
+          </span>
+          <h3 className="font-heading text-foreground text-[23px] leading-snug font-semibold md:text-[28px]">
+            {title}
+          </h3>
+          {meta}
+          <CardLinkFooter>{cta}</CardLinkFooter>
         </div>
       </Card>
     </Link>

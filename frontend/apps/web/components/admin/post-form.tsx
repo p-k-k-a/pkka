@@ -1,5 +1,7 @@
 "use client";
 
+import { FieldLabel } from "@/components/admin/field-label";
+import { SectionTitle } from "@/components/content/section-title";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -96,18 +98,21 @@ export function PostForm({ post }: PostFormProps) {
   };
 
   return (
-    <div className="px-4 py-10 md:px-10">
+    <div className="bg-background px-4 py-10 md:px-10 md:py-16">
       <div className="mx-auto max-w-[1280px]">
-        <Button asChild variant="ghost" size="sm" className="mb-6 -ml-2">
+        <Button asChild variant="ghost" size="sm" className="mb-8 -ml-2">
           <Link href="/dashboard/posts">
             <ArrowLeft data-icon="inline-start" />
             Wróć do listy wpisów
           </Link>
         </Button>
 
-        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div className="mb-10 space-y-3">
+          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+            {isEditing ? "Edycja" : "Nowy wpis"}
+          </p>
           <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-            {isEditing ? "Edytuj wpis" : "Nowy wpis"}
+            {isEditing ? "Edytuj wpis" : "Napisz wpis do aktualności"}
           </h1>
         </div>
 
@@ -117,42 +122,32 @@ export function PostForm({ post }: PostFormProps) {
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <Card className="gap-8 p-5 md:p-8">
+        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-12">
             <section className="space-y-5">
-              <h2 className="text-foreground font-heading text-lg font-semibold">
-                Podstawowe informacje
-              </h2>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="post-title"
-                  className="text-muted-foreground text-xs font-semibold tracking-widest uppercase"
-                >
-                  Tytuł wpisu
-                </Label>
-                <Input
-                  id="post-title"
-                  value={title}
-                  maxLength={300}
-                  placeholder="np. Relacja z debaty: AI w przemyśle"
-                  onChange={(event) => setTitle(event.target.value)}
-                />
-                <p className="text-muted-foreground text-xs">
-                  {!isEditing
-                    ? "Adres wpisu wygenerujemy automatycznie z tytułu."
-                    : `Adres wpisu: /${post.slug}. Nie zmienia się przy edycji.`}
-                </p>
-              </div>
+              <FieldLabel htmlFor="post-title">Tytuł</FieldLabel>
+              <Input
+                id="post-title"
+                value={title}
+                maxLength={300}
+                placeholder="np. Relacja z debaty: AI w przemyśle"
+                className="font-heading h-auto min-h-14 py-3 text-lg font-semibold md:text-[23px]"
+                onChange={(event) => setTitle(event.target.value)}
+              />
+              <p className="text-muted-foreground text-xs">
+                {!isEditing
+                  ? "Adres wpisu wygenerujemy automatycznie z tytułu."
+                  : `Adres wpisu: /${post.slug}. Nie zmienia się przy edycji.`}
+              </p>
             </section>
 
-            <section className="space-y-3">
-              <h2 className="text-foreground font-heading text-lg font-semibold">Treść</h2>
+            <section className="space-y-5">
+              <SectionTitle>Treść</SectionTitle>
               <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
             </section>
 
-            <section className="space-y-3">
-              <h2 className="text-foreground font-heading text-lg font-semibold">Okładka</h2>
+            <section className="space-y-5">
+              <SectionTitle>Okładka</SectionTitle>
               {/* TODO: cover image upload is not supported by the API yet */}
               <div className="bg-background border-border text-muted-foreground flex min-h-40 cursor-not-allowed items-center justify-center rounded-lg border-2 border-dashed">
                 <div className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase">
@@ -160,12 +155,12 @@ export function PostForm({ post }: PostFormProps) {
                 </div>
               </div>
             </section>
-          </Card>
+          </div>
 
-          <div className="space-y-6">
-            <Card className="gap-4 p-5">
+          <div className="space-y-10">
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
               <div className="flex items-center gap-1.5">
-                <h2 className="text-foreground font-heading text-base font-semibold">Status</h2>
+                <SectionTitle>Status</SectionTitle>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
@@ -218,10 +213,8 @@ export function PostForm({ post }: PostFormProps) {
               ) : null}
             </Card>
 
-            <Card className="gap-4 p-5">
-              <h2 className="text-foreground font-heading text-base font-semibold">
-                Gdzie opublikować
-              </h2>
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionTitle>Gdzie opublikować</SectionTitle>
               <div className="space-y-3">
                 {PUBLISH_CHANNELS.map((channel) => (
                   <div key={channel.id} className="flex items-center gap-3">
@@ -241,10 +234,8 @@ export function PostForm({ post }: PostFormProps) {
               </div>
             </Card>
 
-            <Card className="gap-4 p-5">
-              <h2 className="text-foreground font-heading text-base font-semibold">
-                Powiadomienia
-              </h2>
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionTitle>Powiadomienia</SectionTitle>
               <div className="space-y-3">
                 {NOTIFICATIONS.map((notification) => (
                   <div key={notification.id} className="flex items-center gap-3">

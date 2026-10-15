@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
-  ApiError,
   getGetEventByIdQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
@@ -11,6 +10,7 @@ import {
   EventRegistrationStatus,
   type EventDetailsResponse,
 } from "@pkka/api";
+import { eventRegistrationErrorMessage, isEventFull } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Calendar from "expo-calendar";
 import { router } from "expo-router";
@@ -18,27 +18,6 @@ import { useState } from "react";
 import { View } from "react-native";
 
 type ActiveSheet = "calendar" | "leave" | null;
-// In ideal world we would have this enum from the backend from openapi but I don't want to do that myself and I don't want to wait for backend to be updated so let's stick with it
-type ConflictReason = "ALREADY_REGISTERED" | "REGISTRATION_CLOSED" | "EVENT_ALREADY_STARTED";
-
-const CONFLICT_MESSAGES: Record<ConflictReason, string> = {
-  ALREADY_REGISTERED: "Jesteś już zapisany na to wydarzenie.",
-  REGISTRATION_CLOSED: "Rejestracja na to wydarzenie została zamknięta.",
-  EVENT_ALREADY_STARTED: "Wydarzenie już się rozpoczęło.",
-};
-
-function errorMessage(error: unknown, action: "join" | "leave"): string {
-  if (error instanceof ApiError) {
-    const reason = (error.body as { reason?: string } | null)?.reason;
-    if (reason && CONFLICT_MESSAGES[reason as ConflictReason])
-      return CONFLICT_MESSAGES[reason as ConflictReason];
-    if (error.status === 404 && action === "leave") return "Nie jesteś zapisany na to wydarzenie.";
-    if (error.status === 404) return "Nie znaleziono wydarzenia.";
-  }
-  return action === "join"
-    ? "Nie udało się zapisać na wydarzenie. Spróbuj ponownie."
-    : "Nie udało się opuścić wydarzenia. Spróbuj ponownie.";
-}
 
 export function EventParticipationFooter({ event }: { event: EventDetailsResponse }) {
   const { user } = useAuth();
@@ -49,7 +28,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const register = useRegisterForEvent();
   const unregister = useCancelEventRegistration();
   const waitlisted = event.registrationStatus === EventRegistrationStatus.WAITLISTED;
-  const full = event.seatLimit != null && event.seatsTaken >= event.seatLimit;
+  const full = isEventFull(event.seatLimit, event.seatsTaken);
   const pending = register.isPending || unregister.isPending;
 
   const refresh = () =>
@@ -67,7 +46,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
         setSheet("calendar");
       }
     } catch (e) {
-      setError(errorMessage(e, "join"));
+      setError(eventRegistrationErrorMessage(e, "join"));
       await refresh();
     }
   };
@@ -80,7 +59,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
       await refresh();
     } catch (e) {
       setSheet(null);
-      setError(errorMessage(e, "leave"));
+      setError(eventRegistrationErrorMessage(e, "leave"));
       await refresh();
     }
   };
@@ -106,8 +85,10 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   };
 
   return (
-    <View className="border-border bg-background gap-3 border-t px-5 py-4">
-      {error ? <Text className="text-destructive text-xs font-semibold">{error}</Text> : null}
+    <View className="border-border bg-card gap-3 border-t px-5 py-4">
+      {error ? (
+        <Text className="text-destructive dark:text-foreground text-xs font-semibold">{error}</Text>
+      ) : null}
 
       {!user ? (
         <>
@@ -125,11 +106,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           </Text>
           <Button
             variant="outline"
-            className="w-full active:bg-muted"
+            className="w-full"
             disabled={pending}
             onPress={() => setSheet("leave")}
           >
-            <Text className="group-active:text-foreground">Opuść listę rezerwową</Text>
+            <Text>Opuść listę rezerwową</Text>
           </Button>
         </>
       ) : event.registrationStatus ? (
@@ -139,11 +120,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           </Button>
           <Button
             variant="outline"
-            className="w-full active:bg-muted"
+            className="w-full"
             disabled={pending}
             onPress={() => setSheet("leave")}
           >
-            <Text className="group-active:text-foreground">Opuść wydarzenie</Text>
+            <Text>Opuść wydarzenie</Text>
           </Button>
         </>
       ) : (
@@ -171,12 +152,8 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           <Button className="w-full" onPress={onAddToCalendar}>
             <Text>Dodaj do kalendarza</Text>
           </Button>
-          <Button
-            variant="outline"
-            className="w-full active:bg-muted"
-            onPress={() => setSheet(null)}
-          >
-            <Text className="group-active:text-foreground">Nie teraz</Text>
+          <Button variant="outline" className="w-full" onPress={() => setSheet(null)}>
+            <Text>Nie teraz</Text>
           </Button>
         </View>
       </BottomSheet>
@@ -200,12 +177,8 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
                   : "Opuść wydarzenie"}
             </Text>
           </Button>
-          <Button
-            variant="outline"
-            className="w-full active:bg-muted"
-            onPress={() => setSheet(null)}
-          >
-            <Text className="group-active:text-foreground">Anuluj</Text>
+          <Button variant="outline" className="w-full" onPress={() => setSheet(null)}>
+            <Text>Anuluj</Text>
           </Button>
         </View>
       </BottomSheet>

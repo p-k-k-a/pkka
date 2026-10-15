@@ -2,6 +2,7 @@ package pl.edu.agh.backend.infrastructure;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -27,6 +28,7 @@ import pl.edu.agh.backend.survey.SurveyAlreadySubmittedException;
 import pl.edu.agh.backend.survey.SurveyHasSubmissionsException;
 import pl.edu.agh.backend.survey.SurveyNotActiveException;
 import pl.edu.agh.backend.survey.SurveyNotFoundException;
+import pl.edu.agh.backend.ticket.TicketNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -159,10 +161,26 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(TicketNotFoundException.class)
+    public ProblemDetail handleTicketNotFound(TicketNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Ticket not found");
+        return problem;
+    }
+
     @ExceptionHandler(MaterialNotFoundException.class)
     public ProblemDetail handleMaterialNotFound(MaterialNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Material not found");
+        return problem;
+    }
+
+    /** A {@code ?sort=} naming a property the entity doesn't have — the client's mistake, not a server error. */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ProblemDetail handleUnknownSortProperty(PropertyReferenceException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Cannot sort by unknown property '%s'".formatted(ex.getPropertyName()));
+        problem.setTitle("Invalid sort");
         return problem;
     }
 
