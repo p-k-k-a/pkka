@@ -22,7 +22,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "userInterfaceStyle": "automatic",
-      "package": "com.pkka.app"
+      "package": "com.pkka.app",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -47,6 +48,14 @@
         "expo-calendar",
         {
           "calendarPermission": "Aplikacja potrzebuje dostępu do Twojego kalendarza."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#ffffff",
+          "defaultChannel": "events"
         }
       ],
       [
@@ -111,6 +120,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c7520f8c-48d2-4d78-af05-c5eb503e5882"
+      },
+      "router": {}
+    },
+    "owner": "pkka"
   }
 }
