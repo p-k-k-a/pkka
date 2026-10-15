@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "build": "expo export --platform web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eas-build-post-install": "pnpm --filter @pkka/api generate"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

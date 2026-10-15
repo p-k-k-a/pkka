@@ -1,0 +1,45 @@
+name: Deploy web to Vercel
+
+# Deploys pkka.me for a release (see RELEASING.md). This is the only way the web app
+# reaches Vercel: frontend/apps/web/vercel.json turns off Vercel's own deployments on
+# push, including previews, which could not reach the API anyway.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy production
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-web-production
+      cancel-in-progress: false
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@62.7.0
+
+      # Downloads the project settings (root directory, install and build commands)
+      # and the production environment variables, so the build matches Vercel's.
+      - name: Pull production settings
+        run: vercel pull --yes --environment=production
+
+      - name: Build
+        run: vercel build --prod
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod
