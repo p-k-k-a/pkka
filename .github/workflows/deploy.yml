@@ -91,7 +91,7 @@ jobs:
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
             --command-id RunShellScript \
-            --scripts 'sudo -H -u deploy /opt/pkka/deploy/deploy.sh "$1"' \
+            --scripts 'sudo -H -u pkka-deploy /opt/pkka/deploy/deploy.sh "$1"' \
             --parameters "$TAG" \
             --output json > result.json || echo "::warning::az exited with status $?"
           jq -r '.value[]?.message' result.json 2>/dev/null | tee deploy.log || true
