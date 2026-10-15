@@ -1,4 +1,5 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
+import { NotificationToggle } from "@/components/profile/notification-toggle";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
@@ -242,6 +243,8 @@ export function UserPanel() {
             colors={colors}
           />
         )}
+
+        <NotificationToggle />
 
         <Separator />
 

@@ -1,4 +1,5 @@
 import {
+  ApiError,
   NotificationType,
   registerDevice,
   unregisterDevice,
@@ -55,6 +56,16 @@ async function ensureChannels(): Promise<void> {
   });
 }
 
+export type PushStatus = "off" | "on" | "blocked";
+
+export async function getNotificationPermissionStatus(): Promise<PushStatus> {
+  if (!(await isPushEnabled())) return "off";
+
+  const { granted, canAskAgain } = await Notifications.getPermissionsAsync();
+  if (granted) return "on";
+  return canAskAgain ? "off" : "blocked";
+}
+
 async function ensurePermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -108,10 +119,31 @@ export async function unregisterFromPushNotifications(): Promise<void> {
 
   try {
     await unregisterDevice(encodeURIComponent(token));
-  } catch {
-    // Already gone server-side, or the session has expired
+  } catch (error) {
+    if (!(error instanceof ApiError && error.status === 404)) throw error;
   }
   await SecureStore.deleteItemAsync(REGISTERED_TOKEN_KEY);
+}
+
+export async function switchPushNotifications(enabled: boolean): Promise<PushStatus> {
+  if (!enabled) {
+    await unregisterFromPushNotifications();
+    await setPushEnabled(false);
+    return "off";
+  }
+
+  await setPushEnabled(true);
+  try {
+    if ((await registerForPushNotifications()) === "registered") return "on";
+  } catch (error) {
+    // Left on, the next status check would flip the switch back by itself
+    await setPushEnabled(false);
+    throw error;
+  }
+
+  const blocked = (await getNotificationPermissionStatus()) === "blocked";
+  if (!blocked) await setPushEnabled(false);
+  return blocked ? "blocked" : "off";
 }
 
 export function watchForTokenRotation(): Notifications.EventSubscription {
