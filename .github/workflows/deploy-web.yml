@@ -40,6 +40,8 @@ jobs:
 
       - name: Build
         run: vercel build --prod
+        env:
+          OPENAPI_INPUT: ../../../backend/openapi.json
 
       - name: Deploy
         run: vercel deploy --prebuilt --prod
