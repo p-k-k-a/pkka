@@ -1334,6 +1334,7 @@ app:
   mobile:
     deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME:myapp}</span>
   web:
+    base-url: <span class="prop">${WEB_BASE_URL:http://localhost:3000}</span>
     success-url: <span class="prop">${WEB_SUCCESS_URL:http://localhost:3000/dashboard}</span>
     logout-redirect-url: <span class="prop">${WEB_LOGOUT_REDIRECT_URL:http://localhost:3000/}</span>
     cors-allowed-origins: <span class="prop">${WEB_CORS_ALLOWED_ORIGINS:http://localhost:3000}</span>
@@ -1431,6 +1432,7 @@ app:
   mobile:
     deep-link-scheme: <span class="prop">${MOBILE_DEEP_LINK_SCHEME}</span>
   web:
+    base-url: <span class="prop">${WEB_BASE_URL:}</span>
     success-url: <span class="prop">${WEB_SUCCESS_URL}</span>
     logout-redirect-url: <span class="prop">${WEB_LOGOUT_REDIRECT_URL}</span>
     cors-allowed-origins: <span class="prop">${WEB_CORS_ALLOWED_ORIGINS}</span>
@@ -1472,7 +1474,7 @@ logging:
       Oba punkty odnoszą się do tego samego klienta Keycloaka (<code>pkka-web</code>), bo ma on włączone jednocześnie <strong>Standard Flow</strong> (user login) i <strong>Service Accounts</strong> (admin API). Użycie tych samych credentials upraszcza konfigurację — zamiast utrzymywać osobny klient tylko do admina, <code>pkka-web</code> pełni obie role.
     </div></div>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars (poza uruchomioną bazą, patrz <code>docker-compose.yml</code>). Na <code>prod</code> większość nie ma wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>SPRING_DATASOURCE_URL</code>, <code>SPRING_DATASOURCE_USERNAME</code>, <code>SPRING_DATASOURCE_PASSWORD</code>, <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>, <code>WEB_SUCCESS_URL</code>, <code>WEB_LOGOUT_REDIRECT_URL</code>, <code>WEB_CORS_ALLOWED_ORIGINS</code>. <code>KEYCLOAK_VERIFIED_ALUMN_ROLE</code> ma domyślną wartość (<code>verified-alumn</code>) nawet na prod — trzeba go nadpisać tylko jeśli rola w realmie nazywa się inaczej. Zmienne <code>DISCORD_*</code> są opcjonalne: bez nich nic nie trafia na Discorda, a serwer, kanał ogłoszeń i rolę absolwenta ustawia się komendą <code>/setup</code> i trzyma w bazie.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars (poza uruchomioną bazą, patrz <code>docker-compose.yml</code>). Na <code>prod</code> większość nie ma wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>SPRING_DATASOURCE_URL</code>, <code>SPRING_DATASOURCE_USERNAME</code>, <code>SPRING_DATASOURCE_PASSWORD</code>, <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>, <code>WEB_SUCCESS_URL</code>, <code>WEB_LOGOUT_REDIRECT_URL</code>, <code>WEB_CORS_ALLOWED_ORIGINS</code>. <code>KEYCLOAK_VERIFIED_ALUMN_ROLE</code> ma domyślną wartość (<code>verified-alumn</code>) nawet na prod — trzeba go nadpisać tylko jeśli rola w realmie nazywa się inaczej. Zmienne <code>DISCORD_*</code> są opcjonalne: bez nich nic nie trafia na Discorda, a serwer, kanał ogłoszeń i rolę absolwenta ustawia się komendą <code>/setup</code> i trzyma w bazie. <code>WEB_BASE_URL</code> też jest opcjonalny: bez niego ogłoszenia na Discordzie idą bez linku do wydarzenia na stronie.</div></div>
   </section>
   <!-- KEYCLOAK ADMIN API -->
   <section id="admin-api">
