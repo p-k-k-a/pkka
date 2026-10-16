@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -23,7 +22,6 @@ import pl.edu.agh.backend.user.User;
 @Table(name = "applications", indexes = @Index(name = "idx_applications_status", columnList = "status, created_at"))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
@@ -42,6 +40,10 @@ public class Application {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.UNDER_REVIEW;
+
+    @Column(name = "discord_vouched", nullable = false)
+    @Builder.Default
+    private boolean discordVouched = false;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -126,26 +128,36 @@ public class Application {
 
     public void approve(User reviewer) {
         ensureUnderReview();
-        this.status = ApplicationStatus.APPROVED;
-        this.applicant.setGraduationYear(this.graduationYear);
-        markReviewed(reviewer);
+        markApproved();
+        this.reviewedBy = reviewer;
+    }
+
+    public void autoApprove() {
+        ensureUnderReview();
+        markApproved();
     }
 
     public void reject(User reviewer, String reason) {
         ensureUnderReview();
         this.status = ApplicationStatus.REJECTED;
         this.rejectionReason = reason;
-        markReviewed(reviewer);
+        this.reviewedBy = reviewer;
+        this.reviewedAt = Instant.now();
+    }
+
+    private void markApproved() {
+        this.status = ApplicationStatus.APPROVED;
+        this.reviewedAt = Instant.now();
+        recordGraduationYearOnApplicant();
+    }
+
+    private void recordGraduationYearOnApplicant() {
+        this.applicant.setGraduationYear(this.graduationYear);
     }
 
     private void ensureUnderReview() {
         if (this.status != ApplicationStatus.UNDER_REVIEW) {
             throw new InvalidApplicationStateException(this.id, this.status);
         }
-    }
-
-    private void markReviewed(User reviewer) {
-        this.reviewedBy = reviewer;
-        this.reviewedAt = Instant.now();
     }
 }
