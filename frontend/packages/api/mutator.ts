@@ -5,7 +5,7 @@ let getRefreshToken: () => Promise<string | null> = async () => null;
 let onTokenRefreshed: (newAT: string, newRT: string) => Promise<void> = async () => {};
 let useSessionAuth = false;
 
-let refreshingTokenPromise: Promise<string> | null = null;
+let refreshingTokenPromise: Promise<string | null> | null = null;
 
 export function configureApi(opts: {
   baseUrl: string;
@@ -63,7 +63,11 @@ const parseBody = async <T>(res: Response): Promise<T> => {
 };
 
 export const refreshTokens = async (): Promise<string> => {
-  if (refreshingTokenPromise) return refreshingTokenPromise;
+  if (refreshingTokenPromise) {
+    const token = await refreshingTokenPromise;
+    if (!token) throw new Error("Refresh failed");
+    return token;
+  }
 
   const rt = await getRefreshToken();
 
@@ -74,24 +78,28 @@ export const refreshTokens = async (): Promise<string> => {
 
   refreshingTokenPromise = performTokenRefresh(rt);
 
+  let token: string | null;
   try {
-    return await refreshingTokenPromise;
+    token = await refreshingTokenPromise;
   } finally {
     refreshingTokenPromise = null;
   }
+
+  if (!token) {
+    await onUnauthenticated();
+    throw new Error("Refresh failed");
+  }
+  return token;
 };
 
-const performTokenRefresh = async (rt: string): Promise<string> => {
+const performTokenRefresh = async (rt: string): Promise<string | null> => {
   const res = await fetch(buildUrl("/api/public/auth/refresh"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: rt }),
   });
 
-  if (!res.ok) {
-    await onUnauthenticated();
-    throw new Error("Refresh failed");
-  }
+  if (!res.ok) return null;
 
   const data = (await res.json()) as { access_token: string; refresh_token: string };
   await onTokenRefreshed(data.access_token, data.refresh_token);

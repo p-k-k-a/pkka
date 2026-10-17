@@ -5,7 +5,7 @@ import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import type { ReactNode } from "react";
 import { getProfileContacts } from "@pkka/domain";
 import { openDiscordUser, openEmail, openWithFallback } from "@/lib/contact";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { Mail } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
@@ -30,6 +30,7 @@ function ExternalLink({ label, url, icon }: { label: string; url: string; icon: 
 }
 
 export function ContactActions({ profile }: ContactActionsProps) {
+  const theme = useThemeColors();
   const { email, discordId, linkedinUrl, githubUrl, hasAny } = getProfileContacts(profile);
 
   const hasButtons = !!discordId || !!email;
@@ -42,7 +43,7 @@ export function ContactActions({ profile }: ContactActionsProps) {
         <View className="gap-3">
           {discordId ? (
             <Button size="lg" className="w-full" onPress={() => openDiscordUser(discordId)}>
-              <DiscordIcon size={18} color={THEME.light.primaryForeground} />
+              <DiscordIcon size={18} color={theme.primaryForeground} />
               <Text className="font-bold">Kontakt przez Discord</Text>
             </Button>
           ) : null}
@@ -53,7 +54,7 @@ export function ContactActions({ profile }: ContactActionsProps) {
               className="w-full"
               onPress={() => openEmail(email)}
             >
-              <Mail size={18} color={THEME.light.secondaryForeground} />
+              <Mail size={18} color={theme.secondaryForeground} />
               <Text className="font-bold">Kontakt przez E-mail</Text>
             </Button>
           ) : null}
@@ -66,7 +67,11 @@ export function ContactActions({ profile }: ContactActionsProps) {
             <ExternalLink label="LinkedIn" url={linkedinUrl} icon={<LinkedinIcon size={16} />} />
           ) : null}
           {githubUrl ? (
-            <ExternalLink label="GitHub" url={githubUrl} icon={<GithubIcon size={16} />} />
+            <ExternalLink
+              label="GitHub"
+              url={githubUrl}
+              icon={<GithubIcon size={16} color={theme.foreground} />}
+            />
           ) : null}
         </View>
       ) : null}
