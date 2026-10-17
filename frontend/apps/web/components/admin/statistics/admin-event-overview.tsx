@@ -223,7 +223,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
             </section>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <Card className="gap-6 px-6 py-6 lg:col-span-2">
+              <Card className="flex flex-col gap-6 px-6 py-6 lg:col-span-2">
                 <div className="space-y-1">
                   <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
                     Zapisy w czasie
