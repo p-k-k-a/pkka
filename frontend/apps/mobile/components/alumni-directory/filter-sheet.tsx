@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/button";
 import { RangeSlider } from "@/components/ui/range-slider";
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
-import { EMPTY_FILTERS, YEAR_MAX, YEAR_MIN, type AlumniFilters } from "@/lib/alumni-directory";
+import {
+  ALUMNI_YEAR_MAX,
+  ALUMNI_YEAR_MIN,
+  EMPTY_ALUMNI_FILTERS,
+  type AlumniFilters,
+} from "@pkka/domain";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
@@ -28,6 +34,7 @@ function HeaderText({ children }: { children: ReactNode }) {
 }
 
 export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetProps) {
+  const theme = useThemeColors();
   const [draft, setDraft] = useState<AlumniFilters>(value);
   // The sheet keeps its children mounted while closed, so the pickers would
   // otherwise reopen still holding the previous search text and expanded list.
@@ -62,15 +69,15 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
           </Text>
         </View>
         <RangeSlider
-          min={YEAR_MIN}
-          max={YEAR_MAX}
+          min={ALUMNI_YEAR_MIN}
+          max={ALUMNI_YEAR_MAX}
           low={draft.yearRange[0]}
           high={draft.yearRange[1]}
           onChange={(low, high) => setDraft((d) => ({ ...d, yearRange: [low, high] }))}
         />
         <View className="flex-row justify-between">
-          <Text className="text-muted-foreground text-xs">{YEAR_MIN}</Text>
-          <Text className="text-muted-foreground text-xs">{YEAR_MAX}</Text>
+          <Text className="text-muted-foreground text-xs">{ALUMNI_YEAR_MIN}</Text>
+          <Text className="text-muted-foreground text-xs">{ALUMNI_YEAR_MAX}</Text>
         </View>
       </View>
 
@@ -115,7 +122,9 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
               draft.mentorOnly ? "border-primary bg-primary" : "border-muted-foreground/40",
             )}
           >
-            {draft.mentorOnly ? <Check size={14} color="white" strokeWidth={3} /> : null}
+            {draft.mentorOnly ? (
+              <Check size={14} color={theme.primaryForeground} strokeWidth={3} />
+            ) : null}
           </View>
           <Text className="text-foreground text-base">Tylko chętni do mentoringu</Text>
         </Pressable>
@@ -125,7 +134,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
         <Button size="lg" onPress={() => onApply(draft)}>
           <Text className="font-bold">Zastosuj filtry</Text>
         </Button>
-        <Pressable onPress={() => setDraft(EMPTY_FILTERS)} className="items-center py-1">
+        <Pressable onPress={() => setDraft(EMPTY_ALUMNI_FILTERS)} className="items-center py-1">
           <Text className="text-muted-foreground text-sm font-semibold">Wyczyść wszystko</Text>
         </Pressable>
       </View>

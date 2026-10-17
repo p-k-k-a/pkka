@@ -4,15 +4,15 @@ import { SortSheet } from "@/components/alumni-directory/sort-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { useAlumniDirectory } from "@/lib/alumni-directory";
 import {
-  countActiveFilters,
-  DEFAULT_SORT,
-  EMPTY_FILTERS,
-  useAlumniDirectory,
+  countActiveAlumniFilters,
+  DEFAULT_ALUMNI_SORT,
+  EMPTY_ALUMNI_FILTERS,
   type AlumniFilters,
-  type SortOption,
-} from "@/lib/alumni-directory";
-import { THEME } from "@/lib/theme";
+  type AlumniSortOption,
+} from "@pkka/domain";
+import { useThemeColors } from "@/lib/theme";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, RefreshControl, View } from "react-native";
@@ -20,16 +20,17 @@ import { ActivityIndicator, FlatList, RefreshControl, View } from "react-native"
 type ActiveSheet = "filter" | "sort" | null;
 
 export function AlumniDirectory() {
+  const theme = useThemeColors();
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_FILTERS);
-  const [sort, setSort] = useState<SortOption>(DEFAULT_SORT);
+  const [filters, setFilters] = useState<AlumniFilters>(EMPTY_ALUMNI_FILTERS);
+  const [sort, setSort] = useState<AlumniSortOption>(DEFAULT_ALUMNI_SORT);
   const [sheet, setSheet] = useState<ActiveSheet>(null);
 
   const { alumni, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useAlumniDirectory({ query, filters, sort });
 
-  const activeCount = countActiveFilters(filters);
+  const activeCount = countActiveAlumniFilters(filters);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -47,14 +48,18 @@ export function AlumniDirectory() {
     <View className="bg-background flex-1">
       {/* Pinned above the list: keeping the search TextInput out of the FlatList
           header avoids Android focus loss when results change on each keystroke. */}
-      <View className="gap-4 px-5 pb-4 pt-8">
-        <Text className="text-foreground font-heading text-2xl font-bold uppercase tracking-tight">
+      <View className="border-border gap-4 border-b px-5 pb-5 pt-8">
+        <Text
+          role="heading"
+          aria-level="1"
+          className="font-heading text-foreground text-[33px] font-semibold leading-tight tracking-tight"
+        >
           Katalog Alumnów
         </Text>
 
         <View className="justify-center">
           <View className="absolute bottom-0 left-3 top-0 z-10 justify-center">
-            <Search size={18} color={THEME.light.mutedForeground} />
+            <Search size={18} color={theme.mutedForeground} />
           </View>
           <Input
             value={query}
@@ -71,7 +76,7 @@ export function AlumniDirectory() {
             className="flex-1 active:bg-muted"
             onPress={() => setSheet("filter")}
           >
-            <SlidersHorizontal size={16} color={THEME.light.foreground} />
+            <SlidersHorizontal size={16} color={theme.foreground} />
             <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
               Filtruj
             </Text>
@@ -86,7 +91,7 @@ export function AlumniDirectory() {
             className="flex-1 active:bg-muted"
             onPress={() => setSheet("sort")}
           >
-            <ArrowUpDown size={16} color={THEME.light.foreground} />
+            <ArrowUpDown size={16} color={theme.foreground} />
             <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
               Sortuj
             </Text>
@@ -104,7 +109,7 @@ export function AlumniDirectory() {
           </View>
         )}
         ItemSeparatorComponent={() => <View className="h-4" />}
-        contentContainerStyle={{ paddingBottom: 48, paddingTop: 4 }}
+        contentContainerStyle={{ paddingBottom: 48, paddingTop: 20 }}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReached={onEndReached}
