@@ -49,15 +49,6 @@ function EventDetail({ label, children }: { label: string; children: ReactNode }
   );
 }
 
-function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="border-border flex items-baseline justify-between gap-4 border-t py-3 first:border-t-0 first:pt-0">
-      <dt className="text-muted-foreground text-sm">{label}</dt>
-      <dd className="text-foreground text-right text-sm font-medium">{children}</dd>
-    </div>
-  );
-}
-
 function OverviewSkeleton() {
   return (
     <div className="px-4 py-10 md:px-10 md:py-16">
@@ -146,7 +137,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                   </Link>
                 </Button>
               </div>
-              <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+              <dl className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <EventDetail label="Termin">
                   <span className="block">
                     {formatEventDateLong(event.startsAt)},{" "}
@@ -160,6 +151,10 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                   {eventLocationLabel(event.type, event.location)}
                 </EventDetail>
                 <EventDetail label="Odbiorcy">{audienceLabel(event.audience)}</EventDetail>
+                <EventDetail label="Opublikowano">{formatDateTime(event.createdAt)}</EventDetail>
+                <EventDetail label="Zapisy do">
+                  {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
+                </EventDetail>
                 <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
               </dl>
             </div>
@@ -229,22 +224,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                 <DailyRegistrationsChart days={stats.daily} />
               </Card>
 
-              <div className="flex flex-col gap-6">
-                <Card className="gap-4 px-6 py-6">
-                  <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-                    Podsumowanie
-                  </h2>
-                  <dl>
-                    <SummaryRow label="Opublikowano">
-                      {formatDateTime(stats.publishedAt)}
-                    </SummaryRow>
-                    <SummaryRow label="Zapisy do">
-                      {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
-                    </SummaryRow>
-                  </dl>
-                </Card>
-                <SignupSources signUps={stats.signUps} />
-              </div>
+              <SignupSources signUps={stats.signUps} />
             </div>
           </>
         )}
