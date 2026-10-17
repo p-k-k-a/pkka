@@ -10,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import pl.edu.agh.backend.event.EventTimeframe;
 
 @RestController
 @RequestMapping("/api/admin/events")
@@ -34,10 +32,8 @@ public class EventStatisticsController {
     }
 
     @GetMapping("/statistics")
-    @Operation(
-            summary = "Compare occupancy across events",
-            description = "One row per event, newest start first, optionally limited to upcoming or past events.")
-    public List<EventOccupancyResponse> listEventOccupancy(@RequestParam(required = false) EventTimeframe timeframe) {
-        return eventStatisticsService.compareOccupancy(timeframe == null ? EventTimeframe.ALL : timeframe);
+    @Operation(summary = "Compare occupancy across events", description = "One row per event, newest start first.")
+    public List<EventOccupancyResponse> listEventOccupancy() {
+        return eventStatisticsService.compareOccupancy();
     }
 }

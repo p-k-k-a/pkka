@@ -17,17 +17,16 @@ public interface RegistrationActivityRepository extends JpaRepository<Registrati
             """)
     List<ActivityOccurrence> findOccurrences(@Param("eventId") UUID eventId);
 
-    /** An event with no activity of some type has no row for it, so a missing entry reads as zero. */
     @Query("""
-            select a.event.id as eventId, a.type as type, count(a) as count
+            select a.event.id as eventId, count(a) as count
             from RegistrationActivity a
-            where a.event.id in :eventIds and a.type in :types
-            group by a.event.id, a.type
+            where a.event.id in :eventIds
+              and a.type = pl.edu.agh.backend.event.registration.RegistrationActivityType.CANCELLED
+            group by a.event.id
             """)
-    List<ActivityCount> countByEventIdInAndTypeIn(
-            @Param("eventIds") Collection<UUID> eventIds, @Param("types") Collection<RegistrationActivityType> types);
+    List<ActivityCount> countCancellationsByEventIdIn(@Param("eventIds") Collection<UUID> eventIds);
 
     record ActivityOccurrence(RegistrationActivityType type, Instant occurredAt) {}
 
-    record ActivityCount(UUID eventId, RegistrationActivityType type, long count) {}
+    record ActivityCount(UUID eventId, long count) {}
 }
