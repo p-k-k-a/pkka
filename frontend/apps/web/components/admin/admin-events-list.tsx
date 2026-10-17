@@ -241,8 +241,8 @@ export function AdminEventsList() {
               >
                 <option value="startsAt,asc">daty wydarzenia, od najstarszej</option>
                 <option value="startsAt,desc">daty wydarzenia, od najnowszej</option>
-                <option value="createdAt,desc">daty dodania, od najnowszej</option>
-                <option value="createdAt,asc">daty dodania, od najstarszej</option>
+                <option value="createdAt,desc">daty publikacji, od najnowszej</option>
+                <option value="createdAt,asc">daty publikacji, od najstarszej</option>
               </Select>
             </label>
           </div>
