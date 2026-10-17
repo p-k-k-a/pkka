@@ -42,9 +42,11 @@ function startStatus(startsAt: string, endsAt: string) {
   return parseISO(endsAt) > now ? "trwa teraz" : "zakończone";
 }
 
-function seatsHint(seatLimit?: number) {
-  if (seatLimit == null) return "bez limitu miejsc";
-  return `z ${seatLimit} ${pluralPl(seatLimit, "miejsca", "miejsc", "miejsc")}`;
+function seatsHint(percent?: number) {
+  if (percent == null) return "bez limitu miejsc";
+  if (percent > 100) return `${percent}% miejsc, limit obniżono po zapisach`;
+  if (percent === 100) return "100% miejsc, komplet";
+  return `${percent}% miejsc zajętych`;
 }
 
 function waitlistHint(stats: EventStatisticsResponse) {
@@ -57,13 +59,6 @@ function waitlistHint(stats: EventStatisticsResponse) {
     "osoby czekają na miejsce",
     "osób czeka na miejsce",
   );
-}
-
-function occupancyHint(percent?: number) {
-  if (percent == null) return "wydarzenie bez limitu miejsc";
-  if (percent > 100) return "więcej zapisanych niż miejsc — limit obniżono po zapisach";
-  if (percent >= 100) return "komplet";
-  return "zajętych miejsc";
 }
 
 function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
@@ -80,8 +75,8 @@ function OverviewSkeleton() {
     <div className="px-4 py-10 md:px-10 md:py-16">
       <div className="mx-auto max-w-[1280px] space-y-6">
         <Skeleton className="h-10 w-80 rounded-lg" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
@@ -187,8 +182,8 @@ export function AdminEventOverview({ id }: { id: string }) {
         </div>
 
         {statsQuery.isLoading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-32 rounded-xl" />
             ))}
           </div>
@@ -198,23 +193,24 @@ export function AdminEventOverview({ id }: { id: string }) {
           <>
             <section
               aria-label="Najważniejsze liczby"
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              className="grid grid-cols-1 gap-4 sm:grid-cols-3"
             >
               <StatTile
                 label="Zapisani"
-                value={stats.registered}
-                hint={seatsHint(stats.seatLimit)}
-              />
-              <StatTile
-                label="Lista rezerwowa"
-                value={stats.waitlisted}
-                hint={waitlistHint(stats)}
-              />
-              <StatTile label="Wypisy" value={stats.cancellations} hint="rezygnacje z zapisu" />
-              <StatTile
-                label="Obłożenie"
-                value={stats.occupancyPercent == null ? "—" : `${stats.occupancyPercent}%`}
-                hint={occupancyHint(stats.occupancyPercent)}
+                value={
+                  stats.seatLimit == null ? (
+                    stats.registered
+                  ) : (
+                    <>
+                      {stats.registered}
+                      <span className="text-muted-foreground text-xl font-medium">
+                        {" "}
+                        / {stats.seatLimit}
+                      </span>
+                    </>
+                  )
+                }
+                hint={seatsHint(stats.occupancyPercent)}
               >
                 {stats.occupancyPercent == null ? null : (
                   <OccupancyMeter
@@ -224,6 +220,12 @@ export function AdminEventOverview({ id }: { id: string }) {
                   />
                 )}
               </StatTile>
+              <StatTile
+                label="Lista rezerwowa"
+                value={stats.waitlisted}
+                hint={waitlistHint(stats)}
+              />
+              <StatTile label="Wypisy" value={stats.cancellations} hint="rezygnacje z zapisu" />
             </section>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
