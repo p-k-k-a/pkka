@@ -10,6 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { EventRegistrationStatus } from "@pkka/api";
+import { LabeledDetails } from "@/components/labeled-details";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
 import {
@@ -91,25 +92,17 @@ export function EventCalendarCard({
         {event.title.trim() || "Tytuł wydarzenia"}
       </h3>
       {labeled ? (
-        <dl className="space-y-3 text-sm">
-          {(
-            [
-              [
-                Calendar,
-                "Start",
-                `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
-              ],
-              [MapPin, "Miejsce", location],
-              [UserRound, "Autor", labeled.author ?? "nieznany"],
-            ] as const
-          ).map(([Icon, label, value]) => (
-            <div key={label} className="flex items-start gap-3">
-              <Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              <dt className="text-muted-foreground shrink-0">{label}:</dt>
-              <dd className="text-foreground min-w-0 break-words">{value}</dd>
-            </div>
-          ))}
-        </dl>
+        <LabeledDetails
+          items={[
+            {
+              icon: Calendar,
+              label: "Start",
+              value: `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
+            },
+            { icon: MapPin, label: "Miejsce", value: location },
+            { icon: UserRound, label: "Autor", value: labeled.author ?? "nieznany" },
+          ]}
+        />
       ) : (
         <ul className="text-muted-foreground space-y-3 text-sm">
           <li className="flex items-start gap-3">
