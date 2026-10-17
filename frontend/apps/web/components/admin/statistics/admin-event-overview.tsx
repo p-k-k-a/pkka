@@ -50,9 +50,6 @@ function seatsHint(percent?: number) {
 }
 
 function waitlistHint(stats: EventStatisticsResponse) {
-  if (stats.promotions > 0) {
-    return `${stats.promotions} ${pluralPl(stats.promotions, "osoba przeniesiona", "osoby przeniesione", "osób przeniesionych")} na listę główną`;
-  }
   return pluralPl(
     stats.waitlisted,
     "osoba czeka na miejsce",
@@ -241,19 +238,12 @@ export function AdminEventOverview({ id }: { id: string }) {
                 </h2>
                 <dl>
                   <SummaryRow label="Wszystkie zapisy">{stats.signUps}</SummaryRow>
-                  <SummaryRow label="Przeniesieni z listy rezerwowej">
-                    {stats.promotions}
-                  </SummaryRow>
                   <SummaryRow label="Limit miejsc">{stats.seatLimit ?? "brak"}</SummaryRow>
                   <SummaryRow label="Opublikowano">{formatDateTime(stats.publishedAt)}</SummaryRow>
                   <SummaryRow label="Zapisy do">
                     {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
                   </SummaryRow>
                 </dl>
-                <p className="text-muted-foreground mt-auto text-xs leading-relaxed">
-                  Wypisy są liczone od wdrożenia statystyk — wcześniejsze rezygnacje nie zostały
-                  zapisane.
-                </p>
               </Card>
             </div>
           </>
