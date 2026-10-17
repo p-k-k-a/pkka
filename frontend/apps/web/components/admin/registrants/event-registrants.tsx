@@ -55,7 +55,7 @@ function slugify(title: string) {
 
 function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResponse[]) {
   const csv = toCsv(
-    ["Imię i nazwisko", "E-mail", "Status", "Pozycja na liście rezerwowej", "Data zapisu"],
+    ["Imię i nazwisko", "E-mail", "Status", "Pozycja na liście rezerwowej", "Data dołączenia"],
     registrations.map((registration) => [
       registration.displayName,
       registration.email,
@@ -141,62 +141,60 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
       ) : filtered.length === 0 ? (
         <p className="text-muted-foreground px-6 pb-6">Brak wyników dla „{deferredQuery}”.</p>
       ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
-              <caption className="sr-only">Osoby zapisane na wydarzenie „{eventTitle}”</caption>
-              <thead className="bg-muted text-muted-foreground text-xs tracking-widest uppercase">
-                <tr>
-                  <th scope="col" className="px-6 py-3 font-semibold">
-                    Uczestnik
-                  </th>
-                  <th scope="col" className="px-6 py-3 font-semibold">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right font-semibold">
-                    Data dołączenia
-                  </th>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-sm">
+            <caption className="sr-only">Osoby zapisane na wydarzenie „{eventTitle}”</caption>
+            <thead className="bg-muted text-muted-foreground text-xs tracking-widest uppercase">
+              <tr>
+                <th scope="col" className="px-6 py-3 font-semibold">
+                  Uczestnik
+                </th>
+                <th scope="col" className="px-6 py-3 font-semibold">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-right font-semibold">
+                  Data dołączenia
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((registration) => (
+                <tr key={registration.registrationId} className="border-border border-t">
+                  <td className="px-6 py-3">
+                    <p
+                      className={cn(
+                        "font-semibold",
+                        registration.displayName
+                          ? "text-foreground"
+                          : "text-muted-foreground italic",
+                      )}
+                    >
+                      {registration.displayName ?? "Bez imienia i nazwiska"}
+                    </p>
+                    <p className="text-muted-foreground text-xs break-all">
+                      {registration.email ?? "brak adresu e-mail"}
+                    </p>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span
+                      className={cn(
+                        "inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold",
+                        registration.status === EventRegistrationStatus.WAITLISTED
+                          ? "bg-primary/15 text-brand-ink dark:text-primary"
+                          : "bg-accent/10 text-accent",
+                      )}
+                    >
+                      {statusLabel(registration)}
+                    </span>
+                  </td>
+                  <td className="text-muted-foreground px-6 py-3 text-right whitespace-nowrap tabular-nums">
+                    {signedUpAt(registration.registeredAt)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtered.map((registration) => (
-                  <tr key={registration.registrationId} className="border-border border-t">
-                    <td className="px-6 py-3">
-                      <p
-                        className={cn(
-                          "font-semibold",
-                          registration.displayName
-                            ? "text-foreground"
-                            : "text-muted-foreground italic",
-                        )}
-                      >
-                        {registration.displayName ?? "Bez imienia i nazwiska"}
-                      </p>
-                      <p className="text-muted-foreground text-xs break-all">
-                        {registration.email ?? "brak adresu e-mail"}
-                      </p>
-                    </td>
-                    <td className="px-6 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold",
-                          registration.status === EventRegistrationStatus.WAITLISTED
-                            ? "bg-primary/15 text-brand-ink dark:text-primary"
-                            : "bg-accent/10 text-accent",
-                        )}
-                      >
-                        {statusLabel(registration)}
-                      </span>
-                    </td>
-                    <td className="text-muted-foreground px-6 py-3 text-right whitespace-nowrap tabular-nums">
-                      {signedUpAt(registration.registeredAt)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );

@@ -33,6 +33,7 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
+import { cn } from "@/lib/utils";
 import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
@@ -124,6 +125,7 @@ export function AdminEventsList() {
     data: response,
     isLoading: isListLoading,
     isError,
+    isPlaceholderData,
   } = useListAdminEvents(
     {
       timeframe,
@@ -133,10 +135,7 @@ export function AdminEventsList() {
     },
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
-  const occupancy = useListEventOccupancy(
-    { timeframe: EventTimeframe.ALL },
-    { query: { enabled: admin } },
-  );
+  const occupancy = useListEventOccupancy({ query: { enabled: admin } });
 
   const deleteEvent = useDeleteAdminEvent({
     mutation: {
@@ -226,8 +225,8 @@ export function AdminEventsList() {
                   setPage(0);
                 }}
               >
-                <option value="startsAt,asc">daty wydarzenia, od najstarszej</option>
-                <option value="startsAt,desc">daty wydarzenia, od najnowszej</option>
+                <option value="startsAt,asc">daty wydarzenia, od najwcześniejszej</option>
+                <option value="startsAt,desc">daty wydarzenia, od najpóźniejszej</option>
                 <option value="createdAt,desc">daty publikacji, od najnowszej</option>
                 <option value="createdAt,asc">daty publikacji, od najstarszej</option>
               </Select>
@@ -255,7 +254,13 @@ export function AdminEventsList() {
                   : `Wyświetlono ${totalElements} ${totalElements === 1 ? "wydarzenie" : "wydarzeń"}.`}
               </p>
 
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <div
+                aria-busy={isPlaceholderData}
+                className={cn(
+                  "grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 lg:grid-cols-3",
+                  isPlaceholderData && "pointer-events-none opacity-60",
+                )}
+              >
                 {events.map((item) => {
                   const row = occupancyById.get(item.id);
                   return (

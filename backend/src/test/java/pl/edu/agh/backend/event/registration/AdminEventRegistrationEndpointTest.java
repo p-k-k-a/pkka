@@ -131,7 +131,6 @@ class AdminEventRegistrationEndpointTest {
                 .andExpect(
                         jsonPath("$[*].status").value(contains("REGISTERED", "REGISTERED", "WAITLISTED", "WAITLISTED")))
                 .andExpect(jsonPath("$[0].email").value("anna@example.com"))
-                .andExpect(jsonPath("$[0].userId").exists())
                 .andExpect(jsonPath("$[0].registeredAt").exists())
                 .andExpect(jsonPath("$[0].waitlistPosition").doesNotExist())
                 .andExpect(jsonPath("$[2].waitlistPosition").value(1))

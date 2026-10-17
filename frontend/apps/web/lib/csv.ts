@@ -9,7 +9,7 @@ function csvCell(value: string | number | null | undefined) {
 
 // Semicolons and a byte-order mark are what Excel in a Polish locale expects to open the file correctly.
 export function toCsv(header: string[], rows: (string | number | null | undefined)[][]) {
-  return `﻿${[header, ...rows].map((row) => row.map(csvCell).join(";")).join("\r\n")}`;
+  return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(";")).join("\r\n")}`;
 }
 
 export function downloadCsv(filename: string, content: string) {
@@ -20,5 +20,5 @@ export function downloadCsv(filename: string, content: string) {
   document.body.append(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
