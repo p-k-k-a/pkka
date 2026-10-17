@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, CircleCheck, Clock, Hourglass, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CircleCheck,
+  Clock,
+  Hourglass,
+  MapPin,
+  UserRound,
+} from "lucide-react";
 import { EventRegistrationStatus } from "@pkka/api";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
@@ -83,16 +91,20 @@ export function EventCalendarCard({
         {event.title.trim() || "Tytuł wydarzenia"}
       </h3>
       {labeled ? (
-        <dl className="space-y-2 text-sm">
-          {[
+        <dl className="space-y-3 text-sm">
+          {(
             [
-              "Start",
-              `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
-            ],
-            ["Miejsce", location],
-            ["Autor", labeled.author ?? "nieznany"],
-          ].map(([label, value]) => (
-            <div key={label} className="flex gap-2">
+              [
+                Calendar,
+                "Start",
+                `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
+              ],
+              [MapPin, "Miejsce", location],
+              [UserRound, "Autor", labeled.author ?? "nieznany"],
+            ] as const
+          ).map(([Icon, label, value]) => (
+            <div key={label} className="flex items-start gap-3">
+              <Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />
               <dt className="text-muted-foreground shrink-0">{label}:</dt>
               <dd className="text-foreground min-w-0 break-words">{value}</dd>
             </div>
