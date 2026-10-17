@@ -39,7 +39,7 @@ function startStatus(startsAt: string, endsAt: string) {
 
 function EventDetail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="min-w-0 space-y-1 text-center">
+    <div className="bg-card min-w-0 space-y-1 px-5 py-4">
       <dt className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
         {label}
       </dt>
@@ -133,7 +133,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                   </Link>
                 </Button>
               </div>
-              <dl className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+              <dl className="bg-border ring-border grid grid-cols-1 gap-px overflow-hidden rounded-xl ring-1 sm:grid-cols-2 lg:grid-cols-3">
                 <EventDetail label="Termin">
                   <span className="block">
                     {formatEventDateLong(event.startsAt)},{" "}
