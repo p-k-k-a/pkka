@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { ArrowLeft, CalendarClock, MapPin, Pencil, TriangleAlert, Users } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
 import { type ApiError, useGetAdminEvent, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
@@ -35,6 +35,17 @@ function startStatus(startsAt: string, endsAt: string) {
     return `za ${days} dni`;
   }
   return parseISO(endsAt) > now ? "trwa teraz" : "zakończone";
+}
+
+function EventDetail({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-1">
+      <dt className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
+        {label}
+      </dt>
+      <dd className="text-foreground text-sm break-words">{children}</dd>
+    </div>
+  );
 }
 
 function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
@@ -119,41 +130,25 @@ export function AdminEventOverview({ id }: { id: string }) {
           </Button>
 
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="min-w-0 space-y-3">
-              <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-                Statystyki wydarzenia
-              </p>
+            <div className="min-w-0 flex-1 space-y-6">
               <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight break-words md:text-[33px]">
                 {event.title}
               </h1>
-              <ul className="text-muted-foreground flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                <li className="flex items-center gap-1.5">
-                  <CalendarClock className="size-4 shrink-0" aria-hidden />
-                  <span>
-                    {formatEventDateLong(event.startsAt)},{" "}
-                    {formatTimeRange(event.startsAt, event.endsAt)}
-                    <span className="text-foreground font-medium">
-                      {" "}
-                      ({startStatus(event.startsAt, event.endsAt)})
-                    </span>
+              <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+                <EventDetail label="Termin">
+                  {formatEventDateLong(event.startsAt)},{" "}
+                  {formatTimeRange(event.startsAt, event.endsAt)}{" "}
+                  <span className="text-muted-foreground">
+                    ({startStatus(event.startsAt, event.endsAt)})
                   </span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <MapPin className="size-4 shrink-0" aria-hidden />
+                </EventDetail>
+                <EventDetail label="Miejsce">
                   {eventLocationLabel(event.type, event.location)}
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <Users className="size-4 shrink-0" aria-hidden />
-                  {audienceLabel(event.audience)}
-                </li>
-              </ul>
+                </EventDetail>
+                <EventDetail label="Odbiorcy">{audienceLabel(event.audience)}</EventDetail>
+                <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
+              </dl>
             </div>
-            <Button asChild variant="outline" size="lg">
-              <Link href={`${ADMIN_EVENTS_PATH}/${event.id}/edit`}>
-                <Pencil data-icon="inline-start" />
-                Edytuj wydarzenie
-              </Link>
-            </Button>
           </div>
         </div>
 

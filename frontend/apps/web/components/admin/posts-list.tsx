@@ -180,7 +180,7 @@ export function PostsList() {
                           <span className="min-w-0 break-words">{post.authorDisplayName}</span>
                         </li>
                       </ul>
-                      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 pt-2">
+                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/dashboard/posts/${post.id}`}>
                             <Pencil data-icon="inline-start" />
