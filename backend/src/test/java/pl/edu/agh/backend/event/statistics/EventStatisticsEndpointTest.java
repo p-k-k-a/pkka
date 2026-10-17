@@ -155,7 +155,7 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$.signUps").value(4))
                 .andExpect(jsonPath("$.cancellations").value(1))
                 .andExpect(jsonPath("$.cancellationsFromWaitlist").doesNotExist())
-                .andExpect(jsonPath("$.promotions").value(1))
+                .andExpect(jsonPath("$.promotions").doesNotExist())
                 .andExpect(jsonPath("$.occupancyPercent").value(100));
     }
 
@@ -208,7 +208,6 @@ class EventStatisticsEndpointTest {
         activity(event, RegistrationActivityType.WAITLISTED, now.minus(3, ChronoUnit.DAYS));
         activity(event, RegistrationActivityType.SIGNED_UP, now.minus(1, ChronoUnit.DAYS));
         activity(event, RegistrationActivityType.CANCELLED, now.minus(1, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.PROMOTED, now.minus(1, ChronoUnit.DAYS));
         activity(event, RegistrationActivityType.LEFT_WAITLIST, now.minus(1, ChronoUnit.DAYS));
 
         LocalDate today = LocalDate.now(WARSAW);
