@@ -134,7 +134,7 @@ export function AdminEventsList() {
       size: PAGE_SIZE,
       sort: [timeframe === EventTimeframe.UPCOMING ? "startsAt,asc" : "startsAt,desc"],
     },
-    { query: { enabled: admin } },
+    { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
   const occupancy = useListEventOccupancy(
     { timeframe: EventTimeframe.ALL },
