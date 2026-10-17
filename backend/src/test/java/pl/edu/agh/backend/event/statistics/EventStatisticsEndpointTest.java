@@ -2,7 +2,6 @@ package pl.edu.agh.backend.event.statistics;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -152,48 +151,7 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$.registered").value(2))
                 .andExpect(jsonPath("$.waitlisted").value(0))
                 .andExpect(jsonPath("$.signUps").value(4))
-                .andExpect(jsonPath("$.cancellations").value(1))
-                .andExpect(jsonPath("$.occupancyPercent").value(100));
-    }
-
-    @Test
-    void occupancyIsRoundedAndAbsentWithoutASeatLimit() throws Exception {
-        Event limited = upcomingEvent(3);
-        signUp(limited);
-        Event unlimited = upcomingEvent(null);
-        signUp(unlimited);
-
-        mockMvc.perform(get("/api/admin/events/{id}/statistics", limited.getId())
-                        .with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$.occupancyPercent").value(33));
-        mockMvc.perform(get("/api/admin/events/{id}/statistics", unlimited.getId())
-                        .with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$.registered").value(1))
-                .andExpect(jsonPath("$.occupancyPercent").value(nullValue()));
-    }
-
-    @Test
-    void occupancyOfAZeroSeatEventIsFullAndNeverDividesByZero() throws Exception {
-        Event event = upcomingEvent(0);
-        signUp(event);
-
-        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$.registered").value(0))
-                .andExpect(jsonPath("$.waitlisted").value(1))
-                .andExpect(jsonPath("$.occupancyPercent").value(100));
-    }
-
-    @Test
-    void seatsHeldAfterTheLimitDroppedToZeroReadAsOverTheLimit() throws Exception {
-        Event event = upcomingEvent(4);
-        signUp(event);
-        signUp(event);
-        jdbcTemplate.update("UPDATE events SET seat_limit = 0 WHERE id = ?", event.getId());
-        entityManager.clear();
-
-        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$.registered").value(2))
-                .andExpect(jsonPath("$.occupancyPercent").value(200));
+                .andExpect(jsonPath("$.cancellations").value(1));
     }
 
     @Test
@@ -282,10 +240,7 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$[1].waitlisted").value(0))
                 .andExpect(jsonPath("$[1].cancellations").value(0))
                 .andExpect(jsonPath("$[1].seatLimit").value(2))
-                .andExpect(jsonPath("$[1].occupancyPercent").value(100))
-                .andExpect(jsonPath("$[0].occupancyPercent").value(nullValue()))
-                .andExpect(jsonPath("$[2].registered").value(0))
-                .andExpect(jsonPath("$[2].occupancyPercent").value(0));
+                .andExpect(jsonPath("$[2].registered").value(0));
     }
 
     @Test
@@ -297,19 +252,5 @@ class EventStatisticsEndpointTest {
 
         mockMvc.perform(get("/api/admin/events/statistics").with(JwtTestSupport.asAdmin()))
                 .andExpect(jsonPath("$[*].eventId").value(contains(kept.getId().toString())));
-    }
-
-    @Test
-    void occupancyAboveTheLimitIsReportedAsItIs() throws Exception {
-        Event event = upcomingEvent(4);
-        signUp(event);
-        signUp(event);
-        signUp(event);
-        jdbcTemplate.update("UPDATE events SET seat_limit = 2 WHERE id = ?", event.getId());
-        entityManager.clear();
-
-        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$.registered").value(3))
-                .andExpect(jsonPath("$.occupancyPercent").value(150));
     }
 }
