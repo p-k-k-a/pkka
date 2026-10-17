@@ -40,10 +40,9 @@ import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
 
-type SortKey = "startsAt" | "createdAt";
+type SortKey = "startsAt,asc" | "startsAt,desc" | "createdAt,desc" | "createdAt,asc";
 
-function sortParam(sortKey: SortKey, timeframe: EventTimeframe) {
-  if (sortKey === "createdAt") return "createdAt,desc";
+function defaultSort(timeframe: EventTimeframe): SortKey {
   return timeframe === EventTimeframe.UPCOMING ? "startsAt,asc" : "startsAt,desc";
 }
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
@@ -123,7 +122,8 @@ export function AdminEventsList() {
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
   const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
-  const [sortKey, setSortKey] = useState<SortKey>("startsAt");
+  const [chosenSort, setChosenSort] = useState<SortKey | null>(null);
+  const sortKey = chosenSort ?? defaultSort(timeframe);
   const [eventToDelete, setEventToDelete] = useState<AdminEventSummaryResponse | null>(null);
 
   useEffect(() => {
@@ -141,7 +141,7 @@ export function AdminEventsList() {
       timeframe,
       page,
       size: PAGE_SIZE,
-      sort: [sortParam(sortKey, timeframe)],
+      sort: [sortKey],
     },
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
@@ -238,12 +238,14 @@ export function AdminEventsList() {
                 className="h-9 w-auto"
                 value={sortKey}
                 onChange={(changeEvent) => {
-                  setSortKey(changeEvent.target.value as SortKey);
+                  setChosenSort(changeEvent.target.value as SortKey);
                   setPage(0);
                 }}
               >
-                <option value="startsAt">daty wydarzenia</option>
-                <option value="createdAt">daty dodania</option>
+                <option value="startsAt,asc">daty wydarzenia, od najstarszej</option>
+                <option value="startsAt,desc">daty wydarzenia, od najnowszej</option>
+                <option value="createdAt,desc">daty dodania, od najnowszej</option>
+                <option value="createdAt,asc">daty dodania, od najstarszej</option>
               </Select>
             </label>
           </div>
