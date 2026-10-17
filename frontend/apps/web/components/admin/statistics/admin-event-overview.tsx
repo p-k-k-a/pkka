@@ -191,7 +191,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                     Zapisy w czasie
                   </h2>
                   <p className="text-muted-foreground text-sm">
-                    Od {formatEventDateLong(stats.daily[0]?.date ?? stats.publishedAt)} do{" "}
+                    Od {formatEventDateLong(stats.daily[0]?.date ?? event.createdAt)} do{" "}
                     {seriesEndsAtStart ? "startu wydarzenia" : "dziś"}.
                   </p>
                 </div>
