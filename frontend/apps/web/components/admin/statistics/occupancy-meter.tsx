@@ -8,6 +8,7 @@ type OccupancyMeterProps = {
 
 export function OccupancyMeter({ percent, label, className }: OccupancyMeterProps) {
   const filled = Math.min(100, Math.max(0, percent));
+  const over = percent > 100;
   return (
     <div
       role="meter"
@@ -16,9 +17,16 @@ export function OccupancyMeter({ percent, label, className }: OccupancyMeterProp
       aria-valuemax={100}
       aria-valuenow={Math.min(percent, 100)}
       aria-valuetext={`${percent}%`}
-      className={cn("bg-chart-1/15 h-2 w-full overflow-hidden rounded-full", className)}
+      className={cn(
+        "h-2 w-full overflow-hidden rounded-full",
+        over ? "bg-destructive/15" : "bg-chart-1/15",
+        className,
+      )}
     >
-      <div className="bg-chart-1 h-full rounded-full" style={{ width: `${filled}%` }} />
+      <div
+        className={cn("h-full rounded-full", over ? "bg-destructive" : "bg-chart-1")}
+        style={{ width: `${filled}%` }}
+      />
     </div>
   );
 }
