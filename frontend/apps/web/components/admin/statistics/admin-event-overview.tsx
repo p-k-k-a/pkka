@@ -22,6 +22,7 @@ import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-reg
 import { OccupancyMeter, occupancyPercent } from "@/components/admin/statistics/occupancy-meter";
 import { SignupSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
+import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
@@ -214,6 +215,8 @@ export function AdminEventOverview({ id }: { id: string }) {
             </div>
           </>
         )}
+
+        <EventRegistrants eventId={event.id} eventTitle={event.title} />
       </div>
     </div>
   );
