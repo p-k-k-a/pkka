@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { parseISO } from "date-fns";
 import {
   getListAdminEventsQueryKey,
   getListEventOccupancyQueryKey,
@@ -52,30 +53,35 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
         );
 
   return (
-    <section
-      aria-label="Podsumowanie zapisów"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-    >
-      <StatTile
-        label="Zapisani"
-        value={registered}
-        hint={`na ${rows.length} ${pluralPl(rows.length, "wydarzeniu", "wydarzeniach", "wydarzeniach")}`}
-      />
-      <StatTile
-        label="Lista rezerwowa"
-        value={waitlisted}
-        hint={pluralPl(waitlisted, "osoba czeka", "osoby czekają", "osób czeka")}
-      />
-      <StatTile label="Wypisy" value={cancellations} hint="rezygnacje z zapisu" />
-      <StatTile
-        label="Średnie obłożenie"
-        value={average == null ? "brak" : `${average}%`}
-        hint={
-          average == null
-            ? "żadne wydarzenie nie ma limitu miejsc"
-            : `z ${limited.length} ${pluralPl(limited.length, "wydarzenia", "wydarzeń", "wydarzeń")} z limitem miejsc`
-        }
-      />
+    <section aria-labelledby="upcoming-stats-heading" className="space-y-3">
+      <div>
+        <h2 id="upcoming-stats-heading" className="text-foreground text-sm font-semibold">
+          Statystyki nadchodzących wydarzeń
+        </h2>
+        <p className="text-muted-foreground text-xs">Minione wydarzenia nie są wliczane.</p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile
+          label="Zapisani"
+          value={registered}
+          hint={`na ${rows.length} ${pluralPl(rows.length, "wydarzeniu", "wydarzeniach", "wydarzeniach")}`}
+        />
+        <StatTile
+          label="Lista rezerwowa"
+          value={waitlisted}
+          hint={pluralPl(waitlisted, "osoba czeka", "osoby czekają", "osób czeka")}
+        />
+        <StatTile label="Wypisy" value={cancellations} hint="rezygnacje z zapisu" />
+        <StatTile
+          label="Średnie obłożenie"
+          value={average == null ? "brak" : `${average}%`}
+          hint={
+            average == null
+              ? "żadne wydarzenie nie ma limitu miejsc"
+              : `z ${limited.length} ${pluralPl(limited.length, "wydarzenia", "wydarzeń", "wydarzeń")} z limitem miejsc`
+          }
+        />
+      </div>
     </section>
   );
 }
@@ -123,8 +129,8 @@ export function AdminEventsList() {
     isError,
   } = useListAdminEvents({ timeframe, page, size: PAGE_SIZE }, { query: { enabled: admin } });
   const occupancy = useListEventOccupancy(
-    { timeframe },
-    { query: { enabled: admin, placeholderData: (previous) => previous } },
+    { timeframe: EventTimeframe.ALL },
+    { query: { enabled: admin } },
   );
 
   const deleteEvent = useDeleteAdminEvent({
@@ -155,6 +161,8 @@ export function AdminEventsList() {
   const lastShown = firstShown + events.length - 1;
   const occupancyRows = occupancy.data?.data ?? [];
   const occupancyById = new Map(occupancyRows.map((row) => [row.eventId, row]));
+  const now = new Date();
+  const upcomingRows = occupancyRows.filter((row) => parseISO(row.startsAt) > now);
 
   return (
     <div>
@@ -200,7 +208,7 @@ export function AdminEventsList() {
               ))}
             </div>
           ) : occupancy.isError ? null : (
-            <OccupancySummary rows={occupancyRows} />
+            <OccupancySummary rows={upcomingRows} />
           )}
         </div>
       </section>
