@@ -137,10 +137,12 @@ export function AdminEventOverview({ id }: { id: string }) {
               </h1>
               <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                 <EventDetail label="Termin">
-                  {formatEventDateLong(event.startsAt)},{" "}
-                  {formatTimeRange(event.startsAt, event.endsAt)}{" "}
-                  <span className="text-muted-foreground">
-                    ({startStatus(event.startsAt, event.endsAt)})
+                  <span className="block">
+                    {formatEventDateLong(event.startsAt)},{" "}
+                    {formatTimeRange(event.startsAt, event.endsAt)}
+                  </span>
+                  <span className="text-muted-foreground block">
+                    {startStatus(event.startsAt, event.endsAt)}
                   </span>
                 </EventDetail>
                 <EventDetail label="Miejsce">
