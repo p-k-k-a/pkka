@@ -198,17 +198,9 @@ export function AdminEventOverview({ id }: { id: string }) {
               <StatTile
                 label="Zapisani"
                 value={
-                  stats.seatLimit == null ? (
-                    stats.registered
-                  ) : (
-                    <>
-                      {stats.registered}
-                      <span className="text-muted-foreground text-xl font-medium">
-                        {" "}
-                        / {stats.seatLimit}
-                      </span>
-                    </>
-                  )
+                  stats.seatLimit == null
+                    ? stats.registered
+                    : `${stats.registered}/${stats.seatLimit}`
                 }
                 hint={seatsHint(stats.occupancyPercent)}
               >
