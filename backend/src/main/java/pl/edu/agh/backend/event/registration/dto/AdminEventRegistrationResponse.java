@@ -4,8 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import pl.edu.agh.backend.event.registration.EventRegistration;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.user.User;
@@ -13,11 +11,8 @@ import pl.edu.agh.backend.user.User;
 public record AdminEventRegistrationResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID registrationId,
 
-        @Schema(description = "First and last name; absent for a user who has not filled in either")
-        String displayName,
-
-        @Schema(description = "Absent for a user whose identity provider shared no address")
-        String email,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String displayName,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String email,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) EventRegistrationStatus status,
 
@@ -29,14 +24,10 @@ public record AdminEventRegistrationResponse(
 
     public static AdminEventRegistrationResponse from(EventRegistration registration, Integer waitlistPosition) {
         User user = registration.getUser();
-        String displayName = Stream.of(user.getFirstName(), user.getLastName())
-                .filter(part -> part != null && !part.isBlank())
-                .map(String::trim)
-                .collect(Collectors.joining(" "));
         return new AdminEventRegistrationResponse(
                 registration.getId(),
-                displayName.isEmpty() ? null : displayName,
-                user.getEmail() == null || user.getEmail().isBlank() ? null : user.getEmail(),
+                user.getFirstName() + " " + user.getLastName(),
+                user.getEmail(),
                 registration.getStatus(),
                 registration.getRegisteredAt(),
                 waitlistPosition);

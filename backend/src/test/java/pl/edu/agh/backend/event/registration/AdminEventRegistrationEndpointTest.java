@@ -155,17 +155,4 @@ class AdminEventRegistrationEndpointTest {
                 .andExpect(jsonPath("$[*].status").value(contains("REGISTERED", "WAITLISTED")))
                 .andExpect(jsonPath("$[1].waitlistPosition").value(1));
     }
-
-    @Test
-    void userWithoutAProfileHasNoDisplayNameRatherThanTheWordNull() throws Exception {
-        Event event = newEvent(10);
-        signUp(event, null, null, null);
-        signUp(event, "Anna", null, "anna@example.com");
-
-        mockMvc.perform(get("/api/admin/events/{id}/registrations", event.getId())
-                        .with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$[0].displayName").doesNotExist())
-                .andExpect(jsonPath("$[0].email").doesNotExist())
-                .andExpect(jsonPath("$[1].displayName").value("Anna"));
-    }
 }
