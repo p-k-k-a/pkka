@@ -263,6 +263,7 @@ export function AdminEventsList() {
                     <EventCalendarCard
                       key={item.id}
                       event={item}
+                      labeled={{ author: item.authorDisplayName }}
                       footer={
                         <div className="mt-auto flex flex-col gap-4 pt-2">
                           {row ? <CardOccupancy row={row} /> : null}

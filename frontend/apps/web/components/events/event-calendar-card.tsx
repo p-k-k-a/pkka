@@ -28,6 +28,8 @@ type EventCalendarCardProps = {
   href?: string;
   preview?: boolean;
   footer?: ReactNode;
+  /** Admin lists: name each detail instead of relying on icons, and show who created the event. */
+  labeled?: { author?: string };
   className?: string;
 };
 
@@ -37,6 +39,7 @@ export function EventCalendarCard({
   href,
   preview = false,
   footer,
+  labeled,
   className,
 }: EventCalendarCardProps) {
   const location = eventLocationLabel(event.type, event.location);
@@ -79,20 +82,38 @@ export function EventCalendarCard({
       <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
         {event.title.trim() || "Tytuł wydarzenia"}
       </h3>
-      <ul className="text-muted-foreground space-y-3 text-sm">
-        <li className="flex items-start gap-3">
-          <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{formatEventDateComma(event.startsAt)}</span>
-        </li>
-        <li className="flex items-start gap-3">
-          <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{formatTimeRange(event.startsAt, event.endsAt)}</span>
-        </li>
-        <li className="flex items-start gap-3">
-          <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{location}</span>
-        </li>
-      </ul>
+      {labeled ? (
+        <dl className="space-y-2 text-sm">
+          {[
+            [
+              "Start",
+              `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
+            ],
+            ["Miejsce", location],
+            ["Autor", labeled.author ?? "nieznany"],
+          ].map(([label, value]) => (
+            <div key={label} className="flex gap-2">
+              <dt className="text-muted-foreground shrink-0">{label}:</dt>
+              <dd className="text-foreground min-w-0 break-words">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <ul className="text-muted-foreground space-y-3 text-sm">
+          <li className="flex items-start gap-3">
+            <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{formatEventDateComma(event.startsAt)}</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{formatTimeRange(event.startsAt, event.endsAt)}</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{location}</span>
+          </li>
+        </ul>
+      )}
       {footer ?? (
         <div className="mt-auto flex justify-end pt-2">
           <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
