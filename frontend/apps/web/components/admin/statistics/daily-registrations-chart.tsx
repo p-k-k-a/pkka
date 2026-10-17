@@ -80,7 +80,7 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
 
   if (days.length === 0 || totalSignUps + totalCancellations === 0) {
     return (
-      <div className="border-border text-muted-foreground flex h-40 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm">
+      <div className="border-border text-muted-foreground flex min-h-40 flex-1 items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm">
         Brak zapisów i wypisów w tym okresie.
       </div>
     );
