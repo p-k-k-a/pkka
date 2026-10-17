@@ -40,7 +40,7 @@ function startStatus(startsAt: string, endsAt: string) {
 
 function EventDetail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="min-w-0 space-y-1">
+    <div className="min-w-0 space-y-1 text-center">
       <dt className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
         {label}
       </dt>
