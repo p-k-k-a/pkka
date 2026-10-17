@@ -174,7 +174,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                     : `${stats.registered}/${stats.seatLimit}`
                 }
                 hint={stats.seatLimit == null ? "bez limitu miejsc" : undefined}
-                info="Osoby z miejscem / limit miejsc. Bez listy rezerwowej."
+                info="Osoby z miejscem / limit miejsc."
               >
                 {stats.occupancyPercent == null ? null : (
                   <OccupancyMeter
