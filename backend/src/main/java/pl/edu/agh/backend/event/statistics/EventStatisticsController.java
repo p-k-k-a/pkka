@@ -26,8 +26,7 @@ public class EventStatisticsController {
     @Operation(
             summary = "Get sign-up statistics for one event",
             description = "Current seat and waitlist counts, cancellations, occupancy and sign-ups per day since"
-                    + " publication. Cancellations are tracked from the moment this feature shipped; earlier ones"
-                    + " were not recorded.")
+                    + " publication.")
     @ApiResponse(responseCode = "200", description = "Event statistics")
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
     public EventStatisticsResponse getEventStatistics(@PathVariable UUID id) {
