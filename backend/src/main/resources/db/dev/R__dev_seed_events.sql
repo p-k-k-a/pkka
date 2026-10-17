@@ -197,7 +197,7 @@ INSERT INTO events (
      200, date_trunc('day', now()) - interval '32 days' + interval '23 hours',
      'ALL_ALUMNI', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=450&fit=crop',
      now(), now(), 0)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET slug = EXCLUDED.slug;
 
 INSERT INTO event_tags (event_id, tag_id) VALUES
     -- 1) AI workshop: ai, workshop, online

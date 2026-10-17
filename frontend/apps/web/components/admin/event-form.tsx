@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { eventDetailHref } from "@/lib/event-paths";
 import {
   AUDIENCE_OPTIONS,
   EVENT_TYPE_OPTIONS,
@@ -267,9 +268,9 @@ export function EventForm({ event }: EventFormProps) {
                 onChange={(changeEvent) => setTitle(changeEvent.target.value)}
               />
               <p className="text-muted-foreground text-xs">
-                {!isEditing
-                  ? "Adres wydarzenia wygenerujemy automatycznie z tytułu."
-                  : `Adres wydarzenia: /events/${event.slug}. Nie zmienia się przy edycji.`}
+                {isEditing
+                  ? `Adres wydarzenia: ${eventDetailHref(event.slug)}. Nie zmienia się przy edycji.`
+                  : "Adres wydarzenia wygenerujemy automatycznie z tytułu."}
               </p>
             </section>
 
