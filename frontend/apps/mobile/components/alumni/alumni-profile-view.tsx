@@ -3,7 +3,7 @@ import { ProfileHero } from "@/components/alumni/profile-hero";
 import { ProfileSectionCard } from "@/components/alumni/profile-section-card";
 import { SkillChips } from "@/components/alumni/skill-chips";
 import { Text } from "@/components/ui/text";
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
 import { Pencil } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -21,6 +21,7 @@ type AlumniProfileViewProps = {
 };
 
 export function AlumniProfileView({ profile, onEdit }: AlumniProfileViewProps) {
+  const theme = useThemeColors();
   return (
     <View className="gap-6">
       {onEdit ? (
@@ -30,7 +31,7 @@ export function AlumniProfileView({ profile, onEdit }: AlumniProfileViewProps) {
           accessibilityLabel="Edytuj profil"
           className="border-border active:bg-muted flex-row items-center gap-2 self-start rounded-full border px-3 py-1.5"
         >
-          <Pencil size={14} color={THEME.light.foreground} />
+          <Pencil size={14} color={theme.foreground} />
           <Text className="text-foreground text-xs font-semibold uppercase tracking-wider">
             Edytuj profil
           </Text>

@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Firebase client config; its API key identifies the project and ships in every APK"
+paths = ['''^frontend/apps/mobile/google-services\.json$''']
