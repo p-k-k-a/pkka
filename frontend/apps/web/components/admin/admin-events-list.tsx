@@ -36,6 +36,7 @@ import { useAuth } from "@/lib/auth-context";
 import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
+import { SignupSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
@@ -51,41 +52,31 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
   const registered = rows.reduce((total, row) => total + row.registered, 0);
   const waitlisted = rows.reduce((total, row) => total + row.waitlisted, 0);
   const cancellations = rows.reduce((total, row) => total + row.cancellations, 0);
-  const limited = rows.filter((row) => row.occupancyPercent != null);
-  const average =
-    limited.length === 0
-      ? null
-      : Math.round(
-          limited.reduce((total, row) => total + (row.occupancyPercent ?? 0), 0) / limited.length,
-        );
 
   return (
     <section aria-labelledby="upcoming-stats-heading" className="space-y-3">
       <h2 id="upcoming-stats-heading" className="text-foreground text-sm font-semibold">
         Statystyki nadchodzących wydarzeń
       </h2>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
           label="Zapisani"
           value={registered}
           hint={`na ${rows.length} ${pluralPl(rows.length, "wydarzeniu", "wydarzeniach", "wydarzeniach")}`}
+          info="Osoby, które mają miejsce na nadchodzących wydarzeniach. Lista rezerwowa nie jest tu wliczana."
         />
         <StatTile
           label="Lista rezerwowa"
           value={waitlisted}
-          hint={pluralPl(waitlisted, "osoba czeka", "osoby czekają", "osób czeka")}
+          info="Osoby czekające na wolne miejsce na nadchodzących wydarzeniach."
         />
-        <StatTile label="Wypisy" value={cancellations} hint="rezygnacje z zapisu" />
         <StatTile
-          label="Średnie obłożenie"
-          value={average == null ? "brak" : `${average}%`}
-          hint={
-            average == null
-              ? "żadne wydarzenie nie ma limitu miejsc"
-              : `z ${limited.length} ${pluralPl(limited.length, "wydarzenia", "wydarzeń", "wydarzeń")} z limitem miejsc`
-          }
+          label="Wypisy"
+          value={cancellations}
+          info="Osoby, które miały miejsce i zrezygnowały. Zejścia z listy rezerwowej nie są tu liczone."
         />
       </div>
+      <SignupSources signUps={registered} layout="row" />
     </section>
   );
 }
@@ -203,8 +194,8 @@ export function AdminEventsList() {
             </Button>
           </div>
           {occupancy.isLoading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-28 rounded-xl" />
               ))}
             </div>
