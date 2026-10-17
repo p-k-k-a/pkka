@@ -1,5 +1,11 @@
 import { cn } from "@/lib/utils";
 
+export function occupancyPercent(registered: number, seatLimit?: number) {
+  if (seatLimit == null) return undefined;
+  if (seatLimit === 0) return registered === 0 ? 100 : registered * 100;
+  return Math.round((registered / seatLimit) * 100);
+}
+
 type OccupancyMeterProps = {
   percent: number;
   label: string;

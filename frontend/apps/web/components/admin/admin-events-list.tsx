@@ -36,7 +36,7 @@ import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
-import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
+import { OccupancyMeter, occupancyPercent } from "@/components/admin/statistics/occupancy-meter";
 import { SignupSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
@@ -83,6 +83,7 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
 }
 
 function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
+  const percent = occupancyPercent(row.registered, row.seatLimit);
   return (
     <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-3 text-sm">
@@ -91,10 +92,10 @@ function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
             ? `${row.registered} ${pluralPl(row.registered, "zapisany", "zapisanych", "zapisanych")}`
             : `${row.registered}/${row.seatLimit} miejsc`}
         </span>
-        <OccupancyLabel percent={row.occupancyPercent} />
+        <OccupancyLabel percent={percent} />
       </div>
-      {row.occupancyPercent == null ? null : (
-        <OccupancyMeter percent={row.occupancyPercent} label={`Obłożenie: ${row.title}`} />
+      {percent == null ? null : (
+        <OccupancyMeter percent={percent} label={`Obłożenie: ${row.title}`} />
       )}
       <p className="text-muted-foreground text-xs">
         Lista rezerwowa:{" "}
