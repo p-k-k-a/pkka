@@ -1,3 +1,4 @@
+import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
 
 // TODO: replace with real per-channel counts once sign-ups record where they came from.
@@ -35,9 +36,16 @@ export function SignupSources({
   return (
     <Card className="gap-4 px-6 py-6">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-          Źródła zapisów
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
+            Źródła zapisów
+          </h2>
+          <InfoTip label="Źródła zapisów">
+            Skąd przyszły osoby, które się zapisały: z ogłoszenia na Discordzie, z e-maila, ze
+            strony WWW albo z aplikacji mobilnej. Na razie liczby są przykładowe, bo zapisy nie
+            zapamiętują jeszcze kanału.
+          </InfoTip>
+        </div>
         <span className="bg-accent/10 text-accent shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold tracking-widest uppercase">
           Przykładowe dane
         </span>
@@ -67,9 +75,6 @@ export function SignupSources({
           );
         })}
       </ul>
-      <p className="text-muted-foreground text-xs">
-        Liczby są poglądowe. Prawdziwe źródła pojawią się, gdy zapisy zaczną zapamiętywać kanał.
-      </p>
     </Card>
   );
 }
