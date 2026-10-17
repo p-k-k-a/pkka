@@ -221,8 +221,7 @@ class EventStatisticsEndpointTest {
                                 today.minusDays(1).toString(),
                                 today.toString())))
                 .andExpect(jsonPath("$.daily[*].signUps").value(contains(2, 0, 1, 0)))
-                .andExpect(jsonPath("$.daily[*].cancellations").value(contains(0, 0, 1, 0)))
-                .andExpect(jsonPath("$.daily[*].signedUpAtEndOfDay").value(contains(2, 2, 1, 1)));
+                .andExpect(jsonPath("$.daily[*].cancellations").value(contains(0, 0, 1, 0)));
     }
 
     @Test

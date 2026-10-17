@@ -233,7 +233,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                     {seriesEndsAtStart ? "startu wydarzenia" : "dziś"}.
                   </p>
                 </div>
-                <DailyRegistrationsChart days={stats.daily} seatLimit={stats.seatLimit} />
+                <DailyRegistrationsChart days={stats.daily} />
               </Card>
 
               <div className="flex flex-col gap-6">
