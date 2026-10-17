@@ -94,7 +94,7 @@ export function PostsList() {
 
   return (
     <div>
-      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <section className="bg-background px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8">
         <div className="mx-auto max-w-[1280px] space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="space-y-6">
@@ -129,7 +129,7 @@ export function PostsList() {
         </div>
       </section>
 
-      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <section className="bg-background px-4 pb-10 md:px-10 md:pb-16">
         <div className="mx-auto max-w-[1280px]">
           {isListLoading ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
