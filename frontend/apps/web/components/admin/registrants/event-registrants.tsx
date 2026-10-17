@@ -27,7 +27,7 @@ function normalize(text: string) {
 
 function matches(registration: AdminEventRegistrationResponse, query: string) {
   if (!query) return true;
-  const haystack = normalize(`${registration.displayName ?? ""} ${registration.email ?? ""}`);
+  const haystack = normalize(`${registration.displayName} ${registration.email}`);
   return normalize(query)
     .split(/\s+/)
     .filter(Boolean)
@@ -161,19 +161,8 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
               {filtered.map((registration) => (
                 <tr key={registration.registrationId} className="border-border border-t">
                   <td className="px-6 py-3">
-                    <p
-                      className={cn(
-                        "font-semibold",
-                        registration.displayName
-                          ? "text-foreground"
-                          : "text-muted-foreground italic",
-                      )}
-                    >
-                      {registration.displayName ?? "Bez imienia i nazwiska"}
-                    </p>
-                    <p className="text-muted-foreground text-xs break-all">
-                      {registration.email ?? "brak adresu e-mail"}
-                    </p>
+                    <p className="text-foreground font-semibold">{registration.displayName}</p>
+                    <p className="text-muted-foreground text-xs break-all">{registration.email}</p>
                   </td>
                   <td className="px-6 py-3">
                     <span
