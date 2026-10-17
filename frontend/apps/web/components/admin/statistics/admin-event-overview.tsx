@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-registrations-chart";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
+import { SignupSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
 
@@ -232,19 +233,24 @@ export function AdminEventOverview({ id }: { id: string }) {
                 <DailyRegistrationsChart days={stats.daily} seatLimit={stats.seatLimit} />
               </Card>
 
-              <Card className="gap-4 px-6 py-6">
-                <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-                  Podsumowanie
-                </h2>
-                <dl>
-                  <SummaryRow label="Wszystkie zapisy">{stats.signUps}</SummaryRow>
-                  <SummaryRow label="Limit miejsc">{stats.seatLimit ?? "brak"}</SummaryRow>
-                  <SummaryRow label="Opublikowano">{formatDateTime(stats.publishedAt)}</SummaryRow>
-                  <SummaryRow label="Zapisy do">
-                    {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
-                  </SummaryRow>
-                </dl>
-              </Card>
+              <div className="flex flex-col gap-6">
+                <Card className="gap-4 px-6 py-6">
+                  <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
+                    Podsumowanie
+                  </h2>
+                  <dl>
+                    <SummaryRow label="Wszystkie zapisy">{stats.signUps}</SummaryRow>
+                    <SummaryRow label="Limit miejsc">{stats.seatLimit ?? "brak"}</SummaryRow>
+                    <SummaryRow label="Opublikowano">
+                      {formatDateTime(stats.publishedAt)}
+                    </SummaryRow>
+                    <SummaryRow label="Zapisy do">
+                      {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
+                    </SummaryRow>
+                  </dl>
+                </Card>
+                <SignupSources signUps={stats.signUps} />
+              </div>
             </div>
           </>
         )}
