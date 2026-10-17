@@ -2,18 +2,9 @@ package pl.edu.agh.backend.event.statistics;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
-import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public record EventStatisticsResponse(
-        @Schema(requiredMode = RequiredMode.REQUIRED) UUID eventId,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String title,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
-
-        @Schema(requiredMode = RequiredMode.REQUIRED, description = "When the event was created, i.e. made visible")
-        Instant publishedAt,
-
         Integer seatLimit,
 
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "People holding a seat right now")
