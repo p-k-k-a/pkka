@@ -33,9 +33,6 @@ public record EventStatisticsResponse(
                 description = "Seat holders who cancelled; people leaving the waitlist are not counted")
         int cancellations,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED, description = "Waitlisted people who were moved onto a seat")
-        int promotions,
-
         @Schema(
                 description = "Held seats as a percentage of the seat limit, rounded; absent when the event has no"
                         + " limit. Can exceed 100 when the limit was lowered below the seats already taken.")

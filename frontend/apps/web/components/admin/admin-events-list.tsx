@@ -11,8 +11,10 @@ import {
   getListEventsQueryKey,
   useDeleteAdminEvent,
   useListAdminEvents,
+  useListEventOccupancy,
   EventTimeframe,
   type AdminEventSummaryResponse,
+  type EventOccupancyResponse,
 } from "@pkka/api";
 import {
   AlertDialog,
@@ -29,10 +31,82 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { audienceLabel, isAdmin } from "@pkka/domain";
+import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
+import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
+import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
+import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
+
+function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
+  const registered = rows.reduce((total, row) => total + row.registered, 0);
+  const waitlisted = rows.reduce((total, row) => total + row.waitlisted, 0);
+  const cancellations = rows.reduce((total, row) => total + row.cancellations, 0);
+  const limited = rows.filter((row) => row.occupancyPercent != null);
+  const average =
+    limited.length === 0
+      ? null
+      : Math.round(
+          limited.reduce((total, row) => total + (row.occupancyPercent ?? 0), 0) / limited.length,
+        );
+
+  return (
+    <section
+      aria-label="Podsumowanie zapisów"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    >
+      <StatTile
+        label="Zapisani"
+        value={registered}
+        hint={`na ${rows.length} ${pluralPl(rows.length, "wydarzeniu", "wydarzeniach", "wydarzeniach")}`}
+      />
+      <StatTile
+        label="Lista rezerwowa"
+        value={waitlisted}
+        hint={pluralPl(waitlisted, "osoba czeka", "osoby czekają", "osób czeka")}
+      />
+      <StatTile label="Wypisy" value={cancellations} hint="rezygnacje z zapisu" />
+      <StatTile
+        label="Średnie obłożenie"
+        value={average == null ? "brak" : `${average}%`}
+        hint={
+          average == null
+            ? "żadne wydarzenie nie ma limitu miejsc"
+            : `z ${limited.length} ${pluralPl(limited.length, "wydarzenia", "wydarzeń", "wydarzeń")} z limitem miejsc`
+        }
+      />
+    </section>
+  );
+}
+
+function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="text-foreground font-semibold tabular-nums">
+          {row.seatLimit == null
+            ? `${row.registered} ${pluralPl(row.registered, "zapisany", "zapisanych", "zapisanych")}`
+            : `${row.registered}/${row.seatLimit} miejsc`}
+        </span>
+        <OccupancyLabel percent={row.occupancyPercent} />
+      </div>
+      {row.occupancyPercent == null ? null : (
+        <OccupancyMeter percent={row.occupancyPercent} label={`Obłożenie: ${row.title}`} />
+      )}
+      <dl className="text-muted-foreground flex gap-4 text-xs">
+        <div className="flex gap-1">
+          <dt>Lista rezerwowa:</dt>
+          <dd className="text-foreground font-medium tabular-nums">{row.waitlisted}</dd>
+        </div>
+        <div className="flex gap-1">
+          <dt>Wypisy:</dt>
+          <dd className="text-foreground font-medium tabular-nums">{row.cancellations}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
 
 export function AdminEventsList() {
   const router = useRouter();
@@ -54,6 +128,10 @@ export function AdminEventsList() {
     isLoading: isListLoading,
     isError,
   } = useListAdminEvents({ timeframe, page, size: PAGE_SIZE }, { query: { enabled: admin } });
+  const occupancy = useListEventOccupancy(
+    { timeframe },
+    { query: { enabled: admin, placeholderData: (previous) => previous } },
+  );
 
   const deleteEvent = useDeleteAdminEvent({
     mutation: {
@@ -81,6 +159,8 @@ export function AdminEventsList() {
   const currentPage = pageData?.number ?? page;
   const firstShown = currentPage * (pageData?.size ?? PAGE_SIZE) + 1;
   const lastShown = firstShown + events.length - 1;
+  const occupancyRows = occupancy.data?.data ?? [];
+  const occupancyById = new Map(occupancyRows.map((row) => [row.eventId, row]));
 
   return (
     <div>
@@ -111,12 +191,6 @@ export function AdminEventsList() {
               </TabsList>
             </Tabs>
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild variant="outline">
-                <Link href={`${ADMIN_EVENTS_PATH}/statistics`}>
-                  <ChartColumn data-icon="inline-start" />
-                  Porównaj obłożenie
-                </Link>
-              </Button>
               <Button asChild>
                 <Link href={`${ADMIN_EVENTS_PATH}/new`}>
                   <Plus data-icon="inline-start" />
@@ -125,6 +199,15 @@ export function AdminEventsList() {
               </Button>
             </div>
           </div>
+          {occupancy.isLoading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-xl" />
+              ))}
+            </div>
+          ) : occupancy.isError ? null : (
+            <OccupancySummary rows={occupancyRows} />
+          )}
         </div>
       </section>
 
@@ -153,41 +236,47 @@ export function AdminEventsList() {
               </p>
 
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {events.map((item) => (
-                  <EventCalendarCard
-                    key={item.id}
-                    event={item}
-                    footer={
-                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
-                        <span className="text-muted-foreground w-full text-xs font-semibold tracking-widest uppercase">
-                          {audienceLabel(item.audience)}
-                        </span>
-                        <Button asChild variant="outline" size="sm">
-                          <Link href={`${ADMIN_EVENTS_PATH}/${item.id}`}>
-                            <ChartColumn data-icon="inline-start" />
-                            Statystyki
-                          </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="sm">
-                          <Link href={`${ADMIN_EVENTS_PATH}/${item.id}/edit`}>
-                            <Pencil data-icon="inline-start" />
-                            Edytuj
-                          </Link>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setEventToDelete(item)}
-                        >
-                          <Trash2 data-icon="inline-start" />
-                          Usuń
-                        </Button>
-                      </div>
-                    }
-                  />
-                ))}
+                {events.map((item) => {
+                  const row = occupancyById.get(item.id);
+                  return (
+                    <EventCalendarCard
+                      key={item.id}
+                      event={item}
+                      footer={
+                        <div className="mt-auto flex flex-col gap-4 pt-2">
+                          {row ? <CardOccupancy row={row} /> : null}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-muted-foreground w-full text-xs font-semibold tracking-widest uppercase">
+                              {audienceLabel(item.audience)}
+                            </span>
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`${ADMIN_EVENTS_PATH}/${item.id}`}>
+                                <ChartColumn data-icon="inline-start" />
+                                Statystyki
+                              </Link>
+                            </Button>
+                            <Button asChild variant="outline" size="sm">
+                              <Link href={`${ADMIN_EVENTS_PATH}/${item.id}/edit`}>
+                                <Pencil data-icon="inline-start" />
+                                Edytuj
+                              </Link>
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => setEventToDelete(item)}
+                            >
+                              <Trash2 data-icon="inline-start" />
+                              Usuń
+                            </Button>
+                          </div>
+                        </div>
+                      }
+                    />
+                  );
+                })}
               </div>
 
               {totalPages > 1 ? (

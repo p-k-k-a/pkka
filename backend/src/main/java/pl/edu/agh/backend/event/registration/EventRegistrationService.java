@@ -127,7 +127,6 @@ public class EventRegistrationService {
                         event.getId(), EventRegistrationStatus.WAITLISTED, freeSeats)
                 .forEach(next -> {
                     next.setStatus(EventRegistrationStatus.REGISTERED);
-                    recordActivity(event, next.getUser(), RegistrationActivityType.PROMOTED);
                     eventPublisher.publishEvent(new RegistrationPromotedEvent(
                             event.getId(), next.getUser().getId()));
                 });

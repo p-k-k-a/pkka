@@ -65,7 +65,6 @@ public class EventStatisticsService {
                 (int) (count(byType, RegistrationActivityType.SIGNED_UP)
                         + count(byType, RegistrationActivityType.WAITLISTED)),
                 (int) count(byType, RegistrationActivityType.CANCELLED),
-                (int) count(byType, RegistrationActivityType.PROMOTED),
                 occupancyPercent(registered, event.getSeatLimit()),
                 daily(event, occurrences));
     }
@@ -138,7 +137,7 @@ public class EventStatisticsService {
             switch (occurrence.type()) {
                 case SIGNED_UP, WAITLISTED -> counts[0]++;
                 case CANCELLED -> counts[1]++;
-                case PROMOTED, LEFT_WAITLIST -> {}
+                case LEFT_WAITLIST -> {}
             }
             if (day.isBefore(first)) {
                 first = day;
