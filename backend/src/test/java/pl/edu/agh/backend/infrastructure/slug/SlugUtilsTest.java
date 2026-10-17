@@ -1,4 +1,4 @@
-package pl.edu.agh.backend.post;
+package pl.edu.agh.backend.infrastructure.slug;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

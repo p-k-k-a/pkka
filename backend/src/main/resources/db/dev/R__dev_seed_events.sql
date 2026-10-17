@@ -12,12 +12,13 @@ INSERT INTO tags (id, name) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO events (
-    id, title, full_description, type, starts_at, ends_at, transmission_url,
+    id, slug, title, full_description, type, starts_at, ends_at, transmission_url,
     location, seat_limit, registration_closes_at, audience, cover_image_url,
     created_at, updated_at, version
 ) VALUES
     -- 1) ONLINE / PUBLIC / +3d — has a transmission URL, no physical location
     ('22222222-2222-2222-2222-222222222201',
+     'warsztat-wprowadzenie-do-ai',
      'Warsztat: Wprowadzenie do AI',
      'Praktyczny warsztat online o podstawach uczenia maszynowego i pracy z modelami językowymi. Dla każdego, kto chce zacząć przygodę z AI.',
      'ONLINE',
@@ -30,6 +31,7 @@ INSERT INTO events (
 
     -- 2) IN_PERSON / ALL_ALUMNI / +7d — alumni-only, has a venue, no transmission URL
     ('22222222-2222-2222-2222-222222222202',
+     'wieczor-networkingowy-alumnow',
      'Wieczór networkingowy alumnów',
      'Spotkanie integracyjne absolwentów. Krótkie prezentacje, rozmowy przy kawie i okazja do nawiązania nowych kontaktów zawodowych.',
      'IN_PERSON',
@@ -42,6 +44,7 @@ INSERT INTO events (
 
     -- 3) HYBRID / PUBLIC / +10d — both a venue and a transmission URL; no registration deadline
     ('22222222-2222-2222-2222-222222222203',
+     'tech-talk-architektura-w-chmurze',
      'Tech Talk: Architektura w chmurze',
      'Prelekcja o projektowaniu skalowalnych systemów w chmurze. Udział stacjonarny lub zdalny.',
      'HYBRID',
@@ -54,6 +57,7 @@ INSERT INTO events (
 
     -- 4) IN_PERSON / PUBLIC / +14d — large seat limit (300), tests capacity display
     ('22222222-2222-2222-2222-222222222204',
+     'targi-pracy-it-2026',
      'Targi Pracy IT 2026',
      'Największe targi pracy dla studentów i absolwentów informatyki. Kilkadziesiąt firm, oferty staży i pracy.',
      'IN_PERSON',
@@ -66,6 +70,7 @@ INSERT INTO events (
 
     -- 5) IN_PERSON / ALL_ALUMNI / +21d — small seat limit (60)
     ('22222222-2222-2222-2222-222222222205',
+     'startup-pitch-night',
      'Startup Pitch Night',
      'Wieczór prezentacji startupów założonych przez absolwentów. Jury, nagrody i sesja Q&A z inwestorami.',
      'IN_PERSON',
@@ -78,6 +83,7 @@ INSERT INTO events (
 
     -- 6) HYBRID / PUBLIC / +30d — multi-hour conference, largest seat limit (500)
     ('22222222-2222-2222-2222-222222222206',
+     'konferencja-agh-informatyka',
      'Konferencja AGH Informatyka',
      'Doroczna konferencja naukowo-techniczna. Wykłady plenarne, sesje tematyczne i panel dyskusyjny.',
      'HYBRID',
@@ -90,6 +96,7 @@ INSERT INTO events (
 
     -- 7) ONLINE / ALL_ALUMNI / +5d — no seat limit and no registration deadline (open to all)
     ('22222222-2222-2222-2222-222222222207',
+     'sesja-qa-z-zarzadem-klubu',
      'Sesja Q&A z zarządem klubu',
      'Otwarta sesja pytań i odpowiedzi z zarządem klubu alumnów. Bez limitu miejsc, bez zapisów.',
      'ONLINE',
@@ -102,6 +109,7 @@ INSERT INTO events (
 
     -- 8) IN_PERSON / PUBLIC / +12d — small casual meetup, seat limit (40)
     ('22222222-2222-2222-2222-222222222208',
+     'wieczor-planszowek',
      'Wieczór planszówek',
      'Luźne spotkanie integracyjne przy grach planszowych. Snacki i napoje zapewnione.',
      'IN_PERSON',
@@ -114,6 +122,7 @@ INSERT INTO events (
 
     -- 9) ONLINE / PUBLIC / +45d — far-future event, tests longer date ranges
     ('22222222-2222-2222-2222-222222222209',
+     'bootcamp-machine-learning-od-zera',
      'Bootcamp: Machine Learning od zera',
      'Czterotygodniowy cykl warsztatów online z uczenia maszynowego. Zaczynamy od podstaw, kończymy na wdrożeniu modelu.',
      'ONLINE',
@@ -126,6 +135,7 @@ INSERT INTO events (
 
     -- 10) IN_PERSON / ALL_ALUMNI / +60d — venue in a different city (Warsaw)
     ('22222222-2222-2222-2222-222222222210',
+     'mentoring-mixer',
      'Mentoring Mixer',
      'Spotkanie łączące mentorów-absolwentów ze studentami. Krótkie rozmowy 1:1 w formule speed-mentoringu.',
      'IN_PERSON',
@@ -138,6 +148,7 @@ INSERT INTO events (
 
     -- 11) IN_PERSON / PUBLIC / +90d — multi-day event (starts_at and ends_at span 24h+)
     ('22222222-2222-2222-2222-222222222211',
+     'hackathon-agh-24h',
      'Hackathon AGH 24h',
      'Całodobowy hackathon zespołowy. Tematy z obszaru AI, fintech i smart city. Nagrody dla najlepszych zespołów.',
      'IN_PERSON',
@@ -150,6 +161,7 @@ INSERT INTO events (
 
     -- 12) IN_PERSON / SPECIFIC_GROUP / +9d — restricted audience, should be hidden from the public list (visibility test)
     ('22222222-2222-2222-2222-222222222212',
+     'zamkniete-spotkanie-grupy-roboczej',
      'Zamknięte spotkanie grupy roboczej',
      'Spotkanie wewnętrzne dedykowanej grupy projektowej. Widoczne tylko dla wybranej grupy.',
      'IN_PERSON',
@@ -162,6 +174,7 @@ INSERT INTO events (
 
     -- 13) ONLINE / PUBLIC / -7d — PAST event, should not appear in the "upcoming" list (date-filter test)
     ('22222222-2222-2222-2222-222222222213',
+     'webinar-podsumowanie-roku',
      'Webinar: Podsumowanie roku',
      'Archiwalny webinar podsumowujący działalność klubu. Wydarzenie minione — przydatne do testów filtrowania po dacie.',
      'ONLINE',
@@ -174,6 +187,7 @@ INSERT INTO events (
 
     -- 14) IN_PERSON / ALL_ALUMNI / -30d — older PAST event, with a registration deadline already elapsed
     ('22222222-2222-2222-2222-222222222214',
+     'gala-absolwentow-2025',
      'Gala Absolwentów 2025',
      'Archiwalna gala absolwentów z poprzedniego sezonu. Wydarzenie minione.',
      'IN_PERSON',
