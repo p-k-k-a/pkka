@@ -4,13 +4,8 @@ import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { ArrowLeft, CalendarClock, MapPin, Pencil, Users } from "lucide-react";
-import {
-  type ApiError,
-  useGetAdminEvent,
-  useGetEventStatistics,
-  type EventStatisticsResponse,
-} from "@pkka/api";
+import { ArrowLeft, CalendarClock, MapPin, Pencil, TriangleAlert, Users } from "lucide-react";
+import { type ApiError, useGetAdminEvent, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
   eventLocationLabel,
@@ -18,7 +13,6 @@ import {
   formatEventDateLong,
   formatTimeRange,
   isAdmin,
-  pluralPl,
 } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,22 +35,6 @@ function startStatus(startsAt: string, endsAt: string) {
     return `za ${days} dni`;
   }
   return parseISO(endsAt) > now ? "trwa teraz" : "zakończone";
-}
-
-function seatsHint(percent?: number) {
-  if (percent == null) return "bez limitu miejsc";
-  if (percent > 100) return `${percent}% miejsc, limit obniżono po zapisach`;
-  if (percent === 100) return "100% miejsc, komplet";
-  return `${percent}% miejsc zajętych`;
-}
-
-function waitlistHint(stats: EventStatisticsResponse) {
-  return pluralPl(
-    stats.waitlisted,
-    "osoba czeka na miejsce",
-    "osoby czekają na miejsce",
-    "osób czeka na miejsce",
-  );
 }
 
 function SummaryRow({ label, children }: { label: string; children: ReactNode }) {
@@ -200,7 +178,8 @@ export function AdminEventOverview({ id }: { id: string }) {
                     ? stats.registered
                     : `${stats.registered}/${stats.seatLimit}`
                 }
-                hint={seatsHint(stats.occupancyPercent)}
+                hint={stats.seatLimit == null ? "bez limitu miejsc" : undefined}
+                info="Osoby, które mają miejsce na wydarzeniu, na tle limitu miejsc. Lista rezerwowa nie jest tu wliczana."
               >
                 {stats.occupancyPercent == null ? null : (
                   <OccupancyMeter
@@ -209,13 +188,23 @@ export function AdminEventOverview({ id }: { id: string }) {
                     label="Obłożenie wydarzenia"
                   />
                 )}
+                {stats.seatLimit != null && stats.registered > stats.seatLimit ? (
+                  <p className="text-destructive inline-flex items-center gap-1.5 text-sm font-medium">
+                    <TriangleAlert className="size-4" aria-hidden />
+                    {stats.registered - stats.seatLimit} ponad limit
+                  </p>
+                ) : null}
               </StatTile>
               <StatTile
                 label="Lista rezerwowa"
                 value={stats.waitlisted}
-                hint={waitlistHint(stats)}
+                info="Osoby czekające na wolne miejsce. Dostają je automatycznie, w kolejności zapisu, gdy ktoś się wypisze albo limit wzrośnie."
               />
-              <StatTile label="Wypisy" value={stats.cancellations} hint="rezygnacje z zapisu" />
+              <StatTile
+                label="Wypisy"
+                value={stats.cancellations}
+                info="Osoby, które miały miejsce i zrezygnowały. Zejścia z listy rezerwowej nie są tu liczone."
+              />
             </section>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
