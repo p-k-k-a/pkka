@@ -94,16 +94,10 @@ function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
       {row.occupancyPercent == null ? null : (
         <OccupancyMeter percent={row.occupancyPercent} label={`Obłożenie: ${row.title}`} />
       )}
-      <dl className="text-muted-foreground flex gap-4 text-xs">
-        <div className="flex gap-1">
-          <dt>Lista rezerwowa:</dt>
-          <dd className="text-foreground font-medium tabular-nums">{row.waitlisted}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt>Wypisy:</dt>
-          <dd className="text-foreground font-medium tabular-nums">{row.cancellations}</dd>
-        </div>
-      </dl>
+      <p className="text-muted-foreground text-xs">
+        Lista rezerwowa:{" "}
+        <span className="text-foreground font-medium tabular-nums">{row.waitlisted}</span>
+      </p>
     </div>
   );
 }
