@@ -114,7 +114,7 @@ export function AdminEventsList() {
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
-  const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.ALL);
+  const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
   const [eventToDelete, setEventToDelete] = useState<AdminEventSummaryResponse | null>(null);
 
   useEffect(() => {
@@ -127,7 +127,15 @@ export function AdminEventsList() {
     data: response,
     isLoading: isListLoading,
     isError,
-  } = useListAdminEvents({ timeframe, page, size: PAGE_SIZE }, { query: { enabled: admin } });
+  } = useListAdminEvents(
+    {
+      timeframe,
+      page,
+      size: PAGE_SIZE,
+      sort: [timeframe === EventTimeframe.UPCOMING ? "startsAt,asc" : "startsAt,desc"],
+    },
+    { query: { enabled: admin } },
+  );
   const occupancy = useListEventOccupancy(
     { timeframe: EventTimeframe.ALL },
     { query: { enabled: admin } },
@@ -178,20 +186,7 @@ export function AdminEventsList() {
             Twórz, edytuj i usuwaj wydarzenia — także minione i tylko dla alumnów. Karty wyglądają
             tak samo jak w publicznym kalendarzu.
           </p>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Tabs
-              value={timeframe}
-              onValueChange={(value) => {
-                setTimeframe(value as EventTimeframe);
-                setPage(0);
-              }}
-            >
-              <TabsList>
-                <TabsTrigger value={EventTimeframe.ALL}>Wszystkie</TabsTrigger>
-                <TabsTrigger value={EventTimeframe.UPCOMING}>Nadchodzące</TabsTrigger>
-                <TabsTrigger value={EventTimeframe.PAST}>Minione</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <div className="flex flex-wrap items-center justify-end gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild>
                 <Link href={`${ADMIN_EVENTS_PATH}/new`}>
@@ -214,7 +209,19 @@ export function AdminEventsList() {
       </section>
 
       <section className="bg-background px-4 py-10 md:px-10 md:py-16">
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-[1280px] space-y-8">
+          <Tabs
+            value={timeframe}
+            onValueChange={(value) => {
+              setTimeframe(value as EventTimeframe);
+              setPage(0);
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value={EventTimeframe.UPCOMING}>Nadchodzące</TabsTrigger>
+              <TabsTrigger value={EventTimeframe.PAST}>Archiwum</TabsTrigger>
+            </TabsList>
+          </Tabs>
           {isListLoading ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -225,9 +232,9 @@ export function AdminEventsList() {
             <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
           ) : events.length === 0 ? (
             <p className="text-muted-foreground">
-              {timeframe === EventTimeframe.ALL
-                ? "Brak wydarzeń — utwórz pierwsze."
-                : "Brak wydarzeń w tym zakresie."}
+              {timeframe === EventTimeframe.UPCOMING
+                ? "Brak nadchodzących wydarzeń."
+                : "Archiwum jest puste."}
             </p>
           ) : (
             <div className="space-y-8">
