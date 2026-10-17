@@ -42,8 +42,8 @@ function signedUpAt(iso: string) {
 
 function statusLabel(registration: AdminEventRegistrationResponse) {
   return registration.status === EventRegistrationStatus.WAITLISTED
-    ? `Rezerwa #${registration.waitlistPosition ?? "?"}`
-    : "Ma miejsce";
+    ? `Lista rezerwowa #${registration.waitlistPosition ?? "?"}`
+    : "Zapisany";
 }
 
 function slugify(title: string) {
@@ -61,7 +61,7 @@ function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResp
     registrations.map((registration) => [
       registration.displayName,
       registration.email,
-      registration.status === EventRegistrationStatus.WAITLISTED ? "Lista rezerwowa" : "Ma miejsce",
+      registration.status === EventRegistrationStatus.WAITLISTED ? "Lista rezerwowa" : "Zapisany",
       registration.waitlistPosition,
       format(parseISO(registration.registeredAt), "yyyy-MM-dd HH:mm"),
     ]),
@@ -94,7 +94,7 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
       <div className="flex flex-wrap items-end justify-between gap-4 px-6 pt-6 pb-4">
         <div className="space-y-1">
           <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-            Zapisani{isLoading || isError ? "" : ` · ${seated}`}
+            Zapisani{isLoading || isError ? "" : ` (${seated})`}
           </h2>
           <p className="text-muted-foreground text-sm">
             {isLoading || isError
@@ -159,7 +159,7 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
                     Status
                   </th>
                   <th scope="col" className="px-6 py-3 text-right font-semibold">
-                    Zapis
+                    Data dołączenia
                   </th>
                 </tr>
               </thead>
