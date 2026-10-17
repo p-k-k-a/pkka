@@ -86,13 +86,25 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
     );
   }
 
-  const dimmedUnlessActive = (props: BarShapeProps) => (
-    <Rectangle
-      {...props}
-      fillOpacity={activeIndex === null || activeIndex === props.index ? 1 : 0.3}
-      className="transition-[fill-opacity] duration-150"
-    />
-  );
+  const segment = (kind: "signUps" | "cancellations") =>
+    function Segment(props: BarShapeProps) {
+      const day = days[props.index];
+      const onTop = kind === "cancellations" || day.cancellations === 0;
+      const gap = kind === "cancellations" && day.signUps > 0 ? 2 : 0;
+      const height = props.height - gap;
+      if (height <= 0) return <g />;
+      return (
+        <Rectangle
+          {...props}
+          height={height}
+          radius={onTop ? [4, 4, 0, 0] : 0}
+          fillOpacity={activeIndex === null || activeIndex === props.index ? 1 : 0.3}
+          className="transition-[fill-opacity] duration-150"
+        />
+      );
+    };
+  const signUpsSegment = segment("signUps");
+  const cancellationsSegment = segment("cancellations");
 
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -113,10 +125,8 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={days}
-            barGap={2}
             barCategoryGap="20%"
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-            title="Zapisy i wypisy dzień po dniu"
             onMouseMove={(state) => {
               const index = state.activeTooltipIndex;
               setActiveIndex(index == null ? null : Number(index));
@@ -148,20 +158,20 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
             <Bar
               dataKey="signUps"
               name="Zapisy"
+              stackId="day"
               fill={SIGN_UPS}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={20}
-              shape={dimmedUnlessActive}
-              activeBar={dimmedUnlessActive}
+              maxBarSize={24}
+              shape={signUpsSegment}
+              activeBar={signUpsSegment}
             />
             <Bar
               dataKey="cancellations"
               name="Wypisy"
+              stackId="day"
               fill={CANCELLATIONS}
-              radius={[4, 4, 0, 0]}
-              maxBarSize={20}
-              shape={dimmedUnlessActive}
-              activeBar={dimmedUnlessActive}
+              maxBarSize={24}
+              shape={cancellationsSegment}
+              activeBar={cancellationsSegment}
             />
           </BarChart>
         </ResponsiveContainer>
