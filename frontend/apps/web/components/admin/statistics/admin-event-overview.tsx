@@ -221,15 +221,14 @@ export function AdminEventOverview({ id }: { id: string }) {
               <Card className="gap-6 px-6 py-6 lg:col-span-2">
                 <div className="space-y-1">
                   <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
-                    Zapisy dziennie
+                    Zapisy w czasie
                   </h2>
                   <p className="text-muted-foreground text-sm">
                     Od {formatEventDateLong(stats.daily[0]?.date ?? stats.publishedAt)} do{" "}
-                    {seriesEndsAtStart ? "startu wydarzenia" : "dziś"} — nad osią zapisy, pod osią
-                    wypisy.
+                    {seriesEndsAtStart ? "startu wydarzenia" : "dziś"}.
                   </p>
                 </div>
-                <DailyRegistrationsChart days={stats.daily} />
+                <DailyRegistrationsChart days={stats.daily} seatLimit={stats.seatLimit} />
               </Card>
 
               <Card className="gap-4 px-6 py-6">
