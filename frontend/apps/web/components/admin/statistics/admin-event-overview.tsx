@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pencil } from "lucide-react";
 import { type ApiError, useGetAdminEvent, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
@@ -132,9 +132,17 @@ export function AdminEventOverview({ id }: { id: string }) {
 
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="min-w-0 flex-1 space-y-6">
-              <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight break-words md:text-[33px]">
-                {event.title}
-              </h1>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <h1 className="font-heading text-foreground min-w-0 text-[28px] font-semibold tracking-tight break-words md:text-[33px]">
+                  {event.title}
+                </h1>
+                <Button asChild variant="outline" className="shrink-0">
+                  <Link href={`${ADMIN_EVENTS_PATH}/${event.id}/edit`}>
+                    <Pencil data-icon="inline-start" />
+                    Edytuj wydarzenie
+                  </Link>
+                </Button>
+              </div>
               <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                 <EventDetail label="Termin">
                   <span className="block">
