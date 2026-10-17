@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EventCalendarCard } from "@/components/events/event-calendar-card";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
@@ -38,6 +39,13 @@ import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
+
+type SortKey = "startsAt" | "createdAt";
+
+function sortParam(sortKey: SortKey, timeframe: EventTimeframe) {
+  if (sortKey === "createdAt") return "createdAt,desc";
+  return timeframe === EventTimeframe.UPCOMING ? "startsAt,asc" : "startsAt,desc";
+}
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
 function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
@@ -115,6 +123,7 @@ export function AdminEventsList() {
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
   const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
+  const [sortKey, setSortKey] = useState<SortKey>("startsAt");
   const [eventToDelete, setEventToDelete] = useState<AdminEventSummaryResponse | null>(null);
 
   useEffect(() => {
@@ -132,7 +141,7 @@ export function AdminEventsList() {
       timeframe,
       page,
       size: PAGE_SIZE,
-      sort: [timeframe === EventTimeframe.UPCOMING ? "startsAt,asc" : "startsAt,desc"],
+      sort: [sortParam(sortKey, timeframe)],
     },
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
@@ -210,18 +219,34 @@ export function AdminEventsList() {
 
       <section className="bg-background px-4 py-10 md:px-10 md:py-16">
         <div className="mx-auto max-w-[1280px] space-y-8">
-          <Tabs
-            value={timeframe}
-            onValueChange={(value) => {
-              setTimeframe(value as EventTimeframe);
-              setPage(0);
-            }}
-          >
-            <TabsList>
-              <TabsTrigger value={EventTimeframe.UPCOMING}>Nadchodzące</TabsTrigger>
-              <TabsTrigger value={EventTimeframe.PAST}>Archiwum</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Tabs
+              value={timeframe}
+              onValueChange={(value) => {
+                setTimeframe(value as EventTimeframe);
+                setPage(0);
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value={EventTimeframe.UPCOMING}>Nadchodzące</TabsTrigger>
+                <TabsTrigger value={EventTimeframe.PAST}>Archiwum</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <label className="text-muted-foreground flex items-center gap-2 text-sm">
+              Sortuj według
+              <Select
+                className="h-9 w-auto"
+                value={sortKey}
+                onChange={(changeEvent) => {
+                  setSortKey(changeEvent.target.value as SortKey);
+                  setPage(0);
+                }}
+              >
+                <option value="startsAt">daty wydarzenia</option>
+                <option value="createdAt">daty dodania</option>
+              </Select>
+            </label>
+          </div>
           {isListLoading ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
