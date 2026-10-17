@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { differenceInCalendarDays, parseISO } from "date-fns";
-import { ArrowLeft, TriangleAlert } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { type ApiError, useGetAdminEventBySlug, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
@@ -188,8 +188,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                   />
                 )}
                 {stats.seatLimit != null && stats.registered > stats.seatLimit ? (
-                  <p className="text-destructive inline-flex items-center gap-1.5 text-sm font-medium">
-                    <TriangleAlert className="size-4" aria-hidden />
+                  <p className="text-destructive text-sm font-medium">
                     {stats.registered - stats.seatLimit} ponad limit
                   </p>
                 ) : null}
