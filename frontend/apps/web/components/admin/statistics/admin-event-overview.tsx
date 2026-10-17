@@ -231,8 +231,6 @@ export function AdminEventOverview({ id }: { id: string }) {
                     Podsumowanie
                   </h2>
                   <dl>
-                    <SummaryRow label="Wszystkie zapisy">{stats.signUps}</SummaryRow>
-                    <SummaryRow label="Limit miejsc">{stats.seatLimit ?? "brak"}</SummaryRow>
                     <SummaryRow label="Opublikowano">
                       {formatDateTime(stats.publishedAt)}
                     </SummaryRow>
