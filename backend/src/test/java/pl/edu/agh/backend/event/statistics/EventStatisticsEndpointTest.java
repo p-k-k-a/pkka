@@ -136,7 +136,7 @@ class EventStatisticsEndpointTest {
     }
 
     @Test
-    void countsSeatsWaitlistAndBothKindsOfCancellation() throws Exception {
+    void countsSeatHolderCancellationsButNotLeavingTheWaitlist() throws Exception {
         Event event = upcomingEvent(2);
         String first = signUp(event);
         signUp(event);
@@ -153,8 +153,8 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$.registered").value(2))
                 .andExpect(jsonPath("$.waitlisted").value(0))
                 .andExpect(jsonPath("$.signUps").value(4))
-                .andExpect(jsonPath("$.cancellations").value(2))
-                .andExpect(jsonPath("$.cancellationsFromWaitlist").value(1))
+                .andExpect(jsonPath("$.cancellations").value(1))
+                .andExpect(jsonPath("$.cancellationsFromWaitlist").doesNotExist())
                 .andExpect(jsonPath("$.promotions").value(1))
                 .andExpect(jsonPath("$.occupancyPercent").value(100));
     }
@@ -209,6 +209,7 @@ class EventStatisticsEndpointTest {
         activity(event, RegistrationActivityType.SIGNED_UP, now.minus(1, ChronoUnit.DAYS));
         activity(event, RegistrationActivityType.CANCELLED, now.minus(1, ChronoUnit.DAYS));
         activity(event, RegistrationActivityType.PROMOTED, now.minus(1, ChronoUnit.DAYS));
+        activity(event, RegistrationActivityType.LEFT_WAITLIST, now.minus(1, ChronoUnit.DAYS));
 
         LocalDate today = LocalDate.now(WARSAW);
         mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
@@ -283,7 +284,7 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$[1].eventId").value(small.getId().toString()))
                 .andExpect(jsonPath("$[1].registered").value(2))
                 .andExpect(jsonPath("$[1].waitlisted").value(0))
-                .andExpect(jsonPath("$[1].cancellations").value(1))
+                .andExpect(jsonPath("$[1].cancellations").value(0))
                 .andExpect(jsonPath("$[1].seatLimit").value(2))
                 .andExpect(jsonPath("$[1].occupancyPercent").value(100))
                 .andExpect(jsonPath("$[0].occupancyPercent").value(nullValue()))

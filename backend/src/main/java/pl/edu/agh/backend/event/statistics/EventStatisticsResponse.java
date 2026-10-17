@@ -30,13 +30,8 @@ public record EventStatisticsResponse(
 
         @Schema(
                 requiredMode = RequiredMode.REQUIRED,
-                description = "Every withdrawal: seat holders who cancelled and people who left the waitlist")
+                description = "Seat holders who cancelled; people leaving the waitlist are not counted")
         int cancellations,
-
-        @Schema(
-                requiredMode = RequiredMode.REQUIRED,
-                description = "The part of `cancellations` that left the waitlist")
-        int cancellationsFromWaitlist,
 
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "Waitlisted people who were moved onto a seat")
         int promotions,
