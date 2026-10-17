@@ -59,13 +59,6 @@ function waitlistHint(stats: EventStatisticsResponse) {
   );
 }
 
-function cancellationsHint(stats: EventStatisticsResponse) {
-  if (stats.cancellationsFromWaitlist > 0) {
-    return `w tym ${stats.cancellationsFromWaitlist} z listy rezerwowej`;
-  }
-  return "rezygnacje z zapisu";
-}
-
 function occupancyHint(percent?: number) {
   if (percent == null) return "wydarzenie bez limitu miejsc";
   if (percent > 100) return "więcej zapisanych niż miejsc — limit obniżono po zapisach";
@@ -170,7 +163,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                     {formatTimeRange(event.startsAt, event.endsAt)}
                     <span className="text-foreground font-medium">
                       {" "}
-                      · {startStatus(event.startsAt, event.endsAt)}
+                      ({startStatus(event.startsAt, event.endsAt)})
                     </span>
                   </span>
                 </li>
@@ -217,11 +210,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                 value={stats.waitlisted}
                 hint={waitlistHint(stats)}
               />
-              <StatTile
-                label="Wypisy"
-                value={stats.cancellations}
-                hint={cancellationsHint(stats)}
-              />
+              <StatTile label="Wypisy" value={stats.cancellations} hint="rezygnacje z zapisu" />
               <StatTile
                 label="Obłożenie"
                 value={stats.occupancyPercent == null ? "—" : `${stats.occupancyPercent}%`}
