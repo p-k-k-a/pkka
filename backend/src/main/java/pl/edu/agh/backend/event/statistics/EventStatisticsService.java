@@ -1,35 +1,26 @@
 package pl.edu.agh.backend.event.statistics;
 
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
-
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.EventRepository;
-import pl.edu.agh.backend.event.EventSpecifications;
-import pl.edu.agh.backend.event.EventTimeframe;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
 import pl.edu.agh.backend.event.registration.EventRegistrationRepository.EventSeatCount;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository.ActivityCount;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository.ActivityOccurrence;
-import pl.edu.agh.backend.event.registration.RegistrationActivityType;
 
 @Service
 @RequiredArgsConstructor
@@ -45,9 +36,7 @@ public class EventStatisticsService {
     @Transactional(readOnly = true)
     public EventStatisticsResponse getStatistics(UUID eventId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
-        List<ActivityOccurrence> occurrences = registrationActivityRepository.findOccurrences(eventId);
-        Map<RegistrationActivityType, Long> byType = new EnumMap<>(RegistrationActivityType.class);
-        byType.putAll(occurrences.stream().collect(groupingBy(ActivityOccurrence::type, counting())));
+        List<DailyRegistrationsResponse> daily = daily(event, registrationActivityRepository.findOccurrences(eventId));
 
         long registered =
                 eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.REGISTERED);
@@ -55,30 +44,20 @@ public class EventStatisticsService {
                 eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.WAITLISTED);
 
         return new EventStatisticsResponse(
-                event.getId(),
-                event.getTitle(),
-                event.getStartsAt(),
-                event.getCreatedAt(),
                 event.getSeatLimit(),
                 (int) registered,
                 (int) waitlisted,
-                (int) (count(byType, RegistrationActivityType.SIGNED_UP)
-                        + count(byType, RegistrationActivityType.WAITLISTED)),
-                (int) count(byType, RegistrationActivityType.CANCELLED),
+                daily.stream().mapToInt(DailyRegistrationsResponse::signUps).sum(),
+                daily.stream()
+                        .mapToInt(DailyRegistrationsResponse::cancellations)
+                        .sum(),
                 occupancyPercent(registered, event.getSeatLimit()),
-                daily(event, occurrences));
+                daily);
     }
 
     @Transactional(readOnly = true)
-    public List<EventOccupancyResponse> compareOccupancy(EventTimeframe timeframe) {
-        Instant now = Instant.now(clock);
-        Specification<Event> spec = Specification.unrestricted();
-        if (timeframe == EventTimeframe.UPCOMING) {
-            spec = spec.and(EventSpecifications.startsAfter(now));
-        } else if (timeframe == EventTimeframe.PAST) {
-            spec = spec.and(EventSpecifications.startsBeforeOrEqual(now));
-        }
-        List<Event> events = eventRepository.findAll(spec, Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")));
+    public List<EventOccupancyResponse> compareOccupancy() {
+        List<Event> events = eventRepository.findAll(Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")));
         if (events.isEmpty()) {
             return List.of();
         }
@@ -87,9 +66,8 @@ public class EventStatisticsService {
         Map<UUID, Long> registered = seatCounts(ids, EventRegistrationStatus.REGISTERED);
         Map<UUID, Long> waitlisted = seatCounts(ids, EventRegistrationStatus.WAITLISTED);
         Map<UUID, Long> cancellations = new HashMap<>();
-        for (ActivityCount row : registrationActivityRepository.countByEventIdInAndTypeIn(
-                ids, List.of(RegistrationActivityType.CANCELLED))) {
-            cancellations.merge(row.eventId(), row.count(), Long::sum);
+        for (ActivityCount row : registrationActivityRepository.countCancellationsByEventIdIn(ids)) {
+            cancellations.put(row.eventId(), row.count());
         }
 
         return events.stream()
@@ -116,11 +94,6 @@ public class EventStatisticsService {
         return counts;
     }
 
-    /**
-     * Runs from publication to today, or to the start of an event that has already begun, since nobody can
-     * sign up or cancel after that. Activity outside that span — sign-ups imported from before the event's
-     * creation date was tracked, say — stretches it rather than going missing.
-     */
     private List<DailyRegistrationsResponse> daily(Event event, List<ActivityOccurrence> occurrences) {
         LocalDate today = LocalDate.now(clock.withZone(ZONE));
         LocalDate startDay = LocalDate.ofInstant(event.getStartsAt(), ZONE);
@@ -153,10 +126,6 @@ public class EventStatisticsService {
             series.add(new DailyRegistrationsResponse(day, counts[0], counts[1]));
         }
         return series;
-    }
-
-    private static long count(Map<RegistrationActivityType, Long> byType, RegistrationActivityType type) {
-        return byType.getOrDefault(type, 0L);
     }
 
     private static Integer occupancyPercent(long registered, Integer seatLimit) {

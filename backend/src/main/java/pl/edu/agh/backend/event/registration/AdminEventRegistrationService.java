@@ -17,10 +17,9 @@ public class AdminEventRegistrationService {
     private final EventRepository eventRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
 
-    /** Seat holders in sign-up order, then the waitlist in the order it will be promoted. */
     @Transactional(readOnly = true)
     public List<AdminEventRegistrationResponse> list(UUID eventId) {
-        if (eventRepository.findById(eventId).isEmpty()) {
+        if (!eventRepository.existsById(eventId)) {
             throw new EventNotFoundException(eventId);
         }
         List<EventRegistration> registrations =

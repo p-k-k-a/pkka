@@ -148,14 +148,11 @@ class EventStatisticsEndpointTest {
 
         mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eventId").value(event.getId().toString()))
                 .andExpect(jsonPath("$.seatLimit").value(2))
                 .andExpect(jsonPath("$.registered").value(2))
                 .andExpect(jsonPath("$.waitlisted").value(0))
                 .andExpect(jsonPath("$.signUps").value(4))
                 .andExpect(jsonPath("$.cancellations").value(1))
-                .andExpect(jsonPath("$.cancellationsFromWaitlist").doesNotExist())
-                .andExpect(jsonPath("$.promotions").doesNotExist())
                 .andExpect(jsonPath("$.occupancyPercent").value(100));
     }
 
@@ -275,7 +272,7 @@ class EventStatisticsEndpointTest {
         cancel(small, queued);
         Event big = newEvent("Gala", null, Instant.now().plus(9, ChronoUnit.DAYS));
         signUp(big);
-        Event past = newEvent("Minione", 20, Instant.now().minus(3, ChronoUnit.DAYS));
+        newEvent("Minione", 20, Instant.now().minus(3, ChronoUnit.DAYS));
 
         mockMvc.perform(get("/api/admin/events/statistics").with(JwtTestSupport.asAdmin()))
                 .andExpect(status().isOk())
@@ -289,15 +286,6 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$[0].occupancyPercent").value(nullValue()))
                 .andExpect(jsonPath("$[2].registered").value(0))
                 .andExpect(jsonPath("$[2].occupancyPercent").value(0));
-
-        mockMvc.perform(get("/api/admin/events/statistics")
-                        .param("timeframe", "UPCOMING")
-                        .with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$[*].title").value(contains("Gala", "Mały warsztat")));
-        mockMvc.perform(get("/api/admin/events/statistics")
-                        .param("timeframe", "PAST")
-                        .with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$[*].eventId").value(contains(past.getId().toString())));
     }
 
     @Test

@@ -12,7 +12,6 @@ import pl.edu.agh.backend.user.User;
 
 public record AdminEventRegistrationResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID registrationId,
-        @Schema(requiredMode = RequiredMode.REQUIRED) UUID userId,
 
         @Schema(description = "First and last name; absent for a user who has not filled in either")
         String displayName,
@@ -36,7 +35,6 @@ public record AdminEventRegistrationResponse(
                 .collect(Collectors.joining(" "));
         return new AdminEventRegistrationResponse(
                 registration.getId(),
-                user.getId(),
                 displayName.isEmpty() ? null : displayName,
                 user.getEmail() == null || user.getEmail().isBlank() ? null : user.getEmail(),
                 registration.getStatus(),
