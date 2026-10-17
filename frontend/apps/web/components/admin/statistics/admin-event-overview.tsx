@@ -39,11 +39,9 @@ function startStatus(startsAt: string, endsAt: string) {
 
 function EventDetail({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="bg-card min-w-0 space-y-1 px-5 py-4">
-      <dt className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-        {label}
-      </dt>
-      <dd className="text-foreground text-sm break-words">{children}</dd>
+    <div className="border-border flex items-baseline justify-between gap-4 border-t py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <dt className="text-muted-foreground shrink-0 text-sm">{label}</dt>
+      <dd className="text-foreground text-right text-sm font-medium break-words">{children}</dd>
     </div>
   );
 }
@@ -133,26 +131,6 @@ export function AdminEventOverview({ id }: { id: string }) {
                   </Link>
                 </Button>
               </div>
-              <dl className="bg-border ring-border grid grid-cols-1 gap-px overflow-hidden rounded-xl ring-1 sm:grid-cols-2 lg:grid-cols-3">
-                <EventDetail label="Termin">
-                  <span className="block">
-                    {formatEventDateLong(event.startsAt)},{" "}
-                    {formatTimeRange(event.startsAt, event.endsAt)}
-                  </span>
-                  <span className="text-muted-foreground block">
-                    {startStatus(event.startsAt, event.endsAt)}
-                  </span>
-                </EventDetail>
-                <EventDetail label="Miejsce">
-                  {eventLocationLabel(event.type, event.location)}
-                </EventDetail>
-                <EventDetail label="Odbiorcy">{audienceLabel(event.audience)}</EventDetail>
-                <EventDetail label="Opublikowano">{formatDateTime(event.createdAt)}</EventDetail>
-                <EventDetail label="Zapisy do">
-                  {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
-                </EventDetail>
-                <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
-              </dl>
             </div>
           </div>
         </div>
@@ -220,7 +198,36 @@ export function AdminEventOverview({ id }: { id: string }) {
                 <DailyRegistrationsChart days={stats.daily} />
               </Card>
 
-              <SignupSources signUps={stats.signUps} />
+              <div className="flex flex-col gap-6">
+                <Card className="gap-4 px-6 py-6">
+                  <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight">
+                    Szczegóły
+                  </h2>
+                  <dl>
+                    <EventDetail label="Termin">
+                      <span className="block">
+                        {formatEventDateLong(event.startsAt)},{" "}
+                        {formatTimeRange(event.startsAt, event.endsAt)}
+                      </span>
+                      <span className="text-muted-foreground block font-normal">
+                        {startStatus(event.startsAt, event.endsAt)}
+                      </span>
+                    </EventDetail>
+                    <EventDetail label="Miejsce">
+                      {eventLocationLabel(event.type, event.location)}
+                    </EventDetail>
+                    <EventDetail label="Odbiorcy">{audienceLabel(event.audience)}</EventDetail>
+                    <EventDetail label="Opublikowano">
+                      {formatDateTime(event.createdAt)}
+                    </EventDetail>
+                    <EventDetail label="Zapisy do">
+                      {formatDateTime(event.registrationClosesAt ?? event.startsAt)}
+                    </EventDetail>
+                    <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
+                  </dl>
+                </Card>
+                <SignupSources signUps={stats.signUps} />
+              </div>
             </div>
           </>
         )}
