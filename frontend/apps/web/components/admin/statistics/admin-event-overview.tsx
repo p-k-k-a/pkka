@@ -175,7 +175,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                     : `${stats.registered}/${stats.seatLimit}`
                 }
                 hint={stats.seatLimit == null ? "bez limitu miejsc" : undefined}
-                info="Osoby, które mają miejsce na wydarzeniu, na tle limitu miejsc. Lista rezerwowa nie jest tu wliczana."
+                info="Osoby z miejscem / limit miejsc. Bez listy rezerwowej."
               >
                 {stats.occupancyPercent == null ? null : (
                   <OccupancyMeter
@@ -194,12 +194,12 @@ export function AdminEventOverview({ id }: { id: string }) {
               <StatTile
                 label="Lista rezerwowa"
                 value={stats.waitlisted}
-                info="Osoby czekające na wolne miejsce. Dostają je automatycznie, w kolejności zapisu, gdy ktoś się wypisze albo limit wzrośnie."
+                info="Osoby czekające na wolne miejsce. Dostają je automatycznie, w kolejności zapisu."
               />
               <StatTile
                 label="Wypisy"
                 value={stats.cancellations}
-                info="Osoby, które miały miejsce i zrezygnowały. Zejścia z listy rezerwowej nie są tu liczone."
+                info="Rezygnacje osób z miejscem. Bez zejść z listy rezerwowej."
               />
             </section>
 

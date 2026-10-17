@@ -41,9 +41,7 @@ export function SignupSources({
             Źródła zapisów
           </h2>
           <InfoTip label="Źródła zapisów">
-            Skąd przyszły osoby, które się zapisały: z ogłoszenia na Discordzie, z e-maila, ze
-            strony WWW albo z aplikacji mobilnej. Na razie liczby są przykładowe, bo zapisy nie
-            zapamiętują jeszcze kanału.
+            Kanał, z którego przyszedł zapis. Na razie dane przykładowe.
           </InfoTip>
         </div>
         <span className="bg-accent/10 text-accent shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold tracking-widest uppercase">
