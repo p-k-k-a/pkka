@@ -61,12 +61,9 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
 
   return (
     <section aria-labelledby="upcoming-stats-heading" className="space-y-3">
-      <div>
-        <h2 id="upcoming-stats-heading" className="text-foreground text-sm font-semibold">
-          Statystyki nadchodzących wydarzeń
-        </h2>
-        <p className="text-muted-foreground text-xs">Minione wydarzenia nie są wliczane.</p>
-      </div>
+      <h2 id="upcoming-stats-heading" className="text-foreground text-sm font-semibold">
+        Statystyki nadchodzących wydarzeń
+      </h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label="Zapisani"
@@ -185,25 +182,25 @@ export function AdminEventsList() {
     <div>
       <section className="bg-background px-4 py-10 md:px-10 md:py-16">
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-            Kalendarz wydarzeń
-          </p>
-          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-            Wydarzenia klubu
-          </h1>
-          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-            Twórz, edytuj i usuwaj wydarzenia — także minione i tylko dla alumnów. Karty wyglądają
-            tak samo jak w publicznym kalendarzu.
-          </p>
-          <div className="flex flex-wrap items-center justify-end gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button asChild>
-                <Link href={`${ADMIN_EVENTS_PATH}/new`}>
-                  <Plus data-icon="inline-start" />
-                  Nowe wydarzenie
-                </Link>
-              </Button>
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="space-y-6">
+              <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+                Kalendarz wydarzeń
+              </p>
+              <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+                Wydarzenia klubu
+              </h1>
+              <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
+                Twórz, edytuj i usuwaj wydarzenia — także minione i tylko dla alumnów. Karty
+                wyglądają tak samo jak w publicznym kalendarzu.
+              </p>
             </div>
+            <Button asChild className="shrink-0">
+              <Link href={`${ADMIN_EVENTS_PATH}/new`}>
+                <Plus data-icon="inline-start" />
+                Nowe wydarzenie
+              </Link>
+            </Button>
           </div>
           {occupancy.isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
