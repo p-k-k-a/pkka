@@ -140,6 +140,7 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
               tick={{ fill: AXIS_TEXT, fontSize: 12 }}
               axisLine={{ stroke: GRID }}
               tickFormatter={(date: string) => dayLabel(date, "d MMM")}
+              interval="preserveStartEnd"
               minTickGap={24}
               tickMargin={8}
             />
