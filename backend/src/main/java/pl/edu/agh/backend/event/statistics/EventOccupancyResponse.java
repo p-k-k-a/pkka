@@ -13,7 +13,9 @@ public record EventOccupancyResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) int registered,
         @Schema(requiredMode = RequiredMode.REQUIRED) int waitlisted,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED, description = "Seat cancellations and waitlist exits together")
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Seat holders who cancelled; waitlist exits are not counted")
         int cancellations,
 
         @Schema(description = "Held seats as a percentage of the seat limit, rounded; absent when there is no limit")

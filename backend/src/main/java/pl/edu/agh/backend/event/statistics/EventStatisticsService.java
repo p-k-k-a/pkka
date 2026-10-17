@@ -53,7 +53,6 @@ public class EventStatisticsService {
                 eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.REGISTERED);
         long waitlisted =
                 eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.WAITLISTED);
-        long leftWaitlist = count(byType, RegistrationActivityType.LEFT_WAITLIST);
 
         return new EventStatisticsResponse(
                 event.getId(),
@@ -65,8 +64,7 @@ public class EventStatisticsService {
                 (int) waitlisted,
                 (int) (count(byType, RegistrationActivityType.SIGNED_UP)
                         + count(byType, RegistrationActivityType.WAITLISTED)),
-                (int) (count(byType, RegistrationActivityType.CANCELLED) + leftWaitlist),
-                (int) leftWaitlist,
+                (int) count(byType, RegistrationActivityType.CANCELLED),
                 (int) count(byType, RegistrationActivityType.PROMOTED),
                 occupancyPercent(registered, event.getSeatLimit()),
                 daily(event, occurrences));
@@ -91,7 +89,7 @@ public class EventStatisticsService {
         Map<UUID, Long> waitlisted = seatCounts(ids, EventRegistrationStatus.WAITLISTED);
         Map<UUID, Long> cancellations = new HashMap<>();
         for (ActivityCount row : registrationActivityRepository.countByEventIdInAndTypeIn(
-                ids, List.of(RegistrationActivityType.CANCELLED, RegistrationActivityType.LEFT_WAITLIST))) {
+                ids, List.of(RegistrationActivityType.CANCELLED))) {
             cancellations.merge(row.eventId(), row.count(), Long::sum);
         }
 
@@ -139,8 +137,8 @@ public class EventStatisticsService {
             int[] counts = byDay.computeIfAbsent(day, d -> new int[2]);
             switch (occurrence.type()) {
                 case SIGNED_UP, WAITLISTED -> counts[0]++;
-                case CANCELLED, LEFT_WAITLIST -> counts[1]++;
-                case PROMOTED -> {}
+                case CANCELLED -> counts[1]++;
+                case PROMOTED, LEFT_WAITLIST -> {}
             }
             if (day.isBefore(first)) {
                 first = day;
