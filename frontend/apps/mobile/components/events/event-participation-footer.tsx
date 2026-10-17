@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import {
-  getGetEventByIdQueryKey,
+  getGetEventBySlugQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
   useRegisterForEvent,
@@ -33,7 +33,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
 
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) }),
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) }),
       queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() }),
     ]);
 

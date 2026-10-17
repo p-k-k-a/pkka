@@ -76,6 +76,7 @@ class EventStatisticsEndpointTest {
     private Event newEvent(String title, Integer seatLimit, Instant startsAt) {
         return eventRepository.saveAndFlush(Event.builder()
                 .title(title)
+                .slug("wydarzenie-" + UUID.randomUUID())
                 .type(EventType.IN_PERSON)
                 .startsAt(startsAt)
                 .endsAt(startsAt.plus(2, ChronoUnit.HOURS))

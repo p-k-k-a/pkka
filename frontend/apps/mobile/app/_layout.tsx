@@ -39,7 +39,7 @@ export default function RootLayout() {
                   <Stack>
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="index" options={{ headerShown: false }} />
-                    <Stack.Screen name="events/[id]" options={{ headerShown: false }} />
+                    <Stack.Screen name="events/[slug]" options={{ headerShown: false }} />
                     <Stack.Screen name="application" options={{ headerShown: false }} />
                     <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
                     <Stack.Screen name="alumni/[id]" options={{ headerShown: false }} />

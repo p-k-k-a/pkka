@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   EventRegistrationStatus,
-  getGetEventByIdQueryKey,
+  getGetEventBySlugQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
   useRegisterForEvent,
@@ -71,12 +71,12 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) }),
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) }),
       queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() }),
     ]);
 
   // Built on click, not during render: the page URL needs `window`.
-  const eventPageUrl = () => `${window.location.origin}${eventDetailHref(event.id)}`;
+  const eventPageUrl = () => `${window.location.origin}${eventDetailHref(event.slug)}`;
 
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({

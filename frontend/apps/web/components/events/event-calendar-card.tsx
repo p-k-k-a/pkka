@@ -16,7 +16,7 @@ import { type EventSchedule } from "@/components/events/event-location-aside";
 import { eventTypeBadgeClass } from "@/lib/event-type-badge";
 
 export type EventCalendarCardData = EventSchedule & {
-  id: string;
+  slug: string;
   title: string;
   /** The viewer's own sign-up, when the list endpoint knows it. */
   registrationStatus?: EventRegistrationStatus;
@@ -40,7 +40,7 @@ export function EventCalendarCard({
   className,
 }: EventCalendarCardProps) {
   const location = eventLocationLabel(event.type, event.location);
-  const target = href ?? eventDetailHref(event.id, variant);
+  const target = href ?? eventDetailHref(event.slug, variant);
 
   const inner = (
     <Card

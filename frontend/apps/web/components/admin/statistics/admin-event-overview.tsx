@@ -7,7 +7,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 import { ArrowLeft, CalendarClock, MapPin, Pencil, Users } from "lucide-react";
 import {
   type ApiError,
-  useGetAdminEvent,
+  useGetAdminEventBySlug,
   useGetEventStatistics,
   type EventStatisticsResponse,
 } from "@pkka/api";
@@ -85,7 +85,7 @@ function OverviewSkeleton() {
   );
 }
 
-export function AdminEventOverview({ id }: { id: string }) {
+export function AdminEventOverview({ slug }: { slug: string }) {
   const router = useRouter();
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
@@ -96,8 +96,11 @@ export function AdminEventOverview({ id }: { id: string }) {
     }
   }, [admin, isLoading, router]);
 
-  const eventQuery = useGetAdminEvent(id, { query: { enabled: admin } });
-  const statsQuery = useGetEventStatistics(id, { query: { enabled: admin } });
+  const eventQuery = useGetAdminEventBySlug(slug, { query: { enabled: admin } });
+  const eventId = eventQuery.data?.status === 200 ? eventQuery.data.data.id : undefined;
+  const statsQuery = useGetEventStatistics(eventId ?? "", {
+    query: { enabled: admin && eventId != null },
+  });
 
   if (isLoading || !admin || eventQuery.isLoading) {
     return <OverviewSkeleton />;
@@ -172,7 +175,7 @@ export function AdminEventOverview({ id }: { id: string }) {
               </ul>
             </div>
             <Button asChild variant="outline" size="lg">
-              <Link href={`${ADMIN_EVENTS_PATH}/${event.id}/edit`}>
+              <Link href={`${ADMIN_EVENTS_PATH}/${event.slug}/edit`}>
                 <Pencil data-icon="inline-start" />
                 Edytuj wydarzenie
               </Link>
