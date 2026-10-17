@@ -10,17 +10,8 @@ const MOCK_SHARES = [
 ];
 
 function splitByShares(total: number) {
-  const exact = MOCK_SHARES.map((source) => source.share * total);
-  const counts = exact.map(Math.floor);
-  let left = total - counts.reduce((sum, count) => sum + count, 0);
-  const byRemainder = exact
-    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
-    .sort((a, b) => b.remainder - a.remainder);
-  for (const { index } of byRemainder) {
-    if (left === 0) break;
-    counts[index] += 1;
-    left -= 1;
-  }
+  const counts = MOCK_SHARES.map((source) => Math.floor(source.share * total));
+  counts[0] += total - counts.reduce((sum, count) => sum + count, 0);
   return counts;
 }
 
