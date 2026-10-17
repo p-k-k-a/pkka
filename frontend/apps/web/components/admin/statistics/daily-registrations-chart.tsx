@@ -1,8 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { pl } from "date-fns/locale";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Rectangle,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  type BarShapeProps,
+} from "recharts";
 import type { DailyRegistrationsResponse } from "@pkka/api";
 import { pluralPl } from "@pkka/domain";
 
@@ -63,6 +74,7 @@ function ChartTooltip({
 }
 
 export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResponse[] }) {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const totalSignUps = days.reduce((sum, day) => sum + day.signUps, 0);
   const totalCancellations = days.reduce((sum, day) => sum + day.cancellations, 0);
 
@@ -74,8 +86,16 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
     );
   }
 
+  const dimmedUnlessActive = (props: BarShapeProps) => (
+    <Rectangle
+      {...props}
+      fillOpacity={activeIndex === null || activeIndex === props.index ? 1 : 0.3}
+      className="transition-[fill-opacity] duration-150"
+    />
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <span className="text-foreground inline-flex items-center gap-2">
           <span className="bg-chart-1 size-3 rounded-[2px]" aria-hidden />
@@ -89,7 +109,7 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
         </span>
       </div>
 
-      <div className="-ml-2" style={{ height: CHART_HEIGHT }}>
+      <div className="-ml-2 flex-1" style={{ minHeight: CHART_HEIGHT }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={days}
@@ -97,6 +117,11 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
             barCategoryGap="20%"
             margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
             title="Zapisy i wypisy dzień po dniu"
+            onMouseMove={(state) => {
+              const index = state.activeTooltipIndex;
+              setActiveIndex(index == null ? null : Number(index));
+            }}
+            onMouseLeave={() => setActiveIndex(null)}
           >
             <CartesianGrid vertical={false} stroke={GRID} strokeOpacity={0.6} />
             <XAxis
@@ -117,7 +142,7 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
               tickMargin={4}
             />
             <Tooltip
-              cursor={{ fill: "var(--color-muted)", opacity: 0.6 }}
+              cursor={{ fill: "var(--color-foreground)", fillOpacity: 0.08, radius: 4 }}
               content={({ active, payload }) => <ChartTooltip active={active} payload={payload} />}
             />
             <Bar
@@ -126,6 +151,8 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
               fill={SIGN_UPS}
               radius={[4, 4, 0, 0]}
               maxBarSize={20}
+              shape={dimmedUnlessActive}
+              activeBar={dimmedUnlessActive}
             />
             <Bar
               dataKey="cancellations"
@@ -133,6 +160,8 @@ export function DailyRegistrationsChart({ days }: { days: DailyRegistrationsResp
               fill={CANCELLATIONS}
               radius={[4, 4, 0, 0]}
               maxBarSize={20}
+              shape={dimmedUnlessActive}
+              activeBar={dimmedUnlessActive}
             />
           </BarChart>
         </ResponsiveContainer>
