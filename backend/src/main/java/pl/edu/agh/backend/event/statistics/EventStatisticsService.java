@@ -51,7 +51,6 @@ public class EventStatisticsService {
                 daily.stream()
                         .mapToInt(DailyRegistrationsResponse::cancellations)
                         .sum(),
-                occupancyPercent(registered, event.getSeatLimit()),
                 daily);
     }
 
@@ -80,8 +79,7 @@ public class EventStatisticsService {
                             event.getSeatLimit(),
                             (int) held,
                             waitlisted.getOrDefault(event.getId(), 0L).intValue(),
-                            cancellations.getOrDefault(event.getId(), 0L).intValue(),
-                            occupancyPercent(held, event.getSeatLimit()));
+                            cancellations.getOrDefault(event.getId(), 0L).intValue());
                 })
                 .toList();
     }
@@ -126,15 +124,5 @@ public class EventStatisticsService {
             series.add(new DailyRegistrationsResponse(day, counts[0], counts[1]));
         }
         return series;
-    }
-
-    private static Integer occupancyPercent(long registered, Integer seatLimit) {
-        if (seatLimit == null) {
-            return null;
-        }
-        if (seatLimit == 0 && registered == 0) {
-            return 100;
-        }
-        return (int) Math.round(registered * 100.0 / Math.max(seatLimit, 1));
     }
 }
