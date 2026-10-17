@@ -102,8 +102,7 @@ export function PostsList() {
                 Aktualności
               </h1>
               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-                Pisz, edytuj i usuwaj wpisy. Szkice widzą tylko administratorzy, a opublikowane
-                wpisy trafiają do zakładki „Aktualności”.
+                Twórz wpisy klubu. Szkice widzą tylko administratorzy.
               </p>
             </div>
             <Button asChild className="shrink-0">
