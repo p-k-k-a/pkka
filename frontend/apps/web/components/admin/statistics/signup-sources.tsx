@@ -23,7 +23,13 @@ function splitByShares(total: number) {
   return counts;
 }
 
-export function SignupSources({ signUps }: { signUps: number }) {
+export function SignupSources({
+  signUps,
+  layout = "stack",
+}: {
+  signUps: number;
+  layout?: "stack" | "row";
+}) {
   const counts = splitByShares(signUps);
 
   return (
@@ -36,7 +42,13 @@ export function SignupSources({ signUps }: { signUps: number }) {
           Przykładowe dane
         </span>
       </div>
-      <ul className="space-y-4">
+      <ul
+        className={
+          layout === "row"
+            ? "grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4"
+            : "space-y-4"
+        }
+      >
         {MOCK_SHARES.map((source, index) => {
           const percent = signUps === 0 ? 0 : Math.round((counts[index] / signUps) * 100);
           return (
