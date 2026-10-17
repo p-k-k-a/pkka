@@ -3,7 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { differenceInCalendarDays, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { type ApiError, useGetAdminEvent, useGetEventStatistics } from "@pkka/api";
 import {
@@ -25,18 +25,6 @@ import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
-
-function startStatus(startsAt: string, endsAt: string) {
-  const now = new Date();
-  const start = parseISO(startsAt);
-  if (start > now) {
-    const days = differenceInCalendarDays(start, now);
-    if (days === 0) return "dziś";
-    if (days === 1) return "jutro";
-    return `za ${days} dni`;
-  }
-  return parseISO(endsAt) > now ? "trwa teraz" : "zakończone";
-}
 
 function EventDetail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -206,13 +194,8 @@ export function AdminEventOverview({ id }: { id: string }) {
                   </h2>
                   <dl>
                     <EventDetail label="Termin">
-                      <span className="block">
-                        {formatEventDateLong(event.startsAt)},{" "}
-                        {formatTimeRange(event.startsAt, event.endsAt)}
-                      </span>
-                      <span className="text-muted-foreground block font-normal">
-                        {startStatus(event.startsAt, event.endsAt)}
-                      </span>
+                      {formatEventDateLong(event.startsAt)},{" "}
+                      {formatTimeRange(event.startsAt, event.endsAt)}
                     </EventDetail>
                     <EventDetail label="Miejsce">
                       {eventLocationLabel(event.type, event.location)}
