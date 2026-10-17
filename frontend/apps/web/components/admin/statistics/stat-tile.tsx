@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 type StatTileProps = {
   label: string;
@@ -9,12 +8,11 @@ type StatTileProps = {
   hint?: ReactNode;
   info?: string;
   children?: ReactNode;
-  className?: string;
 };
 
-export function StatTile({ label, value, hint, info, children, className }: StatTileProps) {
+export function StatTile({ label, value, hint, info, children }: StatTileProps) {
   return (
-    <Card className={cn("gap-2 px-6 py-5", className)}>
+    <Card className="gap-2 px-6 py-5">
       <div className="flex items-center gap-1.5">
         <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           {label}

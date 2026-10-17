@@ -37,7 +37,6 @@ type EventCalendarCardProps = {
   href?: string;
   preview?: boolean;
   footer?: ReactNode;
-  /** Admin lists: name each detail instead of relying on icons, and show who created the event. */
   labeled?: { author?: string };
   className?: string;
 };
@@ -96,7 +95,7 @@ export function EventCalendarCard({
           items={[
             {
               icon: Calendar,
-              label: "Start",
+              label: "Termin",
               value: `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
             },
             { icon: MapPin, label: "Miejsce", value: location },
