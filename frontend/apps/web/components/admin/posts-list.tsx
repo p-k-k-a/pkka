@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { LabeledDetails } from "@/components/labeled-details";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -168,18 +169,16 @@ export function PostsList() {
                       <h2 className="font-heading text-foreground text-lg leading-snug font-semibold">
                         {post.title}
                       </h2>
-                      <ul className="text-muted-foreground space-y-3 text-sm">
-                        <li className="flex items-start gap-3">
-                          <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                          <span>
-                            {published ? "Opublikowano" : "Utworzono"} {dateLabel}
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <UserRound className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                          <span className="min-w-0 break-words">{post.authorDisplayName}</span>
-                        </li>
-                      </ul>
+                      <LabeledDetails
+                        items={[
+                          {
+                            icon: Calendar,
+                            label: published ? "Opublikowano" : "Utworzono",
+                            value: dateLabel,
+                          },
+                          { icon: UserRound, label: "Autor", value: post.authorDisplayName },
+                        ]}
+                      />
                       <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/dashboard/posts/${post.id}`}>
