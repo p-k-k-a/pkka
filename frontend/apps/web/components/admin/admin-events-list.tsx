@@ -175,11 +175,8 @@ export function AdminEventsList() {
         <div className="mx-auto max-w-[1280px] space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="space-y-6">
-              <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-                Kalendarz wydarzeń
-              </p>
               <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-                Wydarzenia klubu
+                Wydarzenia
               </h1>
               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
                 Twórz, edytuj i usuwaj wydarzenia — także minione i tylko dla alumnów. Karty

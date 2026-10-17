@@ -95,37 +95,36 @@ export function PostsList() {
     <div>
       <section className="bg-background px-4 py-10 md:px-10 md:py-16">
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-            Aktualności
-          </p>
-          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-            Wpisy klubu
-          </h1>
-          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-            Pisz, edytuj i usuwaj wpisy. Szkice widzą tylko administratorzy, a opublikowane wpisy
-            trafiają do zakładki „Aktualności”.
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Tabs
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value as StatusFilter);
-                setPage(0);
-              }}
-            >
-              <TabsList>
-                <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-                <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
-                <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Button asChild>
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="space-y-6">
+              <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+                Aktualności
+              </h1>
+              <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
+                Pisz, edytuj i usuwaj wpisy. Szkice widzą tylko administratorzy, a opublikowane
+                wpisy trafiają do zakładki „Aktualności”.
+              </p>
+            </div>
+            <Button asChild className="shrink-0">
               <Link href="/dashboard/posts/new">
                 <Plus data-icon="inline-start" />
                 Nowy wpis
               </Link>
             </Button>
           </div>
+          <Tabs
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value as StatusFilter);
+              setPage(0);
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
+              <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
+              <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </section>
 
