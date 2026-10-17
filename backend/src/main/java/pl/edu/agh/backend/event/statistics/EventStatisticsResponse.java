@@ -25,11 +25,6 @@ public record EventStatisticsResponse(
         int cancellations,
 
         @Schema(
-                description = "Held seats as a percentage of the seat limit, rounded; absent when the event has no"
-                        + " limit. Can exceed 100 when the limit was lowered below the seats already taken.")
-        Integer occupancyPercent,
-
-        @Schema(
                 requiredMode = RequiredMode.REQUIRED,
                 description = "One entry per Europe/Warsaw calendar day, from publication until today or the start"
                         + " of the event, whichever is earlier; days without activity are included as zeros")
