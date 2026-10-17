@@ -11,9 +11,4 @@ public record DailyRegistrationsResponse(
         int signUps,
 
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "Seat holders who cancelled that day")
-        int cancellations,
-
-        @Schema(
-                requiredMode = RequiredMode.REQUIRED,
-                description = "People holding a seat or waiting on the waitlist at the end of that day")
-        int signedUpAtEndOfDay) {}
+        int cancellations) {}
