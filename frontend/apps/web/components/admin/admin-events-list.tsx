@@ -232,7 +232,7 @@ export function AdminEventsList() {
                 <TabsTrigger value={EventTimeframe.PAST}>Archiwum</TabsTrigger>
               </TabsList>
             </Tabs>
-            <label className="text-muted-foreground flex items-center gap-2 text-sm">
+            <label className="text-muted-foreground flex items-center gap-2 text-sm whitespace-nowrap">
               Sortuj według
               <Select
                 className="h-9 w-auto"
