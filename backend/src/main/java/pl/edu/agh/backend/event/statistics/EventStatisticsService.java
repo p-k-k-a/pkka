@@ -133,11 +133,11 @@ public class EventStatisticsService {
         Map<LocalDate, int[]> byDay = new HashMap<>();
         for (ActivityOccurrence occurrence : occurrences) {
             LocalDate day = LocalDate.ofInstant(occurrence.occurredAt(), ZONE);
-            int[] counts = byDay.computeIfAbsent(day, d -> new int[2]);
+            int[] counts = byDay.computeIfAbsent(day, d -> new int[3]);
             switch (occurrence.type()) {
                 case SIGNED_UP, WAITLISTED -> counts[0]++;
                 case CANCELLED -> counts[1]++;
-                case LEFT_WAITLIST -> {}
+                case LEFT_WAITLIST -> counts[2]++;
             }
             if (day.isBefore(first)) {
                 first = day;
@@ -148,9 +148,11 @@ public class EventStatisticsService {
         }
 
         List<DailyRegistrationsResponse> series = new ArrayList<>();
+        int signedUp = 0;
         for (LocalDate day = first; !day.isAfter(last); day = day.plusDays(1)) {
-            int[] counts = byDay.getOrDefault(day, new int[2]);
-            series.add(new DailyRegistrationsResponse(day, counts[0], counts[1]));
+            int[] counts = byDay.getOrDefault(day, new int[3]);
+            signedUp += counts[0] - counts[1] - counts[2];
+            series.add(new DailyRegistrationsResponse(day, counts[0], counts[1], signedUp));
         }
         return series;
     }
