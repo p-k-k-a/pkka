@@ -179,8 +179,7 @@ export function AdminEventsList() {
                 Wydarzenia
               </h1>
               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-                Twórz, edytuj i usuwaj wydarzenia — także minione i tylko dla alumnów. Karty
-                wyglądają tak samo jak w publicznym kalendarzu.
+                Zarządzaj wydarzeniami klubu i sprawdzaj, kto się na nie zapisał.
               </p>
             </div>
             <Button asChild className="shrink-0">
