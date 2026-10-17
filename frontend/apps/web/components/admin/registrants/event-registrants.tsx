@@ -17,8 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
-const COLLAPSED_ROWS = 10;
-
 function normalize(text: string) {
   return text
     .toLowerCase()
@@ -76,7 +74,6 @@ type EventRegistrantsProps = {
 
 export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps) {
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState(false);
   const deferredQuery = useDeferredValue(query.trim());
   const { data: response, isLoading, isError } = useListEventRegistrations(eventId);
 
@@ -86,8 +83,6 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
   ).length;
   const queued = registrations.length - seated;
   const filtered = registrations.filter((registration) => matches(registration, deferredQuery));
-  const visible = expanded || deferredQuery ? filtered : filtered.slice(0, COLLAPSED_ROWS);
-  const hidden = filtered.length - visible.length;
 
   return (
     <Card className="gap-0 py-0">
@@ -164,7 +159,7 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
                 </tr>
               </thead>
               <tbody>
-                {visible.map((registration) => (
+                {filtered.map((registration) => (
                   <tr key={registration.registrationId} className="border-border border-t">
                     <td className="px-6 py-3">
                       <p
@@ -201,17 +196,6 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
               </tbody>
             </table>
           </div>
-          {hidden > 0 || (expanded && filtered.length > COLLAPSED_ROWS && !deferredQuery) ? (
-            <div className="border-border border-t px-6 py-3 text-center text-sm">
-              <button
-                type="button"
-                className="text-accent font-medium hover:underline"
-                onClick={() => setExpanded((current) => !current)}
-              >
-                {expanded ? "Zwiń listę" : `Pokaż wszystkich (+${hidden})`}
-              </button>
-            </div>
-          ) : null}
         </>
       )}
     </Card>
