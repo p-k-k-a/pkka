@@ -13,6 +13,7 @@ import {
 } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { type EventSchedule } from "@/components/events/event-location-aside";
+import { eventTypeBadgeClass } from "@/lib/event-type-badge";
 
 export type EventCalendarCardData = EventSchedule & {
   id: string;
@@ -49,7 +50,12 @@ export function EventCalendarCard({
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+        <span
+          className={cn(
+            "inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
+            eventTypeBadgeClass(event.type),
+          )}
+        >
           {eventTypeLabelUpper(event.type)}
         </span>
         {event.registrationStatus ? (
