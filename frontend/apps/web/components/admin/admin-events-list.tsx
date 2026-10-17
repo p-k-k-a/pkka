@@ -63,17 +63,17 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
           label="Zapisani"
           value={registered}
           hint={`na ${rows.length} ${pluralPl(rows.length, "wydarzeniu", "wydarzeniach", "wydarzeniach")}`}
-          info="Osoby, które mają miejsce na nadchodzących wydarzeniach. Lista rezerwowa nie jest tu wliczana."
+          info="Osoby z miejscem. Bez listy rezerwowej."
         />
         <StatTile
           label="Lista rezerwowa"
           value={waitlisted}
-          info="Osoby czekające na wolne miejsce na nadchodzących wydarzeniach."
+          info="Osoby czekające na wolne miejsce."
         />
         <StatTile
           label="Wypisy"
           value={cancellations}
-          info="Osoby, które miały miejsce i zrezygnowały. Zejścia z listy rezerwowej nie są tu liczone."
+          info="Rezygnacje osób z miejscem. Bez zejść z listy rezerwowej."
         />
       </div>
       <SignupSources signUps={registered} layout="row" />
