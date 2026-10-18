@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { normalizeTagName } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 export type TagOption = {
   id: string;
@@ -65,6 +64,12 @@ export function TagPicker({
   const createProblem = canCreate ? (createError?.(typed) ?? null) : null;
 
   const isOpen = isFocused && !isFull && (matches.length > 0 || canCreate);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // The field can sit at the very bottom of the page; bring the list into view.
+  useEffect(() => {
+    if (isOpen) listRef.current?.scrollIntoView({ block: "nearest" });
+  }, [isOpen]);
 
   function addTag(id: string) {
     if (disabled || isFull || selectedIds.includes(id)) return;
@@ -108,98 +113,95 @@ export function TagPicker({
         </div>
       ) : null}
 
-      {/* The suggestions render in a portal so the surrounding card, which clips
-          its content, cannot cut the list off. */}
-      <Popover open={isOpen} onOpenChange={(next) => !next && setIsFocused(false)}>
-        <PopoverAnchor asChild>
-          {/* Positioned so the sr-only label below resolves against this wrapper
+      <div className="flex flex-col gap-1">
+        {/* Positioned so the sr-only label below resolves against this wrapper
               instead of escaping the dashboard's scroll container. */}
-          <div className="relative">
-            <Label htmlFor="tag-search" className="sr-only">
-              Szukaj umiejętności
-            </Label>
-            <Input
-              id="tag-search"
-              role="combobox"
-              aria-expanded={isOpen}
-              aria-controls="tag-search-results"
-              aria-autocomplete="list"
-              aria-activedescendant={
-                isOpen && needle && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
-              }
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              placeholder={placeholder}
-              disabled={disabled || isFull}
-              autoComplete="off"
-              onKeyDown={(event) => {
-                // The picker lives inside a form — Enter picks the exact or first
-                // match, or creates the tag, instead of submitting the form.
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                if (!needle) return;
-                const exact = available.find(
-                  (option) => option.label.toLocaleLowerCase("pl") === needle,
-                );
-                if (exact) addTag(exact.id);
-                else if (canCreate) createTag();
-                else if (matches[0]) addTag(matches[0].id);
-              }}
-            />
-          </div>
-        </PopoverAnchor>
+        <div className="relative">
+          <Label htmlFor="tag-search" className="sr-only">
+            Szukaj umiejętności
+          </Label>
+          <Input
+            id="tag-search"
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-controls="tag-search-results"
+            aria-autocomplete="list"
+            aria-activedescendant={
+              isOpen && needle && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
+            }
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={placeholder}
+            disabled={disabled || isFull}
+            autoComplete="off"
+            onKeyDown={(event) => {
+              // The picker lives inside a form — Enter picks the exact or first
+              // match, or creates the tag, instead of submitting the form.
+              if (event.key !== "Enter") return;
+              event.preventDefault();
+              if (!needle) return;
+              const exact = available.find(
+                (option) => option.label.toLocaleLowerCase("pl") === needle,
+              );
+              if (exact) addTag(exact.id);
+              else if (canCreate) createTag();
+              else if (matches[0]) addTag(matches[0].id);
+            }}
+          />
+        </div>
 
-        <PopoverContent
-          align="start"
-          side="bottom"
-          avoidCollisions={false}
-          className="max-h-[min(18rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
-          onOpenAutoFocus={(event) => event.preventDefault()}
-        >
-          <ul id="tag-search-results" role="listbox" aria-label="Pasujące umiejętności">
-            {matches.map((tag) => (
-              <li key={tag.id}>
-                <button
-                  id={`tag-search-option-${tag.id}`}
-                  type="button"
-                  role="option"
-                  aria-selected={false}
-                  className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
-                  // Keeps the input focused so the list survives the click.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => addTag(tag.id)}
-                >
-                  {tag.label}
-                </button>
-              </li>
-            ))}
-            {canCreate && createProblem ? (
-              <li className="text-muted-foreground px-3 py-2 text-sm">{createProblem}</li>
-            ) : canCreate ? (
-              <li>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={false}
-                  className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={createTag}
-                >
-                  <Plus className="size-4" />
-                  Dodaj „{typed}”
-                </button>
-              </li>
-            ) : null}
-            {hasMoreWhenIdle ? (
-              <li className="text-muted-foreground px-3 py-2 text-xs">
-                Wpisz nazwę, aby znaleźć pozostałe.
-              </li>
-            ) : null}
-          </ul>
-        </PopoverContent>
-      </Popover>
+        {isOpen ? (
+          <div
+            ref={listRef}
+            className="border-border bg-popover text-popover-foreground max-h-72 overflow-y-auto rounded-md border p-1 shadow-sm"
+            // Keeps the input focused while the list is clicked or scrolled.
+            onMouseDown={(event) => event.preventDefault()}
+          >
+            <ul id="tag-search-results" role="listbox" aria-label="Pasujące umiejętności">
+              {matches.map((tag) => (
+                <li key={tag.id}>
+                  <button
+                    id={`tag-search-option-${tag.id}`}
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
+                    // Keeps the input focused so the list survives the click.
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => addTag(tag.id)}
+                  >
+                    {tag.label}
+                  </button>
+                </li>
+              ))}
+              {canCreate && createProblem ? (
+                <li className="text-muted-foreground px-3 py-2 text-sm">{createProblem}</li>
+              ) : canCreate ? (
+                <li>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={createTag}
+                  >
+                    <Plus className="size-4" />
+                    Dodaj „{typed}”
+                  </button>
+                </li>
+              ) : null}
+              {hasMoreWhenIdle ? (
+                <li className="text-muted-foreground px-3 py-2 text-xs">
+                  Wpisz nazwę, aby znaleźć pozostałe.
+                </li>
+              ) : null}
+            </ul>
+          </div>
+        ) : null}
+      </div>
 
       <div className="flex items-center justify-between gap-3">
         {needle && matches.length === 0 && !canCreate ? (
