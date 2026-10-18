@@ -31,4 +31,4 @@ INSERT INTO tags (id, name) VALUES
     ('cccc0013-cccc-cccc-cccc-cccccccccccc', 'Data Engineering'),
     ('cccc0014-cccc-cccc-cccc-cccccccccccc', 'Security'),
     ('cccc0015-cccc-cccc-cccc-cccccccccccc', 'Embedded')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING;
