@@ -1,8 +1,7 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Download, Search } from "lucide-react";
+import { Download } from "lucide-react";
 import {
   EventRegistrationStatus,
   useListEventRegistrations,
@@ -11,23 +10,9 @@ import {
 import { formatDateTime, pluralPl } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
-
-// Diacritics are dropped so "pawel" finds "Paweł"; NFD does not split "ł", hence the extra replace.
-function fold(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/ł/g, "l");
-}
-
-function matches(registration: AdminEventRegistrationResponse, query: string) {
-  return fold(`${registration.displayName} ${registration.email}`).includes(fold(query));
-}
 
 function statusLabel(registration: AdminEventRegistrationResponse) {
   return registration.status === EventRegistrationStatus.WAITLISTED
@@ -56,8 +41,6 @@ type EventRegistrantsProps = {
 };
 
 export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegistrantsProps) {
-  const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query.trim());
   const { data: response, isLoading, isError } = useListEventRegistrations(eventId);
 
   const registrations = response?.data ?? [];
@@ -65,7 +48,6 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
     (r) => r.status === EventRegistrationStatus.REGISTERED,
   ).length;
   const queued = registrations.length - seated;
-  const filtered = registrations.filter((registration) => matches(registration, deferredQuery));
 
   return (
     <Card className="gap-0 py-0">
@@ -82,31 +64,15 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
                 : "Nikt nie czeka na liście rezerwowej."}
           </p>
         </div>
-        <div className="flex w-full flex-wrap gap-3 sm:w-auto">
-          <div className="relative min-w-0 flex-1 sm:w-72 sm:flex-none">
-            <Search
-              className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Szukaj po imieniu lub e-mailu"
-              aria-label="Szukaj zapisanych po imieniu lub e-mailu"
-              className="pl-9"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={registrations.length === 0}
-            onClick={() => exportCsv(eventSlug, registrations)}
-          >
-            <Download data-icon="inline-start" />
-            Eksport CSV
-          </Button>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={registrations.length === 0}
+          onClick={() => exportCsv(eventSlug, registrations)}
+        >
+          <Download data-icon="inline-start" />
+          Eksport CSV
+        </Button>
       </div>
 
       {isLoading ? (
@@ -121,8 +87,6 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
         </p>
       ) : registrations.length === 0 ? (
         <p className="text-muted-foreground px-6 pb-6">Nikt się jeszcze nie zapisał.</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-muted-foreground px-6 pb-6">Brak wyników dla „{deferredQuery}”.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-left text-sm">
@@ -141,7 +105,7 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
               </tr>
             </thead>
             <tbody>
-              {filtered.map((registration) => (
+              {registrations.map((registration) => (
                 <tr key={registration.registrationId} className="border-border border-t">
                   <td className="px-6 py-3">
                     <p className="text-foreground font-semibold">{registration.displayName}</p>
