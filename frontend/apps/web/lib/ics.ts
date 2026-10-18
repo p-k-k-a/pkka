@@ -1,3 +1,4 @@
+import { slugify } from "@pkka/domain";
 import { createEvent } from "ics";
 
 type IcsEvent = {
@@ -29,15 +30,7 @@ export function buildEventIcs(event: IcsEvent) {
 }
 
 export function icsFileName(title: string) {
-  const slug = title
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ł/g, "l")
-    .replace(/Ł/g, "L")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `${slug || "wydarzenie"}.ics`;
+  return `${slugify(title, "wydarzenie")}.ics`;
 }
 
 export function downloadIcs(fileName: string, content: string) {

@@ -2,14 +2,13 @@
 
 import { useDeferredValue, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { pl } from "date-fns/locale";
 import { Download, Search } from "lucide-react";
 import {
   EventRegistrationStatus,
   useListEventRegistrations,
   type AdminEventRegistrationResponse,
 } from "@pkka/api";
-import { pluralPl } from "@pkka/domain";
+import { foldText, formatDateTime, pluralPl, slugify } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,40 +16,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
-function normalize(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/ł/g, "l");
-}
-
 function matches(registration: AdminEventRegistrationResponse, query: string) {
-  if (!query) return true;
-  const haystack = normalize(`${registration.displayName} ${registration.email}`);
-  return normalize(query)
-    .split(/\s+/)
-    .filter(Boolean)
-    .every((word) => haystack.includes(word));
-}
-
-function signedUpAt(iso: string) {
-  return format(parseISO(iso), "d MMM yyyy, HH:mm", { locale: pl });
+  return foldText(`${registration.displayName} ${registration.email}`).includes(foldText(query));
 }
 
 function statusLabel(registration: AdminEventRegistrationResponse) {
   return registration.status === EventRegistrationStatus.WAITLISTED
     ? `Lista rezerwowa #${registration.waitlistPosition ?? "?"}`
     : "Zapisany";
-}
-
-function slugify(title: string) {
-  return (
-    normalize(title)
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "wydarzenie"
-  );
 }
 
 function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResponse[]) {
@@ -64,7 +37,10 @@ function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResp
       format(parseISO(registration.registeredAt), "yyyy-MM-dd HH:mm"),
     ]),
   );
-  downloadCsv(`zapisani-${slugify(eventTitle)}-${format(new Date(), "yyyy-MM-dd")}.csv`, csv);
+  downloadCsv(
+    `zapisani-${slugify(eventTitle, "wydarzenie")}-${format(new Date(), "yyyy-MM-dd")}.csv`,
+    csv,
+  );
 }
 
 type EventRegistrantsProps = {
@@ -177,7 +153,7 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
                     </span>
                   </td>
                   <td className="text-muted-foreground px-6 py-3 text-right whitespace-nowrap tabular-nums">
-                    {signedUpAt(registration.registeredAt)}
+                    {formatDateTime(registration.registeredAt)}
                   </td>
                 </tr>
               ))}
