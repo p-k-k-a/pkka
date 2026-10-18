@@ -56,6 +56,7 @@ class MaterialEntityTest {
     void persistsAndReloadsWithLinkedEvent() {
         Event event = eventRepository.save(Event.builder()
                 .title("Konferencja " + Instant.now())
+                .slug("konferencja-" + UUID.randomUUID())
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
                 .endsAt(Instant.now().plusSeconds(7200))
@@ -90,6 +91,7 @@ class MaterialEntityTest {
         // unhandled 500 on any endpoint that returns this material.
         Event event = eventRepository.save(Event.builder()
                 .title("Konferencja usuwana " + Instant.now())
+                .slug("konferencja-usuwana-" + UUID.randomUUID())
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
                 .endsAt(Instant.now().plusSeconds(7200))

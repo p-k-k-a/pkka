@@ -28,18 +28,6 @@ export function buildEventIcs(event: IcsEvent) {
   return value;
 }
 
-export function icsFileName(title: string) {
-  const slug = title
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ł/g, "l")
-    .replace(/Ł/g, "L")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `${slug || "wydarzenie"}.ics`;
-}
-
 export function downloadIcs(fileName: string, content: string) {
   const url = URL.createObjectURL(new Blob([content], { type: "text/calendar;charset=utf-8" }));
   const link = document.createElement("a");
