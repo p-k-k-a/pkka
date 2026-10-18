@@ -8,6 +8,8 @@ import { EventRegistration } from "@/components/events/event-registration";
 import { ProseContent } from "@/components/content/prose-content";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
+import { eventTypeBadgeClass } from "@/lib/event-type-badge";
+import { cn } from "@/lib/utils";
 
 type EventDetailProps = {
   slug: string;
@@ -66,7 +68,12 @@ export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
 
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <span className="bg-band text-band-foreground mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+            <span
+              className={cn(
+                "mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
+                eventTypeBadgeClass(event.type),
+              )}
+            >
               {eventTypeLabelUpper(event.type)}
             </span>
             <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">

@@ -11,7 +11,9 @@ import {
   getGetAdminEventBySlugQueryKey,
   getGetEventBySlugQueryKey,
   getListAdminEventsQueryKey,
+  getListEventOccupancyQueryKey,
   getListEventsQueryKey,
+  getGetEventStatisticsQueryKey,
   useCreateAdminEvent,
   useListTags,
   useUpdateAdminEvent,
@@ -125,11 +127,13 @@ export function EventForm({ event }: EventFormProps) {
   const onSaved = () => {
     queryClient.invalidateQueries({ queryKey: getListAdminEventsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListEventOccupancyQueryKey() });
     if (event) {
+      queryClient.invalidateQueries({ queryKey: getGetEventStatisticsQueryKey(event.id) });
       queryClient.invalidateQueries({ queryKey: getGetAdminEventBySlugQueryKey(event.slug) });
       queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) });
     }
-    router.push(ADMIN_EVENTS_PATH);
+    router.push(event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH);
   };
 
   const createEvent = useCreateAdminEvent({ mutation: { onSuccess: onSaved } });
@@ -198,9 +202,9 @@ export function EventForm({ event }: EventFormProps) {
     <div className="bg-background px-4 py-10 md:px-10 md:py-16">
       <div className="mx-auto max-w-[1280px]">
         <Button asChild variant="ghost" size="sm" className="mb-8 -ml-2">
-          <Link href={ADMIN_EVENTS_PATH}>
+          <Link href={event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH}>
             <ArrowLeft data-icon="inline-start" />
-            Wróć do listy wydarzeń
+            {event ? "Wróć do wydarzenia" : "Wróć do listy wydarzeń"}
           </Link>
         </Button>
 

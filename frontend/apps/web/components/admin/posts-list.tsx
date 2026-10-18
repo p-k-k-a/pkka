@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { LabeledDetails } from "@/components/labeled-details";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,43 +94,41 @@ export function PostsList() {
 
   return (
     <div>
-      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <section className="bg-background px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8">
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-            Aktualności
-          </p>
-          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-            Wpisy klubu
-          </h1>
-          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-            Pisz, edytuj i usuwaj wpisy. Szkice widzą tylko administratorzy, a opublikowane wpisy
-            trafiają do zakładki „Aktualności”.
-          </p>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Tabs
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value as StatusFilter);
-                setPage(0);
-              }}
-            >
-              <TabsList>
-                <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-                <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
-                <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <Button asChild>
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="space-y-6">
+              <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+                Aktualności
+              </h1>
+              <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
+                Twórz wpisy klubu. Szkice widzą tylko administratorzy.
+              </p>
+            </div>
+            <Button asChild className="shrink-0">
               <Link href="/dashboard/posts/new">
                 <Plus data-icon="inline-start" />
                 Nowy wpis
               </Link>
             </Button>
           </div>
+          <Tabs
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value as StatusFilter);
+              setPage(0);
+            }}
+          >
+            <TabsList>
+              <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
+              <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
+              <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </section>
 
-      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <section className="bg-background px-4 pb-10 md:px-10 md:pb-16">
         <div className="mx-auto max-w-[1280px]">
           {isListLoading ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -169,19 +168,17 @@ export function PostsList() {
                       <h2 className="font-heading text-foreground text-lg leading-snug font-semibold">
                         {post.title}
                       </h2>
-                      <ul className="text-muted-foreground space-y-3 text-sm">
-                        <li className="flex items-start gap-3">
-                          <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                          <span>
-                            {published ? "Opublikowano" : "Utworzono"} {dateLabel}
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <UserRound className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                          <span className="min-w-0 break-words">{post.authorDisplayName}</span>
-                        </li>
-                      </ul>
-                      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 pt-2">
+                      <LabeledDetails
+                        items={[
+                          {
+                            icon: Calendar,
+                            label: published ? "Opublikowano" : "Utworzono",
+                            value: dateLabel,
+                          },
+                          { icon: UserRound, label: "Autor", value: post.authorDisplayName },
+                        ]}
+                      />
+                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
                         <Button asChild variant="outline" size="sm">
                           <Link href={`/dashboard/posts/${post.id}`}>
                             <Pencil data-icon="inline-start" />
