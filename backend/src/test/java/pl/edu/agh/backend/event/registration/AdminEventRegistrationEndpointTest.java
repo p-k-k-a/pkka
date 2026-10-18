@@ -56,6 +56,7 @@ class AdminEventRegistrationEndpointTest {
         Instant startsAt = Instant.now().plus(7, ChronoUnit.DAYS);
         return eventRepository.saveAndFlush(Event.builder()
                 .title("Wydarzenie " + UUID.randomUUID())
+                .slug("wydarzenie-" + UUID.randomUUID())
                 .type(EventType.IN_PERSON)
                 .startsAt(startsAt)
                 .endsAt(startsAt.plus(2, ChronoUnit.HOURS))

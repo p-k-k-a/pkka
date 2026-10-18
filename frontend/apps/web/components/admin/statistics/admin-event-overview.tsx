@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { type ApiError, useGetAdminEvent, useGetEventStatistics } from "@pkka/api";
+import { type ApiError, useGetAdminEventBySlug, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
   eventLocationLabel,
@@ -51,7 +51,7 @@ function OverviewSkeleton() {
   );
 }
 
-export function AdminEventOverview({ id }: { id: string }) {
+export function AdminEventOverview({ slug }: { slug: string }) {
   const router = useRouter();
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
@@ -62,8 +62,11 @@ export function AdminEventOverview({ id }: { id: string }) {
     }
   }, [admin, isLoading, router]);
 
-  const eventQuery = useGetAdminEvent(id, { query: { enabled: admin } });
-  const statsQuery = useGetEventStatistics(id, { query: { enabled: admin } });
+  const eventQuery = useGetAdminEventBySlug(slug, { query: { enabled: admin } });
+  const eventId = eventQuery.data?.status === 200 ? eventQuery.data.data.id : undefined;
+  const statsQuery = useGetEventStatistics(eventId ?? "", {
+    query: { enabled: admin && eventId != null },
+  });
 
   if (isLoading || !admin || eventQuery.isLoading) {
     return <OverviewSkeleton />;
@@ -114,7 +117,7 @@ export function AdminEventOverview({ id }: { id: string }) {
                   {event.title}
                 </h1>
                 <Button asChild variant="outline" className="shrink-0">
-                  <Link href={`${ADMIN_EVENTS_PATH}/${event.id}/edit`}>
+                  <Link href={`${ADMIN_EVENTS_PATH}/${event.slug}/edit`}>
                     <Pencil data-icon="inline-start" />
                     Edytuj wydarzenie
                   </Link>
@@ -217,7 +220,7 @@ export function AdminEventOverview({ id }: { id: string }) {
           </>
         )}
 
-        <EventRegistrants eventId={event.id} eventTitle={event.title} />
+        <EventRegistrants eventId={event.id} eventSlug={event.slug} eventTitle={event.title} />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { slugify } from "@pkka/domain";
 import { createEvent } from "ics";
 
 type IcsEvent = {
@@ -27,10 +26,6 @@ export function buildEventIcs(event: IcsEvent) {
     throw error ?? new Error("Could not build the calendar file");
   }
   return value;
-}
-
-export function icsFileName(title: string) {
-  return `${slugify(title, "wydarzenie")}.ics`;
 }
 
 export function downloadIcs(fileName: string, content: string) {

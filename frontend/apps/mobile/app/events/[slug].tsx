@@ -2,14 +2,14 @@ import { EventDetailView } from "@/components/events/event-detail-view";
 import { EventParticipationFooter } from "@/components/events/event-participation-footer";
 import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
-import { useGetEventById } from "@pkka/api";
+import { useGetEventBySlug } from "@pkka/api";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function EventDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { data, isError, isPending } = useGetEventById(id ?? "", {
-    query: { enabled: !!id },
+  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { data, isError, isPending } = useGetEventBySlug(slug ?? "", {
+    query: { enabled: !!slug },
   });
 
   const event = data?.data;

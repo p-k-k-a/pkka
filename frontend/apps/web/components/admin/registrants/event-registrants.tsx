@@ -8,7 +8,7 @@ import {
   useListEventRegistrations,
   type AdminEventRegistrationResponse,
 } from "@pkka/api";
-import { foldText, formatDateTime, pluralPl, slugify } from "@pkka/domain";
+import { foldText, formatDateTime, pluralPl } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ function statusLabel(registration: AdminEventRegistrationResponse) {
     : "Zapisany";
 }
 
-function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResponse[]) {
+function exportCsv(eventSlug: string, registrations: AdminEventRegistrationResponse[]) {
   const csv = toCsv(
     ["Imię i nazwisko", "E-mail", "Status", "Pozycja na liście rezerwowej", "Data dołączenia"],
     registrations.map((registration) => [
@@ -37,18 +37,16 @@ function exportCsv(eventTitle: string, registrations: AdminEventRegistrationResp
       format(parseISO(registration.registeredAt), "yyyy-MM-dd HH:mm"),
     ]),
   );
-  downloadCsv(
-    `zapisani-${slugify(eventTitle, "wydarzenie")}-${format(new Date(), "yyyy-MM-dd")}.csv`,
-    csv,
-  );
+  downloadCsv(`zapisani-${eventSlug}-${format(new Date(), "yyyy-MM-dd")}.csv`, csv);
 }
 
 type EventRegistrantsProps = {
   eventId: string;
+  eventSlug: string;
   eventTitle: string;
 };
 
-export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps) {
+export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegistrantsProps) {
   const [query, setQuery] = useState("");
   const deferredQuery = useDeferredValue(query.trim());
   const { data: response, isLoading, isError } = useListEventRegistrations(eventId);
@@ -94,7 +92,7 @@ export function EventRegistrants({ eventId, eventTitle }: EventRegistrantsProps)
             type="button"
             variant="outline"
             disabled={registrations.length === 0}
-            onClick={() => exportCsv(eventTitle, registrations)}
+            onClick={() => exportCsv(eventSlug, registrations)}
           >
             <Download data-icon="inline-start" />
             Eksport CSV

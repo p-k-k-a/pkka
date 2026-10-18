@@ -166,7 +166,7 @@ class EventNotificationTest {
             assertThat(message.title()).isEqualTo("Nowe wydarzenie");
             assertThat(message.data())
                     .containsEntry("type", "EVENT_ANNOUNCEMENT")
-                    .containsEntry("targetId", created.id().toString());
+                    .containsEntry("targetSlug", created.slug());
         });
     }
 
@@ -213,6 +213,7 @@ class EventNotificationTest {
     private Event saveEvent(Instant startsAt, Integer leadTimeMinutes) {
         return eventRepository.save(Event.builder()
                 .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
                 .type(EventType.ONLINE)
                 .startsAt(startsAt)
                 .endsAt(startsAt.plus(2, ChronoUnit.HOURS))
