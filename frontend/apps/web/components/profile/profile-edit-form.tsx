@@ -4,16 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Camera,
-  GraduationCap,
-  IdCard,
-  Link2,
-  Sparkles,
-  UserRound,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
@@ -28,22 +19,23 @@ import {
 } from "@pkka/api";
 import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
-import { ProfileSectionCard } from "@/components/profile/profile-section-card";
-import { SwitchRow } from "@/components/profile/switch-row";
+import { SectionHeading } from "@/components/profile/section-heading";
 import { TagPicker } from "@/components/profile/tag-picker";
 import { VisibilityField } from "@/components/profile/visibility-field";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
-import { AvatarError, readProfileAvatar, saveProfileAvatar } from "@/lib/profile-avatar";
 import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
+const MAX_TAGS = 20;
 
 type UrlField = "linkedinUrl" | "githubUrl";
 
@@ -61,8 +53,11 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={htmlFor} className="text-[11px] font-bold tracking-widest uppercase">
+    <div className="flex flex-col gap-2">
+      <Label
+        htmlFor={htmlFor}
+        className="text-accent text-xs font-semibold tracking-widest uppercase"
+      >
         {label}
       </Label>
       {children}
@@ -87,9 +82,6 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Not part of the API yet, so it is read from and written to local storage.
-  const [initialAvatar] = useState(readProfileAvatar);
-  const [avatar, setAvatar] = useState(initialAvatar);
   const [currentPosition, setCurrentPosition] = useState(profile.currentPosition ?? "");
   const [company, setCompany] = useState(profile.company ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
@@ -122,7 +114,6 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     selectedTagIds.some((id) => !assignedTagIds.includes(id));
   const isDirty =
     tagsChanged ||
-    avatar !== initialAvatar ||
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
     company.trim() !== (profile.company ?? "") ||
     bio.trim() !== (profile.bio ?? "") ||
@@ -151,21 +142,6 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    // Saved first so a rejected picture stops the submit before anything else
-    // is written, the way a separate upload call would.
-    if (avatar !== initialAvatar) {
-      try {
-        saveProfileAvatar(avatar);
-      } catch (error) {
-        setFormError(
-          error instanceof AvatarError
-            ? error.message
-            : "Nie udało się zapisać zdjęcia profilowego. Spróbuj ponownie.",
-        );
-        return;
-      }
-    }
-
     const payload: UpdateProfileRequest = {
       bio: bio.trim(),
       currentPosition: currentPosition.trim(),
@@ -179,13 +155,6 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     try {
       await updateProfile.mutateAsync({ data: payload });
     } catch {
-      if (avatar !== initialAvatar) {
-        try {
-          saveProfileAvatar(initialAvatar);
-        } catch {
-          // Best-effort rollback - the profile itself did not save.
-        }
-      }
       setFormError("Nie udało się zapisać zmian. Spróbuj ponownie.");
       return;
     }
@@ -212,69 +181,51 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col">
-      <div className="bg-muted border-border sticky top-0 z-10 border-b">
-        <div className="mx-auto flex w-full max-w-[960px] flex-col gap-4 px-4 py-6 md:flex-row md:items-end md:justify-between md:px-10">
-          <div className="flex flex-col gap-1">
-            <Link
-              href={PROFILE_HREF}
-              className="text-muted-foreground hover:text-accent inline-flex items-center gap-1.5 text-[13px] font-semibold tracking-wider uppercase transition-colors"
-            >
-              <ArrowLeft className="size-3.5" aria-hidden="true" />
-              Wróć do profilu
-            </Link>
-            <h1 className="font-heading text-foreground text-[28px] leading-tight font-semibold">
+    <form onSubmit={handleSubmit} className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <div className="mx-auto max-w-[1280px]">
+        <Button asChild variant="ghost" size="sm" className="mb-8 -ml-2">
+          <Link href={PROFILE_HREF}>
+            <ArrowLeft data-icon="inline-start" />
+            Wróć do profilu
+          </Link>
+        </Button>
+
+        <div className="mb-10 flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-3">
+            <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+              Edycja profilu
+            </p>
+            <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
               Edytuj profil
             </h1>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="xl"
-              disabled={isSaving}
-              onClick={() => router.push(PROFILE_HREF)}
-            >
-              Anuluj
-            </Button>
-            <Button type="submit" size="xl" className="font-bold" disabled={isSaving || !isDirty}>
-              {isSaving ? "Zapisywanie…" : "Zapisz zmiany"}
-            </Button>
-          </div>
+          <Button type="submit" size="xl" className="gap-2" disabled={isSaving || !isDirty}>
+            {isSaving ? "Zapisywanie…" : "Zapisz zmiany"}
+            {isSaving ? null : <ArrowRight data-icon="inline-end" />}
+          </Button>
         </div>
-      </div>
 
-      <div className="bg-background">
-        <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-4 py-10 md:px-10 md:py-12">
-          {formError ? (
-            <Alert variant="destructive">
-              <AlertTriangle />
-              <AlertTitle>Zapis nie powiódł się</AlertTitle>
-              <AlertDescription>{formError}</AlertDescription>
-            </Alert>
-          ) : null}
+        {formError ? (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle />
+            <AlertTitle>Zapis nie powiódł się</AlertTitle>
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        ) : null}
 
-          <ProfileSectionCard
-            title="Zdjęcie profilowe"
-            icon={Camera}
-            description="Widoczne przy Twoim profilu i w katalogu alumnów."
-          >
-            <AvatarPicker
-              value={avatar}
-              fallback={fullName}
-              onChange={setAvatar}
-              disabled={isSaving}
-            />
-          </ProfileSectionCard>
+        <div className="grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-12">
+            <section className="space-y-5">
+              <SectionHeading>Zdjęcie profilowe</SectionHeading>
+              <AvatarPicker fallback={fullName} />
+            </section>
 
-          <ProfileSectionCard
-            title="O Tobie"
-            icon={UserRound}
-            description="Te informacje widzą pozostali alumni w katalogu."
-          >
-            <div className="flex flex-col gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+            <section className="space-y-5">
+              <SectionHeading>O Tobie</SectionHeading>
+              <p className="text-muted-foreground text-sm">
+                Te informacje widzą pozostali alumni w katalogu.
+              </p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="Stanowisko" htmlFor="currentPosition">
                   <Input
                     id="currentPosition"
@@ -294,12 +245,11 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                   />
                 </Field>
               </div>
-
               <Field
                 label="O mnie"
                 htmlFor="bio"
                 hint={
-                  <p className="text-muted-foreground text-right text-[13px]">
+                  <p className="text-muted-foreground text-right text-xs">
                     {bio.length}/{BIO_MAX_LENGTH}
                   </p>
                 }
@@ -313,119 +263,140 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                   className="min-h-32 resize-y"
                 />
               </Field>
+            </section>
 
-              <SwitchRow
-                id="willingToMentor"
-                label="Jestem otwarty na mentoring"
-                description="Inni alumni zobaczą, że chętnie pomagasz, i będą mogli filtrować katalog po mentorach."
-                checked={willingToMentor}
-                onCheckedChange={setWillingToMentor}
-                disabled={isSaving}
-              />
-            </div>
-          </ProfileSectionCard>
+            <section className="space-y-5">
+              <SectionHeading>Linki</SectionHeading>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="LinkedIn" htmlFor="linkedinUrl" error={fieldErrors.linkedinUrl}>
+                  <Input
+                    id="linkedinUrl"
+                    type="url"
+                    inputMode="url"
+                    value={linkedinUrl}
+                    onChange={(event) => setUrl("linkedinUrl", event.target.value)}
+                    placeholder="https://www.linkedin.com/in/…"
+                    maxLength={500}
+                    aria-invalid={Boolean(fieldErrors.linkedinUrl)}
+                    aria-describedby={fieldErrors.linkedinUrl ? "linkedinUrl-error" : undefined}
+                  />
+                </Field>
+                <Field label="GitHub" htmlFor="githubUrl" error={fieldErrors.githubUrl}>
+                  <Input
+                    id="githubUrl"
+                    type="url"
+                    inputMode="url"
+                    value={githubUrl}
+                    onChange={(event) => setUrl("githubUrl", event.target.value)}
+                    placeholder="https://github.com/…"
+                    maxLength={500}
+                    aria-invalid={Boolean(fieldErrors.githubUrl)}
+                    aria-describedby={fieldErrors.githubUrl ? "githubUrl-error" : undefined}
+                  />
+                </Field>
+              </div>
+            </section>
 
-          <ProfileSectionCard
-            title="Dane z konta"
-            icon={IdCard}
-            description="Pochodzą z Twojego konta - możesz zdecydować, czy są widoczne, ale nie zmienić ich tutaj."
-          >
-            <div className="flex flex-col">
-              <VisibilityField
-                id="visibility-name"
-                label="Imię i nazwisko"
-                value={fullName}
-                checked={showName}
-                onCheckedChange={setShowName}
-                disabled={isSaving}
-              />
-              <VisibilityField
-                id="visibility-email"
-                label="E-mail"
-                value={profile.email}
-                checked={showEmail}
-                onCheckedChange={setShowEmail}
-                disabled={isSaving}
-              />
-              <VisibilityField
-                id="visibility-discord"
-                label="Discord"
-                value={profile.discordId}
-                missingLabel="Brak połączonego konta Discord"
-                checked={showDiscord}
-                onCheckedChange={setShowDiscord}
-                disabled={isSaving}
-              />
-            </div>
-          </ProfileSectionCard>
-
-          <ProfileSectionCard title="Linki" icon={Link2}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="LinkedIn" htmlFor="linkedinUrl" error={fieldErrors.linkedinUrl}>
-                <Input
-                  id="linkedinUrl"
-                  type="url"
-                  inputMode="url"
-                  value={linkedinUrl}
-                  onChange={(event) => setUrl("linkedinUrl", event.target.value)}
-                  placeholder="https://www.linkedin.com/in/…"
-                  maxLength={500}
-                  aria-invalid={Boolean(fieldErrors.linkedinUrl)}
-                  aria-describedby={fieldErrors.linkedinUrl ? "linkedinUrl-error" : undefined}
+            <section className="space-y-5">
+              <SectionHeading>Umiejętności</SectionHeading>
+              <p className="text-muted-foreground text-sm">
+                Wpisz frazę, aby wyszukać tagi. Maksymalnie {MAX_TAGS} umiejętności.
+              </p>
+              {tagsError ? (
+                <Alert variant="destructive">
+                  <AlertTriangle />
+                  <AlertTitle>Nie udało się wczytać listy tagów</AlertTitle>
+                  <AlertDescription>
+                    Możesz zapisać pozostałe pola i wrócić do umiejętności później.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <TagPicker
+                  availableTags={availableTags}
+                  selectedIds={selectedTagIds}
+                  onChange={setSelectedTagIds}
+                  max={MAX_TAGS}
+                  disabled={isSaving}
                 />
-              </Field>
-              <Field label="GitHub" htmlFor="githubUrl" error={fieldErrors.githubUrl}>
-                <Input
-                  id="githubUrl"
-                  type="url"
-                  inputMode="url"
-                  value={githubUrl}
-                  onChange={(event) => setUrl("githubUrl", event.target.value)}
-                  placeholder="https://github.com/…"
-                  maxLength={500}
-                  aria-invalid={Boolean(fieldErrors.githubUrl)}
-                  aria-describedby={fieldErrors.githubUrl ? "githubUrl-error" : undefined}
+              )}
+            </section>
+          </div>
+
+          <div className="space-y-10">
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionHeading>Mentoring</SectionHeading>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <Label
+                    htmlFor="willingToMentor"
+                    className="text-foreground text-sm font-semibold"
+                  >
+                    Jestem otwarty na mentoring
+                  </Label>
+                  <p className="text-muted-foreground text-xs leading-relaxed">
+                    Inni alumni zobaczą, że chętnie pomagasz, i będą mogli filtrować katalog po
+                    mentorach.
+                  </p>
+                </div>
+                <Switch
+                  id="willingToMentor"
+                  checked={willingToMentor}
+                  onCheckedChange={setWillingToMentor}
+                  disabled={isSaving}
+                  className="mt-1"
                 />
-              </Field>
-            </div>
-          </ProfileSectionCard>
+              </div>
+            </Card>
 
-          <ProfileSectionCard
-            title="Umiejętności"
-            icon={Sparkles}
-            description="Wpisz frazę, aby wyszukać tagi. Maksymalnie 20 umiejętności."
-          >
-            {tagsError ? (
-              <Alert variant="destructive">
-                <AlertTriangle />
-                <AlertTitle>Nie udało się wczytać listy tagów</AlertTitle>
-                <AlertDescription>
-                  Możesz zapisać pozostałe pola i wrócić do umiejętności później.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <TagPicker
-                availableTags={availableTags}
-                selectedIds={selectedTagIds}
-                onChange={setSelectedTagIds}
-                disabled={isSaving}
-              />
-            )}
-          </ProfileSectionCard>
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionHeading>Widoczność</SectionHeading>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Dane pochodzą z Twojego konta - możesz zdecydować, czy są widoczne, ale nie zmienić
+                ich tutaj.
+              </p>
+              <div className="flex flex-col">
+                <VisibilityField
+                  id="visibility-name"
+                  label="Imię i nazwisko"
+                  value={fullName}
+                  checked={showName}
+                  onCheckedChange={setShowName}
+                  disabled={isSaving}
+                />
+                <VisibilityField
+                  id="visibility-email"
+                  label="E-mail"
+                  value={profile.email}
+                  checked={showEmail}
+                  onCheckedChange={setShowEmail}
+                  disabled={isSaving}
+                />
+                <VisibilityField
+                  id="visibility-discord"
+                  label="Discord"
+                  value={profile.discordId}
+                  missingLabel="Brak konta"
+                  checked={showDiscord}
+                  onCheckedChange={setShowDiscord}
+                  disabled={isSaving}
+                />
+              </div>
+            </Card>
 
-          {hasEducation ? (
-            <ProfileSectionCard
-              title="Wykształcenie"
-              icon={GraduationCap}
-              description="Dane z zatwierdzonego wniosku - tylko do odczytu."
-            >
-              <DetailList>
-                <DetailRow label="Kierunek" value={profile.fieldOfStudy} />
-                <DetailRow label="Rok ukończenia" value={profile.graduationYear} />
-                <DetailRow label="Alumn od" value={alumnSinceYear} />
-              </DetailList>
-            </ProfileSectionCard>
-          ) : null}
+            {hasEducation ? (
+              <Card className="gap-5 rounded-lg p-5 shadow-none">
+                <SectionHeading>Wykształcenie</SectionHeading>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Dane z zatwierdzonego wniosku - tylko do odczytu.
+                </p>
+                <DetailList>
+                  <DetailRow label="Kierunek" value={profile.fieldOfStudy} />
+                  <DetailRow label="Rok ukończenia" value={profile.graduationYear} />
+                  <DetailRow label="Alumn od" value={alumnSinceYear} />
+                </DetailList>
+              </Card>
+            ) : null}
+          </div>
         </div>
       </div>
     </form>
@@ -434,20 +405,27 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
 
 function EditFormSkeleton() {
   return (
-    <div className="flex flex-col">
-      <div className="bg-muted border-border border-b">
-        <div className="mx-auto flex w-full max-w-[960px] items-end justify-between gap-4 px-4 py-6 md:px-10">
-          <div className="flex flex-col gap-2">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-8 w-48" />
+    <div className="bg-background px-4 py-10 md:px-10 md:py-16">
+      <div className="mx-auto max-w-[1280px]">
+        <Skeleton className="mb-8 h-8 w-36" />
+        <div className="mb-10 flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-9 w-56" />
           </div>
-          <Skeleton className="h-[46px] w-36 rounded-lg" />
+          <Skeleton className="h-[46px] w-40 rounded-lg" />
         </div>
-      </div>
-      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-4 py-10 md:px-10 md:py-12">
-        <Skeleton className="h-64 rounded-xl" />
-        <Skeleton className="h-56 rounded-xl" />
-        <Skeleton className="h-40 rounded-xl" />
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-12">
+            <Skeleton className="h-32" />
+            <Skeleton className="h-64" />
+            <Skeleton className="h-28" />
+          </div>
+          <div className="space-y-10">
+            <Skeleton className="h-36 rounded-lg" />
+            <Skeleton className="h-56 rounded-lg" />
+          </div>
+        </div>
       </div>
     </div>
   );

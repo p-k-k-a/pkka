@@ -2,17 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useGetAdminEvent } from "@pkka/api";
+import { useGetAdminEventBySlug } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventForm } from "@/components/admin/event-form";
 import { useAuth } from "@/lib/auth-context";
 import { isAdmin } from "@pkka/domain";
 
 type EventEditorProps = {
-  id?: string;
+  slug?: string;
 };
 
-export function EventEditor({ id }: EventEditorProps) {
+export function EventEditor({ slug }: EventEditorProps) {
   const router = useRouter();
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
@@ -27,9 +27,9 @@ export function EventEditor({ id }: EventEditorProps) {
     data: response,
     isLoading: isEventLoading,
     isError,
-  } = useGetAdminEvent(id ?? "", { query: { enabled: admin && id !== undefined } });
+  } = useGetAdminEventBySlug(slug ?? "", { query: { enabled: admin && slug !== undefined } });
 
-  if (isLoading || !admin || (id !== undefined && isEventLoading)) {
+  if (isLoading || !admin || (slug !== undefined && isEventLoading)) {
     return (
       <div className="px-4 py-10 md:px-10">
         <div className="mx-auto max-w-[1280px] space-y-6">
@@ -40,7 +40,7 @@ export function EventEditor({ id }: EventEditorProps) {
     );
   }
 
-  if (id === undefined) {
+  if (slug === undefined) {
     return <EventForm />;
   }
 

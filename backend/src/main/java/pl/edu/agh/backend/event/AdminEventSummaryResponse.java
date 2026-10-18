@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record AdminEventSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
@@ -22,6 +23,7 @@ public record AdminEventSummaryResponse(
     static AdminEventSummaryResponse from(Event event) {
         return new AdminEventSummaryResponse(
                 event.getId(),
+                event.getSlug(),
                 event.getTitle(),
                 event.getType(),
                 event.getStartsAt(),

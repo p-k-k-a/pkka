@@ -1,9 +1,21 @@
 import { THEME } from "@pkka/theme";
 import { DarkTheme, DefaultTheme, type Theme } from "@react-navigation/native";
+import { useColorScheme } from "nativewind";
 
 export { THEME };
 
-export const NAV_THEME: Record<"light" | "dark", Theme> = {
+export type ColorScheme = "light" | "dark";
+
+export function useAppColorScheme(): ColorScheme {
+  const { colorScheme } = useColorScheme();
+  return colorScheme === "dark" ? "dark" : "light";
+}
+
+export function useThemeColors() {
+  return THEME[useAppColorScheme()];
+}
+
+export const NAV_THEME: Record<ColorScheme, Theme> = {
   light: {
     ...DefaultTheme,
     colors: {
