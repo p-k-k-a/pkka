@@ -1,7 +1,6 @@
 "use client";
 
 import { PostStatusBadge } from "@/components/admin/post-status-badge";
-import { SectionShell } from "@/components/content/section-shell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,33 +25,22 @@ import {
   type AdminPostListItemResponse,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Pencil, Plus, Trash2, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const PAGE_SIZE = 20;
 
-function PostCardSkeleton() {
-  return (
-    <Card className="gap-3 p-5 md:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <Skeleton className="h-4 w-44" />
-          <Skeleton className="h-7 w-64" />
-          <Skeleton className="h-4 w-28" />
-        </div>
-        <Skeleton className="h-5 w-24 rounded-4xl" />
-      </div>
-      <div className="flex items-center justify-end gap-2">
-        <Skeleton className="h-[34px] w-24 rounded-md" />
-        <Skeleton className="h-[34px] w-24 rounded-md" />
-      </div>
-    </Card>
-  );
-}
-
 type StatusFilter = "ALL" | PostStatus;
+
+function formatPostCount(count: number) {
+  const lastDigit = count % 10;
+  const lastTwo = count % 100;
+  if (count === 1) return "1 wpis";
+  if (lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)) return `${count} wpisy`;
+  return `${count} wpisów`;
+}
 
 export function PostsList() {
   const router = useRouter();
@@ -89,9 +77,9 @@ export function PostsList() {
 
   if (isLoading || !admin) {
     return (
-      <SectionShell title="Blog" as="section">
-        <Skeleton className="h-40 w-full max-w-3xl rounded-2xl" />
-      </SectionShell>
+      <div className="px-4 py-10 md:px-10 md:py-20">
+        <Skeleton className="mx-auto h-40 w-full max-w-3xl rounded-lg" />
+      </div>
     );
   }
 
@@ -104,119 +92,146 @@ export function PostsList() {
   const lastShown = firstShown + posts.length - 1;
 
   return (
-    <SectionShell title="Blog" description="Wpisy na blogu klubu Alumna." as="section">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <Tabs
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value as StatusFilter);
-            setPage(0);
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
-            <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
-            <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <Button asChild>
-          <Link href="/dashboard/posts/new">
-            <Plus data-icon="inline-start" />
-            Nowy wpis
-          </Link>
-        </Button>
-      </div>
-
-      {isListLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <PostCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : isError ? (
-        <p className="text-destructive font-medium">Nie udało się załadować wpisów.</p>
-      ) : posts.length === 0 ? (
-        <p className="text-muted-foreground">
-          {statusFilter === "ALL" ? "Brak wpisów." : "Brak wpisów o tym statusie."}
-        </p>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-muted-foreground text-sm">
-            {totalPages > 1
-              ? `Wyświetlono ${firstShown}–${lastShown} z ${totalElements} wpisów, strona ${currentPage + 1} z ${totalPages}.`
-              : `Wyświetlono ${totalElements} ${totalElements === 1 ? "wpis" : "wpisów"}.`}
+    <div>
+      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+        <div className="mx-auto max-w-[1280px] space-y-6">
+          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+            Aktualności
           </p>
-
-          {posts.map((post) => {
-            const { dateLabel } = formatPublishedAt(
-              post.status === PostStatus.PUBLISHED ? post.publishedAt : post.createdAt,
-            );
-
-            return (
-              <Card key={post.id} className="gap-3 p-5 md:p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-                      {post.status === PostStatus.PUBLISHED ? "Opublikowano" : "Utworzono"}:{" "}
-                      {dateLabel}
-                    </p>
-                    <h2 className="text-foreground truncate text-lg font-bold">{post.title}</h2>
-                    <p className="text-muted-foreground/70 font-mono text-xs">/{post.slug}</p>
-                  </div>
-                  <PostStatusBadge status={post.status} />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-muted-foreground min-w-0 truncate text-xs font-semibold tracking-widest uppercase">
-                    Autor: {post.authorDisplayName}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/dashboard/posts/${post.id}`}>
-                        <Pencil data-icon="inline-start" />
-                        Edytuj
-                      </Link>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setPostToDelete(post)}
-                    >
-                      <Trash2 data-icon="inline-start" />
-                      Usuń
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-
-          {totalPages > 1 ? (
-            <div className="flex items-center justify-between gap-4 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage <= 0}
-                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
-              >
-                <ArrowLeft data-icon="inline-start" />
-                Poprzednia
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= totalPages - 1}
-                onClick={() => setPage((prev) => prev + 1)}
-              >
-                Następna
-                <ArrowRight data-icon="inline-end" />
-              </Button>
-            </div>
-          ) : null}
+          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+            Wpisy klubu
+          </h1>
+          <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
+            Pisz, edytuj i usuwaj wpisy. Szkice widzą tylko administratorzy, a opublikowane wpisy
+            trafiają do zakładki „Aktualności”.
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <Tabs
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value as StatusFilter);
+                setPage(0);
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value="ALL">Wszystkie</TabsTrigger>
+                <TabsTrigger value={PostStatus.PUBLISHED}>Opublikowane</TabsTrigger>
+                <TabsTrigger value={PostStatus.DRAFT}>Szkice</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <Button asChild>
+              <Link href="/dashboard/posts/new">
+                <Plus data-icon="inline-start" />
+                Nowy wpis
+              </Link>
+            </Button>
+          </div>
         </div>
-      )}
+      </section>
+
+      <section className="bg-background px-4 py-10 md:px-10 md:py-16">
+        <div className="mx-auto max-w-[1280px]">
+          {isListLoading ? (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="bg-muted h-64 w-full rounded-none" />
+              ))}
+            </div>
+          ) : isError ? (
+            <p className="text-destructive font-medium">Nie udało się załadować wpisów.</p>
+          ) : posts.length === 0 ? (
+            <p className="text-muted-foreground">
+              {statusFilter === "ALL"
+                ? "Brak wpisów — napisz pierwszy."
+                : "Brak wpisów o tym statusie."}
+            </p>
+          ) : (
+            <div className="space-y-8">
+              <p className="text-muted-foreground text-sm">
+                {totalPages > 1
+                  ? `Wyświetlono ${firstShown}–${lastShown} z ${totalElements} wpisów, strona ${currentPage + 1} z ${totalPages}.`
+                  : `Wyświetlono ${formatPostCount(totalElements)}.`}
+              </p>
+
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                {posts.map((post) => {
+                  const published = post.status === PostStatus.PUBLISHED;
+                  const { dateLabel } = formatPublishedAt(
+                    published ? post.publishedAt : post.createdAt,
+                  );
+
+                  return (
+                    <Card
+                      key={post.id}
+                      className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0"
+                    >
+                      <PostStatusBadge status={post.status} />
+                      <h2 className="font-heading text-foreground text-lg leading-snug font-semibold">
+                        {post.title}
+                      </h2>
+                      <ul className="text-muted-foreground space-y-3 text-sm">
+                        <li className="flex items-start gap-3">
+                          <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                          <span>
+                            {published ? "Opublikowano" : "Utworzono"} {dateLabel}
+                          </span>
+                        </li>
+                        <li className="flex items-start gap-3">
+                          <UserRound className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                          <span className="min-w-0 break-words">{post.authorDisplayName}</span>
+                        </li>
+                      </ul>
+                      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 pt-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link href={`/dashboard/posts/${post.id}`}>
+                            <Pencil data-icon="inline-start" />
+                            Edytuj
+                          </Link>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setPostToDelete(post)}
+                        >
+                          <Trash2 data-icon="inline-start" />
+                          Usuń
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {totalPages > 1 ? (
+                <div className="flex items-center justify-between gap-4 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 0}
+                    onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+                  >
+                    <ArrowLeft data-icon="inline-start" />
+                    Poprzednia
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages - 1}
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    Następna
+                    <ArrowRight data-icon="inline-end" />
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </section>
 
       <AlertDialog
         open={postToDelete !== null}
@@ -235,7 +250,7 @@ export function PostsList() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deletePost.isPending}>Anuluj</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
+              variant="destructive"
               disabled={deletePost.isPending}
               onClick={(event) => {
                 event.preventDefault();
@@ -249,6 +264,6 @@ export function PostsList() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SectionShell>
+    </div>
   );
 }

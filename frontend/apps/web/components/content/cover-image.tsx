@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import { DEFAULT_COVER_IMAGE } from "@/lib/content-images";
+import { cn } from "@/lib/utils";
 
 type CoverImageProps = {
   src?: string | null;
@@ -22,7 +23,11 @@ export function CoverImage({
 
   return (
     <div
-      className={`border-border bg-muted relative mb-6 flex ${aspectClass} w-full items-center justify-center overflow-hidden rounded-xl border md:mb-8 ${className ?? ""}`}
+      className={cn(
+        "bg-muted relative mb-6 flex w-full items-center justify-center overflow-hidden rounded-lg md:mb-8",
+        aspectClass,
+        className,
+      )}
     >
       {imageSrc ? (
         <Image

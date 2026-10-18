@@ -34,7 +34,7 @@ public class NotificationService {
                     case ALL_ALUMNI -> deviceTokenRepository.findAllForApprovedAlumni();
                     case SPECIFIC_GROUP -> List.of();
                 };
-        push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getId());
+        push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getSlug());
     }
 
     public Set<UUID> remind(Event event, Collection<UUID> userIds) {
@@ -45,7 +45,7 @@ public class NotificationService {
                 NotificationType.EVENT_REMINDER,
                 "Przypomnienie",
                 "%s - %s".formatted(event.getTitle(), startsAt),
-                event.getId());
+                event.getSlug());
         Map<UUID, List<DeviceToken>> devicesByUser = devices.stream()
                 .collect(Collectors.groupingBy(device -> device.getUser().getId()));
         return devicesByUser.entrySet().stream()
@@ -56,7 +56,7 @@ public class NotificationService {
     }
 
     private Set<String> push(
-            List<DeviceToken> devices, NotificationType type, String title, String body, UUID targetId) {
+            List<DeviceToken> devices, NotificationType type, String title, String body, String target) {
         if (devices.isEmpty()) {
             return Set.of();
         }
@@ -66,7 +66,7 @@ public class NotificationService {
                         title,
                         body,
                         type.getChannelId(),
-                        new NotificationPayload(type, targetId).toData()))
+                        new NotificationPayload(type, target).toData()))
                 .toList();
 
         SendOutcome outcome = expoPushClient.send(messages);

@@ -153,7 +153,7 @@ export function AdminEventsList() {
                           {audienceLabel(item.audience)}
                         </span>
                         <Button asChild variant="outline" size="sm">
-                          <Link href={`${ADMIN_EVENTS_PATH}/${item.id}`}>
+                          <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
                             <Pencil data-icon="inline-start" />
                             Edytuj
                           </Link>

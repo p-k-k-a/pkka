@@ -1,0 +1,28 @@
+package pl.edu.agh.backend.security.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+// The web app (pkka.me) reads the CSRF cookie in the browser and copies it into a header for the
+// API (api.pkka.me), so in production that cookie is scoped to the shared parent domain. Left
+// empty (local dev, where cookies ignore the port), it stays host-only.
+@Configuration
+public class WebCookieDomainConfig {
+
+    private final String domain;
+
+    public WebCookieDomainConfig(@Value("${app.web.cookie-domain:}") String domain) {
+        this.domain = domain.trim();
+    }
+
+    @Bean
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        if (!domain.isEmpty()) {
+            repository.setCookieCustomizer(cookie -> cookie.domain(domain));
+        }
+        return repository;
+    }
+}

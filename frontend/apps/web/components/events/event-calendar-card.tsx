@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, Clock, MapPin } from "lucide-react";
+import { ArrowRight, Calendar, CircleCheck, Clock, Hourglass, MapPin } from "lucide-react";
+import { EventRegistrationStatus } from "@pkka/api";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
 import {
@@ -8,13 +9,16 @@ import {
   eventTypeLabelUpper,
   formatEventDateComma,
   formatTimeRange,
+  registrationStatusLabelUpper,
 } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { type EventSchedule } from "@/components/events/event-location-aside";
 
 export type EventCalendarCardData = EventSchedule & {
-  id: string;
+  slug: string;
   title: string;
+  /** The viewer's own sign-up, when the list endpoint knows it. */
+  registrationStatus?: EventRegistrationStatus;
 };
 
 type EventCalendarCardProps = {
@@ -35,7 +39,7 @@ export function EventCalendarCard({
   className,
 }: EventCalendarCardProps) {
   const location = eventLocationLabel(event.type, event.location);
-  const target = href ?? eventDetailHref(event.id, variant);
+  const target = href ?? eventDetailHref(event.slug, variant);
 
   const inner = (
     <Card
@@ -44,9 +48,28 @@ export function EventCalendarCard({
         className,
       )}
     >
-      <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-        {eventTypeLabelUpper(event.type)}
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+          {eventTypeLabelUpper(event.type)}
+        </span>
+        {event.registrationStatus ? (
+          <span
+            className={cn(
+              "inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
+              event.registrationStatus === EventRegistrationStatus.WAITLISTED
+                ? "bg-accent/10 text-accent"
+                : "bg-primary text-primary-foreground",
+            )}
+          >
+            {event.registrationStatus === EventRegistrationStatus.WAITLISTED ? (
+              <Hourglass className="size-3.5" aria-hidden="true" />
+            ) : (
+              <CircleCheck className="size-3.5" aria-hidden="true" />
+            )}
+            {registrationStatusLabelUpper(event.registrationStatus)}
+          </span>
+        ) : null}
+      </div>
       <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
         {event.title.trim() || "Tytuł wydarzenia"}
       </h3>

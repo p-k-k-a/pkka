@@ -14,6 +14,7 @@ import pl.edu.agh.backend.event.tag.Tag;
 
 public record EventDetailsResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
@@ -37,6 +38,7 @@ public record EventDetailsResponse(
     public static EventDetailsResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
         return new EventDetailsResponse(
                 e.getId(),
+                e.getSlug(),
                 e.getTitle(),
                 e.getFullDescription(),
                 e.getType(),
