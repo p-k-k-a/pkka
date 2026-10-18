@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-registrations-chart";
-import { OccupancyMeter, occupancyPercent } from "@/components/admin/statistics/occupancy-meter";
+import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
 import { SignupSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
@@ -150,7 +150,8 @@ export function AdminEventOverview({ id }: { id: string }) {
                 {stats.seatLimit == null ? null : (
                   <OccupancyMeter
                     className="mt-1"
-                    percent={occupancyPercent(stats.registered, stats.seatLimit) ?? 0}
+                    registered={stats.registered}
+                    seatLimit={stats.seatLimit}
                     label="Obłożenie wydarzenia"
                   />
                 )}
