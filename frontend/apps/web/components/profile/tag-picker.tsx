@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 const IDLE_LIMIT = 20;
 
@@ -40,6 +41,7 @@ export function TagPicker({
   const id = useId();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const spaceRef = useRef<HTMLDivElement>(null);
 
   const searchText = query.trim();
@@ -54,15 +56,38 @@ export function TagPicker({
   const exactMatch = options.find((name) => name.toLowerCase() === searchLower);
   const canCreate =
     allowCreate && searchLower !== "" && !exactMatch && !selectedKeys.has(searchLower);
-  const isOpen = isFocused && !isFull && (matches.length > 0 || canCreate);
+  const items = canCreate ? [...matches, searchText] : matches;
+  const isOpen = isFocused && !isFull && items.length > 0;
+  const activeId =
+    activeIndex >= 0 && activeIndex < items.length ? `${id}-${activeIndex}` : undefined;
 
   useEffect(() => {
     if (isOpen) spaceRef.current?.scrollIntoView({ block: "nearest" });
   }, [isOpen]);
 
+  useEffect(() => {
+    if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
+  }, [activeId]);
+
   function add(name: string) {
     if (!disabled && !isFull && !selectedKeys.has(name.toLowerCase())) onChange([...value, name]);
     setQuery("");
+    setActiveIndex(-1);
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((index) => (index + step + items.length) % items.length);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (activeId) add(items[activeIndex]);
+      else if (exactMatch) add(exactMatch);
+      else if (canCreate) add(searchText);
+    } else if (event.key === "Escape") {
+      setIsFocused(false);
+    }
   }
 
   return (
@@ -102,9 +127,11 @@ export function TagPicker({
               aria-expanded={isOpen}
               aria-controls={`${id}-results`}
               aria-autocomplete="list"
+              aria-activedescendant={isOpen ? activeId : undefined}
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
+                setActiveIndex(-1);
                 setIsFocused(true);
               }}
               onFocus={() => setIsFocused(true)}
@@ -113,12 +140,7 @@ export function TagPicker({
               disabled={disabled || isFull}
               autoComplete="off"
               maxLength={TAG_NAME_MAX_LENGTH}
-              onKeyDown={(event) => {
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                if (exactMatch) add(exactMatch);
-                else if (canCreate) add(searchText);
-              }}
+              onKeyDown={handleKeyDown}
             />
           </div>
         </PopoverAnchor>
@@ -132,33 +154,35 @@ export function TagPicker({
           onMouseDown={(event) => event.preventDefault()}
         >
           <ul id={`${id}-results`} role="listbox" aria-label={label}>
-            {matches.map((name) => (
-              <li key={name} role="presentation">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={false}
-                  className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
-                  onClick={() => add(name)}
-                >
-                  {format(name)}
-                </button>
-              </li>
-            ))}
-            {canCreate ? (
-              <li role="presentation">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={false}
-                  className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
-                  onClick={() => add(searchText)}
-                >
-                  <Plus className="size-4" />
-                  Dodaj „{format(searchText)}”
-                </button>
-              </li>
-            ) : null}
+            {items.map((name, index) => {
+              const isCreate = canCreate && index === matches.length;
+              return (
+                <li key={isCreate ? "create" : name} role="presentation">
+                  <button
+                    id={`${id}-${index}`}
+                    type="button"
+                    role="option"
+                    tabIndex={-1}
+                    aria-selected={index === activeIndex}
+                    className={cn(
+                      "hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
+                      index === activeIndex && "bg-muted dark:bg-foreground/10",
+                      isCreate && "font-semibold",
+                    )}
+                    onClick={() => add(name)}
+                  >
+                    {isCreate ? (
+                      <>
+                        <Plus className="size-4" />
+                        Dodaj „{format(name)}”
+                      </>
+                    ) : (
+                      format(name)
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </PopoverContent>
       </Popover>

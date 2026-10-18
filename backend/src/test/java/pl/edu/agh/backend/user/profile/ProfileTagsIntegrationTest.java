@@ -209,10 +209,7 @@ class ProfileTagsIntegrationTest {
     void catalogCountsOnlyAlumniListedInTheDirectory() throws Exception {
         User listed = anotherApprovedAlumnus(true);
         User hidden = anotherApprovedAlumnus(false);
-        User notAnAlumnus = new User();
-        notAnAlumnus.setKeycloakId(UUID.randomUUID().toString());
-        notAnAlumnus = userRepository.save(notAnAlumnus);
-        for (User owner : List.of(user, listed, hidden, notAnAlumnus)) {
+        for (User owner : List.of(user, listed, hidden)) {
             putTags(owner, "{\"names\": [\"Elixir\"]}");
         }
 
@@ -220,6 +217,37 @@ class ProfileTagsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name=='Elixir')].usageCount").value(contains(2)))
                 .andExpect(jsonPath("$[?(@.name=='Blockchain')].usageCount").value(contains(0)));
+    }
+
+    @Test
+    void updateMyTagsRequiresAVerifiedAlumnus() throws Exception {
+        User applicant = new User();
+        applicant.setKeycloakId(UUID.randomUUID().toString());
+        applicant = userRepository.save(applicant);
+
+        mockMvc.perform(put("/api/profiles/me/tags")
+                        .with(JwtTestSupport.asUser(applicant.getKeycloakId()))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"names\": [\"Applicant Skill\"]}"))
+                .andExpect(status().isForbidden());
+        assertThat(catalogNames()).doesNotContain("Applicant Skill");
+    }
+
+    @Test
+    void updateMyTagsRejectsMissingNames() throws Exception {
+        putTags(user, "{\"names\": [\"Java\"]}");
+
+        for (String body : List.of("{}", "{\"names\": null}")) {
+            mockMvc.perform(put("/api/profiles/me/tags")
+                            .with(JwtTestSupport.asUser(user.getKeycloakId()))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+                .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test

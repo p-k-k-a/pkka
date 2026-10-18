@@ -22,9 +22,11 @@ export function TagPicker({
   error = false,
 }: TagPickerProps) {
   const options = useMemo<SelectOption[]>(() => {
-    const known = [...catalog].sort(byTagPopularity).map((tag) => tag.name);
-    const knownKeys = new Set(known.map((name) => name.toLowerCase()));
-    const added = value.filter((name) => !knownKeys.has(name.toLowerCase()));
+    const selectedByLower = new Map(value.map((name) => [name.toLowerCase(), name]));
+    const known = [...catalog]
+      .sort(byTagPopularity)
+      .map((tag) => selectedByLower.get(tag.name.toLowerCase()) ?? tag.name);
+    const added = value.filter((name) => !known.includes(name));
     return [...known, ...added].map((name) => ({ id: name, label: name }));
   }, [catalog, value]);
 
