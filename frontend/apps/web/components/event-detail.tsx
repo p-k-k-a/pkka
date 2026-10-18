@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetEventById } from "@pkka/api";
+import { useGetEventBySlug } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { EventLocationAside } from "@/components/events/event-location-aside";
@@ -10,12 +10,12 @@ import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 
 type EventDetailProps = {
-  id: string;
+  slug: string;
   variant?: EventPathVariant;
 };
 
-export function EventDetail({ id, variant = "public" }: EventDetailProps) {
-  const { data: response, isLoading, isError, isFetching } = useGetEventById(id);
+export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
+  const { data: response, isLoading, isError, isFetching } = useGetEventBySlug(slug);
   const event = response?.data;
   const archived = isEventPast(event?.startsAt);
   const eventsBackHref = eventsListHref(variant, archived);

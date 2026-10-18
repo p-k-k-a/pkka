@@ -26,11 +26,11 @@ const NOTIFICATION_TYPES: readonly string[] = Object.values(NotificationType);
 function parseNotificationPayload(data: unknown): NotificationPayload | null {
   if (typeof data !== "object" || data === null) return null;
 
-  const { type, targetId } = data as Record<string, unknown>;
-  if (typeof type !== "string" || typeof targetId !== "string" || targetId === "") return null;
+  const { type, target } = data as Record<string, unknown>;
+  if (typeof type !== "string" || typeof target !== "string" || target === "") return null;
   if (!NOTIFICATION_TYPES.includes(type)) return null;
 
-  return { type: type as NotificationType, targetId };
+  return { type: type as NotificationType, target };
 }
 
 export async function isPushEnabled(): Promise<boolean> {
@@ -178,7 +178,7 @@ export function useNotificationRouting() {
     const payload = parseNotificationPayload(response?.notification.request.content.data);
     if (!payload) return;
 
-    router.push({ pathname: "/events/[id]", params: { id: payload.targetId } });
+    router.push({ pathname: "/events/[slug]", params: { slug: payload.target } });
     Notifications.clearLastNotificationResponse();
   }, [response]);
 }
