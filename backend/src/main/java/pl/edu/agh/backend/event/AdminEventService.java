@@ -26,6 +26,9 @@ import pl.edu.agh.backend.user.CallerUserService;
 @RequiredArgsConstructor
 public class AdminEventService {
 
+    // Static pages that sit next to /events/{slug}, so a slug must never take these names.
+    private static final Set<String> ROUTE_SEGMENTS = Set.of("archive", "new");
+
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
     private final EventRegistrationService eventRegistrationService;
@@ -53,7 +56,8 @@ public class AdminEventService {
     public AdminEventResponse create(Caller caller, EventRequest request) {
         Event event = Event.builder()
                 .author(callerUserService.getOrCreate(caller))
-                .slug(SlugUtils.uniqueSlug(request.title(), eventRepository::existsBySlug))
+                .slug(SlugUtils.uniqueSlug(
+                        request.title(), slug -> ROUTE_SEGMENTS.contains(slug) || eventRepository.existsBySlug(slug)))
                 .title(request.title())
                 .fullDescription(request.fullDescription())
                 .type(request.type())
