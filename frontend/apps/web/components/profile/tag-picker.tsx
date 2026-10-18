@@ -42,17 +42,18 @@ export function TagPicker({
   const [isFocused, setIsFocused] = useState(false);
   const spaceRef = useRef<HTMLDivElement>(null);
 
-  const typed = query.trim();
-  const key = typed.toLowerCase();
+  const searchText = query.trim();
+  const searchLower = searchText.toLowerCase();
   const selectedKeys = new Set(value.map((name) => name.toLowerCase()));
   const isFull = max !== undefined && value.length >= max;
 
   const available = options.filter((name) => !selectedKeys.has(name.toLowerCase()));
-  const matches = key
-    ? available.filter((name) => name.toLowerCase().includes(key))
+  const matches = searchLower
+    ? available.filter((name) => name.toLowerCase().includes(searchLower))
     : available.slice(0, IDLE_LIMIT);
-  const exact = options.find((name) => name.toLowerCase() === key);
-  const canCreate = allowCreate && key !== "" && !exact && !selectedKeys.has(key);
+  const exactMatch = options.find((name) => name.toLowerCase() === searchLower);
+  const canCreate =
+    allowCreate && searchLower !== "" && !exactMatch && !selectedKeys.has(searchLower);
   const isOpen = isFocused && !isFull && (matches.length > 0 || canCreate);
 
   useEffect(() => {
@@ -115,8 +116,8 @@ export function TagPicker({
               onKeyDown={(event) => {
                 if (event.key !== "Enter") return;
                 event.preventDefault();
-                if (exact) add(exact);
-                else if (canCreate) add(typed);
+                if (exactMatch) add(exactMatch);
+                else if (canCreate) add(searchText);
               }}
             />
           </div>
@@ -151,10 +152,10 @@ export function TagPicker({
                   role="option"
                   aria-selected={false}
                   className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
-                  onClick={() => add(typed)}
+                  onClick={() => add(searchText)}
                 >
                   <Plus className="size-4" />
-                  Dodaj „{format(typed)}”
+                  Dodaj „{format(searchText)}”
                 </button>
               </li>
             ) : null}

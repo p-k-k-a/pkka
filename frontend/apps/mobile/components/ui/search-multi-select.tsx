@@ -63,20 +63,20 @@ export function SearchMultiSelect({
     [options, value],
   );
 
-  const typed = query.trim();
-  const needle = typed.toLowerCase();
-  const exact = options.find((option) => option.label.toLowerCase() === needle);
+  const searchText = query.trim();
+  const searchLower = searchText.toLowerCase();
+  const exactMatch = options.find((option) => option.label.toLowerCase() === searchLower);
 
   const filtered = useMemo(
     () =>
-      needle
-        ? options.filter((option) => option.label.toLowerCase().includes(needle))
+      searchLower
+        ? options.filter((option) => option.label.toLowerCase().includes(searchLower))
         : options.slice(0, IDLE_LIMIT),
-    [options, needle],
+    [options, searchLower],
   );
 
   const atMax = max !== undefined && value.length >= max;
-  const canCreate = onCreate !== undefined && needle !== "" && !atMax && !exact;
+  const canCreate = onCreate !== undefined && searchLower !== "" && !atMax && !exactMatch;
 
   // Compute from `prev` (the freshest value) rather than the captured `value`
   // prop, so a memoized onPress closure can never act on a stale snapshot.
@@ -89,8 +89,8 @@ export function SearchMultiSelect({
   };
 
   const submit = () => {
-    if (exact && !value.includes(exact.id)) toggle(exact.id);
-    else if (canCreate) onCreate(typed);
+    if (exactMatch && !value.includes(exactMatch.id)) toggle(exactMatch.id);
+    else if (canCreate) onCreate(searchText);
     setQuery("");
   };
 
@@ -207,7 +207,7 @@ export function SearchMultiSelect({
                 <Pressable
                   onPress={submit}
                   accessibilityRole="button"
-                  accessibilityLabel={`Dodaj: ${typed}`}
+                  accessibilityLabel={`Dodaj: ${searchText}`}
                   className={cn(
                     "flex-row items-center gap-3 px-3 py-3 active:bg-muted",
                     filtered.length > 0 && "border-border border-t",
@@ -215,11 +215,11 @@ export function SearchMultiSelect({
                 >
                   <Plus size={18} color={theme.primary} />
                   <Text className="text-foreground flex-1 text-sm font-semibold">
-                    Dodaj „{typed}”
+                    Dodaj „{searchText}”
                   </Text>
                 </Pressable>
               ) : null}
-              {!needle && options.length > IDLE_LIMIT ? (
+              {!searchLower && options.length > IDLE_LIMIT ? (
                 <View className="border-border border-t px-3 py-3">
                   <Text className="text-muted-foreground text-xs">
                     Wpisz nazwę, aby znaleźć pozostałe.
