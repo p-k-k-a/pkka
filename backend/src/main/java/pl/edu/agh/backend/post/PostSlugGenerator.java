@@ -2,6 +2,7 @@ package pl.edu.agh.backend.post;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 
 @Component
 @RequiredArgsConstructor

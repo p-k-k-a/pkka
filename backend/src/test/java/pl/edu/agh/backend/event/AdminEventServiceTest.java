@@ -49,6 +49,9 @@ class AdminEventServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private EventSlugGenerator slugGenerator;
+
     @InjectMocks
     private AdminEventService adminEventService;
 
@@ -56,10 +59,9 @@ class AdminEventServiceTest {
 
     @Test
     void getThrowsWhenMissing() {
-        UUID id = UUID.randomUUID();
-        when(eventRepository.findById(id)).thenReturn(Optional.empty());
+        when(eventRepository.findBySlug("brak")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminEventService.get(id)).isInstanceOf(EventNotFoundException.class);
+        assertThatThrownBy(() -> adminEventService.getBySlug("brak")).isInstanceOf(EventNotFoundException.class);
     }
 
     @Test
@@ -74,10 +76,10 @@ class AdminEventServiceTest {
                 .audience(Audience.PUBLIC)
                 .tags(new HashSet<>())
                 .build();
-        when(eventRepository.findById(id)).thenReturn(Optional.of(event));
+        when(eventRepository.findBySlug("warsztat-ai")).thenReturn(Optional.of(event));
         when(eventRegistrationService.seatsTaken(id)).thenReturn(7L);
 
-        assertThat(adminEventService.get(id).seatsTaken()).isEqualTo(7);
+        assertThat(adminEventService.getBySlug("warsztat-ai").seatsTaken()).isEqualTo(7);
     }
 
     @Test
@@ -87,6 +89,7 @@ class AdminEventServiceTest {
         when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(slugGenerator.generateUniqueSlug("Warsztat AI")).thenReturn("warsztat-ai-2");
 
         EventRequest request = new EventRequest(
                 "Warsztat AI",
@@ -110,6 +113,7 @@ class AdminEventServiceTest {
         assertThat(captor.getValue().getTags()).containsExactlyInAnyOrder(ai);
         assertThat(captor.getValue().getAuthor()).isSameAs(author);
         assertThat(response.title()).isEqualTo("Warsztat AI");
+        assertThat(response.slug()).isEqualTo("warsztat-ai-2");
         assertThat(response.tags()).containsExactlyInAnyOrder("ai");
         verify(eventPublisher).publishEvent(new EventCreatedEvent(response.id()));
     }

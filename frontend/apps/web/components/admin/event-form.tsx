@@ -8,8 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Audience,
   EventType,
-  getGetAdminEventQueryKey,
-  getGetEventByIdQueryKey,
+  getGetAdminEventBySlugQueryKey,
+  getGetEventBySlugQueryKey,
   getListAdminEventsQueryKey,
   getListEventsQueryKey,
   useCreateAdminEvent,
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { eventDetailHref } from "@/lib/event-paths";
 import {
   AUDIENCE_OPTIONS,
   EVENT_TYPE_OPTIONS,
@@ -125,8 +126,8 @@ export function EventForm({ event }: EventFormProps) {
     queryClient.invalidateQueries({ queryKey: getListAdminEventsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
     if (event) {
-      queryClient.invalidateQueries({ queryKey: getGetAdminEventQueryKey(event.id) });
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getGetAdminEventBySlugQueryKey(event.slug) });
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) });
     }
     router.push(ADMIN_EVENTS_PATH);
   };
@@ -260,6 +261,11 @@ export function EventForm({ event }: EventFormProps) {
                 className="font-heading h-auto min-h-14 py-3 text-lg font-semibold md:text-[23px]"
                 onChange={(changeEvent) => setTitle(changeEvent.target.value)}
               />
+              <p className="text-muted-foreground text-xs">
+                {isEditing
+                  ? `Adres wydarzenia: ${eventDetailHref(event.slug)}. Nie zmienia się przy edycji.`
+                  : "Adres wydarzenia wygenerujemy automatycznie z tytułu."}
+              </p>
             </section>
 
             <section className="space-y-5">

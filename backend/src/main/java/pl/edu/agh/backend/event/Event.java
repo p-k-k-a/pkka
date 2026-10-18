@@ -36,6 +36,12 @@ public class Event {
     private UUID id;
 
     @NotBlank
+    @Size(max = 255)
+    @Column(name = "slug", nullable = false, updatable = false, length = 255)
+    @ToString.Include
+    private String slug;
+
+    @NotBlank
     @Size(max = 200)
     @Column(name = "title", nullable = false, length = 200)
     @ToString.Include

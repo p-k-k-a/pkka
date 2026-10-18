@@ -67,6 +67,7 @@ class EventServiceTest {
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("networking")
                 .title("Networking")
                 .type(EventType.IN_PERSON)
                 .startsAt(Instant.now().plusSeconds(3600))
@@ -74,13 +75,14 @@ class EventServiceTest {
                 .seatLimit(5)
                 .audience(Audience.PUBLIC)
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug("networking", caller)).thenReturn(event);
         when(eventRegistrationService.seatsTaken(id)).thenReturn(5L);
         when(eventRegistrationService.findOwnStatus(id, caller))
                 .thenReturn(Optional.of(EventRegistrationStatus.WAITLISTED));
 
-        var details = eventService.getDetails(id, caller);
+        var details = eventService.getDetails("networking", caller);
 
+        assertThat(details.slug()).isEqualTo("networking");
         assertThat(details.seatsTaken()).isEqualTo(5);
         assertThat(details.registrationStatus()).isEqualTo(EventRegistrationStatus.WAITLISTED);
     }
