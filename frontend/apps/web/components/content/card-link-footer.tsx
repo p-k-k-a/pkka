@@ -1,22 +1,17 @@
+import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type CardLinkFooterProps = {
   children: React.ReactNode;
-  align?: "start" | "end";
   className?: string;
 };
 
-export function CardLinkFooter({ children, align = "end", className }: CardLinkFooterProps) {
+export function CardLinkFooter({ children, className }: CardLinkFooterProps) {
   return (
-    <div
-      className={cn(
-        "border-border/70 mt-6 flex items-center border-t pt-6",
-        align === "start" ? "justify-start" : "justify-end",
-        className,
-      )}
-    >
-      <span className="text-foreground flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-transform group-hover:translate-x-1">
+    <div className={cn("mt-auto flex justify-end pt-2", className)}>
+      <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
         {children}
+        <ArrowRight className="size-3.5" aria-hidden="true" />
       </span>
     </div>
   );

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "753444473588",
+    "project_id": "pkka-970f2",
+    "storage_bucket": "pkka-970f2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:753444473588:android:d82b8b6aaf090a450e6ca1",
+        "android_client_info": {
+          "package_name": "com.pkka.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXsRzuDYyd9buFgDV6NW2npdeXJWiPoYM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
