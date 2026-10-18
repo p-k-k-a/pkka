@@ -4,7 +4,6 @@ export * from "./events/calendar";
 export * from "./events/registration";
 export * from "./format/datetime";
 export * from "./format/plural";
-export * from "./format/text";
 export * from "./labels/application";
 export * from "./labels/events";
 export * from "./profile/contacts";

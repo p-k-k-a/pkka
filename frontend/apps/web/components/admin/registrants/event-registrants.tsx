@@ -8,7 +8,7 @@ import {
   useListEventRegistrations,
   type AdminEventRegistrationResponse,
 } from "@pkka/api";
-import { foldText, formatDateTime, pluralPl } from "@pkka/domain";
+import { formatDateTime, pluralPl } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,8 +16,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { cn } from "@/lib/utils";
 
+// Diacritics are dropped so "pawel" finds "Paweł"; NFD does not split "ł", hence the extra replace.
+function fold(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/ł/g, "l");
+}
+
 function matches(registration: AdminEventRegistrationResponse, query: string) {
-  return foldText(`${registration.displayName} ${registration.email}`).includes(foldText(query));
+  return fold(`${registration.displayName} ${registration.email}`).includes(fold(query));
 }
 
 function statusLabel(registration: AdminEventRegistrationResponse) {

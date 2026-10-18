@@ -1,15 +1,8 @@
-// Excel would run a cell starting with one of these as a formula, so such values get a leading apostrophe.
-const FORMULA_TRIGGER = /^[=+\-@\t\r]/;
-
-function csvCell(value: string | number | null | undefined) {
-  const text = value == null ? "" : String(value);
-  const safe = FORMULA_TRIGGER.test(text) ? `'${text}` : text;
-  return /[";\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
-}
+import Papa from "papaparse";
 
 // Semicolons and a byte-order mark are what Excel in a Polish locale expects to open the file correctly.
-export function toCsv(header: string[], rows: (string | number | null | undefined)[][]) {
-  return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(";")).join("\r\n")}`;
+export function toCsv(fields: string[], data: (string | number | null | undefined)[][]) {
+  return `﻿${Papa.unparse({ fields, data }, { delimiter: ";", escapeFormulae: true })}`;
 }
 
 export function downloadCsv(filename: string, content: string) {
