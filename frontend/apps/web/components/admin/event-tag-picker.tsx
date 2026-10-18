@@ -100,7 +100,7 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
                   type="button"
                   role="option"
                   aria-selected={false}
-                  className="hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
+                  className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => add(name)}
                 >
@@ -114,7 +114,7 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
                   type="button"
                   role="option"
                   aria-selected={false}
-                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
+                  className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => add(typed)}
                 >

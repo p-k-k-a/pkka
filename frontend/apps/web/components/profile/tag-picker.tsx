@@ -164,7 +164,7 @@ export function TagPicker({
                   type="button"
                   role="option"
                   aria-selected={false}
-                  className="hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
+                  className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
                   // Keeps the input focused so the list survives the click.
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => addTag(tag.id)}
@@ -181,7 +181,7 @@ export function TagPicker({
                   type="button"
                   role="option"
                   aria-selected={false}
-                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
+                  className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={createTag}
                 >
