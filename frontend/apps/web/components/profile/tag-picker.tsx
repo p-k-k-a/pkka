@@ -153,7 +153,9 @@ export function TagPicker({
 
         <PopoverContent
           align="start"
-          className="max-h-72 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+          side="bottom"
+          avoidCollisions={false}
+          className="max-h-[min(18rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <ul id="tag-search-results" role="listbox" aria-label="Pasujące umiejętności">

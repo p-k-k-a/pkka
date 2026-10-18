@@ -90,7 +90,9 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
 
         <PopoverContent
           align="start"
-          className="max-h-64 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+          side="bottom"
+          avoidCollisions={false}
+          className="max-h-[min(16rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <ul id="event-tag-results" role="listbox" aria-label="Pasujące tagi">
