@@ -1,8 +1,7 @@
 package pl.edu.agh.backend.user.profile.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -17,7 +16,7 @@ public record UpdateTagsRequest(
 
         @Size(max = 20)
         @Schema(description = "Tag names, matched case-insensitively; names not in the catalog are created")
-        Set<@NotNull @Pattern(regexp = TagNames.PATTERN) String> names) {
+        Set<@NotBlank @Size(max = TagNames.MAX_LENGTH) String> names) {
 
     public UpdateTagsRequest {
         tagIds = tagIds == null ? Set.of() : tagIds;

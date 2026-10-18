@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
@@ -46,7 +45,7 @@ public record EventRequest(
         Integer reminderLeadTimeMinutes,
 
         @Schema(description = "Lower-cased on save; names not in the catalog are created")
-        Set<@NotNull @Pattern(regexp = TagNames.PATTERN) String> tags) {
+        Set<@NotBlank @Size(max = TagNames.MAX_LENGTH) String> tags) {
 
     public EventRequest {
         title = trimToNull(title);

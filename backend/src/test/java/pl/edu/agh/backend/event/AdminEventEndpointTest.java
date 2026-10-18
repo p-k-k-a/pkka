@@ -232,7 +232,7 @@ class AdminEventEndpointTest {
     }
 
     @Test
-    void rejectsTagNamesWithDisallowedCharacters() throws Exception {
+    void rejectsTagNamesLongerThan32Characters() throws Exception {
         Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
         Instant end = start.plus(2, ChronoUnit.HOURS);
 
@@ -240,7 +240,12 @@ class AdminEventEndpointTest {
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(eventJson("Zły tag", start.toString(), end.toString(), "PUBLIC", "[\"<b>x</b>\"]")))
+                        .content(eventJson(
+                                "Zły tag",
+                                start.toString(),
+                                end.toString(),
+                                "PUBLIC",
+                                "[\"%s\"]".formatted("x".repeat(33)))))
                 .andExpect(status().isBadRequest());
     }
 
