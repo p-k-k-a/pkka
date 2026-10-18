@@ -8,15 +8,10 @@ import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 @RequiredArgsConstructor
 class EventSlugGenerator {
 
-    private static final String FALLBACK = "wydarzenie";
-
     private final EventRepository eventRepository;
 
     String generateUniqueSlug(String title) {
         String base = SlugUtils.toSlug(title);
-        if (base.isEmpty()) {
-            base = FALLBACK;
-        }
 
         String candidate = base;
         int suffix = 2;
