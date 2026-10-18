@@ -152,6 +152,16 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
+    void adminReadsTheDirectoryButNotOtherAlumniEndpoints() throws Exception {
+        var admin = jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(alumn.getId().toString()));
+        mockMvc.perform(get("/api/alumni").with(admin)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/alumni/tickets").with(admin)).andExpect(status().isForbidden());
+    }
+
+    @Test
     void rejectsUnverifiedUser() throws Exception {
         mockMvc.perform(get("/api/alumni/{id}", alumn.getId())
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))

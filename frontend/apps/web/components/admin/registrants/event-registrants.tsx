@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { Download } from "lucide-react";
 import {
@@ -108,7 +109,16 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
               {registrations.map((registration) => (
                 <tr key={registration.registrationId} className="border-border border-t">
                   <td className="px-6 py-3">
-                    <p className="text-foreground font-semibold">{registration.displayName}</p>
+                    {registration.alumnusId ? (
+                      <Link
+                        href={`/dashboard/alumni/${registration.alumnusId}`}
+                        className="text-foreground font-semibold underline-offset-4 hover:underline"
+                      >
+                        {registration.displayName}
+                      </Link>
+                    ) : (
+                      <p className="text-foreground font-semibold">{registration.displayName}</p>
+                    )}
                     <p className="text-muted-foreground text-xs break-all">{registration.email}</p>
                   </td>
                   <td className="px-6 py-3">

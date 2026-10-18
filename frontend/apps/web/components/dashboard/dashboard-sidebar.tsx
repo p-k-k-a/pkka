@@ -61,6 +61,12 @@ const adminItems: SidebarItem[] = [
     icon: CalendarDays,
     match: (pathname) => pathname.startsWith("/dashboard/admin/events"),
   },
+  {
+    href: "/dashboard/alumni",
+    label: "Alumni",
+    icon: Users,
+    match: (pathname) => pathname.startsWith("/dashboard/alumni"),
+  },
 ];
 
 export function DashboardSidebar() {

@@ -23,6 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.application.Application;
+import pl.edu.agh.backend.application.ApplicationRepository;
+import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.application.Faculty;
+import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventRepository;
@@ -51,6 +56,9 @@ class AdminEventRegistrationEndpointTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     private Event newEvent(Integer seatLimit) {
         Instant startsAt = Instant.now().plus(7, ChronoUnit.DAYS);
@@ -135,6 +143,31 @@ class AdminEventRegistrationEndpointTest {
                 .andExpect(jsonPath("$[0].waitlistPosition").doesNotExist())
                 .andExpect(jsonPath("$[2].waitlistPosition").value(1))
                 .andExpect(jsonPath("$[3].waitlistPosition").value(2));
+    }
+
+    @Test
+    void verifiedAlumniCarryTheirProfileId() throws Exception {
+        Event event = newEvent(10);
+        User alumn = userRepository
+                .findByKeycloakId(signUp(event, "Anna", "Kowalska", "anna@example.com"))
+                .orElseThrow();
+        signUp(event, "Tomasz", "Nowak", "tomasz@example.com");
+        applicationRepository.saveAndFlush(Application.builder()
+                .applicant(alumn)
+                .status(ApplicationStatus.APPROVED)
+                .faculty(Faculty.WI)
+                .fieldOfStudy("Informatyka")
+                .studyType(StudyType.MASTER)
+                .graduationYear(2020)
+                .phoneNumber("+48123456789")
+                .reviewedAt(Instant.now())
+                .build());
+
+        mockMvc.perform(get("/api/admin/events/{id}/registrations", event.getId())
+                        .with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].alumnusId").value(alumn.getId().toString()))
+                .andExpect(jsonPath("$[1].alumnusId").doesNotExist());
     }
 
     @Test
