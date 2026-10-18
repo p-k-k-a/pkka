@@ -33,7 +33,6 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { cn } from "@/lib/utils";
 import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
@@ -129,7 +128,6 @@ export function AdminEventsList() {
     data: response,
     isLoading: isListLoading,
     isError,
-    isPlaceholderData,
   } = useListAdminEvents(
     {
       timeframe,
@@ -137,7 +135,7 @@ export function AdminEventsList() {
       size: PAGE_SIZE,
       sort: [sortKey],
     },
-    { query: { enabled: admin, placeholderData: (previous) => previous } },
+    { query: { enabled: admin } },
   );
   const occupancy = useListEventOccupancy({ query: { enabled: admin } });
 
@@ -258,13 +256,7 @@ export function AdminEventsList() {
                   : `Wyświetlono ${totalElements} ${totalElements === 1 ? "wydarzenie" : "wydarzeń"}.`}
               </p>
 
-              <div
-                aria-busy={isPlaceholderData}
-                className={cn(
-                  "grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 lg:grid-cols-3",
-                  isPlaceholderData && "pointer-events-none opacity-60",
-                )}
-              >
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {events.map((item) => {
                   const row = occupancyById.get(item.id);
                   return (
@@ -315,7 +307,7 @@ export function AdminEventsList() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={isPlaceholderData || currentPage <= 0}
+                    disabled={currentPage <= 0}
                     onClick={() => setPage((prev) => Math.max(0, prev - 1))}
                   >
                     <ArrowLeft data-icon="inline-start" />
@@ -325,7 +317,7 @@ export function AdminEventsList() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={isPlaceholderData || currentPage >= totalPages - 1}
+                    disabled={currentPage >= totalPages - 1}
                     onClick={() => setPage((prev) => prev + 1)}
                   >
                     Następna
