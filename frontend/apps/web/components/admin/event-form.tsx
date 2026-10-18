@@ -8,8 +8,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Audience,
   EventType,
-  getGetAdminEventQueryKey,
-  getGetEventByIdQueryKey,
+  getGetAdminEventBySlugQueryKey,
+  getGetEventBySlugQueryKey,
   getListAdminEventsQueryKey,
   getListEventOccupancyQueryKey,
   getListEventsQueryKey,
@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { eventDetailHref } from "@/lib/event-paths";
 import {
   AUDIENCE_OPTIONS,
   EVENT_TYPE_OPTIONS,
@@ -129,10 +130,10 @@ export function EventForm({ event }: EventFormProps) {
     queryClient.invalidateQueries({ queryKey: getListEventOccupancyQueryKey() });
     if (event) {
       queryClient.invalidateQueries({ queryKey: getGetEventStatisticsQueryKey(event.id) });
-      queryClient.invalidateQueries({ queryKey: getGetAdminEventQueryKey(event.id) });
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getGetAdminEventBySlugQueryKey(event.slug) });
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) });
     }
-    router.push(event ? `${ADMIN_EVENTS_PATH}/${event.id}` : ADMIN_EVENTS_PATH);
+    router.push(event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH);
   };
 
   const createEvent = useCreateAdminEvent({ mutation: { onSuccess: onSaved } });
@@ -201,7 +202,7 @@ export function EventForm({ event }: EventFormProps) {
     <div className="bg-background px-4 py-10 md:px-10 md:py-16">
       <div className="mx-auto max-w-[1280px]">
         <Button asChild variant="ghost" size="sm" className="mb-8 -ml-2">
-          <Link href={event ? `${ADMIN_EVENTS_PATH}/${event.id}` : ADMIN_EVENTS_PATH}>
+          <Link href={event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH}>
             <ArrowLeft data-icon="inline-start" />
             {event ? "Wróć do wydarzenia" : "Wróć do listy wydarzeń"}
           </Link>
@@ -264,6 +265,11 @@ export function EventForm({ event }: EventFormProps) {
                 className="font-heading h-auto min-h-14 py-3 text-lg font-semibold md:text-[23px]"
                 onChange={(changeEvent) => setTitle(changeEvent.target.value)}
               />
+              <p className="text-muted-foreground text-xs">
+                {isEditing
+                  ? `Adres wydarzenia: ${eventDetailHref(event.slug)}. Nie zmienia się przy edycji.`
+                  : "Adres wydarzenia wygenerujemy automatycznie z tytułu."}
+              </p>
             </section>
 
             <section className="space-y-5">

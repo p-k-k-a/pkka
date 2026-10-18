@@ -10,6 +10,7 @@ import pl.edu.agh.backend.event.tag.Tag;
 
 public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
@@ -40,6 +41,7 @@ public record AdminEventResponse(
     static AdminEventResponse from(Event event, long seatsTaken) {
         return new AdminEventResponse(
                 event.getId(),
+                event.getSlug(),
                 event.getTitle(),
                 event.getFullDescription(),
                 event.getType(),

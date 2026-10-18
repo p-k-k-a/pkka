@@ -1,10 +1,10 @@
 import { EventEditor } from "@/components/admin/event-editor";
 
 type DashboardEditEventPageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export default async function DashboardEditEventPage({ params }: DashboardEditEventPageProps) {
-  const { id } = await params;
-  return <EventEditor id={id} />;
+  const { slug } = await params;
+  return <EventEditor slug={slug} />;
 }

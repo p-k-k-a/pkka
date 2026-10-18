@@ -29,6 +29,7 @@ public class AdminEventService {
     private final TagRepository tagRepository;
     private final EventRegistrationService eventRegistrationService;
     private final CallerUserService callerUserService;
+    private final EventSlugGenerator slugGenerator;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -44,14 +45,15 @@ public class AdminEventService {
     }
 
     @Transactional(readOnly = true)
-    public AdminEventResponse get(UUID id) {
-        return respond(findOrThrow(id));
+    public AdminEventResponse getBySlug(String slug) {
+        return respond(eventRepository.findBySlug(slug).orElseThrow(() -> new EventNotFoundException(slug)));
     }
 
     @Transactional
     public AdminEventResponse create(Caller caller, EventRequest request) {
         Event event = Event.builder()
                 .author(callerUserService.getOrCreate(caller))
+                .slug(slugGenerator.generateUniqueSlug(request.title()))
                 .title(request.title())
                 .fullDescription(request.fullDescription())
                 .type(request.type())
