@@ -7,14 +7,16 @@ export function occupancyPercent(registered: number, seatLimit?: number) {
 }
 
 type OccupancyMeterProps = {
-  percent: number;
+  registered: number;
+  seatLimit: number;
   label: string;
   className?: string;
 };
 
-export function OccupancyMeter({ percent, label, className }: OccupancyMeterProps) {
-  const filled = Math.min(100, Math.max(0, percent));
-  const over = percent > 100;
+export function OccupancyMeter({ registered, seatLimit, label, className }: OccupancyMeterProps) {
+  const percent = occupancyPercent(registered, seatLimit) ?? 0;
+  const filled = Math.min(100, percent);
+  const over = registered > seatLimit;
   return (
     <div
       role="meter"
