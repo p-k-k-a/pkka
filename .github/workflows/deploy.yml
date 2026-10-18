@@ -1,25 +1,33 @@
 name: Build & publish backend image
 
 on:
-  push:
-    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: >-
+          Redeploy an image tag that already exists (e.g. v1.1.0) without building.
+          Leave empty to only build the image from the selected ref.
+        required: false
+        type: string
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.tag == ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: true
@@ -28,3 +36,66 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/pkka-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # Rolls the new image out on the VM by running deploy.sh there through the Azure control
+  # plane (no SSH port, no SSH key in GitHub). Logs in with OIDC, so no Azure secret is stored.
+  #
+  # One-time setup:
+  #  - A user-assigned managed identity with a federated credential, subject
+  #    `repo:<owner>/<repo>:environment:production` (matches `environment:` below).
+  #  - That identity's role limited to this one VM and to run-command.
+  #  - Repository secrets AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID and
+  #    variables AZURE_RESOURCE_GROUP, AZURE_VM_NAME. Add required reviewers to the
+  #    `production` environment if deploys should wait for an approval.
+  deploy:
+    name: Deploy backend to the VM
+    needs: build
+    # Runs for a published release, or for a manual run with a tag (build is skipped then).
+    if: >-
+      !cancelled() && needs.build.result != 'failure' &&
+      (github.event_name == 'release' || inputs.tag != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+    concurrency:
+      group: deploy-backend-production
+      cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      VM_NAME: ${{ vars.AZURE_VM_NAME }}
+    steps:
+      - name: Validate tag
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Unexpected tag '$TAG'"
+            exit 1
+          fi
+
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # run-command output is capped at about 4 KB and the script's exit code is not
+      # reliably passed on, so success is decided by the PKKA_DEPLOY_RESULT=OK line that
+      # deploy.sh prints last. deploy.sh itself rolls back if the new version is unhealthy.
+      - name: Run deploy.sh on the VM
+        run: |
+          # shellcheck disable=SC2016  # "$1" must expand on the VM, not here
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
+            --command-id RunShellScript \
+            --scripts 'sudo -H -u pkka-deploy /opt/pkka/deploy/deploy.sh "$1"' \
+            --parameters "$TAG" \
+            --output json > result.json || echo "::warning::az exited with status $?"
+          jq -r '.value[]?.message' result.json 2>/dev/null | tee deploy.log || true
+          if ! grep -q '^PKKA_DEPLOY_RESULT=OK ' deploy.log; then
+            echo "::error::Deploy of $TAG did not finish with PKKA_DEPLOY_RESULT=OK"
+            exit 1
+          fi
