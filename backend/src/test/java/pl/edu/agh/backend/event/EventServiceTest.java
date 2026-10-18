@@ -25,6 +25,8 @@ import pl.edu.agh.backend.security.Caller;
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
 
+    private static final String MEETING_URL = "https://meet.google.com/abc-defg-hij";
+
     @Mock
     private EventRepository eventRepository;
 
@@ -83,5 +85,38 @@ class EventServiceTest {
 
         assertThat(details.seatsTaken()).isEqualTo(5);
         assertThat(details.registrationStatus()).isEqualTo(EventRegistrationStatus.WAITLISTED);
+    }
+
+    @Test
+    void getDetailsHandsTheMeetingLinkToAHeldSeat() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.REGISTERED))).isEqualTo(MEETING_URL);
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromTheWaitlist() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.WAITLISTED))).isNull();
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromCallersNotSignedUp() {
+        assertThat(meetingLinkSeenWith(Optional.empty())).isNull();
+    }
+
+    private String meetingLinkSeenWith(Optional<EventRegistrationStatus> ownStatus) {
+        UUID id = UUID.randomUUID();
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
+                .id(id)
+                .title("Webinar")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .transmissionUrl(MEETING_URL)
+                .audience(Audience.PUBLIC)
+                .build();
+        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
+
+        return eventService.getDetails(id, caller).transmissionUrl();
     }
 }

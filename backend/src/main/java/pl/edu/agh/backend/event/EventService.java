@@ -46,7 +46,16 @@ public class EventService {
         Event event = eventLookup.findVisible(id, caller);
         EventRegistrationStatus registrationStatus =
                 eventRegistrationService.findOwnStatus(id, caller).orElse(null);
-        return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);
+        return EventDetailsResponse.from(
+                event,
+                eventRegistrationService.seatsTaken(id),
+                registrationStatus,
+                transmissionUrlFor(event, registrationStatus));
+    }
+
+    /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */
+    private String transmissionUrlFor(Event event, EventRegistrationStatus registrationStatus) {
+        return registrationStatus == EventRegistrationStatus.REGISTERED ? event.getTransmissionUrl() : null;
     }
 
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {

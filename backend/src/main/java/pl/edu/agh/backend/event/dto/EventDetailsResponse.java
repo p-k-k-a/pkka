@@ -21,6 +21,9 @@ public record EventDetailsResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         String location,
 
+        @Schema(description = "Meeting link; absent unless the requesting user holds a seat (REGISTERED)")
+        String transmissionUrl,
+
         @Schema(description = "Absent when the event has no seat limit")
         Integer seatLimit,
 
@@ -34,7 +37,9 @@ public record EventDetailsResponse(
 
         @Schema(description = "The requesting user's own sign-up; absent when they are not signed up or anonymous")
         EventRegistrationStatus registrationStatus) {
-    public static EventDetailsResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
+    /** Takes {@code transmissionUrl} separately, as whether the caller may see it is decided by the service. */
+    public static EventDetailsResponse from(
+            Event e, long seatsTaken, EventRegistrationStatus registrationStatus, String transmissionUrl) {
         return new EventDetailsResponse(
                 e.getId(),
                 e.getTitle(),
@@ -43,6 +48,7 @@ public record EventDetailsResponse(
                 e.getStartsAt(),
                 e.getEndsAt(),
                 e.getLocation(),
+                transmissionUrl,
                 e.getSeatLimit(),
                 (int) seatsTaken,
                 e.getRegistrationClosesAt(),
