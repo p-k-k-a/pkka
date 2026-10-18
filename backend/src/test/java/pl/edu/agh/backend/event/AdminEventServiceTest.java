@@ -116,6 +116,29 @@ class AdminEventServiceTest {
     }
 
     @Test
+    void createSkipsSlugsTakenByStaticPages() {
+        when(callerUserService.getOrCreate(ADMIN)).thenReturn(new User());
+        when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EventRequest request = new EventRequest(
+                "Archive",
+                "Opis",
+                EventType.ONLINE,
+                Instant.parse("2026-09-01T17:00:00Z"),
+                Instant.parse("2026-09-01T19:00:00Z"),
+                "https://meet.example.com",
+                null,
+                40,
+                null,
+                Audience.PUBLIC,
+                null,
+                null,
+                Set.of());
+
+        assertThat(adminEventService.create(ADMIN, request).slug()).isEqualTo("archive-2");
+    }
+
+    @Test
     void createRejectsUnknownTags() {
         when(tagRepository.findByNameIn(Set.of("nope"))).thenReturn(Set.of());
 
