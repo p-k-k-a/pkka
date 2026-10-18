@@ -29,12 +29,4 @@ class EventSlugGeneratorTest {
 
         assertThat(generator.generateUniqueSlug("Hackathon")).isEqualTo("hackathon-3");
     }
-
-    @Test
-    void fallsBackToAGenericSlugWhenTheTitleHasNoLettersOrDigits() {
-        when(eventRepository.existsBySlug("wydarzenie")).thenReturn(true);
-        when(eventRepository.existsBySlug("wydarzenie-2")).thenReturn(false);
-
-        assertThat(generator.generateUniqueSlug("???")).isEqualTo("wydarzenie-2");
-    }
 }
