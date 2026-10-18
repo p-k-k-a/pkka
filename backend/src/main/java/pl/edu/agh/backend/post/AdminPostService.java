@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 
@@ -15,7 +16,6 @@ import pl.edu.agh.backend.user.CallerUserService;
 public class AdminPostService {
 
     private final PostRepository postRepository;
-    private final PostSlugGenerator slugGenerator;
     private final CallerUserService callerUserService;
 
     @Transactional(readOnly = true)
@@ -34,7 +34,7 @@ public class AdminPostService {
     public AdminPostResponse create(Caller caller, CreatePostRequest request) {
         Post post = new Post();
         post.setTitle(request.title());
-        post.setSlug(slugGenerator.generateUniqueSlug(request.title()));
+        post.setSlug(SlugUtils.uniqueSlug(request.title(), postRepository::existsBySlug));
         post.setContent(request.content());
         post.setAuthor(callerUserService.getOrCreate(caller));
         if (request.status() == PostStatus.PUBLISHED) {

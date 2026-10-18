@@ -49,9 +49,6 @@ class AdminEventServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
-    @Mock
-    private EventSlugGenerator slugGenerator;
-
     @InjectMocks
     private AdminEventService adminEventService;
 
@@ -89,7 +86,7 @@ class AdminEventServiceTest {
         when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(slugGenerator.generateUniqueSlug("Warsztat AI")).thenReturn("warsztat-ai-2");
+        when(eventRepository.existsBySlug("warsztat-ai")).thenReturn(true);
 
         EventRequest request = new EventRequest(
                 "Warsztat AI",
