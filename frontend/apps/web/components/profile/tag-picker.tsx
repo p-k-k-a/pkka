@@ -1,49 +1,80 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import type { UserTagResponse } from "@pkka/api";
+import { Plus, X } from "lucide-react";
+import { normalizeTagName } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
+export type TagOption = {
+  id: string;
+  label: string;
+};
+
 type TagPickerProps = {
-  availableTags: UserTagResponse[];
+  /** Most popular first: with an empty field only the first `idleLimit` are listed. */
+  options: TagOption[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   /** Caps the selection and shows a counter; leave out for an unlimited picker. */
   max?: number;
+  idleLimit?: number;
   disabled?: boolean;
+  onCreate?: (label: string) => void;
+  createError?: (label: string) => string | null;
+  placeholder?: string;
 };
 
-export function TagPicker({ availableTags, selectedIds, onChange, max, disabled }: TagPickerProps) {
+export function TagPicker({
+  options,
+  selectedIds,
+  onChange,
+  max,
+  idleLimit,
+  disabled,
+  onCreate,
+  createError,
+  placeholder = "Wyszukaj umiejętności…",
+}: TagPickerProps) {
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  const selected = useMemo(() => {
-    const byId = new Map(availableTags.map((tag) => [tag.id, tag]));
-    return selectedIds
-      .map((id) => byId.get(id))
-      .filter((tag): tag is UserTagResponse => tag != null);
-  }, [availableTags, selectedIds]);
+  const selected = useMemo(
+    () => selectedIds.flatMap((id) => options.filter((option) => option.id === id)),
+    [options, selectedIds],
+  );
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase("pl");
-    if (!q) return [];
-
-    return availableTags
-      .filter((tag) => !selectedIds.includes(tag.id))
-      .filter((tag) => tag.name.toLocaleLowerCase("pl").includes(q))
-      .slice(0, 8);
-  }, [availableTags, selectedIds, query]);
-
-  const isOpen = isFocused && matches.length > 0;
+  const typed = normalizeTagName(query);
+  const needle = typed.toLocaleLowerCase("pl");
   const isFull = max !== undefined && selectedIds.length >= max;
+
+  const available = options.filter((option) => !selectedIds.includes(option.id));
+  const matches = needle
+    ? available.filter((option) => option.label.toLocaleLowerCase("pl").includes(needle))
+    : idleLimit === undefined
+      ? available
+      : available.slice(0, idleLimit);
+  const hasMoreWhenIdle = !needle && matches.length < available.length;
+
+  const canCreate =
+    onCreate !== undefined &&
+    needle !== "" &&
+    !options.some((option) => option.label.toLocaleLowerCase("pl") === needle);
+  const createProblem = canCreate ? (createError?.(typed) ?? null) : null;
+
+  const isOpen = isFocused && !isFull && (matches.length > 0 || canCreate);
 
   function addTag(id: string) {
     if (disabled || isFull || selectedIds.includes(id)) return;
     onChange([...selectedIds, id]);
+    setQuery("");
+  }
+
+  function createTag() {
+    if (disabled || isFull || !canCreate || createProblem) return;
+    onCreate?.(typed);
     setQuery("");
   }
 
@@ -62,10 +93,10 @@ export function TagPicker({ availableTags, selectedIds, onChange, max, disabled 
               variant="secondary"
               className="bg-muted text-foreground h-auto gap-1 rounded-md px-2.5 py-1 text-xs font-semibold uppercase"
             >
-              {tag.name}
+              {tag.label}
               <button
                 type="button"
-                aria-label={`Usuń ${tag.name}`}
+                aria-label={`Usuń ${tag.label}`}
                 disabled={disabled}
                 onClick={() => removeTag(tag.id)}
                 className="hover:text-destructive ml-0.5 inline-flex"
@@ -94,21 +125,27 @@ export function TagPicker({ availableTags, selectedIds, onChange, max, disabled 
               aria-controls="tag-search-results"
               aria-autocomplete="list"
               aria-activedescendant={
-                isOpen && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
+                isOpen && needle && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
               }
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Wyszukaj umiejętności…"
+              placeholder={placeholder}
               disabled={disabled || isFull}
               autoComplete="off"
               onKeyDown={(event) => {
-                // The picker lives inside a form — Enter picks the first match
-                // instead of submitting a half-filled form.
+                // The picker lives inside a form — Enter picks the exact or first
+                // match, or creates the tag, instead of submitting the form.
                 if (event.key !== "Enter") return;
                 event.preventDefault();
-                if (matches[0]) addTag(matches[0].id);
+                if (!needle) return;
+                const exact = available.find(
+                  (option) => option.label.toLocaleLowerCase("pl") === needle,
+                );
+                if (exact) addTag(exact.id);
+                else if (canCreate) createTag();
+                else if (matches[0]) addTag(matches[0].id);
               }}
             />
           </div>
@@ -116,7 +153,7 @@ export function TagPicker({ availableTags, selectedIds, onChange, max, disabled 
 
         <PopoverContent
           align="start"
-          className="max-h-48 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+          className="max-h-72 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <ul id="tag-search-results" role="listbox" aria-label="Pasujące umiejętności">
@@ -126,25 +163,45 @@ export function TagPicker({ availableTags, selectedIds, onChange, max, disabled 
                   id={`tag-search-option-${tag.id}`}
                   type="button"
                   role="option"
-                  aria-selected={matches[0]?.id === tag.id}
+                  aria-selected={false}
                   className="hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
                   // Keeps the input focused so the list survives the click.
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => addTag(tag.id)}
                 >
-                  {tag.name}
+                  {tag.label}
                 </button>
               </li>
             ))}
+            {canCreate && createProblem ? (
+              <li className="text-muted-foreground px-3 py-2 text-sm">{createProblem}</li>
+            ) : canCreate ? (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="hover:bg-muted flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={createTag}
+                >
+                  <Plus className="size-4" />
+                  Dodaj „{typed}”
+                </button>
+              </li>
+            ) : null}
+            {hasMoreWhenIdle ? (
+              <li className="text-muted-foreground px-3 py-2 text-xs">
+                Wpisz nazwę, aby znaleźć pozostałe.
+              </li>
+            ) : null}
           </ul>
         </PopoverContent>
       </Popover>
 
       <div className="flex items-center justify-between gap-3">
-        {query.trim() && matches.length === 0 ? (
-          <p className="text-muted-foreground text-[13px]">
-            Brak tagów pasujących do „{query.trim()}”.
-          </p>
+        {needle && matches.length === 0 && !canCreate ? (
+          <p className="text-muted-foreground text-[13px]">Brak tagów pasujących do „{typed}”.</p>
         ) : (
           <span />
         )}

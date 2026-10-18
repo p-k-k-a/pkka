@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,7 +15,7 @@ import {
   useUpdateMyTags,
   type ProfileResponse,
   type UpdateProfileRequest,
-  type UserTagResponse,
+  type UserTagCatalogResponse,
 } from "@pkka/api";
 import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
@@ -31,11 +31,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
+import {
+  byTagPopularity,
+  canonicalizeProfileUrl,
+  githubUrlError,
+  linkedinUrlError,
+  tagNameError,
+  tagNameKey,
+} from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
 const MAX_TAGS = 20;
+const TAG_IDLE_LIMIT = 20;
 
 type UrlField = "linkedinUrl" | "githubUrl";
 
@@ -74,11 +82,11 @@ function Field({
 
 type EditFormFieldsProps = {
   profile: ProfileResponse;
-  availableTags: UserTagResponse[];
+  catalog: UserTagCatalogResponse[];
   tagsError: boolean;
 };
 
-function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsProps) {
+function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -87,7 +95,7 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const [bio, setBio] = useState(profile.bio ?? "");
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl ?? "");
   const [githubUrl, setGithubUrl] = useState(profile.githubUrl ?? "");
-  const [selectedTagIds, setSelectedTagIds] = useState(profile.tags.map((tag) => tag.id));
+  const [tagNames, setTagNames] = useState(profile.tags.map((tag) => tag.name));
   const [willingToMentor, setWillingToMentor] = useState(profile.willingToMentor);
   const [showName, setShowName] = useState(profile.visibility.name);
   const [showEmail, setShowEmail] = useState(profile.visibility.email);
@@ -108,10 +116,21 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const linkedin = canonicalizeProfileUrl(linkedinUrl);
   const github = canonicalizeProfileUrl(githubUrl);
 
-  const assignedTagIds = profile.tags.map((tag) => tag.id);
+  const tagOptions = useMemo(() => {
+    const known = [...catalog]
+      .sort(byTagPopularity)
+      .map((tag) => ({ id: tagNameKey(tag.name), label: tag.name }));
+    const knownKeys = new Set(known.map((option) => option.id));
+    const added = tagNames
+      .filter((name) => !knownKeys.has(tagNameKey(name)))
+      .map((name) => ({ id: tagNameKey(name), label: name }));
+    return [...known, ...added];
+  }, [catalog, tagNames]);
+
+  const assignedTagKeys = profile.tags.map((tag) => tagNameKey(tag.name));
   const tagsChanged =
-    selectedTagIds.length !== assignedTagIds.length ||
-    selectedTagIds.some((id) => !assignedTagIds.includes(id));
+    tagNames.length !== assignedTagKeys.length ||
+    tagNames.some((name) => !assignedTagKeys.includes(tagNameKey(name)));
   const isDirty =
     tagsChanged ||
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
@@ -161,7 +180,7 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
 
     if (tagsChanged) {
       try {
-        await updateTags.mutateAsync({ data: { tagIds: selectedTagIds } });
+        await updateTags.mutateAsync({ data: { names: tagNames } });
       } catch (error) {
         // The profile itself is already saved, so the cache has to be refreshed
         // even though the tags did not go through.
@@ -300,7 +319,7 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
             <section className="space-y-5">
               <SectionHeading>Umiejętności</SectionHeading>
               <p className="text-muted-foreground text-sm">
-                Wpisz frazę, aby wyszukać tagi. Maksymalnie {MAX_TAGS} umiejętności.
+                Wybierz z listy albo wpisz własną. Maksymalnie {MAX_TAGS} umiejętności.
               </p>
               {tagsError ? (
                 <Alert variant="destructive">
@@ -312,11 +331,24 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                 </Alert>
               ) : (
                 <TagPicker
-                  availableTags={availableTags}
-                  selectedIds={selectedTagIds}
-                  onChange={setSelectedTagIds}
+                  options={tagOptions}
+                  selectedIds={tagNames.map(tagNameKey)}
+                  onChange={(keys) => {
+                    const labels = new Map(tagOptions.map((option) => [option.id, option.label]));
+                    setTagNames(keys.map((key) => labels.get(key) ?? key));
+                  }}
+                  onCreate={(name) =>
+                    setTagNames((prev) =>
+                      prev.some((existing) => tagNameKey(existing) === tagNameKey(name))
+                        ? prev
+                        : [...prev, name],
+                    )
+                  }
+                  createError={tagNameError}
                   max={MAX_TAGS}
+                  idleLimit={TAG_IDLE_LIMIT}
                   disabled={isSaving}
+                  placeholder="Wyszukaj lub dodaj…"
                 />
               )}
             </section>
@@ -456,15 +488,11 @@ export function ProfileEditForm() {
     );
   }
 
-  // Tags already assigned stay selectable even if the tag catalogue call failed.
-  const availableTags = [
-    ...profile.tags,
-    ...(tagsQuery.data?.data ?? []).filter(
-      (tag) => !profile.tags.some((assigned) => assigned.id === tag.id),
-    ),
-  ];
-
   return (
-    <EditFormFields profile={profile} availableTags={availableTags} tagsError={tagsQuery.isError} />
+    <EditFormFields
+      profile={profile}
+      catalog={tagsQuery.data?.data ?? []}
+      tagsError={tagsQuery.isError}
+    />
   );
 }

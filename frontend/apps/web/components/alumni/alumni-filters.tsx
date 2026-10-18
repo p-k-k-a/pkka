@@ -5,6 +5,7 @@ import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
   EMPTY_ALUMNI_FILTERS,
+  byTagPopularity,
   countActiveAlumniFilters,
   type AlumniFilters,
 } from "@pkka/domain";
@@ -18,6 +19,7 @@ const YEARS = Array.from(
   { length: ALUMNI_YEAR_MAX - ALUMNI_YEAR_MIN + 1 },
   (_, i) => ALUMNI_YEAR_MAX - i,
 );
+const TAG_IDLE_LIMIT = 20;
 
 function FilterHeading({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
   return (
@@ -85,9 +87,13 @@ export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps)
           </p>
         ) : (
           <TagPicker
-            availableTags={tagsQuery.data?.data ?? []}
+            options={(tagsQuery.data?.data ?? [])
+              .filter((tag) => tag.usageCount > 0 || value.tagIds.includes(tag.id))
+              .sort(byTagPopularity)
+              .map((tag) => ({ id: tag.id, label: tag.name }))}
             selectedIds={value.tagIds}
             onChange={(tagIds) => onChange({ ...value, tagIds })}
+            idleLimit={TAG_IDLE_LIMIT}
           />
         )}
       </div>
