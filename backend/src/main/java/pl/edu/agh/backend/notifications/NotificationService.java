@@ -56,7 +56,7 @@ public class NotificationService {
     }
 
     private Set<String> push(
-            List<DeviceToken> devices, NotificationType type, String title, String body, String targetSlug) {
+            List<DeviceToken> devices, NotificationType type, String title, String body, String target) {
         if (devices.isEmpty()) {
             return Set.of();
         }
@@ -66,7 +66,7 @@ public class NotificationService {
                         title,
                         body,
                         type.getChannelId(),
-                        new NotificationPayload(type, targetSlug).toData()))
+                        new NotificationPayload(type, target).toData()))
                 .toList();
 
         SendOutcome outcome = expoPushClient.send(messages);
