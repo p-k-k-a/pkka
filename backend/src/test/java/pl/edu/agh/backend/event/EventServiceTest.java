@@ -91,12 +91,14 @@ class EventServiceTest {
 
     @Test
     void getDetailsHandsTheMeetingLinkToAHeldSeat() {
-        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.REGISTERED))).isEqualTo(MEETING_URL);
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.REGISTERED)))
+                .isEqualTo(MEETING_URL);
     }
 
     @Test
     void getDetailsKeepsTheMeetingLinkFromTheWaitlist() {
-        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.WAITLISTED))).isNull();
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.WAITLISTED)))
+                .isNull();
     }
 
     @Test
