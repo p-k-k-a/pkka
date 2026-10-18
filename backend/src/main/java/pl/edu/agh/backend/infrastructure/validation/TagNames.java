@@ -7,6 +7,7 @@ import lombok.experimental.UtilityClass;
 public class TagNames {
 
     public static final int MAX_LENGTH = 32;
+    public static final int MAX_PER_USER = 20;
 
     public String normalize(String raw) {
         return raw == null ? null : raw.strip().replaceAll("\\s+", " ");

@@ -12,7 +12,7 @@ import pl.edu.agh.backend.infrastructure.validation.TagNames;
 @Schema(description = "Full replacement set of own tags")
 public record UpdateTagsRequest(
         @NotNull
-        @Size(max = 20)
+        @Size(max = TagNames.MAX_PER_USER)
         @Schema(description = "Tag names, matched case-insensitively; names not in the catalog are created")
         Set<@NotBlank @Size(max = TagNames.MAX_LENGTH) String> names) {
 

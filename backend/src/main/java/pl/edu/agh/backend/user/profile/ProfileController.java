@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
@@ -51,7 +52,7 @@ public class ProfileController {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Invalid tag name or more than 20 tags",
+                description = "Invalid tag name or more than " + TagNames.MAX_PER_USER + " tags",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {

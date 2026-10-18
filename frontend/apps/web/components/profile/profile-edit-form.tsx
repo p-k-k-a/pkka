@@ -37,11 +37,11 @@ import {
   canonicalizeProfileUrl,
   githubUrlError,
   linkedinUrlError,
+  MAX_TAGS_PER_USER,
 } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
-const MAX_TAGS = 20;
 
 type UrlField = "linkedinUrl" | "githubUrl";
 
@@ -307,7 +307,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
             <section className="space-y-5">
               <SectionHeading>Umiejętności</SectionHeading>
               <p className="text-muted-foreground text-sm">
-                Wybierz z listy albo wpisz własną. Maksymalnie {MAX_TAGS} umiejętności.
+                Wybierz z listy albo wpisz własną. Maksymalnie {MAX_TAGS_PER_USER} umiejętności.
               </p>
               {tagsError ? (
                 <Alert variant="destructive">
@@ -324,7 +324,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   onChange={setTagNames}
                   label="Szukaj lub dodaj umiejętność"
                   placeholder="Wyszukaj lub dodaj…"
-                  max={MAX_TAGS}
+                  max={MAX_TAGS_PER_USER}
                   allowCreate
                   disabled={isSaving}
                   reserveListSpace

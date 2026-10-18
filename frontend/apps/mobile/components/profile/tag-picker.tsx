@@ -1,10 +1,8 @@
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
 import type { UserTagCatalogResponse } from "@pkka/api";
-import { TAG_NAME_MAX_LENGTH, byTagPopularity } from "@pkka/domain";
+import { MAX_TAGS_PER_USER, TAG_NAME_MAX_LENGTH, byTagPopularity } from "@pkka/domain";
 import { useMemo } from "react";
-
-const MAX_TAGS = 20;
 
 type TagPickerProps = {
   catalog: UserTagCatalogResponse[];
@@ -50,8 +48,8 @@ export function TagPicker({
       onCreate={(name) => onChange((prev) => [...prev, name])}
       maxLength={TAG_NAME_MAX_LENGTH}
       placeholder="Wyszukaj lub dodaj..."
-      max={MAX_TAGS}
-      maxHint={`Możesz wybrać maksymalnie ${MAX_TAGS} umiejętności.`}
+      max={MAX_TAGS_PER_USER}
+      maxHint={`Możesz wybrać maksymalnie ${MAX_TAGS_PER_USER} umiejętności.`}
       uppercaseChips
     />
   );
