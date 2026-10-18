@@ -18,7 +18,6 @@ type TagPickerProps = {
   onChange: (names: string[]) => void;
   label: string;
   placeholder: string;
-  max?: number;
   allowCreate?: boolean;
   disabled?: boolean;
   /** Keeps room below the field so the suggestions fit even at the bottom of a page. */
@@ -32,7 +31,6 @@ export function TagPicker({
   onChange,
   label,
   placeholder,
-  max,
   allowCreate = false,
   disabled = false,
   reserveListSpace = false,
@@ -41,13 +39,11 @@ export function TagPicker({
   const id = useId();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
   const spaceRef = useRef<HTMLDivElement>(null);
 
   const searchText = query.trim();
   const searchLower = searchText.toLowerCase();
   const selectedKeys = new Set(value.map((name) => name.toLowerCase()));
-  const isFull = max !== undefined && value.length >= max;
 
   const available = options.filter((name) => !selectedKeys.has(name.toLowerCase()));
   const matches = searchLower
@@ -57,37 +53,22 @@ export function TagPicker({
   const canCreate =
     allowCreate && searchLower !== "" && !exactMatch && !selectedKeys.has(searchLower);
   const items = canCreate ? [...matches, searchText] : matches;
-  const isOpen = isFocused && !isFull && items.length > 0;
-  const activeId =
-    activeIndex >= 0 && activeIndex < items.length ? `${id}-${activeIndex}` : undefined;
+  const isOpen = isFocused && items.length > 0;
 
   useEffect(() => {
     if (isOpen) spaceRef.current?.scrollIntoView({ block: "nearest" });
   }, [isOpen]);
 
-  useEffect(() => {
-    if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
-  }, [activeId]);
-
   function add(name: string) {
-    if (!disabled && !isFull && !selectedKeys.has(name.toLowerCase())) onChange([...value, name]);
+    if (!disabled && !selectedKeys.has(name.toLowerCase())) onChange([...value, name]);
     setQuery("");
-    setActiveIndex(-1);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      const step = event.key === "ArrowDown" ? 1 : -1;
-      setActiveIndex((index) => (index + step + items.length) % items.length);
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      if (activeId) add(items[activeIndex]);
-      else if (exactMatch) add(exactMatch);
-      else if (canCreate) add(searchText);
-    } else if (event.key === "Escape") {
-      setIsFocused(false);
-    }
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    if (exactMatch) add(exactMatch);
+    else if (canCreate) add(searchText);
   }
 
   return (
@@ -123,21 +104,15 @@ export function TagPicker({
             </Label>
             <Input
               id={id}
-              role="combobox"
-              aria-expanded={isOpen}
-              aria-controls={`${id}-results`}
-              aria-autocomplete="list"
-              aria-activedescendant={isOpen ? activeId : undefined}
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
-                setActiveIndex(-1);
                 setIsFocused(true);
               }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               placeholder={placeholder}
-              disabled={disabled || isFull}
+              disabled={disabled}
               autoComplete="off"
               maxLength={TAG_NAME_MAX_LENGTH}
               onKeyDown={handleKeyDown}
@@ -153,20 +128,15 @@ export function TagPicker({
           onOpenAutoFocus={(event) => event.preventDefault()}
           onMouseDown={(event) => event.preventDefault()}
         >
-          <ul id={`${id}-results`} role="listbox" aria-label={label}>
+          <ul>
             {items.map((name, index) => {
               const isCreate = canCreate && index === matches.length;
               return (
-                <li key={isCreate ? "create" : name} role="presentation">
+                <li key={isCreate ? "create" : name}>
                   <button
-                    id={`${id}-${index}`}
                     type="button"
-                    role="option"
-                    tabIndex={-1}
-                    aria-selected={index === activeIndex}
                     className={cn(
                       "hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
-                      index === activeIndex && "bg-muted dark:bg-foreground/10",
                       isCreate && "font-semibold",
                     )}
                     onClick={() => add(name)}
@@ -186,12 +156,6 @@ export function TagPicker({
           </ul>
         </PopoverContent>
       </Popover>
-
-      {max !== undefined ? (
-        <span className="text-muted-foreground self-end text-[13px]">
-          {value.length}/{max}
-        </span>
-      ) : null}
 
       {reserveListSpace ? <div ref={spaceRef} aria-hidden className="h-56" /> : null}
     </div>

@@ -23,10 +23,6 @@ type SearchMultiSelectProps = {
   value: string[];
   onChange: (next: string[] | ((prev: string[]) => string[])) => void;
   placeholder: string;
-  /** Upper bound on selections; omit for unlimited. */
-  max?: number;
-  /** Shown once `max` selections are reached. */
-  maxHint?: string;
   emptyText?: string;
   listMaxHeight?: number;
   /** Uppercase the selected chips, as the profile form does for skills. */
@@ -45,8 +41,6 @@ export function SearchMultiSelect({
   value,
   onChange,
   placeholder,
-  max,
-  maxHint,
   emptyText = "Brak wyników.",
   listMaxHeight = LIST_MAX_HEIGHT,
   uppercaseChips = false,
@@ -75,15 +69,13 @@ export function SearchMultiSelect({
     [options, searchLower],
   );
 
-  const atMax = max !== undefined && value.length >= max;
-  const canCreate = onCreate !== undefined && searchLower !== "" && !atMax && !exactMatch;
+  const canCreate = onCreate !== undefined && searchLower !== "" && !exactMatch;
 
   // Compute from `prev` (the freshest value) rather than the captured `value`
   // prop, so a memoized onPress closure can never act on a stale snapshot.
   const toggle = (id: string) => {
     onChange((prev) => {
       if (prev.includes(id)) return prev.filter((optionId) => optionId !== id);
-      if (max !== undefined && prev.length >= max) return prev;
       return [...prev, id];
     });
   };
@@ -165,8 +157,6 @@ export function SearchMultiSelect({
         </Pressable>
       </View>
 
-      {atMax && maxHint ? <Text className="text-muted-foreground text-xs">{maxHint}</Text> : null}
-
       {open ? (
         filtered.length === 0 && !canCreate ? (
           <View className="border-border rounded-md border px-3 py-4">
@@ -181,19 +171,16 @@ export function SearchMultiSelect({
             >
               {filtered.map((option, index) => {
                 const isSelected = value.includes(option.id);
-                const disabled = atMax && !isSelected;
                 return (
                   <Pressable
                     key={option.id}
                     onPress={() => toggle(option.id)}
-                    disabled={disabled}
                     accessibilityRole="checkbox"
-                    accessibilityState={{ checked: isSelected, disabled }}
+                    accessibilityState={{ checked: isSelected }}
                     className={cn(
                       "flex-row items-center gap-3 px-3 py-3",
                       index > 0 && "border-border border-t",
                       isSelected && "bg-muted/40",
-                      disabled && "opacity-40",
                     )}
                   >
                     <View pointerEvents="none">
