@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
+import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 
@@ -29,7 +30,6 @@ public class AdminEventService {
     private final TagRepository tagRepository;
     private final EventRegistrationService eventRegistrationService;
     private final CallerUserService callerUserService;
-    private final EventSlugGenerator slugGenerator;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -53,7 +53,7 @@ public class AdminEventService {
     public AdminEventResponse create(Caller caller, EventRequest request) {
         Event event = Event.builder()
                 .author(callerUserService.getOrCreate(caller))
-                .slug(slugGenerator.generateUniqueSlug(request.title()))
+                .slug(SlugUtils.uniqueSlug(request.title(), eventRepository::existsBySlug))
                 .title(request.title())
                 .fullDescription(request.fullDescription())
                 .type(request.type())
