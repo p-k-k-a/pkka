@@ -42,8 +42,9 @@ public class EventService {
                 event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
     }
 
-    public EventDetailsResponse getDetails(UUID id, Caller caller) {
-        Event event = eventLookup.findVisible(id, caller);
+    public EventDetailsResponse getDetails(String slug, Caller caller) {
+        Event event = eventLookup.findVisibleBySlug(slug, caller);
+        UUID id = event.getId();
         EventRegistrationStatus registrationStatus =
                 eventRegistrationService.findOwnStatus(id, caller).orElse(null);
         return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);

@@ -17,7 +17,8 @@ type EventCardProps = {
 
 function EventCard({ event }: EventCardProps) {
   const theme = useThemeColors();
-  const { id, title, startsAt, type, location, seatLimit, seatsTaken, registrationStatus } = event;
+  const { slug, title, startsAt, type, location, seatLimit, seatsTaken, registrationStatus } =
+    event;
   const seatsLabel = formatSeatsCompact(seatLimit, seatsTaken);
   const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
@@ -76,7 +77,7 @@ function EventCard({ event }: EventCardProps) {
   );
 
   return (
-    <Link href={{ pathname: "/events/[id]", params: { id } }} asChild>
+    <Link href={{ pathname: "/events/[slug]", params: { slug } }} asChild>
       <Pressable className="active:opacity-90">{card}</Pressable>
     </Link>
   );

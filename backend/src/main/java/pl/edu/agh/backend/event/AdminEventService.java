@@ -16,12 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
+import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
 @RequiredArgsConstructor
 public class AdminEventService {
+
+    // Static pages that sit next to /events/{slug}, so a slug must never take these names.
+    private static final Set<String> ROUTE_SEGMENTS = Set.of("archive", "new");
 
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
@@ -42,14 +46,16 @@ public class AdminEventService {
     }
 
     @Transactional(readOnly = true)
-    public AdminEventResponse get(UUID id) {
-        return respond(findOrThrow(id));
+    public AdminEventResponse getBySlug(String slug) {
+        return respond(eventRepository.findBySlug(slug).orElseThrow(() -> new EventNotFoundException(slug)));
     }
 
     @Transactional
     public AdminEventResponse create(Caller caller, EventRequest request) {
         Event event = Event.builder()
                 .author(callerUserService.getOrCreate(caller))
+                .slug(SlugUtils.uniqueSlug(
+                        request.title(), slug -> ROUTE_SEGMENTS.contains(slug) || eventRepository.existsBySlug(slug)))
                 .title(request.title())
                 .fullDescription(request.fullDescription())
                 .type(request.type())

@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   EventRegistrationStatus,
-  getGetEventByIdQueryKey,
+  getGetEventBySlugQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
   useRegisterForEvent,
@@ -43,7 +43,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
-import { buildEventIcs, downloadIcs, icsFileName } from "@/lib/ics";
+import { buildEventIcs, downloadIcs } from "@/lib/ics";
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -71,12 +71,12 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   const refresh = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) }),
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) }),
       queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() }),
     ]);
 
   // Built on click, not during render: the page URL needs `window`.
-  const eventPageUrl = () => `${window.location.origin}${eventDetailHref(event.id)}`;
+  const eventPageUrl = () => `${window.location.origin}${eventDetailHref(event.slug)}`;
 
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({
@@ -94,7 +94,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const downloadCalendarFile = () => {
     setCalendarOpen(false);
     try {
-      downloadIcs(icsFileName(event.title), buildEventIcs({ ...event, url: eventPageUrl() }));
+      downloadIcs(`${event.slug}.ics`, buildEventIcs({ ...event, url: eventPageUrl() }));
     } catch {
       toast.error("Nie udało się przygotować pliku kalendarza.");
     }

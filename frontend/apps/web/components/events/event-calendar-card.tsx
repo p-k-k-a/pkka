@@ -1,7 +1,16 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, CircleCheck, Clock, Hourglass, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  CircleCheck,
+  Clock,
+  Hourglass,
+  MapPin,
+  UserRound,
+} from "lucide-react";
 import { EventRegistrationStatus } from "@pkka/api";
+import { LabeledDetails } from "@/components/labeled-details";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
 import {
@@ -13,9 +22,10 @@ import {
 } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { type EventSchedule } from "@/components/events/event-location-aside";
+import { eventTypeBadgeClass } from "@/lib/event-type-badge";
 
 export type EventCalendarCardData = EventSchedule & {
-  id: string;
+  slug: string;
   title: string;
   /** The viewer's own sign-up, when the list endpoint knows it. */
   registrationStatus?: EventRegistrationStatus;
@@ -27,6 +37,7 @@ type EventCalendarCardProps = {
   href?: string;
   preview?: boolean;
   footer?: ReactNode;
+  labeled?: { author?: string };
   className?: string;
 };
 
@@ -36,10 +47,11 @@ export function EventCalendarCard({
   href,
   preview = false,
   footer,
+  labeled,
   className,
 }: EventCalendarCardProps) {
   const location = eventLocationLabel(event.type, event.location);
-  const target = href ?? eventDetailHref(event.id, variant);
+  const target = href ?? eventDetailHref(event.slug, variant);
 
   const inner = (
     <Card
@@ -49,7 +61,12 @@ export function EventCalendarCard({
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+        <span
+          className={cn(
+            "inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
+            eventTypeBadgeClass(event.type),
+          )}
+        >
           {eventTypeLabelUpper(event.type)}
         </span>
         {event.registrationStatus ? (
@@ -73,20 +90,34 @@ export function EventCalendarCard({
       <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
         {event.title.trim() || "Tytuł wydarzenia"}
       </h3>
-      <ul className="text-muted-foreground space-y-3 text-sm">
-        <li className="flex items-start gap-3">
-          <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{formatEventDateComma(event.startsAt)}</span>
-        </li>
-        <li className="flex items-start gap-3">
-          <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{formatTimeRange(event.startsAt, event.endsAt)}</span>
-        </li>
-        <li className="flex items-start gap-3">
-          <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{location}</span>
-        </li>
-      </ul>
+      {labeled ? (
+        <LabeledDetails
+          items={[
+            {
+              icon: Calendar,
+              label: "Termin",
+              value: `${formatEventDateComma(event.startsAt)}, ${formatTimeRange(event.startsAt, event.endsAt)}`,
+            },
+            { icon: MapPin, label: "Miejsce", value: location },
+            { icon: UserRound, label: "Autor", value: labeled.author ?? "nieznany" },
+          ]}
+        />
+      ) : (
+        <ul className="text-muted-foreground space-y-3 text-sm">
+          <li className="flex items-start gap-3">
+            <Calendar className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{formatEventDateComma(event.startsAt)}</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{formatTimeRange(event.startsAt, event.endsAt)}</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{location}</span>
+          </li>
+        </ul>
+      )}
       {footer ?? (
         <div className="mt-auto flex justify-end pt-2">
           <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">

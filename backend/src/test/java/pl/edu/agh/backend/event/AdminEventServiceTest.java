@@ -55,10 +55,9 @@ class AdminEventServiceTest {
 
     @Test
     void getThrowsWhenMissing() {
-        UUID id = UUID.randomUUID();
-        when(eventRepository.findById(id)).thenReturn(Optional.empty());
+        when(eventRepository.findBySlug("brak")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminEventService.get(id)).isInstanceOf(EventNotFoundException.class);
+        assertThatThrownBy(() -> adminEventService.getBySlug("brak")).isInstanceOf(EventNotFoundException.class);
     }
 
     @Test
@@ -73,10 +72,10 @@ class AdminEventServiceTest {
                 .audience(Audience.PUBLIC)
                 .tags(new HashSet<>())
                 .build();
-        when(eventRepository.findById(id)).thenReturn(Optional.of(event));
+        when(eventRepository.findBySlug("warsztat-ai")).thenReturn(Optional.of(event));
         when(eventRegistrationService.seatsTaken(id)).thenReturn(7L);
 
-        assertThat(adminEventService.get(id).seatsTaken()).isEqualTo(7);
+        assertThat(adminEventService.getBySlug("warsztat-ai").seatsTaken()).isEqualTo(7);
     }
 
     @Test
@@ -86,6 +85,7 @@ class AdminEventServiceTest {
         when(tagRepository.findByNameIn(Set.of("ai"))).thenReturn(Set.of(ai));
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(eventRepository.existsBySlug("warsztat-ai")).thenReturn(true);
 
         EventRequest request = new EventRequest(
                 "Warsztat AI",
@@ -109,8 +109,32 @@ class AdminEventServiceTest {
         assertThat(captor.getValue().getTags()).containsExactlyInAnyOrder(ai);
         assertThat(captor.getValue().getAuthor()).isSameAs(author);
         assertThat(response.title()).isEqualTo("Warsztat AI");
+        assertThat(response.slug()).isEqualTo("warsztat-ai-2");
         assertThat(response.tags()).containsExactlyInAnyOrder("ai");
         verify(eventPublisher).publishEvent(new EventCreatedEvent(response.id()));
+    }
+
+    @Test
+    void createSkipsSlugsTakenByStaticPages() {
+        when(callerUserService.getOrCreate(ADMIN)).thenReturn(new User());
+        when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        EventRequest request = new EventRequest(
+                "Archive",
+                "Opis",
+                EventType.ONLINE,
+                Instant.parse("2026-09-01T17:00:00Z"),
+                Instant.parse("2026-09-01T19:00:00Z"),
+                "https://meet.example.com",
+                null,
+                40,
+                null,
+                Audience.PUBLIC,
+                null,
+                null,
+                Set.of());
+
+        assertThat(adminEventService.create(ADMIN, request).slug()).isEqualTo("archive-2");
     }
 
     @Test
