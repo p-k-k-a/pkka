@@ -104,9 +104,11 @@ public class DiscordEventPublisher {
         return new DiscordEmbed(event.getTitle(), event.getFullDescription(), fields);
     }
 
+    /** {@code ref} tells the web page the visitor came from Discord, so a sign-up there is counted as such. */
     private String eventPage(Event event) {
         return UriComponentsBuilder.fromUriString(webBaseUrl)
-                .pathSegment("events", event.getId().toString())
+                .pathSegment("events", event.getSlug())
+                .queryParam("ref", "discord")
                 .toUriString();
     }
 

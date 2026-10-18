@@ -107,6 +107,7 @@ class DiscordEventPublisherTest {
     @Test
     void aPublicEventIsAnnouncedAndItsPostRemembered() {
         UUID id = create(Audience.PUBLIC);
+        String slug = eventRepository.findById(id).orElseThrow().getSlug();
 
         ArgumentCaptor<DiscordEmbed> embed = ArgumentCaptor.forClass(DiscordEmbed.class);
         verify(discordMessages, timeout(TIMEOUT_MS)).post(eq(CHANNEL_ID), embed.capture());
@@ -116,7 +117,7 @@ class DiscordEventPublisherTest {
                 .contains(
                         tuple("Forma", "Stacjonarnie"),
                         tuple("Miejsce", "D17, sala 1.38"),
-                        tuple("Link", "[Zobacz na stronie](" + EVENT_PAGES + id + ")"));
+                        tuple("Link", "[Zobacz na stronie](" + EVENT_PAGES + slug + "?ref=discord)"));
         awaitUntil(() -> postRepository.existsById(id));
         assertThat(postRepository.findById(id)).hasValueSatisfying(post -> {
             assertThat(post.getChannelId()).isEqualTo(CHANNEL_ID);
