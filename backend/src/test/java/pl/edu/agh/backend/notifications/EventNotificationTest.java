@@ -166,7 +166,7 @@ class EventNotificationTest {
             assertThat(message.title()).isEqualTo("Nowe wydarzenie");
             assertThat(message.data())
                     .containsEntry("type", "EVENT_ANNOUNCEMENT")
-                    .containsEntry("targetSlug", created.slug());
+                    .containsEntry("target", created.slug());
         });
     }
 
