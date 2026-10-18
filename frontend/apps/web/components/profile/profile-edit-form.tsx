@@ -349,6 +349,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   idleLimit={TAG_IDLE_LIMIT}
                   disabled={isSaving}
                   placeholder="Wyszukaj lub dodaj…"
+                  reserveListSpace
                 />
               )}
             </section>

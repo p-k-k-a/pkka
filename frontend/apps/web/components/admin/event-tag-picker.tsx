@@ -7,6 +7,7 @@ import { normalizeTagName, tagNameError, tagNameKey } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 const MAX_SUGGESTIONS = 8;
 
@@ -29,11 +30,12 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
   const problem = isNew ? tagNameError(typed) : null;
   const canCreate = isNew && problem === null;
   const isOpen = isFocused && (matches.length > 0 || canCreate);
-  const listRef = useRef<HTMLDivElement>(null);
+  const spaceRef = useRef<HTMLDivElement>(null);
 
-  // The field can sit at the very bottom of the page; bring the list into view.
+  // The popover never flips above the field, so make sure the reserved space
+  // below it is on screen once the list opens.
   useEffect(() => {
-    if (isOpen) listRef.current?.scrollIntoView({ block: "nearest" });
+    if (isOpen) spaceRef.current?.scrollIntoView({ block: "nearest" });
   }, [isOpen]);
 
   function add(name: string) {
@@ -65,75 +67,78 @@ export function EventTagPicker({ catalog, selected, onChange }: EventTagPickerPr
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-1">
-        <div className="relative">
-          <Label htmlFor="event-tag-search" className="sr-only">
-            Szukaj lub dodaj tag
-          </Label>
-          <Input
-            id="event-tag-search"
-            role="combobox"
-            aria-expanded={isOpen}
-            aria-controls="event-tag-results"
-            aria-autocomplete="list"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder="Szukaj lub dodaj tag, np. warsztat…"
-            autoComplete="off"
-            onKeyDown={(event) => {
-              if (event.key !== "Enter") return;
-              event.preventDefault();
-              if (typed === "" || problem) return;
-              add(available.includes(typed) || canCreate ? typed : (matches[0] ?? typed));
-            }}
-          />
-        </div>
-
-        {isOpen ? (
-          <div
-            ref={listRef}
-            className="border-border bg-popover text-popover-foreground max-h-64 overflow-y-auto rounded-md border p-1 shadow-sm"
-            // Keeps the input focused while the list is clicked or scrolled.
-            onMouseDown={(event) => event.preventDefault()}
-          >
-            <ul id="event-tag-results" role="listbox" aria-label="Pasujące tagi">
-              {matches.map((name) => (
-                <li key={name}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => add(name)}
-                  >
-                    #{name}
-                  </button>
-                </li>
-              ))}
-              {canCreate ? (
-                <li>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => add(typed)}
-                  >
-                    <Plus className="size-4" />
-                    Dodaj #{typed}
-                  </button>
-                </li>
-              ) : null}
-            </ul>
+      <Popover open={isOpen} onOpenChange={(next) => !next && setIsFocused(false)}>
+        <PopoverAnchor asChild>
+          <div className="relative">
+            <Label htmlFor="event-tag-search" className="sr-only">
+              Szukaj lub dodaj tag
+            </Label>
+            <Input
+              id="event-tag-search"
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-controls="event-tag-results"
+              aria-autocomplete="list"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              placeholder="Szukaj lub dodaj tag, np. warsztat…"
+              autoComplete="off"
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                event.preventDefault();
+                if (typed === "" || problem) return;
+                add(available.includes(typed) || canCreate ? typed : (matches[0] ?? typed));
+              }}
+            />
           </div>
-        ) : null}
-      </div>
+        </PopoverAnchor>
+
+        <PopoverContent
+          align="start"
+          side="bottom"
+          avoidCollisions={false}
+          className="max-h-[min(14rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <ul id="event-tag-results" role="listbox" aria-label="Pasujące tagi">
+            {matches.map((name) => (
+              <li key={name}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="hover:bg-muted dark:hover:bg-foreground/10 w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => add(name)}
+                >
+                  #{name}
+                </button>
+              </li>
+            ))}
+            {canCreate ? (
+              <li>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className="hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => add(typed)}
+                >
+                  <Plus className="size-4" />
+                  Dodaj #{typed}
+                </button>
+              </li>
+            ) : null}
+          </ul>
+        </PopoverContent>
+      </Popover>
 
       {problem ? <p className="text-muted-foreground text-[13px]">{problem}</p> : null}
+
+      <div ref={spaceRef} aria-hidden className="h-56" />
     </div>
   );
 }
