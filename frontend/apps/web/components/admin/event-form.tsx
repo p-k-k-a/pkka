@@ -31,7 +31,6 @@ import {
   EVENT_TYPE_OPTIONS,
   audienceLabel,
   fromDatetimeLocalValue,
-  tagNameKey,
   toDatetimeLocalValue,
 } from "@pkka/domain";
 
@@ -320,7 +319,7 @@ export function EventForm({ event }: EventFormProps) {
               <TagPicker
                 options={catalogTags.map((tag) => tag.name).sort()}
                 value={selectedTags}
-                onChange={(names) => setSelectedTags(names.map(tagNameKey))}
+                onChange={(names) => setSelectedTags(names.map((name) => name.toLowerCase()))}
                 label="Szukaj lub dodaj tag"
                 placeholder="Szukaj lub dodaj tag, np. warsztat…"
                 allowCreate

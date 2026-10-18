@@ -37,13 +37,11 @@ import {
   canonicalizeProfileUrl,
   githubUrlError,
   linkedinUrlError,
-  tagNameKey,
 } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
 const MAX_TAGS = 20;
-const TAG_IDLE_LIMIT = 20;
 
 type UrlField = "linkedinUrl" | "githubUrl";
 
@@ -116,10 +114,10 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const linkedin = canonicalizeProfileUrl(linkedinUrl);
   const github = canonicalizeProfileUrl(githubUrl);
 
-  const assignedTagKeys = profile.tags.map((tag) => tagNameKey(tag.name));
+  const assignedTagKeys = profile.tags.map((tag) => tag.name.toLowerCase());
   const tagsChanged =
     tagNames.length !== assignedTagKeys.length ||
-    tagNames.some((name) => !assignedTagKeys.includes(tagNameKey(name)));
+    tagNames.some((name) => !assignedTagKeys.includes(name.toLowerCase()));
   const isDirty =
     tagsChanged ||
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
@@ -327,7 +325,6 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   label="Szukaj lub dodaj umiejętność"
                   placeholder="Wyszukaj lub dodaj…"
                   max={MAX_TAGS}
-                  idleLimit={TAG_IDLE_LIMIT}
                   allowCreate
                   disabled={isSaving}
                   reserveListSpace

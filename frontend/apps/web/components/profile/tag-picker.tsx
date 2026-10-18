@@ -2,21 +2,22 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { normalizeTagName, tagNameError, tagNameKey } from "@pkka/domain";
+import { TAG_NAME_MAX_LENGTH } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
+const IDLE_LIMIT = 20;
+
 type TagPickerProps = {
-  /** Most popular first: with an empty field only the first `idleLimit` are listed. */
+  /** Most popular first: with an empty field only the first 20 are listed. */
   options: string[];
   value: string[];
   onChange: (names: string[]) => void;
   label: string;
   placeholder: string;
   max?: number;
-  idleLimit?: number;
   allowCreate?: boolean;
   disabled?: boolean;
   /** Keeps room below the field so the suggestions fit even at the bottom of a page. */
@@ -31,7 +32,6 @@ export function TagPicker({
   label,
   placeholder,
   max,
-  idleLimit,
   allowCreate = false,
   disabled = false,
   reserveListSpace = false,
@@ -42,19 +42,17 @@ export function TagPicker({
   const [isFocused, setIsFocused] = useState(false);
   const spaceRef = useRef<HTMLDivElement>(null);
 
-  const typed = normalizeTagName(query);
-  const key = tagNameKey(typed);
-  const selectedKeys = new Set(value.map(tagNameKey));
+  const typed = query.trim();
+  const key = typed.toLowerCase();
+  const selectedKeys = new Set(value.map((name) => name.toLowerCase()));
   const isFull = max !== undefined && value.length >= max;
 
-  const available = options.filter((name) => !selectedKeys.has(tagNameKey(name)));
+  const available = options.filter((name) => !selectedKeys.has(name.toLowerCase()));
   const matches = key
-    ? available.filter((name) => tagNameKey(name).includes(key))
-    : available.slice(0, idleLimit);
-  const isKnown =
-    key !== "" && (selectedKeys.has(key) || options.some((name) => tagNameKey(name) === key));
-  const canCreate = allowCreate && key !== "" && !isKnown;
-  const createProblem = canCreate ? tagNameError(typed) : null;
+    ? available.filter((name) => name.toLowerCase().includes(key))
+    : available.slice(0, IDLE_LIMIT);
+  const exact = options.find((name) => name.toLowerCase() === key);
+  const canCreate = allowCreate && key !== "" && !exact && !selectedKeys.has(key);
   const isOpen = isFocused && !isFull && (matches.length > 0 || canCreate);
 
   useEffect(() => {
@@ -62,8 +60,7 @@ export function TagPicker({
   }, [isOpen]);
 
   function add(name: string) {
-    const next = options.find((option) => tagNameKey(option) === tagNameKey(name)) ?? name;
-    if (!disabled && !isFull && !selectedKeys.has(tagNameKey(next))) onChange([...value, next]);
+    if (!disabled && !isFull && !selectedKeys.has(name.toLowerCase())) onChange([...value, name]);
     setQuery("");
   }
 
@@ -114,10 +111,12 @@ export function TagPicker({
               placeholder={placeholder}
               disabled={disabled || isFull}
               autoComplete="off"
+              maxLength={TAG_NAME_MAX_LENGTH}
               onKeyDown={(event) => {
                 if (event.key !== "Enter") return;
                 event.preventDefault();
-                if (isKnown || (canCreate && !createProblem)) add(typed);
+                if (exact) add(exact);
+                else if (canCreate) add(typed);
               }}
             />
           </div>
@@ -145,11 +144,7 @@ export function TagPicker({
                 </button>
               </li>
             ))}
-            {createProblem ? (
-              <li role="presentation" className="text-muted-foreground px-3 py-2 text-sm">
-                {createProblem}
-              </li>
-            ) : canCreate ? (
+            {canCreate ? (
               <li role="presentation">
                 <button
                   type="button"

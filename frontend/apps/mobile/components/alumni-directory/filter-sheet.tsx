@@ -25,7 +25,6 @@ type FilterSheetProps = {
 };
 
 const SHEET_LIST_MAX_HEIGHT = 216;
-const TAG_IDLE_LIMIT = 20;
 
 function HeaderText({ children }: { children: ReactNode }) {
   return (
@@ -108,7 +107,6 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
             }
             placeholder="Wyszukaj umiejętności..."
             listMaxHeight={SHEET_LIST_MAX_HEIGHT}
-            idleLimit={TAG_IDLE_LIMIT}
             uppercaseChips
           />
         )}

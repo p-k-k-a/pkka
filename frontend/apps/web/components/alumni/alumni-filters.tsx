@@ -19,7 +19,6 @@ const YEARS = Array.from(
   { length: ALUMNI_YEAR_MAX - ALUMNI_YEAR_MIN + 1 },
   (_, i) => ALUMNI_YEAR_MAX - i,
 );
-const TAG_IDLE_LIMIT = 20;
 
 function FilterHeading({ htmlFor, children }: { htmlFor?: string; children: React.ReactNode }) {
   return (
@@ -101,7 +100,6 @@ export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps)
             }
             label="Szukaj umiejętności"
             placeholder="Wyszukaj umiejętności…"
-            idleLimit={TAG_IDLE_LIMIT}
           />
         )}
       </div>

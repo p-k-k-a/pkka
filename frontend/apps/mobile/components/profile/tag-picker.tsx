@@ -1,11 +1,10 @@
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
 import type { UserTagCatalogResponse } from "@pkka/api";
-import { byTagPopularity, tagNameError, tagNameKey } from "@pkka/domain";
+import { TAG_NAME_MAX_LENGTH, byTagPopularity } from "@pkka/domain";
 import { useMemo } from "react";
 
 const MAX_TAGS = 20;
-const IDLE_LIMIT = 20;
 
 type TagPickerProps = {
   catalog: UserTagCatalogResponse[];
@@ -24,8 +23,8 @@ export function TagPicker({
 }: TagPickerProps) {
   const options = useMemo<SelectOption[]>(() => {
     const known = [...catalog].sort(byTagPopularity).map((tag) => tag.name);
-    const knownKeys = new Set(known.map(tagNameKey));
-    const added = value.filter((name) => !knownKeys.has(tagNameKey(name)));
+    const knownKeys = new Set(known.map((name) => name.toLowerCase()));
+    const added = value.filter((name) => !knownKeys.has(name.toLowerCase()));
     return [...known, ...added].map((name) => ({ id: name, label: name }));
   }, [catalog, value]);
 
@@ -47,11 +46,10 @@ export function TagPicker({
       value={value}
       onChange={onChange}
       onCreate={(name) => onChange((prev) => [...prev, name])}
-      createError={tagNameError}
+      maxLength={TAG_NAME_MAX_LENGTH}
       placeholder="Wyszukaj lub dodaj..."
       max={MAX_TAGS}
       maxHint={`Możesz wybrać maksymalnie ${MAX_TAGS} umiejętności.`}
-      idleLimit={IDLE_LIMIT}
       uppercaseChips
     />
   );

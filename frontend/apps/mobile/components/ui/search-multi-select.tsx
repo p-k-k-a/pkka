@@ -10,6 +10,7 @@ import { Keyboard, Pressable, ScrollView, TextInput, View } from "react-native";
 // Caps the open dropdown so a long option list stays scrollable instead of
 // pushing the rest of the form (or sheet) off-screen.
 const LIST_MAX_HEIGHT = 288;
+const IDLE_LIMIT = 20;
 
 export type SelectOption = {
   id: string;
@@ -30,9 +31,8 @@ type SearchMultiSelectProps = {
   listMaxHeight?: number;
   /** Uppercase the selected chips, as the profile form does for skills. */
   uppercaseChips?: boolean;
-  idleLimit?: number;
   onCreate?: (label: string) => void;
-  createError?: (label: string) => string | null;
+  maxLength?: number;
 };
 
 /**
@@ -50,9 +50,8 @@ export function SearchMultiSelect({
   emptyText = "Brak wyników.",
   listMaxHeight = LIST_MAX_HEIGHT,
   uppercaseChips = false,
-  idleLimit,
   onCreate,
-  createError,
+  maxLength,
 }: SearchMultiSelectProps) {
   const theme = useThemeColors();
   const [query, setQuery] = useState("");
@@ -64,22 +63,20 @@ export function SearchMultiSelect({
     [options, value],
   );
 
-  const typed = query.trim().replace(/\s+/g, " ");
+  const typed = query.trim();
   const needle = typed.toLowerCase();
+  const exact = options.find((option) => option.label.toLowerCase() === needle);
 
-  const filtered = useMemo(() => {
-    if (needle) return options.filter((option) => option.label.toLowerCase().includes(needle));
-    return idleLimit === undefined ? options : options.slice(0, idleLimit);
-  }, [options, needle, idleLimit]);
+  const filtered = useMemo(
+    () =>
+      needle
+        ? options.filter((option) => option.label.toLowerCase().includes(needle))
+        : options.slice(0, IDLE_LIMIT),
+    [options, needle],
+  );
 
   const atMax = max !== undefined && value.length >= max;
-  const hasMoreWhenIdle = !needle && filtered.length < options.length;
-  const canCreate =
-    onCreate !== undefined &&
-    needle !== "" &&
-    !atMax &&
-    !options.some((option) => option.label.toLowerCase() === needle);
-  const createProblem = canCreate ? (createError?.(typed) ?? null) : null;
+  const canCreate = onCreate !== undefined && needle !== "" && !atMax && !exact;
 
   // Compute from `prev` (the freshest value) rather than the captured `value`
   // prop, so a memoized onPress closure can never act on a stale snapshot.
@@ -89,6 +86,12 @@ export function SearchMultiSelect({
       if (max !== undefined && prev.length >= max) return prev;
       return [...prev, id];
     });
+  };
+
+  const submit = () => {
+    if (exact && !value.includes(exact.id)) toggle(exact.id);
+    else if (canCreate) onCreate(typed);
+    setQuery("");
   };
 
   // Collapse resets the search so the field shows a clean placeholder again.
@@ -129,12 +132,8 @@ export function SearchMultiSelect({
           onFocus={() => setOpen(true)}
           onBlur={close}
           submitBehavior="submit"
-          onSubmitEditing={() => {
-            const exact = options.find((option) => option.label.toLowerCase() === needle);
-            if (exact && !value.includes(exact.id)) toggle(exact.id);
-            else if (canCreate && !createProblem) onCreate(typed);
-            setQuery("");
-          }}
+          onSubmitEditing={submit}
+          maxLength={maxLength}
           placeholder={placeholder}
           autoCapitalize="none"
           autoCorrect={false}
@@ -204,16 +203,9 @@ export function SearchMultiSelect({
                   </Pressable>
                 );
               })}
-              {canCreate && createProblem ? (
-                <View className={cn("px-3 py-3", filtered.length > 0 && "border-border border-t")}>
-                  <Text className="text-muted-foreground text-sm">{createProblem}</Text>
-                </View>
-              ) : canCreate ? (
+              {canCreate ? (
                 <Pressable
-                  onPress={() => {
-                    onCreate(typed);
-                    setQuery("");
-                  }}
+                  onPress={submit}
                   accessibilityRole="button"
                   accessibilityLabel={`Dodaj: ${typed}`}
                   className={cn(
@@ -227,7 +219,7 @@ export function SearchMultiSelect({
                   </Text>
                 </Pressable>
               ) : null}
-              {hasMoreWhenIdle ? (
+              {!needle && options.length > IDLE_LIMIT ? (
                 <View className="border-border border-t px-3 py-3">
                   <Text className="text-muted-foreground text-xs">
                     Wpisz nazwę, aby znaleźć pozostałe.
