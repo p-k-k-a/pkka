@@ -23,14 +23,10 @@ export function TagPicker({
   error = false,
 }: TagPickerProps) {
   const options = useMemo<SelectOption[]>(() => {
-    const known = [...catalog]
-      .sort(byTagPopularity)
-      .map((tag) => ({ id: tagNameKey(tag.name), label: tag.name }));
-    const knownKeys = new Set(known.map((option) => option.id));
-    const added = value
-      .filter((name) => !knownKeys.has(tagNameKey(name)))
-      .map((name) => ({ id: tagNameKey(name), label: name }));
-    return [...known, ...added];
+    const known = [...catalog].sort(byTagPopularity).map((tag) => tag.name);
+    const knownKeys = new Set(known.map(tagNameKey));
+    const added = value.filter((name) => !knownKeys.has(tagNameKey(name)));
+    return [...known, ...added].map((name) => ({ id: name, label: name }));
   }, [catalog, value]);
 
   if (loading) {
@@ -48,23 +44,9 @@ export function TagPicker({
   return (
     <SearchMultiSelect
       options={options}
-      value={value.map(tagNameKey)}
-      onChange={(next) =>
-        onChange((prev) => {
-          const labels = new Map(options.map((option) => [option.id, option.label]));
-          prev.forEach((name) => labels.set(tagNameKey(name), name));
-          const keys = typeof next === "function" ? next(prev.map(tagNameKey)) : next;
-          return keys.map((key) => labels.get(key) ?? key);
-        })
-      }
-      onCreate={(name) =>
-        onChange((prev) =>
-          prev.length >= MAX_TAGS ||
-          prev.some((existing) => tagNameKey(existing) === tagNameKey(name))
-            ? prev
-            : [...prev, name],
-        )
-      }
+      value={value}
+      onChange={onChange}
+      onCreate={(name) => onChange((prev) => [...prev, name])}
       createError={tagNameError}
       placeholder="Wyszukaj lub dodaj..."
       max={MAX_TAGS}

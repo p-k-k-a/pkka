@@ -128,6 +128,13 @@ export function SearchMultiSelect({
           onChangeText={setQuery}
           onFocus={() => setOpen(true)}
           onBlur={close}
+          submitBehavior="submit"
+          onSubmitEditing={() => {
+            const exact = options.find((option) => option.label.toLowerCase() === needle);
+            if (exact && !value.includes(exact.id)) toggle(exact.id);
+            else if (canCreate && !createProblem) onCreate(typed);
+            setQuery("");
+          }}
           placeholder={placeholder}
           autoCapitalize="none"
           autoCorrect={false}

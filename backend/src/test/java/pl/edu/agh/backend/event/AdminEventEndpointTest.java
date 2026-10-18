@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
-import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -50,9 +49,6 @@ class AdminEventEndpointTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private EntityManager entityManager;
 
     @Autowired
     private EventRepository eventRepository;
@@ -247,38 +243,6 @@ class AdminEventEndpointTest {
                                 "PUBLIC",
                                 "[\"%s\"]".formatted("x".repeat(33)))))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void dropsAnAdminCreatedTagOnceNoEventUsesItButKeepsPredefinedOnes() throws Exception {
-        Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
-        Instant end = start.plus(2, ChronoUnit.HOURS);
-        String first = createEvent(
-                eventJson("Pierwsze", start.toString(), end.toString(), "PUBLIC", "[\"hackathon\", \"meetup\"]"));
-        String second =
-                createEvent(eventJson("Drugie", start.toString(), end.toString(), "PUBLIC", "[\"meetup\", \"ai\"]"));
-        entityManager.flush();
-        entityManager.clear();
-
-        mockMvc.perform(put("/api/admin/events/{id}", (String) JsonPath.read(first, "$.id"))
-                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(eventJson("Pierwsze", start.toString(), end.toString(), "PUBLIC", "[]")))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/api/tags").with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$[?(@.name=='hackathon')]").value(hasSize(0)))
-                .andExpect(jsonPath("$[?(@.name=='meetup')]").value(hasSize(1)));
-
-        mockMvc.perform(delete("/api/admin/events/{id}", (String) JsonPath.read(second, "$.id"))
-                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
-                        .with(csrf()))
-                .andExpect(status().isNoContent());
-
-        mockMvc.perform(get("/api/tags").with(JwtTestSupport.asAdmin()))
-                .andExpect(jsonPath("$[?(@.name=='meetup')]").value(hasSize(0)))
-                .andExpect(jsonPath("$[?(@.name=='ai')]").value(hasSize(1)));
     }
 
     @Test

@@ -65,9 +65,8 @@ public class AdminEventController {
                     + "so omitted optional fields are cleared.")
     @ApiResponse(responseCode = "200", description = "Event updated")
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
-    public AdminEventResponse updateAdminEvent(
-            Caller caller, @PathVariable UUID id, @Valid @RequestBody EventRequest request) {
-        return adminEventService.update(caller, id, request);
+    public AdminEventResponse updateAdminEvent(@PathVariable UUID id, @Valid @RequestBody EventRequest request) {
+        return adminEventService.update(id, request);
     }
 
     @DeleteMapping("/{id}")

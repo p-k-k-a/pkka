@@ -39,6 +39,7 @@ type AlumniFiltersPanelProps = {
 
 export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps) {
   const tagsQuery = useListUserTags();
+  const catalog = tagsQuery.data?.data ?? [];
   const [fromYear, toYear] = value.yearRange;
   const activeCount = countActiveAlumniFilters(value);
 
@@ -87,12 +88,19 @@ export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps)
           </p>
         ) : (
           <TagPicker
-            options={(tagsQuery.data?.data ?? [])
-              .filter((tag) => tag.usageCount > 0 || value.tagIds.includes(tag.id))
+            options={catalog
+              .filter((tag) => tag.usageCount > 0)
               .sort(byTagPopularity)
-              .map((tag) => ({ id: tag.id, label: tag.name }))}
-            selectedIds={value.tagIds}
-            onChange={(tagIds) => onChange({ ...value, tagIds })}
+              .map((tag) => tag.name)}
+            value={catalog.filter((tag) => value.tagIds.includes(tag.id)).map((tag) => tag.name)}
+            onChange={(names) =>
+              onChange({
+                ...value,
+                tagIds: catalog.filter((tag) => names.includes(tag.name)).map((tag) => tag.id),
+              })
+            }
+            label="Szukaj umiejętności"
+            placeholder="Wyszukaj umiejętności…"
             idleLimit={TAG_IDLE_LIMIT}
           />
         )}

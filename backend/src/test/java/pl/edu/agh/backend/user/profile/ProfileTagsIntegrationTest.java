@@ -62,7 +62,6 @@ class ProfileTagsIntegrationTest {
     private ApplicationRepository applicationRepository;
 
     private User user;
-    private UUID tagId;
 
     @BeforeEach
     void setUp() {
@@ -71,8 +70,6 @@ class ProfileTagsIntegrationTest {
         user.setFirstName("Anna");
         user.setBio("Bio");
         user = userRepository.save(user);
-
-        tagId = userTagRepository.findAll().getFirst().getId();
 
         Application approved = Application.builder()
                 .applicant(user)
@@ -110,23 +107,13 @@ class ProfileTagsIntegrationTest {
                         .with(JwtTestSupport.asUser(user.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tagIds\": [\"%s\"]}".formatted(tagId)))
+                        .content("{\"names\": [\"Java\"]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
         mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
-    }
-
-    @Test
-    void updateMyTagsWithInvalidIdReturns400() throws Exception {
-        mockMvc.perform(put("/api/profiles/me/tags")
-                        .with(JwtTestSupport.asUser(user.getKeycloakId()))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tagIds\": [\"%s\"]}".formatted(UUID.randomUUID())))
-                .andExpect(status().isBadRequest());
     }
 
     private void putTags(User owner, String body) throws Exception {
@@ -184,14 +171,6 @@ class ProfileTagsIntegrationTest {
     }
 
     @Test
-    void updateMyTagsCombinesIdsAndNames() throws Exception {
-        putTags(user, "{\"tagIds\": [\"%s\"], \"names\": [\"Elixir\"]}".formatted(tagId));
-
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
-                .andExpect(jsonPath("$", hasSize(2)));
-    }
-
-    @Test
     void updateMyTagsRejectsBlankAndTooLongNames() throws Exception {
         for (String name : List.of("\"   \"", "\"%s\"".formatted("x".repeat(33)), "null")) {
             mockMvc.perform(put("/api/profiles/me/tags")
@@ -213,8 +192,8 @@ class ProfileTagsIntegrationTest {
     }
 
     @Test
-    void updateMyTagsRejectsMoreThanTwentyTagsAcrossIdsAndNames() throws Exception {
-        String names = IntStream.rangeClosed(1, 20)
+    void updateMyTagsRejectsMoreThanTwentyTags() throws Exception {
+        String names = IntStream.rangeClosed(1, 21)
                 .mapToObj(i -> "\"skill %d\"".formatted(i))
                 .collect(Collectors.joining(","));
 
@@ -222,29 +201,8 @@ class ProfileTagsIntegrationTest {
                         .with(JwtTestSupport.asUser(user.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tagIds\": [\"%s\"], \"names\": [%s]}".formatted(tagId, names)))
+                        .content("{\"names\": [%s]}".formatted(names)))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void aUserCreatedTagDisappearsOnceNobodyHasIt() throws Exception {
-        User other = anotherApprovedAlumnus(true);
-        putTags(user, "{\"names\": [\"Elixir\"]}");
-        putTags(other, "{\"names\": [\"elixir\"]}");
-
-        putTags(user, "{\"names\": []}");
-        assertThat(catalogNames()).contains("Elixir");
-
-        putTags(other, "{\"names\": []}");
-        assertThat(catalogNames()).doesNotContain("Elixir");
-    }
-
-    @Test
-    void aPredefinedTagStaysWhenNobodyHasIt() throws Exception {
-        putTags(user, "{\"names\": [\"Rust\"]}");
-        putTags(user, "{\"names\": []}");
-
-        assertThat(catalogNames()).contains("Rust");
     }
 
     @Test

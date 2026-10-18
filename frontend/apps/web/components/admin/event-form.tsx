@@ -19,7 +19,7 @@ import {
   type AdminEventResponse,
   type EventRequest,
 } from "@pkka/api";
-import { EventTagPicker } from "@/components/admin/event-tag-picker";
+import { TagPicker } from "@/components/profile/tag-picker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ import {
   EVENT_TYPE_OPTIONS,
   audienceLabel,
   fromDatetimeLocalValue,
+  tagNameKey,
   toDatetimeLocalValue,
 } from "@pkka/domain";
 
@@ -316,10 +317,15 @@ export function EventForm({ event }: EventFormProps) {
 
             <section className="space-y-4">
               <SectionTitle>Tagi wydarzenia</SectionTitle>
-              <EventTagPicker
-                catalog={catalogTags}
-                selected={selectedTags}
-                onChange={setSelectedTags}
+              <TagPicker
+                options={catalogTags.map((tag) => tag.name).sort()}
+                value={selectedTags}
+                onChange={(names) => setSelectedTags(names.map(tagNameKey))}
+                label="Szukaj lub dodaj tag"
+                placeholder="Szukaj lub dodaj tag, np. warsztat…"
+                allowCreate
+                reserveListSpace
+                format={(name) => `#${name}`}
               />
             </section>
           </div>

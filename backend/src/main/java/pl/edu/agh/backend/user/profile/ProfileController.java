@@ -51,10 +51,10 @@ public class ProfileController {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(
                 responseCode = "400",
-                description = "Unknown tag ID, invalid tag name or more than 20 tags",
+                description = "Invalid tag name or more than 20 tags",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(caller.requireKeycloakId(), request.tagIds(), request.names());
+        return profileService.updateTags(caller.requireKeycloakId(), request.names());
     }
 }

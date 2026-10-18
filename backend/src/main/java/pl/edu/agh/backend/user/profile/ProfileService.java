@@ -1,13 +1,9 @@
 package pl.edu.agh.backend.user.profile;
 
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,8 +24,6 @@ import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
-
-    private static final int MAX_TAGS = 20;
 
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
@@ -96,57 +90,19 @@ public class ProfileService {
     }
 
     @Transactional
-    public List<UserTagResponse> updateTags(String keycloakId, Set<UUID> tagIds, Set<String> names) {
+    public List<UserTagResponse> updateTags(String keycloakId, Set<String> names) {
         User user = loadWithTags(keycloakId);
-        Set<UserTag> next = new HashSet<>(userTagRepository.findForShareByIdIn(tagIds));
-        if (next.size() != tagIds.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag IDs are invalid");
-        }
-        next.addAll(findOrCreateByName(user, names));
-        if (next.size() > MAX_TAGS) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At most " + MAX_TAGS + " tags are allowed");
-        }
-
-        Set<UUID> removedIds = user.getTags().stream()
-                .filter(tag -> !next.contains(tag))
-                .map(UserTag::getId)
-                .collect(Collectors.toSet());
+        names.forEach(name -> userTagRepository.insertIfAbsent(UUID.randomUUID(), name));
+        List<UserTag> tags = names.isEmpty()
+                ? List.of()
+                : userTagRepository.findByNameKeyIn(
+                        names.stream().map(TagNames::key).toList());
         user.getTags().clear();
-        user.getTags().addAll(next);
-        if (!removedIds.isEmpty()) {
-            userTagRepository.lockUserCreated(removedIds);
-            userTagRepository.deleteUnusedUserCreated(removedIds);
-        }
-
-        return next.stream()
+        user.getTags().addAll(tags);
+        return tags.stream()
                 .map(UserTagResponse::from)
-                .sorted(Comparator.comparing(UserTagResponse::name))
+                .sorted(Comparator.comparing(UserTagResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
-    }
-
-    private List<UserTag> findOrCreateByName(User user, Set<String> names) {
-        if (names.isEmpty()) {
-            return List.of();
-        }
-        Map<String, String> nameByKey = new LinkedHashMap<>();
-        names.forEach(name -> nameByKey.putIfAbsent(TagNames.key(name), name));
-
-        List<UserTag> existing = userTagRepository.findForShareByNameKeyIn(nameByKey.keySet());
-        if (existing.size() == nameByKey.size()) {
-            return existing;
-        }
-        Set<String> existingKeys =
-                existing.stream().map(tag -> TagNames.key(tag.getName())).collect(Collectors.toSet());
-        nameByKey.forEach((key, name) -> {
-            if (!existingKeys.contains(key)) {
-                userTagRepository.insertIfAbsent(UUID.randomUUID(), name, user.getId());
-            }
-        });
-        List<UserTag> resolved = userTagRepository.findForShareByNameKeyIn(nameByKey.keySet());
-        if (resolved.size() != nameByKey.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag names are not supported");
-        }
-        return resolved;
     }
 
     private User loadWithTags(String keycloakId) {

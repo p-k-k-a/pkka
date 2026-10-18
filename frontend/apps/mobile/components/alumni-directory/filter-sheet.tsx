@@ -7,12 +7,12 @@ import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
   EMPTY_ALUMNI_FILTERS,
+  byTagPopularity,
   type AlumniFilters,
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
-import { byTagPopularity } from "@pkka/domain";
 import { Check } from "lucide-react-native";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";

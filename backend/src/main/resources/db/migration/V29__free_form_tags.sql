@@ -1,8 +1,6 @@
-ALTER TABLE tags ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE tags DROP CONSTRAINT uk_tags_name;
 CREATE UNIQUE INDEX uk_tags_name ON tags (lower(name));
 
-ALTER TABLE user_skill_tags ADD COLUMN created_by UUID REFERENCES users(id) ON DELETE SET NULL;
 ALTER TABLE user_skill_tags DROP CONSTRAINT uk_user_skill_tags_name;
 CREATE UNIQUE INDEX uk_user_skill_tags_name ON user_skill_tags (lower(name));
 

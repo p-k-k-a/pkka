@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
   ApiError,
   getGetMyProfileQueryKey,
+  getListUserTagsQueryKey,
   useGetMyProfile,
   useListUserTags,
   useUpdateMyProfile,
@@ -36,7 +37,6 @@ import {
   canonicalizeProfileUrl,
   githubUrlError,
   linkedinUrlError,
-  tagNameError,
   tagNameKey,
 } from "@pkka/domain";
 
@@ -116,17 +116,6 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const linkedin = canonicalizeProfileUrl(linkedinUrl);
   const github = canonicalizeProfileUrl(githubUrl);
 
-  const tagOptions = useMemo(() => {
-    const known = [...catalog]
-      .sort(byTagPopularity)
-      .map((tag) => ({ id: tagNameKey(tag.name), label: tag.name }));
-    const knownKeys = new Set(known.map((option) => option.id));
-    const added = tagNames
-      .filter((name) => !knownKeys.has(tagNameKey(name)))
-      .map((name) => ({ id: tagNameKey(name), label: name }));
-    return [...known, ...added];
-  }, [catalog, tagNames]);
-
   const assignedTagKeys = profile.tags.map((tag) => tagNameKey(tag.name));
   const tagsChanged =
     tagNames.length !== assignedTagKeys.length ||
@@ -181,6 +170,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
     if (tagsChanged) {
       try {
         await updateTags.mutateAsync({ data: { names: tagNames } });
+        await queryClient.invalidateQueries({ queryKey: getListUserTagsQueryKey() });
       } catch (error) {
         // The profile itself is already saved, so the cache has to be refreshed
         // even though the tags did not go through.
@@ -331,24 +321,15 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                 </Alert>
               ) : (
                 <TagPicker
-                  options={tagOptions}
-                  selectedIds={tagNames.map(tagNameKey)}
-                  onChange={(keys) => {
-                    const labels = new Map(tagOptions.map((option) => [option.id, option.label]));
-                    setTagNames(keys.map((key) => labels.get(key) ?? key));
-                  }}
-                  onCreate={(name) =>
-                    setTagNames((prev) =>
-                      prev.some((existing) => tagNameKey(existing) === tagNameKey(name))
-                        ? prev
-                        : [...prev, name],
-                    )
-                  }
-                  createError={tagNameError}
+                  options={catalog.toSorted(byTagPopularity).map((tag) => tag.name)}
+                  value={tagNames}
+                  onChange={setTagNames}
+                  label="Szukaj lub dodaj umiejętność"
+                  placeholder="Wyszukaj lub dodaj…"
                   max={MAX_TAGS}
                   idleLimit={TAG_IDLE_LIMIT}
+                  allowCreate
                   disabled={isSaving}
-                  placeholder="Wyszukaj lub dodaj…"
                   reserveListSpace
                 />
               )}

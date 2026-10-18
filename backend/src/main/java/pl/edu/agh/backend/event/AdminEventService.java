@@ -6,23 +6,18 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
-import pl.edu.agh.backend.user.User;
 
 @Service
 @RequiredArgsConstructor
@@ -53,9 +48,8 @@ public class AdminEventService {
 
     @Transactional
     public AdminEventResponse create(Caller caller, EventRequest request) {
-        User author = callerUserService.getOrCreate(caller);
         Event event = Event.builder()
-                .author(author)
+                .author(callerUserService.getOrCreate(caller))
                 .title(request.title())
                 .fullDescription(request.fullDescription())
                 .type(request.type())
@@ -68,7 +62,7 @@ public class AdminEventService {
                 .audience(request.audience())
                 .coverImageUrl(request.coverImageUrl())
                 .reminderLeadTimeMinutes(request.reminderLeadTimeMinutes())
-                .tags(new HashSet<>(findOrCreateTags(() -> author, request.tags())))
+                .tags(new HashSet<>(findOrCreateTags(request.tags())))
                 .build();
 
         Event created = eventRepository.saveAndFlush(event);
@@ -81,7 +75,7 @@ public class AdminEventService {
      * that must not interleave with sign-ups and cancellations counting the same seats.
      */
     @Transactional
-    public AdminEventResponse update(Caller caller, UUID id, EventRequest request) {
+    public AdminEventResponse update(UUID id, EventRequest request) {
         Event event = eventRepository.findForUpdateById(id).orElseThrow(() -> new EventNotFoundException(id));
         event.setTitle(request.title());
         event.setFullDescription(request.fullDescription());
@@ -101,9 +95,8 @@ public class AdminEventService {
             event.setTags(tags);
         }
         tags.clear();
-        tags.addAll(findOrCreateTags(() -> callerUserService.getOrCreate(caller), request.tags()));
+        tags.addAll(findOrCreateTags(request.tags()));
         Event saved = eventRepository.saveAndFlush(event);
-        dropUnusedTags();
         eventRegistrationService.fillFreeSeats(saved);
         return respond(saved);
     }
@@ -111,7 +104,6 @@ public class AdminEventService {
     @Transactional
     public void delete(UUID id) {
         eventRepository.delete(findOrThrow(id));
-        dropUnusedTags();
     }
 
     private AdminEventResponse respond(Event event) {
@@ -122,28 +114,11 @@ public class AdminEventService {
         return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
     }
 
-    private Set<Tag> findOrCreateTags(Supplier<User> creator, Set<String> names) {
-        if (names == null || names.isEmpty()) {
+    private Set<Tag> findOrCreateTags(Set<String> names) {
+        if (names.isEmpty()) {
             return Set.of();
         }
-        Set<Tag> existing = tagRepository.findForShareByNameIn(names);
-        if (existing.size() == names.size()) {
-            return existing;
-        }
-        Set<String> existingNames = existing.stream().map(Tag::getName).collect(Collectors.toSet());
-        UUID creatorId = creator.get().getId();
-        names.stream()
-                .filter(name -> !existingNames.contains(name))
-                .forEach(name -> tagRepository.insertIfAbsent(UUID.randomUUID(), name, creatorId));
-        Set<Tag> resolved = tagRepository.findForShareByNameIn(names);
-        if (resolved.size() != names.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag names are not supported");
-        }
-        return resolved;
-    }
-
-    private void dropUnusedTags() {
-        tagRepository.lockAdminCreated();
-        tagRepository.deleteUnusedAdminCreated();
+        names.forEach(name -> tagRepository.insertIfAbsent(UUID.randomUUID(), name));
+        return tagRepository.findByNameIn(names);
     }
 }
