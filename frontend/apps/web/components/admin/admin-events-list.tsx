@@ -272,13 +272,13 @@ export function AdminEventsList() {
                               {audienceLabel(item.audience)}
                             </span>
                             <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.id}`}>
+                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
                                 <ChartColumn data-icon="inline-start" />
                                 Statystyki
                               </Link>
                             </Button>
                             <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.id}/edit`}>
+                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}/edit`}>
                                 <Pencil data-icon="inline-start" />
                                 Edytuj
                               </Link>

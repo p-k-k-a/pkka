@@ -2,6 +2,7 @@ package pl.edu.agh.backend.event;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,20 +21,24 @@ public class EventLookup {
     private final EventRepository eventRepository;
 
     public Event findVisible(UUID id, Caller caller) {
-        return requireVisible(eventRepository.findById(id), id, caller);
+        return requireVisible(eventRepository.findById(id), () -> new EventNotFoundException(id), caller);
+    }
+
+    public Event findVisibleBySlug(String slug, Caller caller) {
+        return requireVisible(eventRepository.findBySlug(slug), () -> new EventNotFoundException(slug), caller);
     }
 
     /** {@code MANDATORY} because a lock taken in a transaction of its own would be released too early. */
     @Transactional(propagation = Propagation.MANDATORY)
     public Event findVisibleForUpdate(UUID id, Caller caller) {
-        return requireVisible(eventRepository.findForUpdateById(id), id, caller);
+        return requireVisible(eventRepository.findForUpdateById(id), () -> new EventNotFoundException(id), caller);
     }
 
     /** Not visible is reported as not existing, so the caller cannot probe for hidden events. */
-    private Event requireVisible(Optional<Event> found, UUID id, Caller caller) {
-        Event event = found.orElseThrow(() -> new EventNotFoundException(id));
+    private Event requireVisible(Optional<Event> found, Supplier<EventNotFoundException> notFound, Caller caller) {
+        Event event = found.orElseThrow(notFound);
         if (!EventVisibility.isVisibleTo(event, caller)) {
-            throw new EventNotFoundException(id);
+            throw notFound.get();
         }
         return event;
     }

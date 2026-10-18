@@ -1,13 +1,13 @@
-package pl.edu.agh.backend.post;
+package pl.edu.agh.backend.infrastructure.slug;
 
 import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 
-final class SlugUtils {
+public final class SlugUtils {
 
     private SlugUtils() {}
 
-    static String toSlug(String input) {
+    public static String toSlug(String input) {
         return StringUtils.stripAccents(input)
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9\\s-]", "")

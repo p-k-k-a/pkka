@@ -3,7 +3,6 @@ package pl.edu.agh.backend.event;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -32,9 +31,9 @@ public class EventController {
         return eventService.list(caller, tags, timeframe, pageable);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Details of a single event")
-    public EventDetailsResponse getEventById(@PathVariable UUID id, Caller caller) {
-        return eventService.getDetails(id, caller);
+    @GetMapping("/{slug}")
+    @Operation(summary = "Details of a single event by its slug")
+    public EventDetailsResponse getEventBySlug(@PathVariable String slug, Caller caller) {
+        return eventService.getDetails(slug, caller);
     }
 }

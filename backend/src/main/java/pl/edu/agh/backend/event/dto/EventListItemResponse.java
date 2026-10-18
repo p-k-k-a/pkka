@@ -10,6 +10,7 @@ import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 
 public record EventListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
@@ -28,6 +29,7 @@ public record EventListItemResponse(
     public static EventListItemResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
         return new EventListItemResponse(
                 e.getId(),
+                e.getSlug(),
                 e.getTitle(),
                 e.getStartsAt(),
                 e.getEndsAt(),
