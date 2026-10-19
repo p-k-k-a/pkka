@@ -9,7 +9,6 @@ import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
   ApplicationStatus,
-  getMeQueryKey,
   ProfileResponse,
   useGetMine,
   useGetMyProfile,
@@ -17,8 +16,7 @@ import {
 import { useThemeColors, type THEME } from "@/lib/theme";
 import { router } from "expo-router";
 import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 type StatusConfig = {
@@ -202,11 +200,6 @@ export function UserPanel() {
 
   const application = data?.data;
   const isApproved = application?.status === ApplicationStatus.APPROVED;
-
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    if (isApproved) queryClient.invalidateQueries({ queryKey: getMeQueryKey() });
-  }, [isApproved, queryClient]);
 
   const {
     data: profileData,
