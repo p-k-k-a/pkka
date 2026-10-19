@@ -3,6 +3,7 @@ package pl.edu.agh.backend.event.statistics;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oidcLogin;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,7 +25,10 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -111,6 +115,23 @@ class EventStatisticsEndpointTest {
         return keycloakId;
     }
 
+    private void signUp(Event event, RequestPostProcessor client, String source) throws Exception {
+        MockHttpServletRequestBuilder request = post("/api/events/{id}/registration", event.getId())
+                .with(client)
+                .with(csrf());
+        if (source != null) {
+            request.param("source", source);
+        }
+        mockMvc.perform(request).andExpect(status().isCreated());
+    }
+
+    /** Signed in through the web app's server-side session rather than with a bearer token. */
+    private static RequestPostProcessor webSession(String keycloakId) {
+        return oidcLogin()
+                .idToken(token -> token.subject(keycloakId))
+                .authorities(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
     private void cancel(Event event, String keycloakId) throws Exception {
         mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
                         .with(JwtTestSupport.asUser(keycloakId))
@@ -153,6 +174,45 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$.waitlisted").value(0))
                 .andExpect(jsonPath("$.signUps").value(4))
                 .andExpect(jsonPath("$.cancellations").value(1));
+    }
+
+    @Test
+    void signUpsAreCountedUnderTheClientOrTheLinkTheyCameFrom() throws Exception {
+        Event event = upcomingEvent(3);
+        signUp(event, webSession(UUID.randomUUID().toString()), null);
+        signUp(event, JwtTestSupport.asUser(), null);
+        String fromDiscord = UUID.randomUUID().toString();
+        signUp(event, JwtTestSupport.asUser(fromDiscord), "DISCORD");
+        signUp(event, webSession(UUID.randomUUID().toString()), "EMAIL");
+        cancel(event, fromDiscord);
+
+        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.signUps").value(4))
+                .andExpect(jsonPath("$.signUpsBySource[*].source").value(contains("WEB", "MOBILE", "DISCORD", "EMAIL")))
+                .andExpect(jsonPath("$.signUpsBySource[*].signUps").value(contains(1, 1, 1, 1)));
+    }
+
+    @Test
+    void signUpsRecordedBeforeSourcesWereAreInNoSource() throws Exception {
+        Event event = upcomingEvent(10);
+        activity(event, RegistrationActivityType.SIGNED_UP, Instant.now());
+
+        mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
+                .andExpect(jsonPath("$.signUps").value(1))
+                .andExpect(jsonPath("$.signUpsBySource", hasSize(4)))
+                .andExpect(jsonPath("$.signUpsBySource[*].signUps").value(contains(0, 0, 0, 0)));
+    }
+
+    @Test
+    void anUnknownSource_isRejected() throws Exception {
+        Event event = upcomingEvent(10);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .param("source", "CARRIER_PIGEON")
+                        .with(JwtTestSupport.asUser())
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -242,6 +302,21 @@ class EventStatisticsEndpointTest {
                 .andExpect(jsonPath("$[1].cancellations").value(0))
                 .andExpect(jsonPath("$[1].seatLimit").value(2))
                 .andExpect(jsonPath("$[2].registered").value(0));
+    }
+
+    @Test
+    void comparisonCountsEachEventsSignUpsBySource() throws Exception {
+        Event workshop = newEvent("Warsztat", 10, Instant.now().plus(2, ChronoUnit.DAYS));
+        signUp(workshop, JwtTestSupport.asUser(), "DISCORD");
+        signUp(workshop, JwtTestSupport.asUser(), "DISCORD");
+        signUp(workshop, webSession(UUID.randomUUID().toString()), null);
+        Event gala = newEvent("Gala", 10, Instant.now().plus(9, ChronoUnit.DAYS));
+        signUp(gala, JwtTestSupport.asUser(), null);
+
+        mockMvc.perform(get("/api/admin/events/statistics").with(JwtTestSupport.asAdmin()))
+                .andExpect(jsonPath("$[*].title").value(contains("Gala", "Warsztat")))
+                .andExpect(jsonPath("$[0].signUpsBySource[*].signUps").value(contains(0, 1, 0, 0)))
+                .andExpect(jsonPath("$[1].signUpsBySource[*].signUps").value(contains(1, 0, 2, 0)));
     }
 
     @Test

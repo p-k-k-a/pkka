@@ -21,7 +21,7 @@ class CallerTest {
     private static final String KEYCLOAK_ID = "0f3a1c8e-1111-4000-8000-000000000001";
 
     @Test
-    void readsSubjectAndRolesFromABearerToken() {
+    void readsSubjectRolesAndTheMobileClientFromABearerToken() {
         Jwt jwt = Jwt.withTokenValue("token")
                 .header("alg", "none")
                 .subject(KEYCLOAK_ID)
@@ -35,10 +35,11 @@ class CallerTest {
         assertThat(caller.roles()).containsExactlyInAnyOrder(Roles.USER, Roles.VERIFIED_ALUMN);
         assertThat(caller.hasRole(Roles.VERIFIED_ALUMN)).isTrue();
         assertThat(caller.hasRole(Roles.ADMIN)).isFalse();
+        assertThat(caller.client()).isEqualTo(Caller.Client.MOBILE);
     }
 
     @Test
-    void readsSubjectAndRolesFromAWebSession() {
+    void readsSubjectRolesAndTheWebClientFromAWebSession() {
         OidcIdToken idToken =
                 new OidcIdToken("token", Instant.now(), Instant.now().plusSeconds(60), Map.of("sub", KEYCLOAK_ID));
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
@@ -48,6 +49,7 @@ class CallerTest {
 
         assertThat(caller.keycloakId()).isEqualTo(KEYCLOAK_ID);
         assertThat(caller.roles()).containsExactly(Roles.USER);
+        assertThat(caller.client()).isEqualTo(Caller.Client.WEB);
     }
 
     @Test
@@ -71,6 +73,7 @@ class CallerTest {
         assertThat(Caller.from(null).isAnonymous()).isTrue();
         assertThat(Caller.from(anonymous).isAnonymous()).isTrue();
         assertThat(Caller.from(anonymous).roles()).isEmpty();
+        assertThat(Caller.from(anonymous).client()).isNull();
     }
 
     @Test
