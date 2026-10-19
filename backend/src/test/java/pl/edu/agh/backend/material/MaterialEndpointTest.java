@@ -209,7 +209,7 @@ class MaterialEndpointTest {
         Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
         Instant end = start.plus(1, ChronoUnit.HOURS);
         return """
-                {"title":"Wydarzenie","fullDescription":"Opis","type":"ONLINE","startsAt":"%s","endsAt":"%s","transmissionUrl":"https://meet.example.com","audience":"%s","tags":[]}
+                {"title":"Wydarzenie","fullDescription":"Opis","type":"ONLINE","startsAt":"%s","endsAt":"%s","transmissionUrl":"https://meet.google.com/abc-defg-hij","audience":"%s","tags":[]}
                 """.formatted(start, end, audience);
     }
 }
