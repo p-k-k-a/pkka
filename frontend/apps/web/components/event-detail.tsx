@@ -1,24 +1,23 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-import { useGetEventById } from "@pkka/api";
-import { Button } from "@/components/ui/button";
+import { useGetEventBySlug } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { EventLocationAside } from "@/components/events/event-location-aside";
+import { EventRegistration } from "@/components/events/event-registration";
 import { ProseContent } from "@/components/content/prose-content";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
-import { useAuth } from "@/lib/auth-context";
+import { eventTypeBadgeClass } from "@/lib/event-type-badge";
+import { cn } from "@/lib/utils";
 
 type EventDetailProps = {
-  id: string;
+  slug: string;
   variant?: EventPathVariant;
 };
 
-export function EventDetail({ id, variant = "public" }: EventDetailProps) {
-  const { isAuthenticated, loginWithKeycloak } = useAuth();
-  const { data: response, isLoading, isError, isFetching } = useGetEventById(id);
+export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
+  const { data: response, isLoading, isError, isFetching } = useGetEventBySlug(slug);
   const event = response?.data;
   const archived = isEventPast(event?.startsAt);
   const eventsBackHref = eventsListHref(variant, archived);
@@ -69,7 +68,12 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
 
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <span className="bg-band text-band-foreground mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+            <span
+              className={cn(
+                "mb-6 inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
+                eventTypeBadgeClass(event.type),
+              )}
+            >
               {eventTypeLabelUpper(event.type)}
             </span>
             <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
@@ -77,22 +81,7 @@ export function EventDetail({ id, variant = "public" }: EventDetailProps) {
             </h1>
             {archived ? null : (
               <div className="mt-8">
-                {isAuthenticated ? (
-                  <div className="space-y-2">
-                    <Button size="xl" className="gap-2" disabled>
-                      Zapisz się
-                      <ArrowRight data-icon="inline-end" />
-                    </Button>
-                    <p className="text-muted-foreground text-xs">
-                      Rejestracja na wydarzenie wkrótce dostępna.
-                    </p>
-                  </div>
-                ) : (
-                  <Button size="xl" className="gap-2" onClick={loginWithKeycloak}>
-                    Zapisz się
-                    <ArrowRight data-icon="inline-end" />
-                  </Button>
-                )}
+                <EventRegistration event={event} />
               </div>
             )}
 

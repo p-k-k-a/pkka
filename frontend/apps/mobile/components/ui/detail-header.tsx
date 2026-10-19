@@ -1,6 +1,6 @@
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@react-navigation/native";
+import { useThemeColors } from "@/lib/theme";
 import { ArrowLeft } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
@@ -11,7 +11,7 @@ type DetailHeaderProps = {
 };
 
 function DetailHeader({ title, onBack, className }: DetailHeaderProps) {
-  const { colors } = useTheme();
+  const theme = useThemeColors();
 
   return (
     <View
@@ -25,11 +25,11 @@ function DetailHeader({ title, onBack, className }: DetailHeaderProps) {
         hitSlop={8}
         role="button"
         accessibilityLabel="Wróć"
-        className="size-10 items-center justify-center rounded-md active:bg-muted"
+        className="size-10 items-center justify-center rounded-full active:bg-muted"
       >
-        <ArrowLeft size={22} color={colors.text} />
+        <ArrowLeft size={22} color={theme.foreground} />
       </Pressable>
-      <Text className="flex-1 text-center text-base font-bold uppercase tracking-widest text-foreground">
+      <Text className="flex-1 text-center text-sm font-bold uppercase tracking-widest text-foreground">
         {title}
       </Text>
       <View className="size-10" />

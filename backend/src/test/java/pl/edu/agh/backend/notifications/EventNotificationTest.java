@@ -183,7 +183,7 @@ class EventNotificationTest {
             assertThat(message.title()).isEqualTo("Nowe wydarzenie");
             assertThat(message.data())
                     .containsEntry("type", "EVENT_ANNOUNCEMENT")
-                    .containsEntry("targetId", created.id().toString());
+                    .containsEntry("target", created.slug());
         });
     }
 
@@ -230,6 +230,7 @@ class EventNotificationTest {
     private Event saveEvent(Instant startsAt, Integer leadTimeMinutes) {
         return eventRepository.save(Event.builder()
                 .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
                 .type(EventType.ONLINE)
                 .startsAt(startsAt)
                 .endsAt(startsAt.plus(2, ChronoUnit.HOURS))
@@ -382,6 +383,7 @@ class EventNotificationTest {
     private Event fullEventHeldBy(User seatHolder) {
         Event event = eventRepository.save(Event.builder()
                 .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))
@@ -420,7 +422,7 @@ class EventNotificationTest {
                 .isEqualTo("Zostałeś automatycznie zapisany na wydarzenie „Warsztaty”, %s".formatted(startsAt));
         assertThat(message.data())
                 .containsEntry("type", "REGISTRATION_PROMOTED")
-                .containsEntry("targetId", event.getId().toString());
+                .containsEntry("target", event.getSlug());
     }
 
     @Test
