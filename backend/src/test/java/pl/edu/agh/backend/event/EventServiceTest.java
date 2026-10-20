@@ -97,6 +97,7 @@ class EventServiceTest {
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("networking-cover")
                 .title("Networking")
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
@@ -104,11 +105,12 @@ class EventServiceTest {
                 .audience(Audience.PUBLIC)
                 .coverImageUrl("covers/events/a.png")
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug("networking-cover", caller)).thenReturn(event);
         when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
         when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(Optional.empty());
         when(storageService.resolveUrl("covers/events/a.png")).thenReturn("https://r2.example/signed");
 
-        assertThat(eventService.getDetails(id, caller).coverImageUrl()).isEqualTo("https://r2.example/signed");
+        assertThat(eventService.getDetails("networking-cover", caller).coverImageUrl())
+                .isEqualTo("https://r2.example/signed");
     }
 }
