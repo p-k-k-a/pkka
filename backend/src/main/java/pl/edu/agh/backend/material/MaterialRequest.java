@@ -17,10 +17,15 @@ public record MaterialRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         MaterialType type,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED)
         @NotBlank
         @Size(max = 2000)
-        @Pattern(regexp = "^https?://.+", message = "url must start with http:// or https://")
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "External http(s) URL, or the `objectKey` of a file uploaded through "
+                        + "`POST /api/admin/files/presign`; an uploaded file's signed URL is accepted too")
+        @Pattern(
+                regexp = "(?i)^(https?://|materials/).+$",
+                message = "url must be an http(s) URL or the objectKey of an uploaded material")
         String url,
 
         UUID eventId) {}
