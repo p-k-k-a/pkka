@@ -86,6 +86,12 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+  # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
+  storage:
+    endpoint: ${R2_ENDPOINT:}
+    bucket: ${R2_BUCKET:}
+    access-key-id: ${R2_ACCESS_KEY_ID:}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY:}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
   web:
@@ -200,6 +206,12 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+  # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
+  storage:
+    endpoint: ${R2_ENDPOINT:}
+    bucket: ${R2_BUCKET:}
+    access-key-id: ${R2_ACCESS_KEY_ID:}
+    secret-access-key: ${R2_SECRET_ACCESS_KEY:}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
   web:
