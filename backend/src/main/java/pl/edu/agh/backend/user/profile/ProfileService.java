@@ -13,6 +13,9 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.storage.AvatarPresignRequest;
+import pl.edu.agh.backend.storage.PresignedUploadResponse;
+import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 import pl.edu.agh.backend.user.UserTag;
@@ -28,11 +31,12 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final UserTagRepository userTagRepository;
     private final ApplicationRepository applicationRepository;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(String keycloakId) {
         User user = loadWithTags(keycloakId);
-        return ProfileResponse.from(user, education(user));
+        return ProfileResponse.from(user, education(user), storageService.resolveUrl(user.getAvatarKey()));
     }
 
     @Transactional
@@ -53,6 +57,18 @@ public class ProfileService {
         if (request.githubUrl() != null) {
             user.setGithubUrl(blankToNull(request.githubUrl()));
         }
+        if (request.avatarKey() != null) {
+            String avatarKey = blankToNull(request.avatarKey().trim());
+            if (avatarKey != null && !storageService.isConfigured()) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "File storage is not configured");
+            }
+            if (avatarKey != null && !storageService.isAvatarKeyOwnedBy(user.getId(), avatarKey)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "avatarKey must be the objectKey of an avatar uploaded through the avatar presign endpoint");
+            }
+            user.setAvatarKey(avatarKey);
+        }
         if (request.willingToMentor() != null) {
             user.setWillingToMentor(request.willingToMentor());
         }
@@ -68,7 +84,15 @@ public class ProfileService {
                 user.setShowDiscord(visibility.discord());
             }
         }
-        return ProfileResponse.from(user, education(user));
+        return ProfileResponse.from(user, education(user), storageService.resolveUrl(user.getAvatarKey()));
+    }
+
+    @Transactional(readOnly = true)
+    public PresignedUploadResponse presignAvatarUpload(String keycloakId, AvatarPresignRequest request) {
+        User user = userRepository
+                .findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
+        return storageService.presignAvatar(user.getId(), request.contentType(), request.sizeBytes());
     }
 
     private AlumnEducation education(User user) {
