@@ -1,0 +1,70 @@
+package pl.edu.agh.backend.event;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import java.time.Instant;
+import java.util.Set;
+import org.junit.jupiter.api.Test;
+
+class EventRequestUrlValidationTest {
+
+    private static final Validator VALIDATOR =
+            Validation.buildDefaultValidatorFactory().getValidator();
+
+    @Test
+    void acceptsHttpAndHttpsUrls() {
+        assertThat(violations("https://meet.example.com/x", "https://files.pkka.me/covers/events/a.jpg"))
+                .isEmpty();
+        assertThat(violations("http://meet.example.com/x", "http://localhost:9000/a.jpg"))
+                .isEmpty();
+        assertThat(violations("HTTPS://meet.example.com/x", "Https://files.pkka.me/a.jpg"))
+                .isEmpty();
+    }
+
+    @Test
+    void acceptsTheObjectKeyOfAnUploadedCoverButNoOtherKeys() {
+        assertThat(violations(null, "covers/events/0f3a1c8e-1111-4000-8000-000000000001.png"))
+                .isEmpty();
+        assertThat(violations(null, "materials/0f3a1c8e-1111-4000-8000-000000000001.pdf"))
+                .hasSize(1);
+        assertThat(violations(null, "avatars/x/y.png")).hasSize(1);
+        assertThat(violations("covers/events/a.png", null)).hasSize(1);
+    }
+
+    @Test
+    void acceptsMissingAndBlankUrls() {
+        assertThat(violations(null, null)).isEmpty();
+        assertThat(violations("   ", "")).isEmpty();
+    }
+
+    @Test
+    void rejectsOtherSchemes() {
+        assertThat(violations("javascript:alert(1)", "data:image/png;base64,AAAA"))
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .containsExactlyInAnyOrder("transmissionUrl", "coverImageUrl");
+        assertThat(violations("ftp://example.com/x", null)).hasSize(1);
+        assertThat(violations("meet.example.com", null)).hasSize(1);
+    }
+
+    private static Set<ConstraintViolation<EventRequest>> violations(String transmissionUrl, String coverImageUrl) {
+        Instant start = Instant.parse("2030-01-01T10:00:00Z");
+        EventRequest request = new EventRequest(
+                "Wydarzenie",
+                null,
+                EventType.ONLINE,
+                start,
+                start.plusSeconds(3600),
+                transmissionUrl,
+                null,
+                null,
+                null,
+                Audience.PUBLIC,
+                coverImageUrl,
+                null,
+                null);
+        return VALIDATOR.validate(request);
+    }
+}

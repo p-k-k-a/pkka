@@ -25,6 +25,10 @@ public record AdminEventResponse(
 
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
+
+        @Schema(
+                description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL; "
+                        + "sending it back unchanged on update is fine")
         String coverImageUrl,
 
         @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
@@ -38,7 +42,7 @@ public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminEventResponse from(Event event, long seatsTaken) {
+    static AdminEventResponse from(Event event, long seatsTaken, String coverImageUrl) {
         return new AdminEventResponse(
                 event.getId(),
                 event.getSlug(),
@@ -53,7 +57,7 @@ public record AdminEventResponse(
                 (int) seatsTaken,
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
-                event.getCoverImageUrl(),
+                coverImageUrl,
                 event.getReminderLeadTimeMinutes(),
                 event.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
                 event.getAuthor() == null ? null : event.getAuthor().getDisplayName(),
