@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, GraduationCap, Tags } from "lucide-react";
+import { ArrowRight, Briefcase, EyeOff, GraduationCap, Tags } from "lucide-react";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -31,6 +31,12 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
           <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
             {alumn.graduationYear ? `Rocznik ${alumn.graduationYear}` : "Alumn"}
           </span>
+          {alumn.visibility.name ? null : (
+            <span className="bg-background text-muted-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+              <EyeOff className="size-3.5" aria-hidden="true" />
+              Imię ukryte
+            </span>
+          )}
           {alumn.willingToMentor ? (
             <span className="bg-primary text-primary-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
               <GraduationCap className="size-3.5" aria-hidden="true" />

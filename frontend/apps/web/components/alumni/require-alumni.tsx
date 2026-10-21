@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 
-/** The alumni endpoints answer 403 to anyone without the VERIFIED_ALUMN role. */
+/** The alumni endpoints answer 403 to anyone who is neither a verified alumnus nor an admin. */
 export function RequireAlumni({ children }: { children: React.ReactNode }) {
   // isLoading, not isPending: the application query stays pending forever when
   // it is disabled for admins.
-  const { isAuthLoading, isLoading, isVerified } = useVerificationStatus();
+  const { isAuthLoading, isLoading, isVerified, admin } = useVerificationStatus();
 
   if (isAuthLoading || isLoading) {
     return (
@@ -20,7 +20,7 @@ export function RequireAlumni({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isVerified) {
+  if (!isVerified && !admin) {
     return (
       <section className="bg-background px-4 py-16 md:px-10 md:py-20">
         <div className="mx-auto flex max-w-[720px] flex-col items-start gap-4">

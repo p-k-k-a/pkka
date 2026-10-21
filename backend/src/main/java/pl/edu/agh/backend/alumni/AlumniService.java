@@ -52,16 +52,17 @@ public class AlumniService {
             Boolean mentor,
             Integer graduationYearFrom,
             Integer graduationYearTo,
+            boolean showHiddenFields,
             Pageable pageable) {
         Specification<User> spec = Specification.allOf(
-                UserSpecifications.matchesQuery(query),
+                UserSpecifications.matchesQuery(query, showHiddenFields),
                 UserSpecifications.hasAnyTagId(tagIds),
                 UserSpecifications.isMentor(mentor),
                 UserSpecifications.graduationYearBetween(graduationYearFrom, graduationYearTo),
                 // The directory only ever shows genuine (approved) alumni, never every row of `users`
                 // (which also covers pending/rejected applicants and staff who merely logged in once).
                 AlumniSpecifications.isApprovedAlumnus(),
-                AlumniSpecifications.hasVisibleName());
+                AlumniSpecifications.hasVisibleName(showHiddenFields));
 
         Page<User> page = userRepository.findAll(spec, sanitizePageable(pageable));
 
@@ -72,10 +73,10 @@ public class AlumniService {
         // Instead, User.tags' existing @BatchSize(30) batches these per-user lazy loads for the whole page
         // into one (or a couple of) extra queries, so this stays free of both the N+1 and the in-memory
         // pagination problems.
-        return page.map(AlumniListItemResponse::from);
+        return page.map(user -> AlumniListItemResponse.from(user, showHiddenFields));
     }
 
-    public AlumniProfileResponse getProfile(UUID id) {
+    public AlumniProfileResponse getProfile(UUID id, boolean showHiddenFields) {
         User user = userRepository.findWithTagsById(id).orElseThrow(() -> new AlumniNotFoundException(id));
         Application approvedApplication = applicationRepository
                 .findFirstByApplicantIdAndStatusOrderByReviewedAtDesc(id, ApplicationStatus.APPROVED)
@@ -83,7 +84,7 @@ public class AlumniService {
                 // directory, same invariant as the list endpoint — treat it as "not found" rather than
                 // leaking a bare user row with empty education facts.
                 .orElseThrow(() -> new AlumniNotFoundException(id));
-        return AlumniProfileResponse.from(user, AlumnEducation.from(approvedApplication));
+        return AlumniProfileResponse.from(user, AlumnEducation.from(approvedApplication), showHiddenFields);
     }
 
     private Pageable sanitizePageable(Pageable pageable) {
