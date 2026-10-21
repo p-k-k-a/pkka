@@ -335,7 +335,6 @@ export function EventForm({ event }: EventFormProps) {
                 label="Szukaj lub dodaj tag"
                 placeholder="Szukaj lub dodaj tag, np. warsztat…"
                 allowCreate
-                reserveListSpace
                 format={(name) => `#${name}`}
               />
             </section>

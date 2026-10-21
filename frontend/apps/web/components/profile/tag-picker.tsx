@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { TAG_NAME_MAX_LENGTH, TAG_SUGGESTION_LIMIT } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
@@ -18,8 +18,6 @@ type TagPickerProps = {
   placeholder: string;
   allowCreate?: boolean;
   disabled?: boolean;
-  /** Keeps room below the field so the suggestions fit even at the bottom of a page. */
-  reserveListSpace?: boolean;
   format?: (name: string) => string;
 };
 
@@ -31,42 +29,28 @@ export function TagPicker({
   placeholder,
   allowCreate = false,
   disabled = false,
-  reserveListSpace = false,
   format = (name) => name,
 }: TagPickerProps) {
   const id = useId();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const spaceRef = useRef<HTMLDivElement>(null);
 
   const searchText = query.trim();
   const searchLower = searchText.toLowerCase();
-  const selectedKeys = new Set(value.map((name) => name.toLowerCase()));
+  const selectedNamesLower = new Set(value.map((name) => name.toLowerCase()));
 
-  const available = options.filter((name) => !selectedKeys.has(name.toLowerCase()));
+  const available = options.filter((name) => !selectedNamesLower.has(name.toLowerCase()));
   const matches = searchLower
     ? available.filter((name) => name.toLowerCase().includes(searchLower))
     : available.slice(0, TAG_SUGGESTION_LIMIT);
-  const exactMatch = options.find((name) => name.toLowerCase() === searchLower);
-  const canCreate =
-    allowCreate && searchLower !== "" && !exactMatch && !selectedKeys.has(searchLower);
-  const items = canCreate ? [...matches, searchText] : matches;
+  const existingNamesLower = new Set([...options, ...value].map((name) => name.toLowerCase()));
+  const offerNewTag = allowCreate && searchLower !== "" && !existingNamesLower.has(searchLower);
+  const items = offerNewTag ? [...matches, searchText] : matches;
   const isOpen = isFocused && items.length > 0;
 
-  useEffect(() => {
-    if (isOpen) spaceRef.current?.scrollIntoView({ block: "nearest" });
-  }, [isOpen]);
-
   function add(name: string) {
-    if (!disabled && !selectedKeys.has(name.toLowerCase())) onChange([...value, name]);
+    if (!disabled && !selectedNamesLower.has(name.toLowerCase())) onChange([...value, name]);
     setQuery("");
-  }
-
-  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    if (exactMatch) add(exactMatch);
-    else if (canCreate) add(searchText);
   }
 
   return (
@@ -113,7 +97,7 @@ export function TagPicker({
               disabled={disabled}
               autoComplete="off"
               maxLength={TAG_NAME_MAX_LENGTH}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(event) => event.key === "Enter" && event.preventDefault()}
             />
           </div>
         </PopoverAnchor>
@@ -128,18 +112,18 @@ export function TagPicker({
         >
           <ul>
             {items.map((name, index) => {
-              const isCreate = canCreate && index === matches.length;
+              const isNewTagRow = offerNewTag && index === matches.length;
               return (
-                <li key={isCreate ? "create" : name}>
+                <li key={isNewTagRow ? "create" : name}>
                   <button
                     type="button"
                     className={cn(
                       "hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
-                      isCreate && "font-semibold",
+                      isNewTagRow && "font-semibold",
                     )}
                     onClick={() => add(name)}
                   >
-                    {isCreate ? (
+                    {isNewTagRow ? (
                       <>
                         <Plus className="size-4" />
                         Dodaj „{format(name)}”
@@ -154,8 +138,6 @@ export function TagPicker({
           </ul>
         </PopoverContent>
       </Popover>
-
-      {reserveListSpace ? <div ref={spaceRef} aria-hidden className="h-56" /> : null}
     </div>
   );
 }

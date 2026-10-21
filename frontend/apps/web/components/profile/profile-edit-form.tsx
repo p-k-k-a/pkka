@@ -318,7 +318,6 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   placeholder="Wyszukaj lub dodaj…"
                   allowCreate
                   disabled={isSaving}
-                  reserveListSpace
                 />
               )}
             </section>
