@@ -155,7 +155,8 @@ class ProfileTagsIntegrationTest {
 
         mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Elixir OTP"));
+                .andExpect(jsonPath("$[0].name").value("Elixir OTP"))
+                .andExpect(jsonPath("$[0].usageCount").doesNotExist());
         assertThat(catalogNames()).contains("Elixir OTP");
     }
 

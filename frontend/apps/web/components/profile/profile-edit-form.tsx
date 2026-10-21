@@ -16,7 +16,7 @@ import {
   useUpdateMyTags,
   type ProfileResponse,
   type UpdateProfileRequest,
-  type UserTagCatalogResponse,
+  type UserTagResponse,
 } from "@pkka/api";
 import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
@@ -74,7 +74,7 @@ function Field({
 
 type EditFormFieldsProps = {
   profile: ProfileResponse;
-  catalog: UserTagCatalogResponse[];
+  catalog: UserTagResponse[];
   tagsError: boolean;
 };
 

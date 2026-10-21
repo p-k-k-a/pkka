@@ -21,11 +21,10 @@ public class UserTagController {
     @Operation(
             summary = "List all alumni skill tags with how many listed alumni have each",
             description = "Most used first, then alphabetical")
-    public List<UserTagCatalogResponse> listUserTags() {
+    public List<UserTagResponse> listUserTags() {
         return userTagRepository.findCatalog().stream()
-                .sorted(Comparator.comparingLong(UserTagCatalogResponse::usageCount)
-                        .reversed()
-                        .thenComparing(UserTagCatalogResponse::name, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing(UserTagResponse::usageCount, Comparator.reverseOrder())
+                        .thenComparing(UserTagResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 }

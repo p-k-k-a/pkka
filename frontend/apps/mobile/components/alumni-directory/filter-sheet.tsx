@@ -43,7 +43,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
 
   const tagsQuery = useListUserTags();
   const tagOptions: SelectOption[] = (tagsQuery.data?.data ?? [])
-    .filter((tag) => tag.usageCount > 0 || draft.tagIds.includes(tag.id))
+    .filter((tag) => (tag.usageCount ?? 0) > 0 || draft.tagIds.includes(tag.id))
     .map((tag) => ({ id: tag.id, label: tag.name }));
 
   useEffect(() => {
