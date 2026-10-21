@@ -18,10 +18,14 @@ public class UserTagController {
     private final UserTagRepository userTagRepository;
 
     @GetMapping
-    @Operation(summary = "List all alumni skill tags with how many listed alumni have each")
+    @Operation(
+            summary = "List all alumni skill tags with how many listed alumni have each",
+            description = "Most used first, then alphabetical")
     public List<UserTagCatalogResponse> listUserTags() {
         return userTagRepository.findCatalog().stream()
-                .sorted(Comparator.comparing(UserTagCatalogResponse::name, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparingLong(UserTagCatalogResponse::usageCount)
+                        .reversed()
+                        .thenComparing(UserTagCatalogResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 }

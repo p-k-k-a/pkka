@@ -1,8 +1,7 @@
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
 import type { UserTagCatalogResponse } from "@pkka/api";
-import { TAG_NAME_MAX_LENGTH, byTagPopularity } from "@pkka/domain";
-import { useMemo } from "react";
+import { TAG_NAME_MAX_LENGTH } from "@pkka/domain";
 
 type TagPickerProps = {
   catalog: UserTagCatalogResponse[];
@@ -19,14 +18,10 @@ export function TagPicker({
   loading = false,
   error = false,
 }: TagPickerProps) {
-  const options = useMemo<SelectOption[]>(() => {
-    const selectedByLower = new Map(value.map((name) => [name.toLowerCase(), name]));
-    const known = [...catalog]
-      .sort(byTagPopularity)
-      .map((tag) => selectedByLower.get(tag.name.toLowerCase()) ?? tag.name);
-    const added = value.filter((name) => !known.includes(name));
-    return [...known, ...added].map((name) => ({ id: name, label: name }));
-  }, [catalog, value]);
+  const selectedByLower = new Map(value.map((name) => [name.toLowerCase(), name]));
+  const known = catalog.map((tag) => selectedByLower.get(tag.name.toLowerCase()) ?? tag.name);
+  const added = value.filter((name) => !known.includes(name));
+  const options: SelectOption[] = [...known, ...added].map((name) => ({ id: name, label: name }));
 
   if (loading) {
     return <Text className="text-muted-foreground text-sm">Ładowanie umiejętności...</Text>;

@@ -4,13 +4,13 @@ import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react-native";
-import { useMemo, useRef, useState } from "react";
+import { TAG_SUGGESTION_LIMIT } from "@pkka/domain";
+import { useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, TextInput, View } from "react-native";
 
 // Caps the open dropdown so a long option list stays scrollable instead of
 // pushing the rest of the form (or sheet) off-screen.
 const LIST_MAX_HEIGHT = 288;
-const IDLE_LIMIT = 20;
 
 export type SelectOption = {
   id: string;
@@ -52,22 +52,15 @@ export function SearchMultiSelect({
   const [open, setOpen] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  const selected = useMemo(
-    () => options.filter((option) => value.includes(option.id)),
-    [options, value],
-  );
+  const selected = options.filter((option) => value.includes(option.id));
 
   const searchText = query.trim();
   const searchLower = searchText.toLowerCase();
   const exactMatch = options.find((option) => option.label.toLowerCase() === searchLower);
 
-  const filtered = useMemo(
-    () =>
-      searchLower
-        ? options.filter((option) => option.label.toLowerCase().includes(searchLower))
-        : options.slice(0, IDLE_LIMIT),
-    [options, searchLower],
-  );
+  const filtered = searchLower
+    ? options.filter((option) => option.label.toLowerCase().includes(searchLower))
+    : options.slice(0, TAG_SUGGESTION_LIMIT);
 
   const canCreate = onCreate !== undefined && searchLower !== "" && !exactMatch;
 
@@ -206,7 +199,7 @@ export function SearchMultiSelect({
                   </Text>
                 </Pressable>
               ) : null}
-              {!searchLower && options.length > IDLE_LIMIT ? (
+              {!searchLower && options.length > TAG_SUGGESTION_LIMIT ? (
                 <View className="border-border border-t px-3 py-3">
                   <Text className="text-muted-foreground text-xs">
                     Wpisz nazwę, aby znaleźć pozostałe.

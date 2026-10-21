@@ -2,14 +2,12 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
-import { TAG_NAME_MAX_LENGTH } from "@pkka/domain";
+import { TAG_NAME_MAX_LENGTH, TAG_SUGGESTION_LIMIT } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
-const IDLE_LIMIT = 20;
 
 type TagPickerProps = {
   /** Most popular first: with an empty field only the first 20 are listed. */
@@ -48,7 +46,7 @@ export function TagPicker({
   const available = options.filter((name) => !selectedKeys.has(name.toLowerCase()));
   const matches = searchLower
     ? available.filter((name) => name.toLowerCase().includes(searchLower))
-    : available.slice(0, IDLE_LIMIT);
+    : available.slice(0, TAG_SUGGESTION_LIMIT);
   const exactMatch = options.find((name) => name.toLowerCase() === searchLower);
   const canCreate =
     allowCreate && searchLower !== "" && !exactMatch && !selectedKeys.has(searchLower);

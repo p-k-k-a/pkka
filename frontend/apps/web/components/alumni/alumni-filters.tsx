@@ -5,7 +5,6 @@ import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
   EMPTY_ALUMNI_FILTERS,
-  byTagPopularity,
   countActiveAlumniFilters,
   type AlumniFilters,
 } from "@pkka/domain";
@@ -87,10 +86,7 @@ export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps)
           </p>
         ) : (
           <TagPicker
-            options={catalog
-              .filter((tag) => tag.usageCount > 0)
-              .sort(byTagPopularity)
-              .map((tag) => tag.name)}
+            options={catalog.filter((tag) => tag.usageCount > 0).map((tag) => tag.name)}
             value={catalog.filter((tag) => value.tagIds.includes(tag.id)).map((tag) => tag.name)}
             onChange={(names) =>
               onChange({

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -217,6 +218,22 @@ class ProfileTagsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name=='Elixir')].usageCount").value(contains(2)))
                 .andExpect(jsonPath("$[?(@.name=='Blockchain')].usageCount").value(contains(0)));
+    }
+
+    @Test
+    void catalogListsTheMostUsedTagsFirst() throws Exception {
+        putTags(user, "{\"names\": [\"Zig\", \"Elixir\"]}");
+        putTags(anotherApprovedAlumnus(true), "{\"names\": [\"Zig\"]}");
+
+        String body = mockMvc.perform(get("/api/user-tags").with(JwtTestSupport.asUser()))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        List<String> names = JsonPath.read(body, "$[*].name");
+
+        assertThat(names.indexOf("Zig")).isLessThan(names.indexOf("Elixir"));
+        assertThat(names.indexOf("Elixir")).isLessThan(names.indexOf("Blockchain"));
     }
 
     @Test

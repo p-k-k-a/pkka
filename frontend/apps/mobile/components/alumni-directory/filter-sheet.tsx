@@ -7,14 +7,13 @@ import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
   EMPTY_ALUMNI_FILTERS,
-  byTagPopularity,
   type AlumniFilters,
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useListUserTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
 type FilterSheetProps = {
@@ -43,14 +42,9 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
   const [openCount, setOpenCount] = useState(0);
 
   const tagsQuery = useListUserTags();
-  const tagOptions = useMemo<SelectOption[]>(
-    () =>
-      (tagsQuery.data?.data ?? [])
-        .filter((tag) => tag.usageCount > 0 || draft.tagIds.includes(tag.id))
-        .sort(byTagPopularity)
-        .map((tag) => ({ id: tag.id, label: tag.name })),
-    [tagsQuery.data, draft.tagIds],
-  );
+  const tagOptions: SelectOption[] = (tagsQuery.data?.data ?? [])
+    .filter((tag) => tag.usageCount > 0 || draft.tagIds.includes(tag.id))
+    .map((tag) => ({ id: tag.id, label: tag.name }));
 
   useEffect(() => {
     if (visible) {

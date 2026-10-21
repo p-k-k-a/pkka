@@ -32,12 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
-import {
-  byTagPopularity,
-  canonicalizeProfileUrl,
-  githubUrlError,
-  linkedinUrlError,
-} from "@pkka/domain";
+import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
@@ -316,7 +311,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                 </Alert>
               ) : (
                 <TagPicker
-                  options={catalog.toSorted(byTagPopularity).map((tag) => tag.name)}
+                  options={catalog.map((tag) => tag.name)}
                   value={tagNames}
                   onChange={setTagNames}
                   label="Szukaj lub dodaj umiejętność"
