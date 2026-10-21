@@ -50,10 +50,10 @@ public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean revealHidden) {
-        boolean showName = revealHidden || user.isShowName();
-        boolean showEmail = revealHidden || user.isShowEmail();
-        boolean showDiscord = revealHidden || user.isShowDiscord();
+    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean showHiddenFields) {
+        boolean showName = showHiddenFields || user.isShowName();
+        boolean showEmail = showHiddenFields || user.isShowEmail();
+        boolean showDiscord = showHiddenFields || user.isShowDiscord();
         return new AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,

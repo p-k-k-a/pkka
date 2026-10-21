@@ -33,11 +33,11 @@ public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
 
-    public static AlumniListItemResponse from(User user, boolean revealHidden) {
+    public static AlumniListItemResponse from(User user, boolean showHiddenFields) {
         // Defensive only for non-admins: the directory query already restricts them to show_name = true
         // (AlumniSpecifications.hasVisibleName()). Kept so the DTO cannot leak a hidden name if it is ever built
         // outside that query.
-        boolean showName = revealHidden || user.isShowName();
+        boolean showName = showHiddenFields || user.isShowName();
         return new AlumniListItemResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
