@@ -21,7 +21,7 @@ import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
  */
 @Schema(
         description =
-                "Public alumni profile visible to verified alumni; fields hidden by the owner's visibility settings are null")
+                "Public alumni profile visible to verified alumni and admins; fields hidden by the owner's visibility settings are null, except for admins")
 public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
@@ -50,10 +50,10 @@ public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static AlumniProfileResponse from(User user, AlumnEducation education) {
-        boolean showName = user.isShowName();
-        boolean showEmail = user.isShowEmail();
-        boolean showDiscord = user.isShowDiscord();
+    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean revealHidden) {
+        boolean showName = revealHidden || user.isShowName();
+        boolean showEmail = revealHidden || user.isShowEmail();
+        boolean showDiscord = revealHidden || user.isShowDiscord();
         return new AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
@@ -73,6 +73,6 @@ public record AlumniProfileResponse(
                         .map(UserTagResponse::from)
                         .sorted(Comparator.comparing(UserTagResponse::name))
                         .toList(),
-                new ProfileVisibility(showName, showEmail, showDiscord));
+                new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
     }
 }

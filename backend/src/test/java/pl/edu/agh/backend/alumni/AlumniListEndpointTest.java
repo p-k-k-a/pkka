@@ -467,6 +467,25 @@ class AlumniListEndpointTest {
     }
 
     @Test
+    void admin_seesAndFindsAlumniHidingTheirName() throws Exception {
+        String marker = UUID.randomUUID().toString().substring(0, 8);
+        User hidden = newUser(UUID.randomUUID().toString(), "Engineer-" + marker, "Acme");
+        hidden.setFirstName("Zdzisław" + marker);
+        hidden.setLastName("Nowak");
+        hidden.setShowName(false);
+        userRepository.save(hidden);
+        flushAndClearSession();
+
+        mockMvc.perform(get("/api/alumni")
+                        .param("q", "Zdzisław" + marker)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].firstName").value("Zdzisław" + marker))
+                .andExpect(jsonPath("$.content[0].lastName").value("Nowak"));
+    }
+
+    @Test
     void combinedFilters_areCombinedWithAnd() throws Exception {
         User match = newUser(UUID.randomUUID().toString(), "Backend Engineer", "Acme", pythonTag);
         newUser(UUID.randomUUID().toString(), "Backend Engineer", "Acme", devopsTag);

@@ -191,6 +191,24 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
+    void adminSeesFieldsHiddenByVisibilitySettings() throws Exception {
+        alumn.setShowName(false);
+        alumn.setShowEmail(false);
+        alumn.setShowDiscord(false);
+        userRepository.save(alumn);
+
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId())
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Jan"))
+                .andExpect(jsonPath("$.lastName").value("Kowalski"))
+                .andExpect(jsonPath("$.email").value("jan.kowalski@example.com"))
+                .andExpect(jsonPath("$.discordId").value("123456789012345678"))
+                .andExpect(jsonPath("$.visibility.name").value(false))
+                .andExpect(jsonPath("$.visibility.email").value(false));
+    }
+
+    @Test
     void updatesOwnProfileViaProfileEndpoint() throws Exception {
         mockMvc.perform(patch("/api/profiles/me")
                         .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))

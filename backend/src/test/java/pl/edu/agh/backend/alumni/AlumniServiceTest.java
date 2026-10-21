@@ -33,8 +33,8 @@ class AlumniServiceTest {
 
     @Test
     void rejectsUnsupportedSortProperty() {
-        assertThatThrownBy(() ->
-                        alumniService.search(null, null, null, null, null, PageRequest.of(0, 20, Sort.by("email"))))
+        assertThatThrownBy(() -> alumniService.search(
+                        null, null, null, null, null, false, PageRequest.of(0, 20, Sort.by("email"))))
                 .isInstanceOf(ResponseStatusException.class)
                 .extracting(ex -> ((ResponseStatusException) ex).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
@@ -45,7 +45,7 @@ class AlumniServiceTest {
         when(userRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(org.springframework.data.domain.Page.empty());
 
-        alumniService.search(null, null, null, null, null, PageRequest.of(0, 500));
+        alumniService.search(null, null, null, null, null, false, PageRequest.of(0, 500));
 
         org.mockito.Mockito.verify(userRepository)
                 .findAll(
@@ -62,6 +62,6 @@ class AlumniServiceTest {
                         id, pl.edu.agh.backend.application.ApplicationStatus.APPROVED))
                 .thenReturn(java.util.Optional.empty());
 
-        assertThatThrownBy(() -> alumniService.getProfile(id)).isInstanceOf(AlumniNotFoundException.class);
+        assertThatThrownBy(() -> alumniService.getProfile(id, false)).isInstanceOf(AlumniNotFoundException.class);
     }
 }
