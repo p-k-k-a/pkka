@@ -1,7 +1,6 @@
 package pl.edu.agh.backend.user.profile;
 
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -13,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 import pl.edu.agh.backend.user.UserTag;
@@ -90,17 +90,18 @@ public class ProfileService {
     }
 
     @Transactional
-    public List<UserTagResponse> updateTags(String keycloakId, Set<UUID> tagIds) {
+    public List<UserTagResponse> updateTags(String keycloakId, Set<String> names) {
         User user = loadWithTags(keycloakId);
-        List<UserTag> found = userTagRepository.findAllById(tagIds);
-        if (found.size() != tagIds.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag IDs are invalid");
-        }
+        names.forEach(name -> userTagRepository.insertIfAbsent(UUID.randomUUID(), name));
+        List<UserTag> tags = names.isEmpty()
+                ? List.of()
+                : userTagRepository.findByNameKeyIn(
+                        names.stream().map(TagNames::key).toList());
         user.getTags().clear();
-        user.getTags().addAll(new HashSet<>(found));
-        return user.getTags().stream()
+        user.getTags().addAll(tags);
+        return tags.stream()
                 .map(UserTagResponse::from)
-                .sorted(Comparator.comparing(UserTagResponse::name))
+                .sorted(Comparator.comparing(UserTagResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
@@ -46,15 +47,15 @@ public class ProfileController {
     }
 
     @PutMapping("/tags")
-    @Operation(summary = "Replace own tags (full replacement of the assigned set)")
+    @Operation(summary = "Replace own tags, creating any named tag that is not in the catalog yet")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(
                 responseCode = "400",
-                description = "One or more tag IDs do not exist",
+                description = "Invalid tag name or more than " + TagNames.MAX_PER_USER + " tags",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(caller.requireKeycloakId(), request.tagIds());
+        return profileService.updateTags(caller.requireKeycloakId(), request.names());
     }
 }
