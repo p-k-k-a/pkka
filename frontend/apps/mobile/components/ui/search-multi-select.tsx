@@ -56,13 +56,14 @@ export function SearchMultiSelect({
 
   const searchText = query.trim();
   const searchLower = searchText.toLowerCase();
-  const exactMatch = options.find((option) => option.label.toLowerCase() === searchLower);
 
   const filtered = searchLower
     ? options.filter((option) => option.label.toLowerCase().includes(searchLower))
     : options.slice(0, TAG_SUGGESTION_LIMIT);
 
-  const canCreate = onCreate !== undefined && searchLower !== "" && !exactMatch;
+  const existingNamesLower = new Set(options.map((option) => option.label.toLowerCase()));
+  const offerNewTag =
+    onCreate !== undefined && searchLower !== "" && !existingNamesLower.has(searchLower);
 
   // Compute from `prev` (the freshest value) rather than the captured `value`
   // prop, so a memoized onPress closure can never act on a stale snapshot.
@@ -73,9 +74,8 @@ export function SearchMultiSelect({
     });
   };
 
-  const submit = () => {
-    if (exactMatch && !value.includes(exactMatch.id)) toggle(exactMatch.id);
-    else if (canCreate) onCreate(searchText);
+  const addNewTag = () => {
+    onCreate?.(searchText);
     setQuery("");
   };
 
@@ -116,8 +116,6 @@ export function SearchMultiSelect({
           onChangeText={setQuery}
           onFocus={() => setOpen(true)}
           onBlur={close}
-          submitBehavior="submit"
-          onSubmitEditing={submit}
           maxLength={maxLength}
           placeholder={placeholder}
           autoCapitalize="none"
@@ -151,7 +149,7 @@ export function SearchMultiSelect({
       </View>
 
       {open ? (
-        filtered.length === 0 && !canCreate ? (
+        filtered.length === 0 && !offerNewTag ? (
           <View className="border-border rounded-md border px-3 py-4">
             <Text className="text-muted-foreground text-sm">{emptyText}</Text>
           </View>
@@ -183,9 +181,9 @@ export function SearchMultiSelect({
                   </Pressable>
                 );
               })}
-              {canCreate ? (
+              {offerNewTag ? (
                 <Pressable
-                  onPress={submit}
+                  onPress={addNewTag}
                   accessibilityRole="button"
                   accessibilityLabel={`Dodaj: ${searchText}`}
                   className={cn(
@@ -198,13 +196,6 @@ export function SearchMultiSelect({
                     Dodaj „{searchText}”
                   </Text>
                 </Pressable>
-              ) : null}
-              {!searchLower && options.length > TAG_SUGGESTION_LIMIT ? (
-                <View className="border-border border-t px-3 py-3">
-                  <Text className="text-muted-foreground text-xs">
-                    Wpisz nazwę, aby znaleźć pozostałe.
-                  </Text>
-                </View>
               ) : null}
             </ScrollView>
           </View>
