@@ -55,6 +55,16 @@ public class NotificationService {
                 .collect(Collectors.toSet());
     }
 
+    public void announcePromotion(Event event, UUID userId) {
+        String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
+        push(
+                deviceTokenRepository.findByUserIdIn(List.of(userId)),
+                NotificationType.REGISTRATION_PROMOTED,
+                "Zwolniło się miejsce",
+                "Zostałeś automatycznie zapisany na wydarzenie „%s”, %s".formatted(event.getTitle(), startsAt),
+                event.getSlug());
+    }
+
     private Set<String> push(
             List<DeviceToken> devices, NotificationType type, String title, String body, String target) {
         if (devices.isEmpty()) {
