@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserTagResponse;
+import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
 
 /**
  * Alumni directory list item — a lighter view than {@link AlumniProfileResponse}, meant for browsing many
@@ -31,7 +32,8 @@ public record AlumniListItemResponse(
         Integer graduationYear,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
+        @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
     public static AlumniListItemResponse from(User user, boolean showHiddenFields) {
         // Defensive only for non-admins: the directory query already restricts them to show_name = true
@@ -51,6 +53,7 @@ public record AlumniListItemResponse(
                 user.getTags().stream()
                         .map(UserTagResponse::from)
                         .sorted(Comparator.comparing(UserTagResponse::name))
-                        .toList());
+                        .toList(),
+                new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
     }
 }

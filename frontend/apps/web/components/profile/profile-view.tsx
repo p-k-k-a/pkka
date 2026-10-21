@@ -51,7 +51,12 @@ export function ProfileView(props: ProfileViewProps) {
   const contacts = getProfileContacts(profile);
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
   const role = [profile.currentPosition, profile.company].filter(Boolean).join(" @ ");
-  const nameHidden = isOwn && !profile.visibility.name && fullName.length > 0;
+  const nameHidden = !profile.visibility.name && fullName.length > 0;
+  const seesHiddenFields =
+    !isOwn &&
+    (nameHidden ||
+      (!profile.visibility.email && Boolean(profile.email)) ||
+      (!profile.visibility.discord && Boolean(profile.discordId)));
 
   // Someone else's empty section is just noise, while the owner gets a nudge to fill it.
   const showBio = isOwn || Boolean(profile.bio);
@@ -195,10 +200,12 @@ export function ProfileView(props: ProfileViewProps) {
               </ProfileAside>
             ) : null}
 
-            {isOwn ? (
+            {isOwn || seesHiddenFields ? (
               <ProfileAside title="Widoczność">
                 <p className="text-muted-foreground -mt-2 text-[13px]">
-                  Tak Twoje dane widzą pozostali alumni.
+                  {isOwn
+                    ? "Tak Twoje dane widzą pozostali alumni."
+                    : "Ukryte dane widzisz tylko jako admin, pozostali alumni ich nie widzą."}
                 </p>
                 <VisibilitySummary
                   visibility={profile.visibility}

@@ -482,7 +482,8 @@ class AlumniListEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].firstName").value("Zdzisław" + marker))
-                .andExpect(jsonPath("$.content[0].lastName").value("Nowak"));
+                .andExpect(jsonPath("$.content[0].lastName").value("Nowak"))
+                .andExpect(jsonPath("$.content[0].visibility.name").value(false));
     }
 
     @Test
