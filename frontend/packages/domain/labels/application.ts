@@ -1,10 +1,4 @@
-import {
-  ConsentType,
-  Faculty,
-  MeetingPreference,
-  StudyType,
-  type ApplicationStatus,
-} from "@pkka/api";
+import { Faculty, MeetingPreference, StudyType, type ApplicationStatus } from "@pkka/api";
 
 const FACULTY_LABELS: Record<Faculty, string> = {
   WE: "Wydział Elektromechaniczny (1952-1957)",
@@ -28,11 +22,6 @@ const MEETING_PREFERENCE_LABELS: Record<MeetingPreference, string> = {
   HYBRID: "Hybrydowo",
 };
 
-const CONSENT_LABELS: Record<ConsentType, string> = {
-  REGULATIONS_PRIVACY: "Akceptuję regulamin oraz politykę prywatności",
-  GDPR_DATA_PROCESSING: "Wyrażam zgodę na przetwarzanie moich danych osobowych (RODO)",
-};
-
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   UNDER_REVIEW: "W trakcie weryfikacji",
   APPROVED: "Zaakceptowany",
@@ -51,10 +40,6 @@ export function meetingPreferenceLabel(preference: MeetingPreference): string {
   return MEETING_PREFERENCE_LABELS[preference];
 }
 
-export function consentLabel(consent: ConsentType): string {
-  return CONSENT_LABELS[consent];
-}
-
 export function statusLabel(status: ApplicationStatus): string {
   return STATUS_LABELS[status];
 }
@@ -71,4 +56,3 @@ export function toOptions<T extends string>(
 export const FACULTY_OPTIONS = toOptions(Faculty, facultyLabel);
 export const STUDY_TYPE_OPTIONS = toOptions(StudyType, studyTypeLabel);
 export const MEETING_PREFERENCE_OPTIONS = toOptions(MeetingPreference, meetingPreferenceLabel);
-export const CONSENT_OPTIONS = toOptions(ConsentType, consentLabel);

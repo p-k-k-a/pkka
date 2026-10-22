@@ -13,6 +13,7 @@ import {
 import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProfileAside, ProfileAsideItem } from "@/components/profile/profile-aside";
+import { PrivacyConsentsAside } from "@/components/profile/privacy-consents-aside";
 import { ProfileContactList } from "@/components/profile/profile-contact-list";
 import { SectionHeading } from "@/components/profile/section-heading";
 import { SkillChips } from "@/components/profile/skill-chips";
@@ -206,6 +207,8 @@ export function ProfileView(props: ProfileViewProps) {
                 />
               </ProfileAside>
             ) : null}
+
+            {isOwn ? <PrivacyConsentsAside /> : null}
           </div>
         </div>
       </div>

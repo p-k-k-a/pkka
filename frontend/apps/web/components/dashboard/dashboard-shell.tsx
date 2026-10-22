@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { ReacceptanceGate } from "@/components/legal/reacceptance-gate";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -30,7 +31,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <DashboardHeader />
       <div className="flex min-h-0 flex-1">
         <DashboardSidebar />
-        <main className="relative min-w-0 flex-1 overflow-y-auto">{children}</main>
+        <main className="relative min-w-0 flex-1 overflow-y-auto">
+          <ReacceptanceGate>{children}</ReacceptanceGate>
+        </main>
       </div>
     </div>
   );

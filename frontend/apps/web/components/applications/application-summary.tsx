@@ -1,11 +1,5 @@
 import type { ApplicationResponse } from "@pkka/api";
-import {
-  consentLabel,
-  facultyLabel,
-  formatDateTime,
-  meetingPreferenceLabel,
-  studyTypeLabel,
-} from "@pkka/domain";
+import { facultyLabel, formatDateTime, meetingPreferenceLabel, studyTypeLabel } from "@pkka/domain";
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -27,7 +21,6 @@ export function ApplicationSummary({
 }) {
   const interests = application.interests ?? [];
   const meetingPreferences = application.meetingPreferences ?? [];
-  const consents = application.consents ?? [];
 
   return (
     <div className="space-y-3">
@@ -51,21 +44,6 @@ export function ApplicationSummary({
       <SummaryRow
         label="Chęć współtworzenia klubu"
         value={application.coCreationInterest ? "Tak" : "Nie"}
-      />
-      <SummaryRow label="Newsletter" value={application.newsletterSubscription ? "Tak" : "Nie"} />
-      <SummaryRow
-        label="Zgody"
-        value={
-          consents.length > 0 ? (
-            <span className="flex flex-col gap-1 sm:items-end">
-              {consents.map((consent) => (
-                <span key={consent}>{consentLabel(consent)}</span>
-              ))}
-            </span>
-          ) : (
-            "-"
-          )
-        }
       />
       <SummaryRow label="Data złożenia" value={formatDateTime(application.createdAt)} />
       {application.reviewedAt ? (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
+import { PRIVACY_PATH, TERMS_PATH } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -108,6 +109,24 @@ export function DashboardSidebar() {
           })
         )}
       </nav>
+      <div className="text-muted-foreground mt-auto flex flex-col gap-1 p-4 pl-7 text-xs">
+        <Link
+          href={TERMS_PATH}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          Regulamin
+        </Link>
+        <Link
+          href={PRIVACY_PATH}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:underline"
+        >
+          Ochrona danych osobowych
+        </Link>
+      </div>
     </aside>
   );
 }

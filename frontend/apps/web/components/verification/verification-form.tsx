@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   ApiError,
   useCreateApplication,
-  type ConsentType,
+  useListCurrentLegalDocuments,
   type CreateApplicationRequest,
   type Faculty,
   type MeetingPreference,
@@ -16,15 +16,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { ConsentCheckboxList } from "@/components/legal/consent-checkbox-list";
+import { PrivacyNoticeSummary } from "@/components/legal/privacy-notice-summary";
 import {
   graduationYearError,
   graduationYearMax,
-  hasRequiredConsents,
   isGraduationYearValid,
+  isOutdatedDocumentError,
+  missingRequiredDocuments,
+  sortLegalDocuments,
+  toggleInSet,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
-  CONSENT_OPTIONS,
+  OUTDATED_DOCUMENTS_MESSAGE,
   FACULTY_OPTIONS,
   GRADUATION_YEAR_MIN,
   MEETING_PREFERENCE_OPTIONS,
@@ -44,9 +50,11 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
   const [interests, setInterests] = useState("");
   const [meetingPreferences, setMeetingPreferences] = useState<MeetingPreference[]>([]);
   const [coCreationInterest, setCoCreationInterest] = useState(false);
-  const [newsletterSubscription, setNewsletterSubscription] = useState(false);
-  const [consents, setConsents] = useState<ConsentType[]>([]);
+  const [acceptedIds, setAcceptedIds] = useState<ReadonlySet<string>>(new Set());
   const [formError, setFormError] = useState<string | null>(null);
+
+  const legalDocuments = useListCurrentLegalDocuments();
+  const documents = sortLegalDocuments(legalDocuments.data?.data ?? []);
 
   const { mutate, isPending } = useCreateApplication<ApiError>({
     mutation: {
@@ -54,7 +62,12 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
         void onSubmitted?.();
       },
       onError: (error) => {
-        if (error instanceof ApiError && error.status === 409) {
+        if (isOutdatedDocumentError(error)) {
+          // The ticks were for texts no longer in force, so they must be given again.
+          setAcceptedIds(new Set());
+          void legalDocuments.refetch();
+          setFormError(OUTDATED_DOCUMENTS_MESSAGE);
+        } else if (error instanceof ApiError && error.status === 409) {
           setFormError(APPLICATION_CONFLICT_MESSAGE);
         } else {
           setFormError(APPLICATION_SUBMIT_ERROR_MESSAGE);
@@ -72,8 +85,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
       return;
     }
 
-    if (!hasRequiredConsents(consents)) {
-      setFormError("Aby złożyć wniosek, musisz zaakceptować wymagane zgody.");
+    // Ids of a version replaced since they were ticked drop out here and count as missing.
+    if (missingRequiredDocuments(documents, acceptedIds).length > 0) {
+      setFormError("Aby złożyć wniosek, musisz zaakceptować wymagane dokumenty.");
       return;
     }
 
@@ -95,8 +109,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
         .filter(Boolean),
       meetingPreferences,
       coCreationInterest,
-      newsletterSubscription,
-      consents,
+      acceptedDocumentIds: documents
+        .filter((document) => acceptedIds.has(document.id))
+        .map((document) => document.id),
     };
 
     mutate({ data: payload });
@@ -233,37 +248,41 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
             />
             Chcę aktywnie współtworzyć działania klubu
           </Label>
-          <Label htmlFor="newsletterSubscription" className="font-normal">
-            <Checkbox
-              id="newsletterSubscription"
-              checked={newsletterSubscription}
-              onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
-            />
-            Chcę zapisać się do newslettera
-          </Label>
         </div>
 
-        <fieldset className="space-y-3">
-          <legend className="text-foreground text-sm font-medium">
-            Zgody <span className="text-destructive">*</span>
+        <fieldset className="space-y-4">
+          <legend className="text-foreground mb-3 text-sm font-medium">
+            Zgody i oświadczenia <span className="text-destructive">*</span>
           </legend>
-          <div className="flex flex-col gap-2">
-            {CONSENT_OPTIONS.map((option) => (
-              <Label
-                key={option.value}
-                htmlFor={`consent-${option.value}`}
-                className="items-start font-normal"
+          {legalDocuments.isPending ? (
+            <div className="space-y-3">
+              <Skeleton className="h-5 w-full rounded-lg" />
+              <Skeleton className="h-5 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          ) : legalDocuments.isError ? (
+            <div className="space-y-2">
+              <p className="text-destructive text-sm font-medium">
+                Nie udało się wczytać dokumentów do akceptacji.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={legalDocuments.isFetching}
+                onClick={() => void legalDocuments.refetch()}
               >
-                <Checkbox
-                  id={`consent-${option.value}`}
-                  className="mt-0.5"
-                  checked={consents.includes(option.value)}
-                  onCheckedChange={() => setConsents((prev) => toggle(prev, option.value))}
-                />
-                {option.label}
-              </Label>
-            ))}
-          </div>
+                Spróbuj ponownie
+              </Button>
+            </div>
+          ) : (
+            <ConsentCheckboxList
+              documents={documents}
+              acceptedIds={acceptedIds}
+              onToggle={(documentId) => setAcceptedIds((prev) => toggleInSet(prev, documentId))}
+            />
+          )}
+          <PrivacyNoticeSummary />
         </fieldset>
 
         {formError ? <p className="text-destructive text-sm font-medium">{formError}</p> : null}
@@ -272,7 +291,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
           type="submit"
           size="xl"
           className="w-full rounded-xl font-semibold"
-          disabled={isPending}
+          disabled={isPending || documents.length === 0}
         >
           {isPending ? "Wysyłanie…" : "Wyślij wniosek"}
         </Button>
