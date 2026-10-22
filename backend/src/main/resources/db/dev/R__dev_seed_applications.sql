@@ -72,3 +72,13 @@ SELECT
     now() - make_interval(hours => g)
 FROM generate_series(1, 25) AS g
 ON CONFLICT (id) DO NOTHING;
+
+-- Accepted the documents currently in force, so the re-acceptance screen does not block seeded users.
+INSERT INTO consent_records (id, user_id, document_id, source, granted_at)
+SELECT gen_random_uuid(), ('a0000000-0000-4000-8000-' || lpad(to_hex(g), 12, '0'))::uuid, d.id, 'APPLICATION', now()
+FROM generate_series(1, 25) AS g
+CROSS JOIN legal_documents d
+WHERE d.type IN ('TERMS', 'PRIVACY_NOTICE', 'MEMBERSHIP_CONSENT')
+  AND d.version = (SELECT max(version) FROM legal_documents newer
+                   WHERE newer.type = d.type AND newer.published_at <= now())
+ON CONFLICT (user_id, document_id) WHERE withdrawn_at IS NULL DO NOTHING;
