@@ -22,10 +22,14 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Submit an alumnus application for the current user")
     @ApiResponse(responseCode = "201", description = "Application created")
-    @ApiResponse(responseCode = "400", description = "Validation failed", content = @Content)
+    @ApiResponse(
+            responseCode = "400",
+            description = "Validation failed, or a required document is not accepted (listed in missing)",
+            content = @Content)
     @ApiResponse(
             responseCode = "409",
-            description = "The user already has an application under review",
+            description = "The user already has an application under review, or an accepted document is not the"
+                    + " version in force (reason OUTDATED_DOCUMENT)",
             content = @Content)
     public ApplicationResponse createApplication(@Valid @RequestBody CreateApplicationRequest request, Caller caller) {
         return applicationService.create(caller, request);

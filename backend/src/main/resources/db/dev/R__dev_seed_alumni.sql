@@ -90,7 +90,7 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO applications (
     id, applicant_id, status, faculty, field_of_study, study_type, graduation_year,
     phone_number, interests, meeting_preferences, co_creation_interest,
-    newsletter_subscription, reviewed_at, created_at, updated_at, version
+    reviewed_at, created_at, updated_at, version
 )
 SELECT
     ('e0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid,
@@ -110,7 +110,6 @@ SELECT
     ARRAY['AI', 'mentoring']::varchar(100)[],
     ARRAY[(ARRAY['ONLINE', 'IN_PERSON_KRAKOW', 'HYBRID'])[1 + ((s.n - 1) % 3)]]::varchar(20)[],
     (s.n % 2 = 0),
-    (s.n % 3 = 0),
     now() - make_interval(days => s.n * 20),
     now() - make_interval(days => s.n + 400),
     now() - make_interval(days => s.n * 20),
@@ -121,30 +120,14 @@ ON CONFLICT (id) DO UPDATE SET
     reviewed_at     = EXCLUDED.reviewed_at,
     updated_at      = now();
 
-INSERT INTO application_consents (id, application_id, type, granted_at)
-SELECT
-    ('f0000000-0000-4000-8000-' || lpad(to_hex(s.n * 2 - 1), 12, '0'))::uuid,
-    ('e0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid,
-    'REGULATIONS_PRIVACY',
-    now() - make_interval(days => s.n + 400)
-FROM seed_alumni s
-ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO application_consents (id, application_id, type, granted_at)
-SELECT
-    ('f0000000-0000-4000-8000-' || lpad(to_hex(s.n * 2), 12, '0'))::uuid,
-    ('e0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid,
-    'GDPR_DATA_PROCESSING',
-    now() - make_interval(days => s.n + 400)
-FROM seed_alumni s
-ON CONFLICT (id) DO NOTHING;
 
 -- Accepted the documents currently in force, so the re-acceptance screen does not block seeded users.
 INSERT INTO consent_records (id, user_id, document_id, source, granted_at)
 SELECT gen_random_uuid(), ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid, d.id, 'APPLICATION', now()
 FROM seed_alumni s
 CROSS JOIN legal_documents d
-WHERE d.type IN ('TERMS', 'PRIVACY_NOTICE', 'MEMBERSHIP_CONSENT')
+WHERE (d.type IN ('TERMS', 'PRIVACY_NOTICE', 'MEMBERSHIP_CONSENT') OR (d.type = 'NEWSLETTER_CONSENT' AND s.n % 3 = 0))
   AND d.version = (SELECT max(version) FROM legal_documents newer
                    WHERE newer.type = d.type AND newer.published_at <= now())
 ON CONFLICT (user_id, document_id) WHERE withdrawn_at IS NULL DO NOTHING;

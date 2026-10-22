@@ -26,4 +26,6 @@ public interface LegalDocumentRepository extends JpaRepository<LegalDocument, UU
                   where newer.type = d.type and newer.publishedAt <= :now)
             """)
     List<LegalDocument> findAllCurrent(@Param("now") Instant now);
+
+    List<LegalDocument> findByRequiresReacceptanceTrueAndPublishedAtLessThanEqual(Instant now);
 }

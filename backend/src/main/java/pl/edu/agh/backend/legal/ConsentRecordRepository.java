@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.legal;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,6 @@ public interface ConsentRecordRepository extends JpaRepository<ConsentRecord, UU
     List<ConsentRecord> findActiveByUserId(@Param("userId") UUID userId);
 
     boolean existsByUserIdAndDocumentIdAndWithdrawnAtIsNull(UUID userId, UUID documentId);
+
+    Optional<ConsentRecord> findByUserIdAndDocumentIdAndWithdrawnAtIsNull(UUID userId, UUID documentId);
 }

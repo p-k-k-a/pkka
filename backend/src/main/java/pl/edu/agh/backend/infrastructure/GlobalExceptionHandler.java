@@ -17,6 +17,9 @@ import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
+import pl.edu.agh.backend.legal.ConsentConflictException;
+import pl.edu.agh.backend.legal.LegalDocumentNotFoundException;
+import pl.edu.agh.backend.legal.MissingRequiredConsentException;
 import pl.edu.agh.backend.material.MaterialNotFoundException;
 import pl.edu.agh.backend.notifications.DeviceTokenConflictException;
 import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
@@ -101,6 +104,30 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleApplicationAlreadyExists(ApplicationAlreadyExistsException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Application already exists");
+        return problem;
+    }
+
+    @ExceptionHandler(LegalDocumentNotFoundException.class)
+    public ProblemDetail handleLegalDocumentNotFound(LegalDocumentNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Legal document not found");
+        return problem;
+    }
+
+    @ExceptionHandler(ConsentConflictException.class)
+    public ProblemDetail handleConsentConflict(ConsentConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Consent conflict");
+        problem.setProperty("reason", ex.getReason().name());
+        return problem;
+    }
+
+    @ExceptionHandler(MissingRequiredConsentException.class)
+    public ProblemDetail handleMissingRequiredConsent(MissingRequiredConsentException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Required consent missing");
+        problem.setProperty(
+                "missing", ex.getMissing().stream().map(Enum::name).sorted().toList());
         return problem;
     }
 

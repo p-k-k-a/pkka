@@ -74,8 +74,6 @@ class AdminApplicationIntegrationTest {
                 .graduationYear(2019)
                 .phoneNumber("+48111222333")
                 .build();
-        pendingApplication.addConsent(ConsentType.REGULATIONS_PRIVACY, java.time.Instant.now());
-        pendingApplication.addConsent(ConsentType.GDPR_DATA_PROCESSING, java.time.Instant.now());
         pendingApplication = applicationRepository.save(pendingApplication);
     }
 
