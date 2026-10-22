@@ -1,6 +1,5 @@
 package pl.edu.agh.backend.application;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +26,8 @@ public class ApplicationService {
     @Transactional
     public ApplicationResponse create(Caller caller, CreateApplicationRequest request) {
         User applicant = callerUserService.getOrCreate(caller);
-        Instant now = Instant.now();
         List<LegalDocument> acceptedDocuments =
-                consentService.requireCurrentForApplication(request.acceptedDocumentIds(), now);
+                consentService.requireCurrentForApplication(request.acceptedDocumentIds());
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
@@ -53,7 +51,7 @@ public class ApplicationService {
         } catch (DataIntegrityViolationException ex) {
             throw new ApplicationAlreadyExistsException();
         }
-        consentService.recordForApplication(applicant, acceptedDocuments, now);
+        consentService.recordForApplication(applicant, acceptedDocuments);
         return response;
     }
 
