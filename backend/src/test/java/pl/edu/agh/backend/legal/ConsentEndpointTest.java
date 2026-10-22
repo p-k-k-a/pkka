@@ -12,7 +12,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,10 +29,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.legal.dto.ConsentResponse;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
 import pl.edu.agh.backend.user.User;
@@ -53,6 +63,9 @@ class ConsentEndpointTest {
 
     @Autowired
     private UserRepository users;
+
+    @Autowired
+    private ConsentService consentService;
 
     @Test
     void currentDocumentsArePublic() throws Exception {
@@ -217,6 +230,39 @@ class ConsentEndpointTest {
         myConsents(keycloakId).andExpect(jsonPath("$.pendingReacceptance").isEmpty());
     }
 
+    /**
+     * Outside the test transaction so each grant commits on its own and the two really race. Lives in this
+     * class rather than its own: another Spring context per test class tips the suite past the test heap.
+     */
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void simultaneousGrantsOfOneVersionBothSucceedWithOneActiveRecord() throws Exception {
+        User user = users.save(newUser());
+        Caller caller = new Caller(user.getKeycloakId(), Set.of("USER"));
+        UUID newsletter = current(LegalDocumentType.NEWSLETTER_CONSENT).getId();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (int attempt = 0; attempt < 20; attempt++) {
+                CountDownLatch start = new CountDownLatch(1);
+                Callable<ConsentResponse> grant = () -> {
+                    start.await();
+                    return consentService.grant(caller, newsletter);
+                };
+                List<Future<ConsentResponse>> grants = List.of(executor.submit(grant), executor.submit(grant));
+                start.countDown();
+                for (Future<ConsentResponse> result : grants) {
+                    result.get();
+                }
+
+                assertThat(consents.findActiveByUserId(user.getId())).hasSize(1);
+                consentService.withdraw(caller, LegalDocumentType.NEWSLETTER_CONSENT);
+            }
+        } finally {
+            executor.shutdownNow();
+            users.delete(user);
+        }
+    }
+
     private ResultActions grant(String keycloakId, UUID documentId) throws Exception {
         return mockMvc.perform(post("/api/me/consents")
                 .with(JwtTestSupport.asUser(keycloakId))
@@ -254,9 +300,13 @@ class ConsentEndpointTest {
     }
 
     private User user() {
+        return users.saveAndFlush(newUser());
+    }
+
+    private static User newUser() {
         User user = new User();
         user.setKeycloakId(UUID.randomUUID().toString());
-        return users.saveAndFlush(user);
+        return user;
     }
 
     private void accept(User user, LegalDocument document) {
