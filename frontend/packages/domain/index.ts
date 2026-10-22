@@ -5,6 +5,7 @@ export * from "./events/registration";
 export * from "./format/datetime";
 export * from "./format/plural";
 export * from "./labels/application";
+export * from "./legal/consents";
 export * from "./labels/events";
 export * from "./profile/contacts";
 export * from "./profile/links";

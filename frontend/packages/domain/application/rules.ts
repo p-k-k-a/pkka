@@ -1,5 +1,3 @@
-import type { ConsentType } from "@pkka/api";
-
 export const GRADUATION_YEAR_MIN = 1919;
 
 // The form asks for the graduation year "or the planned one", so upcoming years are valid.
@@ -16,12 +14,6 @@ export function isGraduationYearValid(year: number): boolean {
 
 export function graduationYearError(): string {
   return `Podaj rok ukończenia między ${GRADUATION_YEAR_MIN} a ${graduationYearMax()}.`;
-}
-
-const REQUIRED_CONSENTS: ConsentType[] = ["REGULATIONS_PRIVACY", "GDPR_DATA_PROCESSING"];
-
-export function hasRequiredConsents(consents: readonly ConsentType[]): boolean {
-  return REQUIRED_CONSENTS.every((consent) => consents.includes(consent));
 }
 
 export const APPLICATION_CONFLICT_MESSAGE =
