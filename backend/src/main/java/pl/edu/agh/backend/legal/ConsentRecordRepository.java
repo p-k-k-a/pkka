@@ -15,5 +15,5 @@ public interface ConsentRecordRepository extends JpaRepository<ConsentRecord, UU
             """)
     List<ConsentRecord> findActiveByUserId(@Param("userId") UUID userId);
 
-    boolean existsByUserIdAndDocumentId(UUID userId, UUID documentId);
+    boolean existsByUserIdAndDocumentIdAndWithdrawnAtIsNull(UUID userId, UUID documentId);
 }

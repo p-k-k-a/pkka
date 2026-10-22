@@ -26,12 +26,17 @@ CREATE TABLE consent_records
     withdrawn_at TIMESTAMPTZ,
 
     CONSTRAINT pk_consent_records          PRIMARY KEY (id),
-    CONSTRAINT uq_consent_records          UNIQUE (user_id, document_id),
     CONSTRAINT fk_consent_records_user     FOREIGN KEY (user_id)     REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_consent_records_document FOREIGN KEY (document_id) REFERENCES legal_documents (id),
     CONSTRAINT chk_consent_records_source  CHECK (source IN ('APPLICATION', 'REACCEPTANCE', 'SETTINGS', 'LEGACY')),
     CONSTRAINT chk_consent_records_period  CHECK (withdrawn_at IS NULL OR withdrawn_at >= granted_at)
 );
+
+-- One active acceptance per version. Withdrawn rows stay as history, so accepting the same version
+-- again after withdrawing adds a new row.
+CREATE UNIQUE INDEX uq_consent_records_active
+    ON consent_records (user_id, document_id)
+    WHERE withdrawn_at IS NULL;
 
 CREATE INDEX idx_consent_records_user ON consent_records (user_id);
 

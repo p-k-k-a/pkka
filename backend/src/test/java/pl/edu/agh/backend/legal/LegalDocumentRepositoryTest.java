@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.legal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -92,8 +94,29 @@ class LegalDocumentRepositoryTest {
         assertThat(consents.findActiveByUserId(user.getId()))
                 .extracting(c -> c.getDocument().getType())
                 .containsExactly(LegalDocumentType.TERMS);
-        assertThat(consents.existsByUserIdAndDocumentId(user.getId(), newsletter.getId()))
+        assertThat(consents.existsByUserIdAndDocumentIdAndWithdrawnAtIsNull(user.getId(), newsletter.getId()))
+                .isFalse();
+        assertThat(consents.findById(newsletterConsent.getId())).isPresent();
+    }
+
+    @Test
+    void sameVersionCanBeAcceptedAgainAfterWithdrawingButNotTwiceAtOnce() {
+        Instant now = Instant.now();
+        User user = new User();
+        user.setKeycloakId("legal-repository-reaccept-test");
+        users.saveAndFlush(user);
+        LegalDocument newsletter =
+                documents.findCurrent(LegalDocumentType.NEWSLETTER_CONSENT, now).orElseThrow();
+        ConsentRecord first = consents.saveAndFlush(consent(user, newsletter, now));
+        first.withdraw(now.plusSeconds(1));
+        consents.flush();
+
+        consents.saveAndFlush(consent(user, newsletter, now.plusSeconds(2)));
+
+        assertThat(consents.existsByUserIdAndDocumentIdAndWithdrawnAtIsNull(user.getId(), newsletter.getId()))
                 .isTrue();
+        assertThatThrownBy(() -> consents.saveAndFlush(consent(user, newsletter, now.plusSeconds(3))))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     private static LegalDocument version(LegalDocumentType type, int version, Instant publishedAt) {

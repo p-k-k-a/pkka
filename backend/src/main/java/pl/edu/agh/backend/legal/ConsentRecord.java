@@ -6,15 +6,12 @@ import java.util.UUID;
 import lombok.*;
 import pl.edu.agh.backend.user.User;
 
-/** A user's acceptance of one document version. Withdrawing keeps the row, since it is the proof of consent. */
+/**
+ * A user's acceptance of one document version. Withdrawing keeps the row, since it is the proof of consent;
+ * at most one row per user and version is active ({@code uq_consent_records_active}).
+ */
 @Entity
-@Table(
-        name = "consent_records",
-        uniqueConstraints =
-                @UniqueConstraint(
-                        name = "uq_consent_records",
-                        columnNames = {"user_id", "document_id"}),
-        indexes = @Index(name = "idx_consent_records_user", columnList = "user_id"))
+@Table(name = "consent_records", indexes = @Index(name = "idx_consent_records_user", columnList = "user_id"))
 @Getter
 @ToString(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

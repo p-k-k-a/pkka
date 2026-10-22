@@ -147,7 +147,7 @@ CROSS JOIN legal_documents d
 WHERE d.type IN ('TERMS', 'PRIVACY_NOTICE', 'MEMBERSHIP_CONSENT')
   AND d.version = (SELECT max(version) FROM legal_documents newer
                    WHERE newer.type = d.type AND newer.published_at <= now())
-ON CONFLICT (user_id, document_id) DO NOTHING;
+ON CONFLICT (user_id, document_id) WHERE withdrawn_at IS NULL DO NOTHING;
 
 DELETE FROM user_tags
 WHERE user_id IN (SELECT ('d0000000-0000-4000-8000-' || lpad(to_hex(n), 12, '0'))::uuid FROM seed_alumni);
