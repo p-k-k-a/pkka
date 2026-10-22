@@ -51,6 +51,9 @@ dependencies {
 }
 tasks.named('test') {
 	useJUnitPlatform()
+	// Spring caches one context per test class (each has its own Postgres container); at the default
+	// 512m the cache fills the heap and the run stalls in full GCs instead of failing.
+	maxHeapSize = '1g'
 }
 
 tasks.withType(JavaCompile).configureEach {
