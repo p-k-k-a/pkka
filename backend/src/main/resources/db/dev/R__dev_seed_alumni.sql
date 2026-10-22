@@ -139,6 +139,16 @@ SELECT
 FROM seed_alumni s
 ON CONFLICT (id) DO NOTHING;
 
+-- Accepted the documents currently in force, so the re-acceptance screen does not block seeded users.
+INSERT INTO consent_records (id, user_id, document_id, source, granted_at)
+SELECT gen_random_uuid(), ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid, d.id, 'APPLICATION', now()
+FROM seed_alumni s
+CROSS JOIN legal_documents d
+WHERE d.type IN ('TERMS', 'PRIVACY_NOTICE', 'MEMBERSHIP_CONSENT')
+  AND d.version = (SELECT max(version) FROM legal_documents newer
+                   WHERE newer.type = d.type AND newer.published_at <= now())
+ON CONFLICT (user_id, document_id) DO NOTHING;
+
 DELETE FROM user_tags
 WHERE user_id IN (SELECT ('d0000000-0000-4000-8000-' || lpad(to_hex(n), 12, '0'))::uuid FROM seed_alumni);
 
