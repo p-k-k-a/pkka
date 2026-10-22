@@ -1,12 +1,13 @@
 package pl.edu.agh.backend.application;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.edu.agh.backend.legal.ConsentService;
+import pl.edu.agh.backend.legal.LegalDocument;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
@@ -20,10 +21,13 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final CallerUserService callerUserService;
+    private final ConsentService consentService;
 
     @Transactional
     public ApplicationResponse create(Caller caller, CreateApplicationRequest request) {
         User applicant = callerUserService.getOrCreate(caller);
+        List<LegalDocument> acceptedDocuments =
+                consentService.requireCurrentForApplication(request.acceptedDocumentIds());
 
         if (applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES)) {
             throw new ApplicationAlreadyExistsException();
@@ -37,19 +41,18 @@ public class ApplicationService {
                 .graduationYear(request.graduationYear())
                 .meetingPreferences(new ArrayList<>(request.meetingPreferences()))
                 .coCreationInterest(request.coCreationInterest())
-                .newsletterSubscription(request.newsletterSubscription())
                 .phoneNumber(request.phoneNumber())
                 .interests(new ArrayList<>(request.interests()))
                 .build();
 
-        Instant now = Instant.now();
-        request.consents().forEach(type -> application.addConsent(type, now));
-
+        ApplicationResponse response;
         try {
-            return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
+            response = ApplicationResponse.from(applicationRepository.saveAndFlush(application));
         } catch (DataIntegrityViolationException ex) {
             throw new ApplicationAlreadyExistsException();
         }
+        consentService.recordForApplication(applicant, acceptedDocuments);
+        return response;
     }
 
     /** No local row means no application, so this never provisions one the way the write paths do. */

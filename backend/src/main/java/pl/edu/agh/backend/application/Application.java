@@ -73,10 +73,6 @@ public class Application {
     @Builder.Default
     private boolean coCreationInterest = false;
 
-    @Column(name = "newsletter_subscription", nullable = false)
-    @Builder.Default
-    private boolean newsletterSubscription = false;
-
     @NotBlank
     @Size(max = 32)
     @Pattern(regexp = "^\\+?[0-9 \\-]{7,32}$")
@@ -87,10 +83,6 @@ public class Application {
     @Column(name = "interests", nullable = false, columnDefinition = "varchar(100)[]")
     @Builder.Default
     private List<String> interests = new ArrayList<>();
-
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<ApplicationConsent> consents = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewed_by_id")
@@ -114,15 +106,6 @@ public class Application {
     @Version
     @Column(nullable = false)
     private Long version;
-
-    public void addConsent(ConsentType type, Instant grantedAt) {
-        ApplicationConsent consent = ApplicationConsent.builder()
-                .application(this)
-                .type(type)
-                .grantedAt(grantedAt)
-                .build();
-        this.consents.add(consent);
-    }
 
     public void approve(User reviewer) {
         ensureUnderReview();

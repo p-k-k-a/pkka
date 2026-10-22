@@ -17,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pl.edu.agh.backend.legal.ConsentConflictException;
+import pl.edu.agh.backend.legal.ConsentService;
+import pl.edu.agh.backend.legal.LegalDocument;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.CallerUserService;
@@ -30,6 +33,9 @@ class ApplicationServiceTest {
 
     @Mock
     private CallerUserService callerUserService;
+
+    @Mock
+    private ConsentService consentService;
 
     @InjectMocks
     private ApplicationService applicationService;
@@ -46,6 +52,8 @@ class ApplicationServiceTest {
                         applicant.getId(), List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED)))
                 .thenReturn(false);
         when(applicationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        List<LegalDocument> accepted = List.of();
+        when(consentService.requireCurrentForApplication(any())).thenReturn(accepted);
 
         CreateApplicationRequest request = new CreateApplicationRequest(
                 Faculty.WI,
@@ -55,15 +63,44 @@ class ApplicationServiceTest {
                 Set.of("AI"),
                 EnumSet.of(MeetingPreference.ONLINE),
                 true,
-                false,
                 "+48123456789",
-                EnumSet.of(ConsentType.REGULATIONS_PRIVACY, ConsentType.GDPR_DATA_PROCESSING));
+                Set.of(UUID.randomUUID()));
 
         ApplicationResponse response = applicationService.create(caller, request);
 
         assertThat(response.status()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
         assertThat(response.fieldOfStudy()).isEqualTo("Informatyka");
         verify(callerUserService).getOrCreate(caller);
+        verify(consentService).recordForApplication(applicant, accepted);
+    }
+
+    @Test
+    void createSavesNothingWhenTheConsentsAreRejected() {
+        String keycloakId = UUID.randomUUID().toString();
+        User applicant = new User();
+        applicant.setKeycloakId(keycloakId);
+        Caller caller = new Caller(keycloakId, Set.of(Roles.USER));
+        UUID outdated = UUID.randomUUID();
+
+        when(callerUserService.getOrCreate(caller)).thenReturn(applicant);
+        when(consentService.requireCurrentForApplication(any()))
+                .thenThrow(ConsentConflictException.outdatedDocument(outdated));
+
+        CreateApplicationRequest request = new CreateApplicationRequest(
+                Faculty.WI,
+                "Informatyka",
+                StudyType.MASTER,
+                2020,
+                Set.of(),
+                EnumSet.noneOf(MeetingPreference.class),
+                false,
+                "+48123456789",
+                Set.of(outdated));
+
+        assertThatThrownBy(() -> applicationService.create(caller, request))
+                .isInstanceOf(ConsentConflictException.class);
+        verify(applicationRepository, never()).saveAndFlush(any());
+        verify(consentService, never()).recordForApplication(any(), any());
     }
 
     @Test
@@ -86,9 +123,8 @@ class ApplicationServiceTest {
                 Set.of(),
                 EnumSet.noneOf(MeetingPreference.class),
                 false,
-                false,
                 "+48123456789",
-                EnumSet.of(ConsentType.REGULATIONS_PRIVACY, ConsentType.GDPR_DATA_PROCESSING));
+                Set.of(UUID.randomUUID()));
 
         assertThatThrownBy(() -> applicationService.create(caller, request))
                 .isInstanceOf(ApplicationAlreadyExistsException.class);

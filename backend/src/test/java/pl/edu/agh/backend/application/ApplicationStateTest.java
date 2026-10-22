@@ -71,14 +71,4 @@ class ApplicationStateTest {
                 .isInstanceOf(InvalidApplicationStateException.class)
                 .hasMessageContaining("already REJECTED");
     }
-
-    @Test
-    void addConsentRecordsTypeAndTimestamp() {
-        var now = java.time.Instant.parse("2024-01-01T00:00:00Z");
-        application.addConsent(ConsentType.REGULATIONS_PRIVACY, now);
-
-        assertThat(application.getConsents()).hasSize(1);
-        assertThat(application.getConsents().getFirst().getType()).isEqualTo(ConsentType.REGULATIONS_PRIVACY);
-        assertThat(application.getConsents().getFirst().getGrantedAt()).isEqualTo(now);
-    }
 }

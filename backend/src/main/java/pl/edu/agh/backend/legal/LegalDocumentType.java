@@ -8,5 +8,10 @@ public enum LegalDocumentType {
     TERMS,
     PRIVACY_NOTICE,
     MEMBERSHIP_CONSENT,
-    NEWSLETTER_CONSENT
+    NEWSLETTER_CONSENT;
+
+    /** Required to join the club and impossible to withdraw in the app; leaving the club goes through the admins. */
+    public boolean isRequired() {
+        return this != NEWSLETTER_CONSENT;
+    }
 }

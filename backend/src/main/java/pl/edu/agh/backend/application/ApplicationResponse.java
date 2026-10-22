@@ -6,7 +6,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public record ApplicationResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
@@ -17,10 +16,8 @@ public record ApplicationResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Integer graduationYear,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<MeetingPreference> meetingPreferences,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean coCreationInterest,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean newsletterSubscription,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String phoneNumber,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<String> interests,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<ConsentType> consents,
 
         @Schema(description = "Set once the application is reviewed", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         Instant reviewedAt,
@@ -39,11 +36,6 @@ public record ApplicationResponse(
                 a.getMeetingPreferences() == null || a.getMeetingPreferences().isEmpty()
                         ? EnumSet.noneOf(MeetingPreference.class)
                         : EnumSet.copyOf(a.getMeetingPreferences());
-        Set<ConsentType> consents = a.getConsents() == null
-                ? EnumSet.noneOf(ConsentType.class)
-                : a.getConsents().stream()
-                        .map(ApplicationConsent::getType)
-                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(ConsentType.class)));
 
         return new ApplicationResponse(
                 a.getId(),
@@ -54,10 +46,8 @@ public record ApplicationResponse(
                 a.getGraduationYear(),
                 meetingPreferences,
                 a.isCoCreationInterest(),
-                a.isNewsletterSubscription(),
                 a.getPhoneNumber(),
                 interests,
-                consents,
                 a.getReviewedAt(),
                 a.getRejectionReason(),
                 a.getCreatedAt(),

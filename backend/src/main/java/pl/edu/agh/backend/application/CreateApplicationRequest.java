@@ -1,7 +1,6 @@
 package pl.edu.agh.backend.application;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -11,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public record CreateApplicationRequest(
         @Schema(description = "AGH faculty code", example = "WI", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull
@@ -43,9 +43,6 @@ public record CreateApplicationRequest(
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         boolean coCreationInterest,
 
-        @Schema(description = "Newsletter subscription", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-        boolean newsletterSubscription,
-
         @Schema(description = "Phone number", example = "+48 123 456 789", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank
         @Size(max = 32)
@@ -53,23 +50,17 @@ public record CreateApplicationRequest(
         String phoneNumber,
 
         @Schema(
-                description = "Required consents — must include REGULATIONS_PRIVACY and GDPR_DATA_PROCESSING",
+                description = "Ids of the accepted legal document versions; must be the ones in force and cover every"
+                        + " required type. The newsletter consent is optional.",
                 requiredMode = Schema.RequiredMode.REQUIRED)
         @NotEmpty
-        Set<ConsentType> consents) {
+        Set<@NotNull UUID> acceptedDocumentIds) {
 
     public CreateApplicationRequest {
         interests = interests == null || interests.isEmpty() ? new HashSet<>() : new HashSet<>(interests);
         meetingPreferences = meetingPreferences == null || meetingPreferences.isEmpty()
                 ? EnumSet.noneOf(MeetingPreference.class)
                 : EnumSet.copyOf(meetingPreferences);
-        consents =
-                consents == null || consents.isEmpty() ? EnumSet.noneOf(ConsentType.class) : EnumSet.copyOf(consents);
-    }
-
-    @AssertTrue(message = "Both required consents must be granted: REGULATIONS_PRIVACY and GDPR_DATA_PROCESSING")
-    @Schema(hidden = true)
-    public boolean isAllRequiredConsentsGranted() {
-        return consents.containsAll(ConsentType.REQUIRED);
+        acceptedDocumentIds = acceptedDocumentIds == null ? new HashSet<>() : new HashSet<>(acceptedDocumentIds);
     }
 }
