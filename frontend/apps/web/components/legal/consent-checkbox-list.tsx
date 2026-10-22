@@ -85,10 +85,13 @@ export function ConsentCheckboxList({
           <span>
             <ConsentText document={document} />
             {document.required ? (
-              <span className="text-destructive" aria-label="wymagane">
-                {" "}
-                *
-              </span>
+              <>
+                <span className="text-destructive" aria-hidden="true">
+                  {" "}
+                  *
+                </span>
+                <span className="sr-only"> (wymagane)</span>
+              </>
             ) : (
               <span className="text-muted-foreground"> (opcjonalnie)</span>
             )}
