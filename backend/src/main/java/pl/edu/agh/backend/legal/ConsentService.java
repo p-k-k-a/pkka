@@ -49,9 +49,9 @@ public class ConsentService {
     public ConsentResponse grant(Caller caller, UUID documentId) {
         User user = callerUserService.getOrCreate(caller);
         Instant now = Instant.now(clock);
-        LegalDocument document = documentRepository.findAllCurrent(now).stream()
-                .filter(current -> current.getId().equals(documentId))
-                .findFirst()
+        LegalDocument document = documentRepository
+                .findById(documentId)
+                .filter(found -> isInForce(found, now))
                 .orElseThrow(() -> ConsentConflictException.outdatedDocument(documentId));
         ConsentSource source = latestActiveByType(user.getId()).containsKey(document.getType())
                 ? ConsentSource.REACCEPTANCE
@@ -75,10 +75,10 @@ public class ConsentService {
 
     /**
      * The documents an application accepts, checked before anything is saved: each must be a version in
-     * force at {@code now}, and together they must cover every required type.
+     * force, and together they must cover every required type.
      */
-    public List<LegalDocument> requireCurrentForApplication(Collection<UUID> documentIds, Instant now) {
-        Map<UUID, LegalDocument> current = documentRepository.findAllCurrent(now).stream()
+    public List<LegalDocument> requireCurrentForApplication(Collection<UUID> documentIds) {
+        Map<UUID, LegalDocument> current = documentRepository.findAllCurrent(Instant.now(clock)).stream()
                 .collect(toMap(LegalDocument::getId, Function.identity()));
         List<LegalDocument> accepted = documentIds.stream()
                 .map(id -> {
@@ -102,19 +102,24 @@ public class ConsentService {
     }
 
     @Transactional
-    public void recordForApplication(User user, List<LegalDocument> documents, Instant now) {
+    public void recordForApplication(User user, List<LegalDocument> documents) {
+        Instant now = Instant.now(clock);
         documents.forEach(document -> record(user, document, ConsentSource.APPLICATION, now));
     }
 
+    /** Idempotent: an existing active acceptance of the same version is kept as it is. */
     private ConsentRecord record(User user, LegalDocument document, ConsentSource source, Instant now) {
+        consentRepository.insertIfNoActive(user.getId(), document.getId(), source.name(), now);
         return consentRepository
                 .findByUserIdAndDocumentIdAndWithdrawnAtIsNull(user.getId(), document.getId())
-                .orElseGet(() -> consentRepository.save(ConsentRecord.builder()
-                        .user(user)
-                        .document(document)
-                        .source(source)
-                        .grantedAt(now)
-                        .build()));
+                .orElseThrow();
+    }
+
+    private boolean isInForce(LegalDocument document, Instant now) {
+        return documentRepository
+                .findCurrent(document.getType(), now)
+                .map(current -> current.getId().equals(document.getId()))
+                .orElse(false);
     }
 
     private MyConsentsResponse mine(UUID userId, Instant now) {

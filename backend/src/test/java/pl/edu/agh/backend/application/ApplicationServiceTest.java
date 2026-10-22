@@ -3,7 +3,6 @@ package pl.edu.agh.backend.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,7 +53,7 @@ class ApplicationServiceTest {
                 .thenReturn(false);
         when(applicationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         List<LegalDocument> accepted = List.of();
-        when(consentService.requireCurrentForApplication(any(), any())).thenReturn(accepted);
+        when(consentService.requireCurrentForApplication(any())).thenReturn(accepted);
 
         CreateApplicationRequest request = new CreateApplicationRequest(
                 Faculty.WI,
@@ -72,7 +71,7 @@ class ApplicationServiceTest {
         assertThat(response.status()).isEqualTo(ApplicationStatus.UNDER_REVIEW);
         assertThat(response.fieldOfStudy()).isEqualTo("Informatyka");
         verify(callerUserService).getOrCreate(caller);
-        verify(consentService).recordForApplication(eq(applicant), eq(accepted), any());
+        verify(consentService).recordForApplication(applicant, accepted);
     }
 
     @Test
@@ -84,7 +83,7 @@ class ApplicationServiceTest {
         UUID outdated = UUID.randomUUID();
 
         when(callerUserService.getOrCreate(caller)).thenReturn(applicant);
-        when(consentService.requireCurrentForApplication(any(), any()))
+        when(consentService.requireCurrentForApplication(any()))
                 .thenThrow(ConsentConflictException.outdatedDocument(outdated));
 
         CreateApplicationRequest request = new CreateApplicationRequest(
@@ -101,7 +100,7 @@ class ApplicationServiceTest {
         assertThatThrownBy(() -> applicationService.create(caller, request))
                 .isInstanceOf(ConsentConflictException.class);
         verify(applicationRepository, never()).saveAndFlush(any());
-        verify(consentService, never()).recordForApplication(any(), any(), any());
+        verify(consentService, never()).recordForApplication(any(), any());
     }
 
     @Test
