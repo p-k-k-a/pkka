@@ -80,6 +80,11 @@ export function PrivacyConsentsAside() {
           ) : (
             accepted.map((consent) => {
               const href = legalDocumentPath(consent.type);
+              // The page shows the version in force; linking an older acceptance to it would show
+              // a text this member never accepted.
+              const isCurrent = documents.data?.data.some(
+                (document) => document.id === consent.documentId,
+              );
               const label = `Wersja ${consent.version} · zaakceptowano ${formatPublishedAt(consent.grantedAt).dateLabel}`;
               return (
                 <ProfileAsideItem
@@ -87,7 +92,7 @@ export function PrivacyConsentsAside() {
                   icon={FileCheck}
                   label={legalDocumentTypeLabel(consent.type)}
                 >
-                  {href ? (
+                  {href && isCurrent ? (
                     <Link
                       href={href}
                       target="_blank"

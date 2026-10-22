@@ -40,6 +40,13 @@ export function sortLegalDocuments<T extends { type: LegalDocumentType }>(docume
   );
 }
 
+/** A copy of the set with the id ticked or unticked, for checkbox state kept in React. */
+export function toggleInSet(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const next = new Set(ids);
+  if (!next.delete(id)) next.add(id);
+  return next;
+}
+
 /** Required documents not yet ticked; empty means the application can be sent. */
 export function missingRequiredDocuments(
   documents: readonly LegalDocumentResponse[],

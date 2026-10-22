@@ -18,6 +18,7 @@ import {
   legalDocumentPath,
   missingRequiredDocuments,
   sortLegalDocuments,
+  toggleInSet,
 } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { ConsentCheckboxList } from "@/components/legal/consent-checkbox-list";
@@ -42,12 +43,7 @@ function ReacceptanceScreen({ pending }: { pending: LegalDocumentResponse[] }) {
 
   const missing = missingRequiredDocuments(pending, acceptedIds);
 
-  const toggle = (documentId: string) =>
-    setAcceptedIds((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(documentId)) next.add(documentId);
-      return next;
-    });
+  const toggle = (documentId: string) => setAcceptedIds((prev) => toggleInSet(prev, documentId));
 
   const onSubmit = async () => {
     setSaving(true);

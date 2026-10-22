@@ -27,6 +27,7 @@ import {
   isOutdatedDocumentError,
   missingRequiredDocuments,
   sortLegalDocuments,
+  toggleInSet,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
   OUTDATED_DOCUMENTS_MESSAGE,
@@ -55,14 +56,6 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
   const legalDocuments = useListCurrentLegalDocuments();
   const documents = sortLegalDocuments(legalDocuments.data?.data ?? []);
 
-  function toggleDocument(documentId: string) {
-    setAcceptedIds((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(documentId)) next.add(documentId);
-      return next;
-    });
-  }
-
   const { mutate, isPending } = useCreateApplication<ApiError>({
     mutation: {
       onSuccess: () => {
@@ -89,11 +82,6 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
 
     if (!faculty || !studyType) {
       setFormError("Wybierz wydział i rodzaj studiów.");
-      return;
-    }
-
-    if (documents.length === 0) {
-      setFormError("Nie udało się wczytać dokumentów do akceptacji. Odśwież stronę.");
       return;
     }
 
@@ -291,7 +279,7 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
             <ConsentCheckboxList
               documents={documents}
               acceptedIds={acceptedIds}
-              onToggle={toggleDocument}
+              onToggle={(documentId) => setAcceptedIds((prev) => toggleInSet(prev, documentId))}
             />
           )}
           <PrivacyNoticeSummary />
