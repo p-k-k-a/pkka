@@ -67,7 +67,7 @@ public class StorageService implements AutoCloseable {
 
     /**
      * @param presigner {@code null} when storage is not configured
-     * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.r2.cloudflarestorage.com}
+     * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.eu.r2.cloudflarestorage.com}
      */
     StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
         this.presigner = presigner;

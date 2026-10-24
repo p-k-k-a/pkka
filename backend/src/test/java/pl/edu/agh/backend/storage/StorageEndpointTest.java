@@ -35,7 +35,7 @@ import pl.edu.agh.backend.user.UserRepository;
 /** Presign endpoints end to end; the presigner signs locally, so no R2 is contacted. */
 @SpringBootTest(
         properties = {
-            "app.storage.endpoint=https://acct.r2.cloudflarestorage.com",
+            "app.storage.endpoint=https://acct.eu.r2.cloudflarestorage.com",
             "app.storage.bucket=pkka-files",
             "app.storage.access-key-id=test-key-id",
             "app.storage.secret-access-key=test-secret"
@@ -72,7 +72,7 @@ class StorageEndpointTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath(
-                        "$.uploadUrl", startsWith("https://acct.r2.cloudflarestorage.com/pkka-files/materials/")))
+                        "$.uploadUrl", startsWith("https://acct.eu.r2.cloudflarestorage.com/pkka-files/materials/")))
                 .andExpect(jsonPath("$.headers['content-type']").value("application/pdf"))
                 .andExpect(jsonPath("$.objectKey", startsWith("materials/")))
                 .andExpect(jsonPath("$.publicUrl").doesNotExist())
@@ -154,7 +154,7 @@ class StorageEndpointTest {
                 .getResponse()
                 .getContentAsString();
         String key = JsonPath.read(presigned, "$.objectKey");
-        String signedPrefix = "https://acct.r2.cloudflarestorage.com/pkka-files/" + key + "?";
+        String signedPrefix = "https://acct.eu.r2.cloudflarestorage.com/pkka-files/" + key + "?";
 
         mockMvc.perform(patch("/api/profiles/me")
                         .with(JwtTestSupport.asUser(user.getKeycloakId()))
@@ -192,7 +192,7 @@ class StorageEndpointTest {
                 .getResponse()
                 .getContentAsString();
         String key = JsonPath.read(presigned, "$.objectKey");
-        String signedPrefix = "https://acct.r2.cloudflarestorage.com/pkka-files/" + key + "?";
+        String signedPrefix = "https://acct.eu.r2.cloudflarestorage.com/pkka-files/" + key + "?";
 
         String created = mockMvc.perform(post("/api/admin/materials")
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))

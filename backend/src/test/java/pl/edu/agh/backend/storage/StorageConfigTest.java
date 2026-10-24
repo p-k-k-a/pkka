@@ -19,7 +19,7 @@ class StorageConfigTest {
 
     @Test
     void failsStartupWhenOnlyPartiallyConfigured() {
-        assertThatThrownBy(() -> config.storageService("https://acct.r2.cloudflarestorage.com", "bucket", "key", ""))
+        assertThatThrownBy(() -> config.storageService("https://acct.eu.r2.cloudflarestorage.com", "bucket", "key", ""))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("R2_SECRET_ACCESS_KEY")
                 .hasMessageNotContaining("R2_BUCKET");
@@ -35,13 +35,13 @@ class StorageConfigTest {
     @Test
     void aFullyConfiguredStorageSignsUploadsAndDownloads() {
         try (StorageService storage =
-                config.storageService("https://acct.r2.cloudflarestorage.com", "bucket", "key", "secret")) {
+                config.storageService("https://acct.eu.r2.cloudflarestorage.com", "bucket", "key", "secret")) {
             PresignedUploadResponse response = storage.presignAvatar(UUID.randomUUID(), "image/png", 10);
 
             assertThat(storage.isConfigured()).isTrue();
-            assertThat(response.uploadUrl()).startsWith("https://acct.r2.cloudflarestorage.com/bucket/avatars/");
+            assertThat(response.uploadUrl()).startsWith("https://acct.eu.r2.cloudflarestorage.com/bucket/avatars/");
             assertThat(storage.resolveUrl(response.objectKey()))
-                    .startsWith("https://acct.r2.cloudflarestorage.com/bucket/avatars/");
+                    .startsWith("https://acct.eu.r2.cloudflarestorage.com/bucket/avatars/");
         }
     }
 }

@@ -29,7 +29,7 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 /** Presigning is local signing, so these run without R2, Spring or Docker. */
 class StorageServiceTest {
 
-    private static final String ENDPOINT = "https://acct.r2.cloudflarestorage.com";
+    private static final String ENDPOINT = "https://acct.eu.r2.cloudflarestorage.com";
     private static final UUID USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final String COVER_KEY = "covers/events/0f3a1c8e-1111-4000-8000-000000000001.png";
     private static final String MATERIAL_KEY = "materials/0f3a1c8e-1111-4000-8000-000000000002.pdf";
@@ -57,7 +57,7 @@ class StorageServiceTest {
         PresignedUploadResponse response = storage.presignAvatar(USER_ID, "image/webp", 123_456);
 
         URI uploadUrl = URI.create(response.uploadUrl());
-        assertThat(uploadUrl.getHost()).isEqualTo("acct.r2.cloudflarestorage.com");
+        assertThat(uploadUrl.getHost()).isEqualTo("acct.eu.r2.cloudflarestorage.com");
         assertThat(uploadUrl.getPath()).isEqualTo("/pkka-files/" + response.objectKey());
         assertThat(response.objectKey()).matches("avatars/" + USER_ID + "/[0-9a-f-]{36}\\.webp");
 
@@ -288,7 +288,7 @@ class StorageServiceTest {
     void anObjectKeyBecomesASignedGetUrlThatExpiresInAnHour() {
         URI url = URI.create(storage.resolveUrl(MATERIAL_KEY));
 
-        assertThat(url.getHost()).isEqualTo("acct.r2.cloudflarestorage.com");
+        assertThat(url.getHost()).isEqualTo("acct.eu.r2.cloudflarestorage.com");
         assertThat(url.getPath()).isEqualTo("/pkka-files/" + MATERIAL_KEY);
         assertThat(url.getQuery()).contains("X-Amz-Expires=3600").contains("X-Amz-Signature=");
         assertThat(url.getQuery().toLowerCase(Locale.ROOT)).doesNotContain("checksum");
