@@ -2,7 +2,7 @@ package pl.edu.agh.backend.storage;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-/** What an admin is uploading a file for. Alumni upload only their own avatar, through the profile API. */
+/** What an admin is uploading a file for. Users upload only their own avatar through the profile API. */
 @Schema(enumAsRef = true)
 public enum AdminUploadPurpose {
     MATERIAL(UploadCategory.MATERIAL),

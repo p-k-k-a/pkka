@@ -54,7 +54,8 @@ public class ProfileController {
             summary = "Get a presigned URL to upload own avatar straight to object storage",
             description = "PUT the image to `uploadUrl` with the returned headers, then send `objectKey` as "
                     + "`avatarKey` in the profile update; the profile then returns a short-lived signed `avatarUrl`. "
-                    + "This is the only upload available to alumni.")
+                    + "This is the only object-storage upload for non-admin users (ROLE_USER); admins use "
+                    + "POST /api/admin/files/presign for materials and event covers.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Upload URL issued"),
         @ApiResponse(responseCode = "413", description = "Image larger than the limit", content = @Content),
