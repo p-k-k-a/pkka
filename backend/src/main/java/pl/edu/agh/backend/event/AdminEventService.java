@@ -20,6 +20,8 @@ import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.AdminUploadPurpose;
+import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.CallerUserService;
 
 @Service
@@ -29,11 +31,15 @@ public class AdminEventService {
     // Static pages that sit next to /events/{slug}, so a slug must never take these names.
     private static final Set<String> ROUTE_SEGMENTS = Set.of("archive", "new");
 
+    /** Length of the {@code cover_image_url} column. */
+    private static final int MAX_STORED_COVER_LENGTH = 500;
+
     private final EventRepository eventRepository;
     private final TagRepository tagRepository;
     private final EventRegistrationService eventRegistrationService;
     private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public Page<AdminEventSummaryResponse> list(EventTimeframe timeframe, Pageable pageable) {
@@ -44,7 +50,10 @@ public class AdminEventService {
         } else if (timeframe == EventTimeframe.PAST) {
             spec = spec.and(startsBeforeOrEqual(now));
         }
-        return eventRepository.findAll(spec, pageable).map(AdminEventSummaryResponse::from);
+        return eventRepository
+                .findAll(spec, pageable)
+                .map(event ->
+                        AdminEventSummaryResponse.from(event, storageService.resolveUrl(event.getCoverImageUrl())));
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +77,7 @@ public class AdminEventService {
                 .seatLimit(request.seatLimit())
                 .registrationClosesAt(request.registrationClosesAt())
                 .audience(request.audience())
-                .coverImageUrl(request.coverImageUrl())
+                .coverImageUrl(coverImageReference(request))
                 .reminderLeadTimeMinutes(request.reminderLeadTimeMinutes())
                 .tags(new HashSet<>(resolveTags(request.tags())))
                 .build();
@@ -95,7 +104,7 @@ public class AdminEventService {
         event.setSeatLimit(request.seatLimit());
         event.setRegistrationClosesAt(request.registrationClosesAt());
         event.setAudience(request.audience());
-        event.setCoverImageUrl(request.coverImageUrl());
+        event.setCoverImageUrl(coverImageReference(request));
         event.setReminderLeadTimeMinutes(request.reminderLeadTimeMinutes());
         Set<Tag> tags = event.getTags();
         if (tags == null) {
@@ -115,7 +124,19 @@ public class AdminEventService {
     }
 
     private AdminEventResponse respond(Event event) {
-        return AdminEventResponse.from(event, eventRegistrationService.seatsTaken(event.getId()));
+        return AdminEventResponse.from(
+                event,
+                eventRegistrationService.seatsTaken(event.getId()),
+                storageService.resolveUrl(event.getCoverImageUrl()));
+    }
+
+    /** External URL as is, or the key of an uploaded cover; a signed URL echoed back from a read is reduced to its key. */
+    private String coverImageReference(EventRequest request) {
+        String reference = storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, request.coverImageUrl());
+        if (reference != null && reference.length() > MAX_STORED_COVER_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "coverImageUrl is too long");
+        }
+        return reference;
     }
 
     private Event findOrThrow(UUID id) {

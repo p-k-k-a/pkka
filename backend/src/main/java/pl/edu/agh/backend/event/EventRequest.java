@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
@@ -27,7 +28,10 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Instant endsAt,
 
-        @Size(max = 500) String transmissionUrl,
+        @Size(max = 500)
+        @Pattern(regexp = "(?i)^https?://.+", message = "transmissionUrl must start with http:// or https://")
+        String transmissionUrl,
+
         @Size(max = 300) String location,
         @Min(0) Integer seatLimit,
         Instant registrationClosesAt,
@@ -35,7 +39,15 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Audience audience,
 
-        @Size(max = 500) String coverImageUrl,
+        // Wide enough for the signed download URL an edit form echoes back; what is stored is capped at 500.
+        @Size(max = 2000)
+        @Schema(
+                description = "External http(s) URL, or the `objectKey` of a file uploaded through "
+                        + "`POST /api/admin/files/presign`; an uploaded file's signed URL is accepted too")
+        @Pattern(
+                regexp = "(?i)^(https?://|covers/events/).+$",
+                message = "coverImageUrl must be an http(s) URL or the objectKey of an uploaded cover")
+        String coverImageUrl,
 
         @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
         @Min(1)

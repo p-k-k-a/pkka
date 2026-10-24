@@ -32,7 +32,13 @@ public record UpdateProfileRequest(
         @Schema(
                 description =
                         "Visibility toggles; null leaves all unchanged, null sub-fields leave that toggle unchanged")
-        VisibilityUpdate visibility) {
+        VisibilityUpdate visibility,
+
+        @Size(max = 255)
+        @Schema(
+                description = "`objectKey` returned by the avatar presign endpoint, once the file is uploaded; "
+                        + "a blank string removes the avatar. Any other value is rejected")
+        String avatarKey) {
 
     public record VisibilityUpdate(Boolean name, Boolean email, Boolean discord) {}
 }
