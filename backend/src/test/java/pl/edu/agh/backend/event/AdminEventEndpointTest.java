@@ -2,6 +2,7 @@ package pl.edu.agh.backend.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -238,16 +240,35 @@ class AdminEventEndpointTest {
     }
 
     @Test
-    void rejectsUnknownTags() throws Exception {
+    void createsUnknownTagsLowerCasedAndListsThemInTheCatalog() throws Exception {
+        Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
+        Instant end = start.plus(2, ChronoUnit.HOURS);
+
+        String body = createEvent(
+                eventJson("Nowy tag", start.toString(), end.toString(), "PUBLIC", "[\" Hackathon \", \"AI\"]"));
+
+        List<String> tags = JsonPath.read(body, "$.tags");
+        assertThat(tags).containsExactlyInAnyOrder("hackathon", "ai");
+        mockMvc.perform(get("/api/tags").with(JwtTestSupport.asAdmin()))
+                .andExpect(jsonPath("$[?(@.name=='hackathon')]").value(hasSize(1)))
+                .andExpect(jsonPath("$[?(@.name=='ai')]").value(hasSize(1)));
+    }
+
+    @Test
+    void rejectsTagNamesLongerThan32Characters() throws Exception {
         Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
         Instant end = start.plus(2, ChronoUnit.HOURS);
 
         mockMvc.perform(post("/api/admin/events")
-                        .with(JwtTestSupport.asAdmin())
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(eventJson(
-                                "Nieznany tag", start.toString(), end.toString(), "PUBLIC", "[\"does-not-exist\"]")))
+                                "Zły tag",
+                                start.toString(),
+                                end.toString(),
+                                "PUBLIC",
+                                "[\"%s\"]".formatted("x".repeat(33)))))
                 .andExpect(status().isBadRequest());
     }
 

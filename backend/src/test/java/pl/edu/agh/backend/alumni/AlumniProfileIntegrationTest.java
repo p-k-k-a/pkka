@@ -42,10 +42,10 @@ import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserProvisioningService;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTagRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -65,7 +65,7 @@ class AlumniProfileIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -92,7 +92,7 @@ class AlumniProfileIntegrationTest {
         alumn.setLinkedinUrl("https://linkedin.com/in/jankowalski");
         alumn.setGithubUrl("https://github.com/jankowalski");
         alumn.setWillingToMentor(true);
-        alumn.getTags().add(userTagRepository.findAll().getFirst());
+        alumn.getTags().add(alumniTagRepository.findAll().getFirst());
         alumn = userRepository.save(alumn);
 
         // Education facts come from the applicant's approved application.

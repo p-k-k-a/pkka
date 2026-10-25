@@ -1,7 +1,6 @@
 package pl.edu.agh.backend.user.profile;
 
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -13,11 +12,12 @@ import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
+import pl.edu.agh.backend.user.AlumniTagResponse;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTag;
-import pl.edu.agh.backend.user.UserTagRepository;
-import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 
@@ -26,7 +26,7 @@ import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 public class ProfileService {
 
     private final UserRepository userRepository;
-    private final UserTagRepository userTagRepository;
+    private final AlumniTagRepository alumniTagRepository;
     private final ApplicationRepository applicationRepository;
 
     @Transactional(readOnly = true)
@@ -82,25 +82,26 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserTagResponse> getTags(String keycloakId) {
+    public List<AlumniTagResponse> getTags(String keycloakId) {
         return loadWithTags(keycloakId).getTags().stream()
-                .map(UserTagResponse::from)
-                .sorted(Comparator.comparing(UserTagResponse::name))
+                .map(AlumniTagResponse::from)
+                .sorted(Comparator.comparing(AlumniTagResponse::name))
                 .toList();
     }
 
     @Transactional
-    public List<UserTagResponse> updateTags(String keycloakId, Set<UUID> tagIds) {
+    public List<AlumniTagResponse> updateTags(String keycloakId, Set<String> names) {
         User user = loadWithTags(keycloakId);
-        List<UserTag> found = userTagRepository.findAllById(tagIds);
-        if (found.size() != tagIds.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tag IDs are invalid");
-        }
+        names.forEach(name -> alumniTagRepository.insertIfAbsent(UUID.randomUUID(), name));
+        List<AlumniTag> tags = names.isEmpty()
+                ? List.of()
+                : alumniTagRepository.findByNameKeyIn(
+                        names.stream().map(TagNames::key).toList());
         user.getTags().clear();
-        user.getTags().addAll(new HashSet<>(found));
-        return user.getTags().stream()
-                .map(UserTagResponse::from)
-                .sorted(Comparator.comparing(UserTagResponse::name))
+        user.getTags().addAll(tags);
+        return tags.stream()
+                .map(AlumniTagResponse::from)
+                .sorted(Comparator.comparing(AlumniTagResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
