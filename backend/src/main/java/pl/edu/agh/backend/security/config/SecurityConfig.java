@@ -74,8 +74,6 @@ public class SecurityConfig {
                         .authenticated()
                         .requestMatchers("/api/alumni/**")
                         .hasRole(Roles.VERIFIED_ALUMN)
-                        .requestMatchers(HttpMethod.PUT, "/api/profiles/me/tags")
-                        .hasAnyRole(Roles.VERIFIED_ALUMN, Roles.ADMIN)
                         .requestMatchers("/api/events/**")
                         .hasRole(Roles.USER)
                         .requestMatchers("/api/admin/**")

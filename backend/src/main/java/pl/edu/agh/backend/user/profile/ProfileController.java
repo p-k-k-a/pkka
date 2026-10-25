@@ -1,22 +1,13 @@
 package pl.edu.agh.backend.user.profile;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
-import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.UserTagResponse;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
-import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
 
 @RestController
 @RequestMapping("/api/profiles/me")
@@ -38,24 +29,5 @@ public class ProfileController {
             description = "Partial update: null/omitted fields are left unchanged; a blank string clears the value")
     public ProfileResponse updateMyProfile(Caller caller, @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(caller.requireKeycloakId(), request);
-    }
-
-    @GetMapping("/tags")
-    @Operation(summary = "Get own assigned tags")
-    public List<UserTagResponse> getMyTags(Caller caller) {
-        return profileService.getTags(caller.requireKeycloakId());
-    }
-
-    @PutMapping("/tags")
-    @Operation(summary = "Replace own tags, creating any named tag that is not in the catalog yet")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(
-                responseCode = "400",
-                description = "Invalid tag name or more than " + TagNames.MAX_PER_USER + " tags",
-                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    })
-    public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
-        return profileService.updateTags(caller.requireKeycloakId(), request.names());
     }
 }

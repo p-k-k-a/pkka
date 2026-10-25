@@ -96,7 +96,7 @@ class ProfileTagsIntegrationTest {
 
     @Test
     void getMyTagsReturnsEmptyInitially() throws Exception {
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$", hasSize(0)));
@@ -104,7 +104,7 @@ class ProfileTagsIntegrationTest {
 
     @Test
     void updateMyTagsReplacesTagSet() throws Exception {
-        mockMvc.perform(put("/api/profiles/me/tags")
+        mockMvc.perform(put("/api/alumni/me/tags")
                         .with(JwtTestSupport.asUser(user.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -112,13 +112,13 @@ class ProfileTagsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
 
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
     }
 
     private void putTags(User owner, String body) throws Exception {
-        mockMvc.perform(put("/api/profiles/me/tags")
+        mockMvc.perform(put("/api/alumni/me/tags")
                         .with(JwtTestSupport.asUser(owner.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -153,7 +153,7 @@ class ProfileTagsIntegrationTest {
     void updateMyTagsCreatesUnknownNamesKeepingTheSpellingAsTyped() throws Exception {
         putTags(user, "{\"names\": [\"  Elixir   OTP \"]}");
 
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Elixir OTP"))
                 .andExpect(jsonPath("$[0].usageCount").doesNotExist());
@@ -166,7 +166,7 @@ class ProfileTagsIntegrationTest {
 
         putTags(user, "{\"names\": [\"jAVA\", \"java\"]}");
 
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Java"));
         assertThat(userTagRepository.count()).isEqualTo(before);
@@ -175,7 +175,7 @@ class ProfileTagsIntegrationTest {
     @Test
     void updateMyTagsRejectsBlankAndTooLongNames() throws Exception {
         for (String name : List.of("\"   \"", "\"%s\"".formatted("x".repeat(33)), "null")) {
-            mockMvc.perform(put("/api/profiles/me/tags")
+            mockMvc.perform(put("/api/alumni/me/tags")
                             .with(JwtTestSupport.asUser(user.getKeycloakId()))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -189,7 +189,7 @@ class ProfileTagsIntegrationTest {
     void updateMyTagsAcceptsPunctuationUsedByTechnologyNames() throws Exception {
         putTags(user, "{\"names\": [\"C++\", \"C#\", \"Node.js\", \"CI/CD\", \"Zażółć-2\", \"R\"]}");
 
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(6)));
     }
 
@@ -199,7 +199,7 @@ class ProfileTagsIntegrationTest {
                 .mapToObj(i -> "\"skill %d\"".formatted(i))
                 .collect(Collectors.joining(","));
 
-        mockMvc.perform(put("/api/profiles/me/tags")
+        mockMvc.perform(put("/api/alumni/me/tags")
                         .with(JwtTestSupport.asUser(user.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -215,7 +215,7 @@ class ProfileTagsIntegrationTest {
             putTags(owner, "{\"names\": [\"Elixir\"]}");
         }
 
-        mockMvc.perform(get("/api/user-tags").with(JwtTestSupport.asUser()))
+        mockMvc.perform(get("/api/alumni/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name=='Elixir')].usageCount").value(contains(2)))
                 .andExpect(jsonPath("$[?(@.name=='Blockchain')].usageCount").value(contains(0)));
@@ -226,7 +226,7 @@ class ProfileTagsIntegrationTest {
         putTags(user, "{\"names\": [\"Zig\", \"Elixir\"]}");
         putTags(anotherApprovedAlumnus(true), "{\"names\": [\"Zig\"]}");
 
-        String body = mockMvc.perform(get("/api/user-tags").with(JwtTestSupport.asUser()))
+        String body = mockMvc.perform(get("/api/alumni/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -243,7 +243,7 @@ class ProfileTagsIntegrationTest {
         applicant.setKeycloakId(UUID.randomUUID().toString());
         applicant = userRepository.save(applicant);
 
-        mockMvc.perform(put("/api/profiles/me/tags")
+        mockMvc.perform(put("/api/alumni/me/tags")
                         .with(JwtTestSupport.asUser(applicant.getKeycloakId()))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -253,39 +253,24 @@ class ProfileTagsIntegrationTest {
     }
 
     @Test
-    void adminCanUpdateOwnTags() throws Exception {
-        User admin = new User();
-        admin.setKeycloakId(UUID.randomUUID().toString());
-        admin = userRepository.save(admin);
-
-        mockMvc.perform(put("/api/profiles/me/tags")
-                        .with(JwtTestSupport.asAdmin(admin.getKeycloakId()))
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"names\": [\"Admin Skill\"]}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].name", contains("Admin Skill")));
-    }
-
-    @Test
     void updateMyTagsRejectsMissingNames() throws Exception {
         putTags(user, "{\"names\": [\"Java\"]}");
 
         for (String body : List.of("{}", "{\"names\": null}")) {
-            mockMvc.perform(put("/api/profiles/me/tags")
+            mockMvc.perform(put("/api/alumni/me/tags")
                             .with(JwtTestSupport.asUser(user.getKeycloakId()))
                             .with(csrf())
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest());
         }
-        mockMvc.perform(get("/api/profiles/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
+        mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(1)));
     }
 
     @Test
     void profileEndpointsRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/profiles/me")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/profiles/me/tags")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/alumni/me/tags")).andExpect(status().isUnauthorized());
     }
 }
