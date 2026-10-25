@@ -89,7 +89,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @BatchSize(size = 30)
-    private Set<UserTag> tags = new HashSet<>();
+    private Set<AlumniTag> tags = new HashSet<>();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

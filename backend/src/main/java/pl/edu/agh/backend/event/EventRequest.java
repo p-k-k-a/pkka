@@ -11,6 +11,8 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
 
 public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 200)
@@ -42,7 +44,8 @@ public record EventRequest(
         @Max(7 * 24 * 60)
         Integer reminderLeadTimeMinutes,
 
-        Set<@NotBlank @Size(max = 32) String> tags) {
+        @Schema(description = "Lower-cased on save; names not in the catalog are created")
+        Set<@NotBlank @Size(max = TagNames.MAX_LENGTH) String> tags) {
 
     public EventRequest {
         title = trimToNull(title);
@@ -50,7 +53,12 @@ public record EventRequest(
         transmissionUrl = trimToNull(transmissionUrl);
         location = trimToNull(location);
         coverImageUrl = trimToNull(coverImageUrl);
-        tags = tags == null || tags.isEmpty() ? new HashSet<>() : new HashSet<>(tags);
+        tags = tags == null
+                ? new HashSet<>()
+                : tags.stream()
+                        .map(TagNames::normalize)
+                        .map(TagNames::key)
+                        .collect(Collectors.toCollection(HashSet::new));
     }
 
     @AssertTrue(message = "endsAt must be after startsAt")
