@@ -100,6 +100,7 @@ export default function EventsScreen() {
   return (
     <FlatList
       className="flex-1 bg-background"
+      contentContainerClassName="pb-8"
       data={events}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
@@ -111,19 +112,17 @@ export default function EventsScreen() {
       ListHeaderComponent={<ListHeader timeframe={timeframe} onTimeframeChange={setTimeframe} />}
       ListHeaderComponentStyle={{ marginBottom: 24 }}
       ListFooterComponent={
-        <View className="px-5 pb-12 pt-8">
-          {isLoading ? (
-            <ActivityIndicator className="pb-8" />
-          ) : isError ? (
-            <Text className="pb-8 text-center text-sm text-muted-foreground">
-              Nie udało się załadować wydarzeń.
-            </Text>
-          ) : events.length === 0 ? (
-            <Text className="pb-8 text-center text-sm text-muted-foreground">
-              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
-            </Text>
-          ) : null}
-        </View>
+        isLoading ? (
+          <ActivityIndicator className="py-8" />
+        ) : isError ? (
+          <Text className="py-8 text-center text-sm text-muted-foreground">
+            Nie udało się załadować wydarzeń.
+          </Text>
+        ) : events.length === 0 ? (
+          <Text className="py-8 text-center text-sm text-muted-foreground">
+            {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
+          </Text>
+        ) : null
       }
     />
   );
