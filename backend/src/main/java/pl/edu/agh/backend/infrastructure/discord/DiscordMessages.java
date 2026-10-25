@@ -21,6 +21,7 @@ import org.springframework.web.client.RestClientException;
 public class DiscordMessages {
 
     private static final String CHANNEL_MESSAGES_URI = "https://discord.com/api/v10/channels/{channelId}/messages";
+    private static final String MESSAGE_URI = CHANNEL_MESSAGES_URI + "/{messageId}";
 
     private final RestClient restClient;
     private final DiscordProperties discord;
@@ -52,6 +53,37 @@ public class DiscordMessages {
                 return attempt.get();
             }
         });
+    }
+
+    public void edit(String channelId, String messageId, DiscordEmbed embed) {
+        send(
+                "edit message " + messageId,
+                () -> restClient
+                        .patch()
+                        .uri(MESSAGE_URI, channelId, messageId)
+                        .header(AUTHORIZATION, "Bot " + discord.botToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(Map.of("embeds", List.of(embed)))
+                        .exchange((request, response) -> switch (response.getStatusCode()
+                                .value()) {
+                            case 200 -> true;
+                            default -> throw refused(response.getStatusCode());
+                        }));
+    }
+
+    public boolean delete(String channelId, String messageId) {
+        return send(
+                        "delete message " + messageId,
+                        () -> restClient
+                                .delete()
+                                .uri(MESSAGE_URI, channelId, messageId)
+                                .header(AUTHORIZATION, "Bot " + discord.botToken())
+                                .exchange((request, response) -> switch (response.getStatusCode()
+                                        .value()) {
+                                    case 204, 404 -> true;
+                                    default -> throw refused(response.getStatusCode());
+                                }))
+                .orElse(false);
     }
 
     private <T> Optional<T> send(String action, Supplier<T> call) {
