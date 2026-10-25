@@ -69,10 +69,12 @@ function IdentityRow({
   label,
   value,
   field,
+  children,
 }: {
   label: string;
   value?: string;
   field: AnyFieldApi;
+  children?: React.ReactNode;
 }) {
   const theme = useThemeColors();
   const visible = field.state.value as boolean;
@@ -113,6 +115,7 @@ function IdentityRow({
           <Text className="text-muted-foreground">{value}</Text>
         </View>
       ) : null}
+      {children}
     </View>
   );
 }
@@ -226,7 +229,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
       <FormSection
         title="Dane podstawowe"
-        description="Pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
+        description="Imię, nazwisko i e-mail pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
       >
         <form.Field name="showName">
           {(field) => (
@@ -245,30 +248,40 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             {(field) => <IdentityRow label="Discord" field={field} />}
           </form.Field>
         ) : null}
-      </FormSection>
-
-      <FormSection title="Telefon">
-        <form.Field
-          name="phoneNumber"
-          validators={{ onBlur: ({ value }) => phoneNumberError(value) }}
-        >
-          {(field) => (
-            <FormField label="Numer telefonu">
-              <Input
-                value={field.state.value}
-                onChangeText={field.handleChange}
-                onBlur={field.handleBlur}
-                placeholder="+48 600 700 800"
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                maxLength={32}
-              />
-              <FieldError field={field} />
-            </FormField>
+        <form.Field name="showPhone">
+          {(visibility) => (
+            <IdentityRow label="Telefon" field={visibility}>
+              <form.Field
+                name="phoneNumber"
+                validators={{ onBlur: ({ value }) => phoneNumberError(value) }}
+              >
+                {(field) => (
+                  <>
+                    <Input
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      placeholder="+48 600 700 800"
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                      maxLength={32}
+                    />
+                    <FieldError field={field} />
+                  </>
+                )}
+              </form.Field>
+            </IdentityRow>
           )}
         </form.Field>
-        <form.Field name="showPhone">
-          {(field) => <IdentityRow label="Telefon w katalogu" field={field} />}
+        <form.Field name="willingToMentor">
+          {(field) => (
+            <CheckboxCard
+              title="Jestem otwarty na mentoring"
+              description="Inni alumni będą to widzieć."
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+            />
+          )}
         </form.Field>
       </FormSection>
 
@@ -316,17 +329,6 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 style={{ textAlignVertical: "top" }}
               />
             </FormField>
-          )}
-        </form.Field>
-
-        <form.Field name="willingToMentor">
-          {(field) => (
-            <CheckboxCard
-              title="Jestem otwarty na mentoring"
-              description="Inni alumni będą to widzieć."
-              checked={field.state.value}
-              onCheckedChange={field.handleChange}
-            />
           )}
         </form.Field>
       </FormSection>
