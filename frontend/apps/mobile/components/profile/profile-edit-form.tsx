@@ -205,6 +205,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
   return (
     <KeyboardAwareScrollView
+      showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"
