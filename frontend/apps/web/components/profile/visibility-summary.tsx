@@ -5,12 +5,18 @@ import { cn } from "@/lib/utils";
 type VisibilitySummaryProps = {
   visibility: ProfileVisibility;
   discordConnected: boolean;
+  phoneSet: boolean;
 };
 
-export function VisibilitySummary({ visibility, discordConnected }: VisibilitySummaryProps) {
+export function VisibilitySummary({
+  visibility,
+  discordConnected,
+  phoneSet,
+}: VisibilitySummaryProps) {
   const rows = [
     { label: "Imię i nazwisko", visible: visibility.name, available: true },
     { label: "E-mail", visible: visibility.email, available: true },
+    { label: "Telefon", visible: visibility.phone, available: phoneSet, missing: "Brak numeru" },
     { label: "Discord", visible: visibility.discord, available: discordConnected },
   ];
 
@@ -38,7 +44,7 @@ export function VisibilitySummary({ visibility, discordConnected }: VisibilitySu
             </span>
           ) : (
             <span className="text-muted-foreground text-[11px] font-semibold tracking-widest uppercase">
-              Brak konta
+              {row.missing ?? "Brak konta"}
             </span>
           )}
         </li>

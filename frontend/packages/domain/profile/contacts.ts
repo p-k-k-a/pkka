@@ -15,13 +15,14 @@ function isDiscordId(id: string) {
 
 type ProfileContactSource = Pick<
   ProfileResponse,
-  "email" | "discordId" | "linkedinUrl" | "githubUrl" | "visibility"
+  "email" | "discordId" | "phoneNumber" | "linkedinUrl" | "githubUrl" | "visibility"
 >;
 
 export type ProfileContacts = {
   email: string | null;
   discordId: string | null;
   discordUrl: string | null;
+  phoneNumber: string | null;
   linkedinUrl: string | null;
   githubUrl: string | null;
   hasAny: boolean;
@@ -33,6 +34,7 @@ export function getProfileContacts(profile: ProfileContactSource): ProfileContac
     profile.visibility.discord && profile.discordId && isDiscordId(profile.discordId)
       ? profile.discordId
       : null;
+  const phoneNumber = profile.visibility.phone && profile.phoneNumber ? profile.phoneNumber : null;
   const linkedinUrl =
     profile.linkedinUrl && isHttpsUrl(profile.linkedinUrl) ? profile.linkedinUrl : null;
   const githubUrl = profile.githubUrl && isHttpsUrl(profile.githubUrl) ? profile.githubUrl : null;
@@ -41,8 +43,9 @@ export function getProfileContacts(profile: ProfileContactSource): ProfileContac
     email,
     discordId,
     discordUrl: discordId ? `https://discord.com/users/${discordId}` : null,
+    phoneNumber,
     linkedinUrl,
     githubUrl,
-    hasAny: Boolean(email || discordId || linkedinUrl || githubUrl),
+    hasAny: Boolean(email || discordId || phoneNumber || linkedinUrl || githubUrl),
   };
 }
