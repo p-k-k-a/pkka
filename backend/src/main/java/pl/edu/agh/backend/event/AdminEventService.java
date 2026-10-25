@@ -104,12 +104,14 @@ public class AdminEventService {
         tags.addAll(findOrCreateTags(request.tags()));
         Event saved = eventRepository.saveAndFlush(event);
         eventRegistrationService.fillFreeSeats(saved);
+        eventPublisher.publishEvent(new EventUpdatedEvent(saved.getId()));
         return respond(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
         eventRepository.delete(findOrThrow(id));
+        eventPublisher.publishEvent(new EventDeletedEvent(id));
     }
 
     private AdminEventResponse respond(Event event) {

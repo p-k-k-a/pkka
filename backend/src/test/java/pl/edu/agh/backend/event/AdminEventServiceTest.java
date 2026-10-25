@@ -164,5 +164,41 @@ class AdminEventServiceTest {
         adminEventService.delete(id);
 
         verify(eventRepository).delete(event);
+        verify(eventPublisher).publishEvent(new EventDeletedEvent(id));
+    }
+
+    @Test
+    void updatePublishesTheChange() {
+        UUID id = UUID.randomUUID();
+        Event event = Event.builder()
+                .id(id)
+                .title("Warsztat")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.parse("2026-09-01T17:00:00Z"))
+                .endsAt(Instant.parse("2026-09-01T19:00:00Z"))
+                .audience(Audience.PUBLIC)
+                .tags(new HashSet<>())
+                .build();
+        when(eventRepository.findForUpdateById(id)).thenReturn(Optional.of(event));
+        when(eventRepository.saveAndFlush(event)).thenReturn(event);
+
+        EventRequest request = new EventRequest(
+                "Warsztat AI",
+                null,
+                EventType.ONLINE,
+                Instant.parse("2026-09-01T17:00:00Z"),
+                Instant.parse("2026-09-01T19:00:00Z"),
+                null,
+                null,
+                null,
+                null,
+                Audience.ALL_ALUMNI,
+                null,
+                null,
+                Set.of());
+
+        adminEventService.update(id, request);
+
+        verify(eventPublisher).publishEvent(new EventUpdatedEvent(id));
     }
 }
