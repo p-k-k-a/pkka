@@ -53,6 +53,9 @@ public class ProfileService {
         if (request.githubUrl() != null) {
             user.setGithubUrl(blankToNull(request.githubUrl()));
         }
+        if (request.phoneNumber() != null) {
+            user.setPhoneNumber(blankToNull(request.phoneNumber()));
+        }
         if (request.willingToMentor() != null) {
             user.setWillingToMentor(request.willingToMentor());
         }
@@ -66,6 +69,9 @@ public class ProfileService {
             }
             if (visibility.discord() != null) {
                 user.setShowDiscord(visibility.discord());
+            }
+            if (visibility.phone() != null) {
+                user.setShowPhone(visibility.phone());
             }
         }
         return ProfileResponse.from(user, education(user));

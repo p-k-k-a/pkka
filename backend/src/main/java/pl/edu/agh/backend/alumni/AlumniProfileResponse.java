@@ -34,6 +34,8 @@ public record AlumniProfileResponse(
         @Schema(description = "Discord snowflake for deep links; null when not linked or hidden")
         String discordId,
 
+        @Schema(description = "Null when not set or hidden") String phoneNumber,
+
         String linkedinUrl,
         String githubUrl,
 
@@ -54,6 +56,7 @@ public record AlumniProfileResponse(
         boolean showName = user.isShowName();
         boolean showEmail = user.isShowEmail();
         boolean showDiscord = user.isShowDiscord();
+        boolean showPhone = user.isShowPhone();
         return new AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
@@ -63,6 +66,7 @@ public record AlumniProfileResponse(
                 user.getCompany(),
                 user.getBio(),
                 showDiscord ? user.getDiscordId() : null,
+                showPhone ? user.getPhoneNumber() : null,
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
                 education.graduationYear(),
@@ -73,6 +77,6 @@ public record AlumniProfileResponse(
                         .map(UserTagResponse::from)
                         .sorted(Comparator.comparing(UserTagResponse::name))
                         .toList(),
-                new ProfileVisibility(showName, showEmail, showDiscord));
+                ProfileVisibility.of(user));
     }
 }

@@ -41,6 +41,7 @@ class ApplicationStateTest {
         assertThat(application.getReviewedAt()).isNotNull();
         assertThat(application.getRejectionReason()).isNull();
         assertThat(applicant.getGraduationYear()).isEqualTo(2020);
+        assertThat(applicant.getPhoneNumber()).isEqualTo("+48123456789");
     }
 
     @Test

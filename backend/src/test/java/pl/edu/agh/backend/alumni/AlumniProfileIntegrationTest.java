@@ -281,6 +281,53 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
+    void updatesPhoneNumberViaProfileEndpoint() throws Exception {
+        mockMvc.perform(patch("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\": \"+48 600 700 800\", \"visibility\": {\"phone\": true}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value("+48 600 700 800"))
+                .andExpect(jsonPath("$.visibility.phone").value(true));
+
+        User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
+        assertThat(updated.getPhoneNumber()).isEqualTo("+48 600 700 800");
+        assertThat(updated.isShowPhone()).isTrue();
+    }
+
+    @Test
+    void rejectsInvalidPhoneNumber() throws Exception {
+        mockMvc.perform(patch("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\": \"zadzwoń do mnie\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void showsPhoneInDirectoryOnlyWhenPublic() throws Exception {
+        alumn.setPhoneNumber("+48600700800");
+        userRepository.save(alumn);
+
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value(nullValue()))
+                .andExpect(jsonPath("$.visibility.phone").value(false));
+
+        alumn.setShowPhone(true);
+        userRepository.save(alumn);
+
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value("+48600700800"))
+                .andExpect(jsonPath("$.visibility.phone").value(true));
+    }
+
+    @Test
     void rejectsTooLongBio() throws Exception {
         mockMvc.perform(patch("/api/profiles/me")
                         .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))

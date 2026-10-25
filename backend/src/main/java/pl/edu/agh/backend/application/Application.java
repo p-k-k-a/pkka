@@ -148,11 +148,12 @@ public class Application {
     private void markApproved() {
         this.status = ApplicationStatus.APPROVED;
         this.reviewedAt = Instant.now();
-        recordGraduationYearOnApplicant();
+        recordOnApplicant();
     }
 
-    private void recordGraduationYearOnApplicant() {
+    private void recordOnApplicant() {
         this.applicant.setGraduationYear(this.graduationYear);
+        this.applicant.setPhoneNumber(this.phoneNumber);
     }
 
     private void ensureUnderReview() {
