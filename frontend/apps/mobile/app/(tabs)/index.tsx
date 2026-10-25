@@ -6,9 +6,13 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
 import { useListPosts } from "@pkka/api";
+import { keepPreviousData } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { ChevronDown } from "lucide-react-native";
 import * as React from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+
+const PAGE_SIZE = 20;
 
 const HERO = {
   title: "Witaj w P.K.K.A",
@@ -19,7 +23,7 @@ const CTA = {
   title: "Dołącz do naszej społeczności",
   subtitle:
     "Dostęp do zamkniętych wydarzeń i katalogu ekspertów. Weryfikacja tylko dla absolwentów WI AGH.",
-  primaryLabel: "Zarejestruj się",
+  primaryLabel: "Dołącz",
   secondaryLabel: "Dowiedz się więcej",
 };
 
@@ -30,23 +34,20 @@ function ListHeader() {
     <View className="gap-10">
       <Hero {...HERO} />
       <View className="gap-10 px-5">
-        {!user && <CtaCard {...CTA} />}
+        {!user && <CtaCard {...CTA} onPrimary={() => router.push("/login")} />}
         <SectionHeading title="Publiczne Aktualności" />
       </View>
     </View>
   );
 }
 
-function ListFooter() {
+function LoadMore({ loading, onPress }: { loading: boolean; onPress: () => void }) {
   const theme = useThemeColors();
 
+  if (loading) return <ActivityIndicator className="py-8" />;
+
   return (
-    <Pressable
-      className="flex-row items-center justify-center gap-2 py-8"
-      onPress={() => {
-        console.log("nothing yet");
-      }}
-    >
+    <Pressable className="flex-row items-center justify-center gap-2 py-8" onPress={onPress}>
       <Text className="text-accent text-xs font-bold uppercase tracking-widest">
         ZOBACZ STARSZE WPISY
       </Text>
@@ -56,9 +57,14 @@ function ListFooter() {
 }
 
 export default function HomeScreen() {
-  const { data, isLoading, isError } = useListPosts({ page: 0, size: 20 });
+  const [pages, setPages] = React.useState(1);
+  const { data, isLoading, isError, isFetching } = useListPosts(
+    { page: 0, size: PAGE_SIZE * pages },
+    { query: { placeholderData: keepPreviousData } },
+  );
 
   const posts = data?.data?.content ?? [];
+  const hasMore = data?.data?.last === false;
 
   return (
     <FlatList
@@ -80,9 +86,9 @@ export default function HomeScreen() {
           <Text className="text-muted-foreground text-sm text-center py-8">
             Nie udało się załadować aktualności.
           </Text>
-        ) : (
-          <ListFooter />
-        )
+        ) : hasMore ? (
+          <LoadMore loading={isFetching} onPress={() => setPages((count) => count + 1)} />
+        ) : null
       }
     />
   );
