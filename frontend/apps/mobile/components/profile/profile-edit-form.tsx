@@ -247,10 +247,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         ) : null}
       </FormSection>
 
-      <FormSection
-        title="Telefon"
-        description="Inni alumni zobaczą numer tylko wtedy, gdy go pokażesz."
-      >
+      <FormSection title="Telefon">
         <form.Field
           name="phoneNumber"
           validators={{ onBlur: ({ value }) => phoneNumberError(value) }}
