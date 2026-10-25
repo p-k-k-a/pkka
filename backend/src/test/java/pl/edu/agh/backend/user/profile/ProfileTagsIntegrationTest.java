@@ -253,6 +253,21 @@ class ProfileTagsIntegrationTest {
     }
 
     @Test
+    void adminCanUpdateOwnTags() throws Exception {
+        User admin = new User();
+        admin.setKeycloakId(UUID.randomUUID().toString());
+        admin = userRepository.save(admin);
+
+        mockMvc.perform(put("/api/profiles/me/tags")
+                        .with(JwtTestSupport.asAdmin(admin.getKeycloakId()))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"names\": [\"Admin Skill\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name", contains("Admin Skill")));
+    }
+
+    @Test
     void updateMyTagsRejectsMissingNames() throws Exception {
         putTags(user, "{\"names\": [\"Java\"]}");
 
