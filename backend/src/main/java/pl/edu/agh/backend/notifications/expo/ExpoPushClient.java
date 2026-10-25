@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -21,7 +22,7 @@ public class ExpoPushClient {
 
     private final RestClient restClient;
 
-    public ExpoPushClient(RestClient restClient) {
+    public ExpoPushClient(@Qualifier("expoRestClient") RestClient restClient) {
         this.restClient = restClient;
     }
 
