@@ -38,7 +38,7 @@ class DiscordAlumnVouchTest {
     @Test
     void somebodyDiscordConfirmsIsVouchedFor() {
         given(userRepository.findByKeycloakId(KEYCLOAK_ID)).willReturn(Optional.of(userWithDiscordId(DISCORD_ID)));
-        given(guildMembership.holdsAcceptedRole(DISCORD_ID)).willReturn(true);
+        given(guildMembership.holdsAlumnRole(DISCORD_ID)).willReturn(true);
 
         assertThat(vouch.vouchesFor(caller)).isTrue();
     }
@@ -46,7 +46,7 @@ class DiscordAlumnVouchTest {
     @Test
     void somebodyDiscordDoesNotConfirmIsNotVouchedFor() {
         given(userRepository.findByKeycloakId(KEYCLOAK_ID)).willReturn(Optional.of(userWithDiscordId(DISCORD_ID)));
-        given(guildMembership.holdsAcceptedRole(DISCORD_ID)).willReturn(false);
+        given(guildMembership.holdsAlumnRole(DISCORD_ID)).willReturn(false);
 
         assertThat(vouch.vouchesFor(caller)).isFalse();
     }

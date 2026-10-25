@@ -324,7 +324,7 @@ networks:
       <strong>Oznaczenie <code>:ro</code></strong><br>
       Skrót <code>:ro</code> oznacza <em>read-only</em> (tylko do odczytu). Gwarantuje to, że baza danych / aplikacja dążąca do załadowania tych danych wewnątrz kontenera nie będzie w stanie nadpisać ani zmodyfikować zawartości Twojego lokalnego pliku źródłowego <code>realm-export.json</code>.<br><br>
       <strong>Konfiguracja środowiska .env</strong><br>
-      Pamiętaj, że po udanym imporcie z tego pliku należy odpowiednio skonfigurować plik <code>.env</code> w katalogu /backend. Zmienne, o które chodzi, to te użyte w konfiguracji Springa (opisane w sekcji <a href="#appyml" style="color:var(--accent)">application.yml</a>: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_GUILD_ID</code>, itp.).
+      Pamiętaj, że po udanym imporcie z tego pliku należy odpowiednio skonfigurować plik <code>.env</code> w katalogu /backend. Zmienne, o które chodzi, to te użyte w konfiguracji Springa (opisane w sekcji <a href="#appyml" style="color:var(--accent)">application.yml</a>: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_BOT_TOKEN</code>, itp.).
     </div></div>
   </section>
 
@@ -1030,7 +1030,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
     <div class="callout info"><div class="callout-icon"></div><div><code>spring-boot-starter-oauth2-resource-server</code> wnosi <code>spring-security-oauth2-resource-server</code> oraz <code>spring-security-oauth2-jose</code> (parsowanie i walidacja JWT/JWK). Zależność <code>oauth2-client</code> <strong>nie</strong> zawiera tych bibliotek — obie muszą być wymienione explicite.</div></div>
 
     <h3>application.yml</h3>
-    <p>Pełna konfiguracja z profilami <code>dev</code> i <code>prod</code> opisana w <a href="#appyml" style="color:var(--accent)">sekcji 15</a>. Klucze wymagające uzupełnienia: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>DISCORD_GUILD_ID</code>.</p>
+    <p>Pełna konfiguracja z profilami <code>dev</code> i <code>prod</code> opisana w <a href="#appyml" style="color:var(--accent)">sekcji 15</a>. Klucze wymagające uzupełnienia: <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>.</p>
 
     <h3>Komponenty do implementacji</h3>
     <table>
@@ -1352,7 +1352,9 @@ keycloak:
 
 <span class="cm"># Discord</span>
 discord:
-  guild-id: <span class="prop">${DISCORD_GUILD_ID:change-me}</span>
+  bot-token: <span class="prop">${DISCORD_BOT_TOKEN:}</span>
+  application-id: <span class="prop">${DISCORD_APPLICATION_ID:}</span>
+  public-key: <span class="prop">${DISCORD_PUBLIC_KEY:}</span>
 
 <span class="cm"># Server</span>
 server:
@@ -1442,7 +1444,9 @@ keycloak:
   verified-alumn-role: <span class="prop">${KEYCLOAK_VERIFIED_ALUMN_ROLE:verified-alumn}</span>
 
 discord:
-  guild-id: <span class="prop">${DISCORD_GUILD_ID}</span>
+  bot-token: <span class="prop">${DISCORD_BOT_TOKEN:}</span>
+  application-id: <span class="prop">${DISCORD_APPLICATION_ID:}</span>
+  public-key: <span class="prop">${DISCORD_PUBLIC_KEY:}</span>
 
 springdoc:
   api-docs:
@@ -1468,7 +1472,7 @@ logging:
       Oba punkty odnoszą się do tego samego klienta Keycloaka (<code>pkka-web</code>), bo ma on włączone jednocześnie <strong>Standard Flow</strong> (user login) i <strong>Service Accounts</strong> (admin API). Użycie tych samych credentials upraszcza konfigurację — zamiast utrzymywać osobny klient tylko do admina, <code>pkka-web</code> pełni obie role.
     </div></div>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars (poza uruchomioną bazą, patrz <code>docker-compose.yml</code>). Na <code>prod</code> większość nie ma wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>SPRING_DATASOURCE_URL</code>, <code>SPRING_DATASOURCE_USERNAME</code>, <code>SPRING_DATASOURCE_PASSWORD</code>, <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>DISCORD_GUILD_ID</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>, <code>WEB_SUCCESS_URL</code>, <code>WEB_LOGOUT_REDIRECT_URL</code>, <code>WEB_CORS_ALLOWED_ORIGINS</code>. <code>KEYCLOAK_VERIFIED_ALUMN_ROLE</code> ma domyślną wartość (<code>verified-alumn</code>) nawet na prod — trzeba go nadpisać tylko jeśli rola w realmie nazywa się inaczej.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Na <code>dev</code> wszystkie zmienne mają wartości domyślne (<code>${VAR:default}</code>) — możesz uruchomić bez żadnych env vars (poza uruchomioną bazą, patrz <code>docker-compose.yml</code>). Na <code>prod</code> większość nie ma wartości domyślnych — aplikacja nie uruchomi się bez poprawnie ustawionych env vars. Zmienne obowiązkowe na prod: <code>SPRING_DATASOURCE_URL</code>, <code>SPRING_DATASOURCE_USERNAME</code>, <code>SPRING_DATASOURCE_PASSWORD</code>, <code>KEYCLOAK_WEB_CLIENT_SECRET</code>, <code>KEYCLOAK_MOBILE_CLIENT_SECRET</code>, <code>KEYCLOAK_ISSUER_URI</code>, <code>KEYCLOAK_URL</code>, <code>KEYCLOAK_REALM</code>, <code>MOBILE_DEEP_LINK_SCHEME</code>, <code>WEB_SUCCESS_URL</code>, <code>WEB_LOGOUT_REDIRECT_URL</code>, <code>WEB_CORS_ALLOWED_ORIGINS</code>. <code>KEYCLOAK_VERIFIED_ALUMN_ROLE</code> ma domyślną wartość (<code>verified-alumn</code>) nawet na prod — trzeba go nadpisać tylko jeśli rola w realmie nazywa się inaczej. Zmienne <code>DISCORD_*</code> są opcjonalne: bez nich nic nie trafia na Discorda, a serwer, kanał ogłoszeń i rolę absolwenta ustawia się komendą <code>/setup</code> i trzyma w bazie.</div></div>
   </section>
   <!-- KEYCLOAK ADMIN API -->
   <section id="admin-api">
