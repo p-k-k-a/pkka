@@ -1,3 +1,4 @@
+import { ProseContent } from "@/components/content/prose-content";
 import { Text } from "@/components/ui/text";
 import {
   eventTypeLabelUpper,
@@ -125,12 +126,18 @@ export function EventDetailView({ event }: EventDetailViewProps) {
           ) : null}
         </View>
 
-        <View className="h-px bg-border" />
+        {event.fullDescription ? (
+          <>
+            <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="font-heading text-foreground text-xl font-semibold">O wydarzeniu</Text>
-          <Text className="text-foreground/90 text-base leading-7">{event.fullDescription}</Text>
-        </View>
+            <View className="gap-3">
+              <Text className="font-heading text-foreground text-xl font-semibold">
+                O wydarzeniu
+              </Text>
+              <ProseContent content={event.fullDescription} />
+            </View>
+          </>
+        ) : null}
       </View>
     </ScrollView>
   );
