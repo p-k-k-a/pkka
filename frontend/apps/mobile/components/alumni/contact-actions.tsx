@@ -64,10 +64,11 @@ export function ContactActions({ profile }: ContactActionsProps) {
               size="lg"
               variant="secondary"
               className="w-full"
+              accessibilityLabel={`Zadzwoń: ${phoneNumber}`}
               onPress={() => callPhone(phoneNumber)}
             >
               <Phone size={18} color={theme.secondaryForeground} />
-              <Text className="font-bold">Zadzwoń: {phoneNumber}</Text>
+              <Text className="font-bold">{phoneNumber}</Text>
             </Button>
           ) : null}
         </View>
