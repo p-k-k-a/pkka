@@ -4,13 +4,11 @@ import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
-import { useThemeColors } from "@/lib/theme";
-import { useListPosts } from "@pkka/api";
-import { keepPreviousData } from "@tanstack/react-query";
+import { END_REACHED_THRESHOLD, nextPageParam, pageItems } from "@/lib/pagination";
+import { useListPostsInfinite } from "@pkka/api";
 import { router } from "expo-router";
-import { ChevronDown } from "lucide-react-native";
 import * as React from "react";
-import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
@@ -41,35 +39,20 @@ function ListHeader() {
   );
 }
 
-function LoadMore({ loading, onPress }: { loading: boolean; onPress: () => void }) {
-  const theme = useThemeColors();
-
-  if (loading) return <ActivityIndicator className="py-8" />;
-
-  return (
-    <Pressable className="flex-row items-center justify-center gap-2 py-8" onPress={onPress}>
-      <Text className="text-accent text-xs font-bold uppercase tracking-widest">
-        ZOBACZ STARSZE WPISY
-      </Text>
-      <ChevronDown size={16} color={theme.accent} />
-    </Pressable>
-  );
-}
-
 export default function HomeScreen() {
-  const [pages, setPages] = React.useState(1);
-  const { data, isLoading, isError, isFetching } = useListPosts(
-    { page: 0, size: PAGE_SIZE * pages },
-    { query: { placeholderData: keepPreviousData } },
-  );
+  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useListPostsInfinite(
+      { size: PAGE_SIZE },
+      { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
+    );
 
-  const posts = data?.data?.content ?? [];
-  const hasMore = data?.data?.last === false;
+  const posts = React.useMemo(() => pageItems(data?.pages), [data]);
 
   return (
     <FlatList
       className="flex-1 bg-background"
       contentContainerClassName="pb-8"
+      showsVerticalScrollIndicator={false}
       data={posts}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
@@ -80,15 +63,17 @@ export default function HomeScreen() {
       ItemSeparatorComponent={() => <View className="h-6" />}
       ListHeaderComponent={ListHeader}
       ListHeaderComponentStyle={{ marginBottom: 24 }}
+      onEndReached={() => {
+        if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+      }}
+      onEndReachedThreshold={END_REACHED_THRESHOLD}
       ListFooterComponent={
-        isLoading ? (
+        isPending || isFetchingNextPage ? (
           <ActivityIndicator className="py-8" />
         ) : isError ? (
           <Text className="text-muted-foreground text-sm text-center py-8">
             Nie udało się załadować aktualności.
           </Text>
-        ) : hasMore ? (
-          <LoadMore loading={isFetching} onPress={() => setPages((count) => count + 1)} />
         ) : null
       }
     />
