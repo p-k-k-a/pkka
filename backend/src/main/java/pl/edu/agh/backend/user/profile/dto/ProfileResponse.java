@@ -29,6 +29,7 @@ public record ProfileResponse(
         @Schema(description = "Discord snowflake synced from Keycloak federated identity; not editable here")
         String discordId,
 
+        String phoneNumber,
         String linkedinUrl,
         String githubUrl,
 
@@ -55,6 +56,7 @@ public record ProfileResponse(
                 user.getCompany(),
                 user.getBio(),
                 user.getDiscordId(),
+                user.getPhoneNumber(),
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
                 education.graduationYear(),
@@ -65,6 +67,6 @@ public record ProfileResponse(
                         .map(AlumniTagResponse::from)
                         .sorted(Comparator.comparing(AlumniTagResponse::name))
                         .toList(),
-                new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
+                ProfileVisibility.of(user));
     }
 }

@@ -29,6 +29,12 @@ export default defineConfig({
           listAlumni: {
             query: { useInfinite: true, useInfiniteQueryParam: "page" },
           },
+          listPosts: {
+            query: { useInfinite: true, useInfiniteQueryParam: "page" },
+          },
+          listEvents: {
+            query: { useInfinite: true, useInfiniteQueryParam: "page" },
+          },
         },
       },
       formatter: "prettier",

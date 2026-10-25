@@ -25,6 +25,11 @@ public record UpdateProfileRequest(
         @Schema(example = "https://github.com/jankowalski")
         String githubUrl,
 
+        @Size(max = 32)
+        @Pattern(regexp = "^$|^\\+?[0-9 \\-]{7,32}$", message = "must be a phone number, e.g. +48 600 700 800")
+        @Schema(example = "+48 600 700 800")
+        String phoneNumber,
+
         @Schema(description = "Willingness to mentor other alumni; null leaves it unchanged")
         Boolean willingToMentor,
 
@@ -34,5 +39,5 @@ public record UpdateProfileRequest(
                         "Visibility toggles; null leaves all unchanged, null sub-fields leave that toggle unchanged")
         VisibilityUpdate visibility) {
 
-    public record VisibilityUpdate(Boolean name, Boolean email, Boolean discord) {}
+    public record VisibilityUpdate(Boolean name, Boolean email, Boolean discord, Boolean phone) {}
 }

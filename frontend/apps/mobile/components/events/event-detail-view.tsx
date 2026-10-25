@@ -1,11 +1,7 @@
 import { ProseContent } from "@/components/content/prose-content";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
-import {
-  eventTypeLabelUpper,
-  formatEventDateShort,
-  formatSeatsRemaining,
-  formatTimeRange,
-} from "@pkka/domain";
+import { formatEventDateShort, formatSeatsRemaining, formatTimeRange } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { EventType, type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
@@ -73,11 +69,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
         </View>
 
         <View className="gap-3">
-          <View className="bg-band dark:bg-muted self-start rounded-lg px-3 py-1">
-            <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
-              {eventTypeLabelUpper(type)}
-            </Text>
-          </View>
+          <EventTypeBadge type={type} className="self-start" />
           <Text
             role="heading"
             aria-level="1"

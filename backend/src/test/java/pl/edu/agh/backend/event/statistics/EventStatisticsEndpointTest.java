@@ -102,6 +102,10 @@ class EventStatisticsEndpointTest {
                 .build());
     }
 
+    private static Instant noonInWarsaw(LocalDate day) {
+        return day.atTime(12, 0).atZone(WARSAW).toInstant();
+    }
+
     private String signUp(Event event) throws Exception {
         String keycloakId = UUID.randomUUID().toString();
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
@@ -158,15 +162,14 @@ class EventStatisticsEndpointTest {
     @Test
     void dailySeriesRunsFromPublicationToTodayWithEmptyDaysFilledIn() throws Exception {
         Event event = upcomingEvent(50);
-        Instant now = Instant.now();
-        publishedAt(event, now.minus(3, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.SIGNED_UP, now.minus(3, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.WAITLISTED, now.minus(3, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.SIGNED_UP, now.minus(1, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.CANCELLED, now.minus(1, ChronoUnit.DAYS));
-        activity(event, RegistrationActivityType.LEFT_WAITLIST, now.minus(1, ChronoUnit.DAYS));
-
         LocalDate today = LocalDate.now(WARSAW);
+        publishedAt(event, noonInWarsaw(today.minusDays(3)));
+        activity(event, RegistrationActivityType.SIGNED_UP, noonInWarsaw(today.minusDays(3)));
+        activity(event, RegistrationActivityType.WAITLISTED, noonInWarsaw(today.minusDays(3)));
+        activity(event, RegistrationActivityType.SIGNED_UP, noonInWarsaw(today.minusDays(1)));
+        activity(event, RegistrationActivityType.CANCELLED, noonInWarsaw(today.minusDays(1)));
+        activity(event, RegistrationActivityType.LEFT_WAITLIST, noonInWarsaw(today.minusDays(1)));
+
         mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
                 .andExpect(jsonPath("$.daily", hasSize(4)))
                 .andExpect(jsonPath("$.daily[*].date")
@@ -212,10 +215,9 @@ class EventStatisticsEndpointTest {
     @Test
     void dailySeriesStretchesToCoverActivityRecordedBeforePublication() throws Exception {
         Event event = upcomingEvent(10);
-        Instant now = Instant.now();
-        activity(event, RegistrationActivityType.SIGNED_UP, now.minus(2, ChronoUnit.DAYS));
-
         LocalDate today = LocalDate.now(WARSAW);
+        activity(event, RegistrationActivityType.SIGNED_UP, noonInWarsaw(today.minusDays(2)));
+
         mockMvc.perform(get("/api/admin/events/{id}/statistics", event.getId()).with(JwtTestSupport.asAdmin()))
                 .andExpect(jsonPath("$.daily", hasSize(3)))
                 .andExpect(jsonPath("$.daily[0].date").value(today.minusDays(2).toString()))

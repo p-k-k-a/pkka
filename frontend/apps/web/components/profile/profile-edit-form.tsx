@@ -32,12 +32,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
+import {
+  canonicalizeProfileUrl,
+  githubUrlError,
+  linkedinUrlError,
+  phoneNumberError,
+} from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
 
 type UrlField = "linkedinUrl" | "githubUrl";
+type ValidatedField = UrlField | "phoneNumber";
 
 function Field({
   label,
@@ -87,12 +93,14 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const [bio, setBio] = useState(profile.bio ?? "");
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl ?? "");
   const [githubUrl, setGithubUrl] = useState(profile.githubUrl ?? "");
+  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber ?? "");
   const [tagNames, setTagNames] = useState(profile.tags.map((tag) => tag.name));
   const [willingToMentor, setWillingToMentor] = useState(profile.willingToMentor);
   const [showName, setShowName] = useState(profile.visibility.name);
   const [showEmail, setShowEmail] = useState(profile.visibility.email);
   const [showDiscord, setShowDiscord] = useState(profile.visibility.discord);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<UrlField, string>>>({});
+  const [showPhone, setShowPhone] = useState(profile.visibility.phone);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ValidatedField, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
   const updateProfile = useUpdateMyProfile<ApiError>();
@@ -119,10 +127,12 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
     bio.trim() !== (profile.bio ?? "") ||
     linkedin !== canonicalizeProfileUrl(profile.linkedinUrl ?? "") ||
     github !== canonicalizeProfileUrl(profile.githubUrl ?? "") ||
+    phoneNumber.trim() !== (profile.phoneNumber ?? "") ||
     willingToMentor !== profile.willingToMentor ||
     showName !== profile.visibility.name ||
     showEmail !== profile.visibility.email ||
-    showDiscord !== profile.visibility.discord;
+    showDiscord !== profile.visibility.discord ||
+    showPhone !== profile.visibility.phone;
 
   function setUrl(field: UrlField, value: string) {
     if (field === "linkedinUrl") setLinkedinUrl(value);
@@ -134,11 +144,13 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
     event.preventDefault();
     setFormError(null);
 
-    const errors: Partial<Record<UrlField, string>> = {};
+    const errors: Partial<Record<ValidatedField, string>> = {};
     const linkedinError = linkedinUrlError(linkedinUrl);
     const githubError = githubUrlError(githubUrl);
     if (linkedinError) errors.linkedinUrl = linkedinError;
     if (githubError) errors.githubUrl = githubError;
+    const phoneError = phoneNumberError(phoneNumber);
+    if (phoneError) errors.phoneNumber = phoneError;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -148,8 +160,9 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
       company: company.trim(),
       linkedinUrl: linkedin,
       githubUrl: github,
+      phoneNumber: phoneNumber.trim(),
       willingToMentor,
-      visibility: { name: showName, email: showEmail, discord: showDiscord },
+      visibility: { name: showName, email: showEmail, discord: showDiscord, phone: showPhone },
     };
 
     try {
@@ -267,6 +280,29 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
             </section>
 
             <section className="space-y-5">
+              <SectionHeading>Kontakt</SectionHeading>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Telefon" htmlFor="phoneNumber" error={fieldErrors.phoneNumber}>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(event) => {
+                      setPhoneNumber(event.target.value);
+                      setFieldErrors((errors) => ({ ...errors, phoneNumber: undefined }));
+                    }}
+                    placeholder="+48 600 700 800"
+                    maxLength={32}
+                    aria-invalid={Boolean(fieldErrors.phoneNumber)}
+                    aria-describedby={fieldErrors.phoneNumber ? "phoneNumber-error" : undefined}
+                  />
+                </Field>
+              </div>
+            </section>
+
+            <section className="space-y-5">
               <SectionHeading>Linki</SectionHeading>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="LinkedIn" htmlFor="linkedinUrl" error={fieldErrors.linkedinUrl}>
@@ -352,8 +388,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
             <Card className="gap-5 rounded-lg p-5 shadow-none">
               <SectionHeading>Widoczność</SectionHeading>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                Dane pochodzą z Twojego konta - możesz zdecydować, czy są widoczne, ale nie zmienić
-                ich tutaj.
+                Zdecyduj, które dane widzą pozostali alumni. Imię, e-mail i Discord pochodzą z
+                Twojego konta.
               </p>
               <div className="flex flex-col">
                 <VisibilityField
@@ -370,6 +406,15 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   value={profile.email}
                   checked={showEmail}
                   onCheckedChange={setShowEmail}
+                  disabled={isSaving}
+                />
+                <VisibilityField
+                  id="visibility-phone"
+                  label="Telefon"
+                  value={phoneNumber.trim()}
+                  missingLabel="Brak numeru"
+                  checked={showPhone}
+                  onCheckedChange={setShowPhone}
                   disabled={isSaving}
                 />
                 <VisibilityField

@@ -203,6 +203,7 @@ export function ProfileView(props: ProfileViewProps) {
                 <VisibilitySummary
                   visibility={profile.visibility}
                   discordConnected={Boolean(profile.discordId)}
+                  phoneSet={Boolean(profile.phoneNumber)}
                 />
               </ProfileAside>
             ) : null}

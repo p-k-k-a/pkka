@@ -59,6 +59,12 @@ public class User {
     @Column(name = "show_discord", nullable = false)
     private boolean showDiscord = true;
 
+    @Column(name = "phone_number", length = 32)
+    private String phoneNumber;
+
+    @Column(name = "show_phone", nullable = false)
+    private boolean showPhone = false;
+
     @Column(name = "current_position", length = 255)
     private String currentPosition;
 
