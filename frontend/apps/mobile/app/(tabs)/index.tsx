@@ -69,6 +69,7 @@ export default function HomeScreen() {
   return (
     <FlatList
       className="flex-1 bg-background"
+      contentContainerClassName="pb-8"
       data={posts}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
