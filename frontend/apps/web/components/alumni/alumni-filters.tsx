@@ -1,6 +1,6 @@
 "use client";
 
-import { useListUserTags } from "@pkka/api";
+import { useListAlumniTags } from "@pkka/api";
 import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
@@ -36,7 +36,7 @@ type AlumniFiltersPanelProps = {
 };
 
 export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps) {
-  const tagsQuery = useListUserTags();
+  const tagsQuery = useListAlumniTags();
   const catalog = tagsQuery.data?.data ?? [];
   const [fromYear, toYear] = value.yearRange;
   const activeCount = countActiveAlumniFilters(value);

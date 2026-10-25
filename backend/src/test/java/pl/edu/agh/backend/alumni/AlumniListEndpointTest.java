@@ -38,10 +38,10 @@ import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTag;
-import pl.edu.agh.backend.user.UserTagRepository;
 
 /**
  * Covers the {@code GET /api/alumni} paginated/filterable list endpoint. See {@link AlumniProfileIntegrationTest}
@@ -66,7 +66,7 @@ class AlumniListEndpointTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -74,15 +74,17 @@ class AlumniListEndpointTest {
     @PersistenceContext
     private EntityManager entityManager;
 
-    private UserTag pythonTag;
-    private UserTag devopsTag;
+    private AlumniTag pythonTag;
+    private AlumniTag devopsTag;
 
     private static final int DEFAULT_GRADUATION_YEAR = 2020;
 
     @BeforeEach
     void setUp() {
-        pythonTag = userTagRepository.save(UserTag.builder().name("test-python").build());
-        devopsTag = userTagRepository.save(UserTag.builder().name("test-devops").build());
+        pythonTag =
+                alumniTagRepository.save(AlumniTag.builder().name("test-python").build());
+        devopsTag =
+                alumniTagRepository.save(AlumniTag.builder().name("test-devops").build());
     }
 
     /**
@@ -90,11 +92,11 @@ class AlumniListEndpointTest {
      * genuine, directory-visible alumnus. Every list test relies on this by default; tests that specifically
      * exercise the "unverified users are excluded" invariant create a bare {@link User} directly instead.
      */
-    private User newUser(String keycloakId, String position, String company, UserTag... tags) {
+    private User newUser(String keycloakId, String position, String company, AlumniTag... tags) {
         return newUser(keycloakId, position, company, DEFAULT_GRADUATION_YEAR, tags);
     }
 
-    private User newUser(String keycloakId, String position, String company, int graduationYear, UserTag... tags) {
+    private User newUser(String keycloakId, String position, String company, int graduationYear, AlumniTag... tags) {
         User user = new User();
         user.setKeycloakId(keycloakId);
         user.setCurrentPosition(position);

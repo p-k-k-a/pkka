@@ -12,10 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import pl.edu.agh.backend.application.ApplicationRepository;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTag;
-import pl.edu.agh.backend.user.UserTagRepository;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,7 +25,7 @@ class ProfileServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Mock
     private ApplicationRepository applicationRepository;
@@ -54,10 +54,10 @@ class ProfileServiceTest {
     void updateTagsReplacesAssignedTags() {
         User user = new User();
         user.setKeycloakId("kc-1");
-        UserTag tag = UserTag.builder().name("Java").build();
+        AlumniTag tag = AlumniTag.builder().name("Java").build();
         tag.setId(UUID.randomUUID());
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(userTagRepository.findByNameKeyIn(List.of("java"))).thenReturn(List.of(tag));
+        when(alumniTagRepository.findByNameKeyIn(List.of("java"))).thenReturn(List.of(tag));
 
         var tags = profileService.updateTags("kc-1", Set.of("Java"));
 

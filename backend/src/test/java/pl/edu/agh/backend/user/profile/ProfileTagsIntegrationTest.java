@@ -34,10 +34,10 @@ import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTag;
-import pl.edu.agh.backend.user.UserTagRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,7 +57,7 @@ class ProfileTagsIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -146,7 +146,7 @@ class ProfileTagsIntegrationTest {
     }
 
     private List<String> catalogNames() {
-        return userTagRepository.findAll().stream().map(UserTag::getName).toList();
+        return alumniTagRepository.findAll().stream().map(AlumniTag::getName).toList();
     }
 
     @Test
@@ -162,14 +162,14 @@ class ProfileTagsIntegrationTest {
 
     @Test
     void updateMyTagsMatchesExistingNamesIgnoringCase() throws Exception {
-        long before = userTagRepository.count();
+        long before = alumniTagRepository.count();
 
         putTags(user, "{\"names\": [\"jAVA\", \"java\"]}");
 
         mockMvc.perform(get("/api/alumni/me/tags").with(JwtTestSupport.asUser(user.getKeycloakId())))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name").value("Java"));
-        assertThat(userTagRepository.count()).isEqualTo(before);
+        assertThat(alumniTagRepository.count()).isEqualTo(before);
     }
 
     @Test

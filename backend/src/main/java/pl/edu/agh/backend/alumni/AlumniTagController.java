@@ -14,8 +14,8 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.user.UserTagRepository;
-import pl.edu.agh.backend.user.UserTagResponse;
+import pl.edu.agh.backend.user.AlumniTagRepository;
+import pl.edu.agh.backend.user.AlumniTagResponse;
 import pl.edu.agh.backend.user.profile.ProfileService;
 import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
 
@@ -25,23 +25,23 @@ import pl.edu.agh.backend.user.profile.dto.UpdateTagsRequest;
 @Tag(name = "Alumni Tags", description = "Alumni skill tags — requires VERIFIED_ALUMN role")
 public class AlumniTagController {
 
-    private final UserTagRepository userTagRepository;
+    private final AlumniTagRepository alumniTagRepository;
     private final ProfileService profileService;
 
     @GetMapping("/tags")
     @Operation(
             summary = "List all alumni skill tags with how many listed alumni have each",
             description = "Most used first, then alphabetical")
-    public List<UserTagResponse> listUserTags() {
-        return userTagRepository.findCatalog().stream()
-                .sorted(Comparator.comparing(UserTagResponse::usageCount, Comparator.reverseOrder())
-                        .thenComparing(UserTagResponse::name, String.CASE_INSENSITIVE_ORDER))
+    public List<AlumniTagResponse> listAlumniTags() {
+        return alumniTagRepository.findCatalog().stream()
+                .sorted(Comparator.comparing(AlumniTagResponse::usageCount, Comparator.reverseOrder())
+                        .thenComparing(AlumniTagResponse::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
     @GetMapping("/me/tags")
     @Operation(summary = "Get own assigned tags")
-    public List<UserTagResponse> getMyTags(Caller caller) {
+    public List<AlumniTagResponse> getMyTags(Caller caller) {
         return profileService.getTags(caller.requireKeycloakId());
     }
 
@@ -54,7 +54,7 @@ public class AlumniTagController {
                 description = "Invalid tag name or more than " + TagNames.MAX_PER_USER + " tags",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public List<UserTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
+    public List<AlumniTagResponse> updateMyTags(Caller caller, @Valid @RequestBody UpdateTagsRequest request) {
         return profileService.updateTags(caller.requireKeycloakId(), request.names());
     }
 }

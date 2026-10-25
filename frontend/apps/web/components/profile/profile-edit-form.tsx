@@ -9,14 +9,14 @@ import { toast } from "sonner";
 import {
   ApiError,
   getGetMyProfileQueryKey,
-  getListUserTagsQueryKey,
+  getListAlumniTagsQueryKey,
   useGetMyProfile,
-  useListUserTags,
+  useListAlumniTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
   type UpdateProfileRequest,
-  type UserTagResponse,
+  type AlumniTagResponse,
 } from "@pkka/api";
 import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
@@ -74,7 +74,7 @@ function Field({
 
 type EditFormFieldsProps = {
   profile: ProfileResponse;
-  catalog: UserTagResponse[];
+  catalog: AlumniTagResponse[];
   tagsError: boolean;
 };
 
@@ -162,7 +162,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
     if (tagsChanged) {
       try {
         await updateTags.mutateAsync({ data: { names: tagNames } });
-        await queryClient.invalidateQueries({ queryKey: getListUserTagsQueryKey() });
+        await queryClient.invalidateQueries({ queryKey: getListAlumniTagsQueryKey() });
       } catch (error) {
         // The profile itself is already saved, so the cache has to be refreshed
         // even though the tags did not go through.
@@ -435,7 +435,7 @@ function EditFormSkeleton() {
 export function ProfileEditForm() {
   const { user } = useAuth();
   const profileQuery = useGetMyProfile();
-  const tagsQuery = useListUserTags();
+  const tagsQuery = useListAlumniTags();
 
   if (!user) return null;
 

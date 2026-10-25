@@ -16,7 +16,7 @@ import pl.edu.agh.backend.event.tag.dto.TagResponse;
 @Tag(
         name = "Tags",
         description = "Available event tags (e.g. \"workshop\", \"networking\") — requires USER role. "
-                + "Alumni skill tags live under /api/user-tags.")
+                + "Alumni skill tags live under /api/alumni/tags.")
 public class TagController {
 
     private final TagRepository tagRepository;

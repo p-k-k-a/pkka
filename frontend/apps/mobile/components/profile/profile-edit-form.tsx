@@ -13,10 +13,10 @@ import {
   ApiError,
   getGetMyProfileQueryKey,
   getGetMyTagsQueryKey,
-  getListUserTagsQueryKey,
+  getListAlumniTagsQueryKey,
   useGetMyProfile,
   useGetMyTags,
-  useListUserTags,
+  useListAlumniTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
@@ -115,7 +115,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const theme = useThemeColors();
   const queryClient = useQueryClient();
 
-  const availableTagsQuery = useListUserTags();
+  const availableTagsQuery = useListAlumniTags();
   const myTagsQuery = useGetMyTags();
   const updateMyTags = useUpdateMyTags();
   const updateMyProfile = useUpdateMyProfile();
@@ -148,7 +148,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         try {
           await updateMyTags.mutateAsync({ data: { names: value.tagNames } });
           queryClient.invalidateQueries({ queryKey: getGetMyTagsQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getListUserTagsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListAlumniTagsQueryKey() });
         } catch (saveException) {
           setSubmitError(
             saveException instanceof ApiError && saveException.status === 400

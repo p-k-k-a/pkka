@@ -48,7 +48,7 @@ class TagCatalogIntegrationTest {
     }
 
     @Test
-    void listUserTagsRequiresUserRole() throws Exception {
-        mockMvc.perform(get("/api/user-tags")).andExpect(status().isUnauthorized());
+    void listAlumniTagsRequiresUserRole() throws Exception {
+        mockMvc.perform(get("/api/alumni/tags")).andExpect(status().isUnauthorized());
     }
 }

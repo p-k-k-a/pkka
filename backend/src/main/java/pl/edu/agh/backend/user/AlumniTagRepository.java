@@ -7,19 +7,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
-public interface UserTagRepository extends JpaRepository<UserTag, UUID> {
+public interface AlumniTagRepository extends JpaRepository<AlumniTag, UUID> {
 
-    @Query("select t from UserTag t where lower(t.name) in :keys")
-    List<UserTag> findByNameKeyIn(Collection<String> keys);
+    @Query("select t from AlumniTag t where lower(t.name) in :keys")
+    List<AlumniTag> findByNameKeyIn(Collection<String> keys);
 
     @Query("""
-            select new pl.edu.agh.backend.user.UserTagResponse(t.id, t.name, (
+            select new pl.edu.agh.backend.user.AlumniTagResponse(t.id, t.name, (
                 select count(u) from User u join u.tags assigned
                 where assigned = t and u.showName = true and exists (
                     select 1 from Application a where a.applicant = u and a.status = 'APPROVED')))
-            from UserTag t
+            from AlumniTag t
             """)
-    List<UserTagResponse> findCatalog();
+    List<AlumniTagResponse> findCatalog();
 
     @Modifying
     @Query(

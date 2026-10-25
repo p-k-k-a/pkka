@@ -1,10 +1,10 @@
 import { SearchMultiSelect, type SelectOption } from "@/components/ui/search-multi-select";
 import { Text } from "@/components/ui/text";
-import type { UserTagResponse } from "@pkka/api";
+import type { AlumniTagResponse } from "@pkka/api";
 import { TAG_NAME_MAX_LENGTH } from "@pkka/domain";
 
 type TagPickerProps = {
-  catalog: UserTagResponse[];
+  catalog: AlumniTagResponse[];
   value: string[];
   onChange: (names: string[] | ((prev: string[]) => string[])) => void;
   loading?: boolean;
