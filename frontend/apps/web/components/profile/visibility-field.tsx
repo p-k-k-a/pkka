@@ -60,7 +60,7 @@ export function VisibilityField({
           <TooltipTrigger asChild>
             <span tabIndex={0}>{toggle}</span>
           </TooltipTrigger>
-          <TooltipContent>Najpierw uzupełnij te dane na swoim koncie.</TooltipContent>
+          <TooltipContent>Najpierw uzupełnij te dane.</TooltipContent>
         </Tooltip>
       )}
     </div>

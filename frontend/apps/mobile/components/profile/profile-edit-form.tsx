@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
+import {
+  canonicalizeProfileUrl,
+  githubUrlError,
+  linkedinUrlError,
+  phoneNumberError,
+} from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
@@ -35,6 +40,7 @@ const FIELD_LABELS: Record<string, string> = {
   company: "Firma",
   linkedinUrl: "LinkedIn",
   githubUrl: "GitHub",
+  phoneNumber: "Telefon",
 };
 
 // The client validates the same rules, so a 400 means the two drifted apart — name the
@@ -63,10 +69,12 @@ function IdentityRow({
   label,
   value,
   field,
+  children,
 }: {
   label: string;
   value?: string;
   field: AnyFieldApi;
+  children?: React.ReactNode;
 }) {
   const theme = useThemeColors();
   const visible = field.state.value as boolean;
@@ -107,6 +115,7 @@ function IdentityRow({
           <Text className="text-muted-foreground">{value}</Text>
         </View>
       ) : null}
+      {children}
     </View>
   );
 }
@@ -136,10 +145,12 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bio: profile.bio ?? "",
       linkedinUrl: profile.linkedinUrl ?? "",
       githubUrl: profile.githubUrl ?? "",
+      phoneNumber: profile.phoneNumber ?? "",
       willingToMentor: profile.willingToMentor,
       showName: profile.visibility.name,
       showEmail: profile.visibility.email,
       showDiscord: profile.visibility.discord,
+      showPhone: profile.visibility.phone,
       tagNames: [] as string[],
     },
     onSubmit: async ({ value }) => {
@@ -168,11 +179,13 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             bio: trimmed(value.bio),
             linkedinUrl: canonicalizeProfileUrl(value.linkedinUrl),
             githubUrl: canonicalizeProfileUrl(value.githubUrl),
+            phoneNumber: trimmed(value.phoneNumber),
             willingToMentor: value.willingToMentor,
             visibility: {
               name: value.showName,
               email: value.showEmail,
               discord: value.showDiscord,
+              phone: value.showPhone,
             },
           },
         });
@@ -197,6 +210,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
   return (
     <KeyboardAwareScrollView
+      showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"
@@ -215,7 +229,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
 
       <FormSection
         title="Dane podstawowe"
-        description="Pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
+        description="Imię, nazwisko i e-mail pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
       >
         <form.Field name="showName">
           {(field) => (
@@ -234,6 +248,41 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             {(field) => <IdentityRow label="Discord" field={field} />}
           </form.Field>
         ) : null}
+        <form.Field name="showPhone">
+          {(visibility) => (
+            <IdentityRow label="Telefon" field={visibility}>
+              <form.Field
+                name="phoneNumber"
+                validators={{ onBlur: ({ value }) => phoneNumberError(value) }}
+              >
+                {(field) => (
+                  <>
+                    <Input
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      placeholder="+48 600 700 800"
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                      maxLength={32}
+                    />
+                    <FieldError field={field} />
+                  </>
+                )}
+              </form.Field>
+            </IdentityRow>
+          )}
+        </form.Field>
+        <form.Field name="willingToMentor">
+          {(field) => (
+            <CheckboxCard
+              title="Jestem otwarty na mentoring"
+              description="Inni alumni będą to widzieć."
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+            />
+          )}
+        </form.Field>
       </FormSection>
 
       <FormSection title="O Tobie" description="Puste pola nie pojawią się na Twoim profilu.">
@@ -280,17 +329,6 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 style={{ textAlignVertical: "top" }}
               />
             </FormField>
-          )}
-        </form.Field>
-
-        <form.Field name="willingToMentor">
-          {(field) => (
-            <CheckboxCard
-              title="Jestem otwarty na mentoring"
-              description="Inni alumni będą to widzieć."
-              checked={field.state.value}
-              onCheckedChange={field.handleChange}
-            />
           )}
         </form.Field>
       </FormSection>

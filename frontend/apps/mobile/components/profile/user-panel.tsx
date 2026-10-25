@@ -218,6 +218,7 @@ export function UserPanel() {
   return (
     <ScrollView
       className="flex-1 bg-background"
+      showsVerticalScrollIndicator={false}
       contentContainerClassName="pb-10"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >

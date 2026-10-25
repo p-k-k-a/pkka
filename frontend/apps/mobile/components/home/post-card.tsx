@@ -30,11 +30,9 @@ export function PostCard({ post }: PostCardProps) {
         </Text>
       </View>
 
-      <View className="border-foreground/10 mt-6 flex-row items-center justify-end gap-1.5 border-t pt-5">
-        <Text className="text-foreground text-xs font-bold uppercase tracking-widest">
-          CZYTAJ WIĘCEJ
-        </Text>
-        <ArrowRight size={14} color={theme.foreground} />
+      <View className="bg-background mt-5 flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2">
+        <Text className="text-accent text-sm font-medium">Czytaj więcej</Text>
+        <ArrowRight size={14} color={theme.accent} />
       </View>
     </Card>
   );

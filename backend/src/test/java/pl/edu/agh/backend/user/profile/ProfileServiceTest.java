@@ -43,8 +43,8 @@ class ProfileServiceTest {
                         user.getId(), pl.edu.agh.backend.application.ApplicationStatus.APPROVED))
                 .thenReturn(java.util.Optional.empty());
 
-        var response =
-                profileService.updateProfile("kc-1", new UpdateProfileRequest(null, null, "", null, null, null, null));
+        var response = profileService.updateProfile(
+                "kc-1", new UpdateProfileRequest(null, null, "", null, null, null, null, null));
 
         assertThat(response.company()).isNull();
         assertThat(user.getCompany()).isNull();
