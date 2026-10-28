@@ -91,11 +91,19 @@ function ListHeader({
 export default function EventsScreen() {
   const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
   const archive = timeframe === EventTimeframe.PAST;
-  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useListEventsInfinite(
-      { size: PAGE_SIZE, timeframe, ...(archive ? { sort: ["startsAt,desc"] } : {}) },
-      { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
-    );
+  const {
+    data,
+    isPending,
+    isError,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useListEventsInfinite(
+    { size: PAGE_SIZE, timeframe, ...(archive ? { sort: ["startsAt,desc"] } : {}) },
+    { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
+  );
 
   const events = useMemo(() => pageItems(data?.pages), [data]);
 
@@ -104,6 +112,8 @@ export default function EventsScreen() {
       className="flex-1 bg-background"
       contentContainerClassName="pb-8"
       showsVerticalScrollIndicator={false}
+      refreshing={isRefetching}
+      onRefresh={refetch}
       data={events}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
