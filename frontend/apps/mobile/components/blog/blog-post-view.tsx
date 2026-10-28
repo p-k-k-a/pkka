@@ -31,10 +31,7 @@ export function BlogPostView({ post }: BlogPostViewProps) {
 
         <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="font-heading text-foreground text-xl font-semibold">O wpisie</Text>
-          <ProseContent content={post.content} />
-        </View>
+        <ProseContent content={post.content} />
       </View>
     </ScrollView>
   );

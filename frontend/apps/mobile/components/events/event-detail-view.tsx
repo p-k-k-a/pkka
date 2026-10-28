@@ -122,12 +122,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
           <>
             <View className="h-px bg-border" />
 
-            <View className="gap-3">
-              <Text className="font-heading text-foreground text-xl font-semibold">
-                O wydarzeniu
-              </Text>
-              <ProseContent content={event.fullDescription} />
-            </View>
+            <ProseContent content={event.fullDescription} />
           </>
         ) : null}
       </View>
