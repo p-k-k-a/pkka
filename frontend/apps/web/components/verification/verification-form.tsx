@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import flags from "react-phone-number-input/flags";
+import pl from "react-phone-number-input/locale/pl";
+import "react-phone-number-input/style.css";
 import {
   ApiError,
+  ConsentType,
   useCreateApplication,
-  type ConsentType,
   type CreateApplicationRequest,
   type Faculty,
   type MeetingPreference,
@@ -16,7 +20,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 import {
   graduationYearError,
   graduationYearMax,
@@ -24,15 +30,107 @@ import {
   isGraduationYearValid,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
-  CONSENT_OPTIONS,
   FACULTY_OPTIONS,
   GRADUATION_YEAR_MIN,
+  INTEREST_AREAS,
   MEETING_PREFERENCE_OPTIONS,
+  PRIVACY_URL,
   STUDY_TYPE_OPTIONS,
+  TERMS_URL,
 } from "@pkka/domain";
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
+
+const selectedClass = "bg-primary/15 border-primary";
+const unselectedClass = "bg-background border-border";
+
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="gap-6 rounded-2xl p-6 md:p-8">
+      <div className="space-y-1">
+        <h2 className="font-heading text-foreground text-[23px] leading-tight font-semibold tracking-tight">
+          {title}
+        </h2>
+        {description ? <p className="text-muted-foreground text-sm">{description}</p> : null}
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function FieldLabel({
+  htmlFor,
+  required,
+  children,
+}: {
+  htmlFor?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Label htmlFor={htmlFor} className="text-xs font-bold tracking-wider uppercase">
+      {children}
+      {required ? <span className="text-destructive">*</span> : null}
+    </Label>
+  );
+}
+
+function CheckboxCard({
+  id,
+  title,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <Label
+      htmlFor={id}
+      className={cn(
+        "cursor-pointer items-start gap-4 rounded-lg border p-4 transition-colors",
+        checked ? selectedClass : unselectedClass,
+      )}
+    >
+      <Checkbox
+        id={id}
+        className="mt-0.5"
+        checked={checked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <span className="flex flex-col gap-1">
+        <span className="text-sm leading-5 font-extrabold tracking-wide uppercase">{title}</span>
+        <span className="text-muted-foreground text-sm leading-5 font-normal">{description}</span>
+      </span>
+    </Label>
+  );
+}
+
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-bold underline underline-offset-2"
+    >
+      {children}
+    </a>
+  );
 }
 
 export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | Promise<void> }) {
@@ -40,8 +138,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [studyType, setStudyType] = useState<StudyType | "">("");
   const [graduationYear, setGraduationYear] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [interests, setInterests] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState<string | undefined>();
+  const [interests, setInterests] = useState<string[]>([]);
   const [meetingPreferences, setMeetingPreferences] = useState<MeetingPreference[]>([]);
   const [coCreationInterest, setCoCreationInterest] = useState(false);
   const [newsletterSubscription, setNewsletterSubscription] = useState(false);
@@ -67,6 +165,11 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
     event.preventDefault();
     setFormError(null);
 
+    if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+      setFormError("Podaj poprawny numer telefonu.");
+      return;
+    }
+
     if (!faculty || !studyType) {
       setFormError("Wybierz wydział i rodzaj studiów.");
       return;
@@ -88,11 +191,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
       fieldOfStudy: fieldOfStudy.trim(),
       studyType,
       graduationYear: parsedGraduationYear,
-      phoneNumber: phoneNumber.trim(),
-      interests: interests
-        .split(",")
-        .map((interest) => interest.trim())
-        .filter(Boolean),
+      phoneNumber,
+      interests,
       meetingPreferences,
       coCreationInterest,
       newsletterSubscription,
@@ -103,13 +203,38 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
   }
 
   return (
-    <Card className="gap-0 p-0">
-      <form onSubmit={handleSubmit} className="space-y-8 p-6 md:p-8">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <FormSection title="Dane kontaktowe">
+        <div className="space-y-2 md:max-w-sm">
+          <FieldLabel htmlFor="phoneNumber" required>
+            Telefon kontaktowy
+          </FieldLabel>
+          <PhoneInput
+            id="phoneNumber"
+            required
+            international
+            countryCallingCodeEditable={false}
+            defaultCountry="PL"
+            flags={flags}
+            labels={pl}
+            autoComplete="tel"
+            value={phoneNumber}
+            onChange={setPhoneNumber}
+            className="border-border bg-background focus-within:border-ring focus-within:ring-ring/50 flex h-11 w-full gap-1 rounded-lg border px-3 text-sm transition-all [--PhoneInput-color--focus:var(--ring)] [--PhoneInputCountryFlag-height:1.1em] focus-within:ring-3"
+            numberInputProps={{
+              className:
+                "text-foreground placeholder:text-muted-foreground h-full bg-transparent outline-none",
+            }}
+          />
+        </div>
+      </FormSection>
+
+      <FormSection title="Informacje o studiach">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="faculty">
-              Wydział <span className="text-destructive">*</span>
-            </Label>
+            <FieldLabel htmlFor="faculty" required>
+              Wydział
+            </FieldLabel>
             <Select
               id="faculty"
               required
@@ -128,30 +253,9 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="studyType">
-              Rodzaj studiów <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              id="studyType"
-              required
-              value={studyType}
-              onChange={(event) => setStudyType(event.target.value as StudyType)}
-            >
-              <option value="" disabled>
-                Wybierz rodzaj studiów
-              </option>
-              {STUDY_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fieldOfStudy">
-              Kierunek studiów <span className="text-destructive">*</span>
-            </Label>
+            <FieldLabel htmlFor="fieldOfStudy" required>
+              Kierunek studiów
+            </FieldLabel>
             <Input
               id="fieldOfStudy"
               required
@@ -163,9 +267,30 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="graduationYear">
-              Rok ukończenia (lub planowany) <span className="text-destructive">*</span>
-            </Label>
+            <FieldLabel htmlFor="studyType" required>
+              Rodzaj studiów
+            </FieldLabel>
+            <Select
+              id="studyType"
+              required
+              value={studyType}
+              onChange={(event) => setStudyType(event.target.value as StudyType)}
+            >
+              <option value="" disabled>
+                Wybierz stopień
+              </option>
+              {STUDY_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <FieldLabel htmlFor="graduationYear" required>
+              Rok ukończenia (lub planowany)
+            </FieldLabel>
             <Input
               id="graduationYear"
               type="number"
@@ -173,110 +298,142 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
               min={GRADUATION_YEAR_MIN}
               max={graduationYearMax()}
               step={1}
-              placeholder="np. 2022"
+              placeholder="YYYY"
               value={graduationYear}
               onChange={(event) => setGraduationYear(event.target.value)}
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phoneNumber">
-              Numer telefonu <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="phoneNumber"
-              type="tel"
-              required
-              inputMode="tel"
-              pattern="\+?[0-9 \-]{7,32}"
-              placeholder="np. +48 600 700 800"
-              value={phoneNumber}
-              onChange={(event) => setPhoneNumber(event.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="interests">Zainteresowania</Label>
-            <Textarea
-              id="interests"
-              placeholder="Oddziel przecinkami, np. sztuczna inteligencja, mentoring, startupy"
-              value={interests}
-              onChange={(event) => setInterests(event.target.value)}
-            />
-          </div>
         </div>
+      </FormSection>
 
+      <FormSection
+        title="Oczekiwania i zaangażowanie"
+        description="Sekcja dobrowolna. Pomoże nam dostosować ofertę klubu do Twoich potrzeb."
+      >
         <fieldset className="space-y-3">
-          <legend className="text-foreground text-sm font-medium">Preferowane formy spotkań</legend>
-          <div className="flex flex-col gap-2">
-            {MEETING_PREFERENCE_OPTIONS.map((option) => (
-              <Label key={option.value} htmlFor={`meeting-${option.value}`} className="font-normal">
-                <Checkbox
-                  id={`meeting-${option.value}`}
-                  checked={meetingPreferences.includes(option.value)}
-                  onCheckedChange={() =>
+          <legend className="mb-3">
+            <FieldLabel>Jakimi obszarami jesteś najbardziej zainteresowany/a?</FieldLabel>
+          </legend>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {INTEREST_AREAS.map((area, index) => {
+              const checked = interests.includes(area);
+              return (
+                <Label
+                  key={area}
+                  htmlFor={`interest-${index}`}
+                  className={cn(
+                    "cursor-pointer gap-3 rounded-md border px-4 py-3 leading-5 font-bold transition-colors",
+                    checked ? selectedClass : unselectedClass,
+                  )}
+                >
+                  <Checkbox
+                    id={`interest-${index}`}
+                    checked={checked}
+                    onCheckedChange={() => setInterests((prev) => toggle(prev, area))}
+                  />
+                  {area}
+                </Label>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend className="mb-3">
+            <FieldLabel>Preferowana forma spotkań</FieldLabel>
+          </legend>
+          <div className="grid grid-cols-3 gap-2">
+            {MEETING_PREFERENCE_OPTIONS.map((option) => {
+              const pressed = meetingPreferences.includes(option.value);
+              return (
+                <Toggle
+                  key={option.value}
+                  variant="outline"
+                  pressed={pressed}
+                  onPressedChange={() =>
                     setMeetingPreferences((prev) => toggle(prev, option.value))
                   }
-                />
-                {option.label}
-              </Label>
-            ))}
+                  className={cn(
+                    "h-auto min-h-10 px-2 py-2 text-[13px] leading-4 font-bold whitespace-normal",
+                    pressed ? `${selectedClass} data-[state=on]:bg-primary/15` : unselectedClass,
+                  )}
+                >
+                  {option.label}
+                </Toggle>
+              );
+            })}
           </div>
         </fieldset>
 
-        <div className="flex flex-col gap-3">
-          <Label htmlFor="coCreationInterest" className="font-normal">
-            <Checkbox
-              id="coCreationInterest"
-              checked={coCreationInterest}
-              onCheckedChange={(checked) => setCoCreationInterest(checked === true)}
-            />
-            Chcę aktywnie współtworzyć działania klubu
-          </Label>
-          <Label htmlFor="newsletterSubscription" className="font-normal">
-            <Checkbox
-              id="newsletterSubscription"
-              checked={newsletterSubscription}
-              onCheckedChange={(checked) => setNewsletterSubscription(checked === true)}
-            />
-            Chcę zapisać się do newslettera
-          </Label>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <CheckboxCard
+            id="coCreationInterest"
+            title="Chcę aktywnie współtworzyć klub"
+            description="Jestem chętny/a do bycia prelegentem, mentorem lub organizatorem wydarzeń."
+            checked={coCreationInterest}
+            onCheckedChange={setCoCreationInterest}
+          />
+          <CheckboxCard
+            id="newsletterSubscription"
+            title="Subskrypcja newslettera"
+            description="Chcę otrzymywać informacje o nadchodzących wydarzeniach i aktualnościach ze świata IT."
+            checked={newsletterSubscription}
+            onCheckedChange={setNewsletterSubscription}
+          />
         </div>
+      </FormSection>
 
-        <fieldset className="space-y-3">
-          <legend className="text-foreground text-sm font-medium">
-            Zgody <span className="text-destructive">*</span>
-          </legend>
-          <div className="flex flex-col gap-2">
-            {CONSENT_OPTIONS.map((option) => (
-              <Label
-                key={option.value}
-                htmlFor={`consent-${option.value}`}
-                className="items-start font-normal"
-              >
-                <Checkbox
-                  id={`consent-${option.value}`}
-                  className="mt-0.5"
-                  checked={consents.includes(option.value)}
-                  onCheckedChange={() => setConsents((prev) => toggle(prev, option.value))}
-                />
-                {option.label}
-              </Label>
-            ))}
-          </div>
-        </fieldset>
+      <Separator />
 
-        {formError ? <p className="text-destructive text-sm font-medium">{formError}</p> : null}
-
-        <Button
-          type="submit"
-          size="xl"
-          className="w-full rounded-xl font-semibold"
-          disabled={isPending}
+      <div className="space-y-5">
+        <Label
+          htmlFor="consent-terms"
+          className="items-start gap-4 text-sm leading-6 font-semibold"
         >
-          {isPending ? "Wysyłanie…" : "Wyślij wniosek"}
-        </Button>
-      </form>
-    </Card>
+          <Checkbox
+            id="consent-terms"
+            className="mt-1"
+            checked={consents.includes(ConsentType.REGULATIONS_PRIVACY)}
+            onCheckedChange={() =>
+              setConsents((prev) => toggle(prev, ConsentType.REGULATIONS_PRIVACY))
+            }
+          />
+          <span>
+            Zapoznałem/am się z{" "}
+            <ExternalLink href={TERMS_URL}>Regulaminem Klubu Alumnów WI AGH</ExternalLink> oraz{" "}
+            <ExternalLink href={PRIVACY_URL}>Polityką Prywatności</ExternalLink> i akceptuję ich
+            postanowienia.<span className="text-destructive">*</span>
+          </span>
+        </Label>
+        <Label htmlFor="consent-gdpr" className="items-start gap-4 text-sm leading-6 font-semibold">
+          <Checkbox
+            id="consent-gdpr"
+            className="mt-1"
+            checked={consents.includes(ConsentType.GDPR_DATA_PROCESSING)}
+            onCheckedChange={() =>
+              setConsents((prev) => toggle(prev, ConsentType.GDPR_DATA_PROCESSING))
+            }
+          />
+          <span>
+            Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji procesu
+            rejestracji i członkostwa w klubie, zgodnie z przepisami RODO.
+            <span className="text-destructive">*</span>
+          </span>
+        </Label>
+      </div>
+
+      {formError ? (
+        <p className="text-destructive text-center text-sm font-semibold">{formError}</p>
+      ) : null}
+
+      <Button
+        type="submit"
+        size="xl"
+        className="w-full rounded-xl font-bold tracking-widest uppercase"
+        disabled={isPending}
+      >
+        {isPending ? "Wysyłanie…" : "Wyślij wniosek"}
+      </Button>
+    </form>
   );
 }
