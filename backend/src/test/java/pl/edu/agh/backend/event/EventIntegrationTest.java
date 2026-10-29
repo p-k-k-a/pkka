@@ -109,6 +109,28 @@ class EventIntegrationTest {
     }
 
     @Test
+    void eventUnderWayStaysUpcomingUntilItEnds() throws Exception {
+        Event ongoing = Event.builder()
+                .title("Ongoing event")
+                .slug("ongoing-event-" + UUID.randomUUID())
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().minusSeconds(1800))
+                .endsAt(Instant.now().plusSeconds(1800))
+                .audience(Audience.PUBLIC)
+                .build();
+        UUID ongoingId = eventRepository.save(ongoing).getId();
+
+        mockMvc.perform(get("/api/public/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(ongoingId))
+                        .exists());
+        mockMvc.perform(get("/api/public/events").param("timeframe", "PAST"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(ongoingId))
+                        .doesNotExist());
+    }
+
+    @Test
     void listItemsExposeEndsAtAndSlug() throws Exception {
         mockMvc.perform(get("/api/public/events"))
                 .andExpect(status().isOk())

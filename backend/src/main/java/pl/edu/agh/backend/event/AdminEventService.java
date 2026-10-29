@@ -38,9 +38,9 @@ public class AdminEventService {
         Specification<Event> spec = Specification.unrestricted();
         Instant now = Instant.now();
         if (timeframe == EventTimeframe.UPCOMING) {
-            spec = spec.and(startsAfter(now));
+            spec = spec.and(endsAfter(now));
         } else if (timeframe == EventTimeframe.PAST) {
-            spec = spec.and(startsBeforeOrEqual(now));
+            spec = spec.and(endsBeforeOrEqual(now));
         }
         return eventRepository.findAll(spec, pageable).map(AdminEventSummaryResponse::from);
     }
