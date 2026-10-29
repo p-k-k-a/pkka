@@ -1,8 +1,8 @@
-ALTER TABLE tags DROP CONSTRAINT uk_tags_name;
-CREATE UNIQUE INDEX uk_tags_name ON tags (lower(name));
+ALTER TABLE tags DROP CONSTRAINT IF EXISTS uk_tags_name;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_tags_name ON tags (lower(name));
 
-ALTER TABLE user_skill_tags DROP CONSTRAINT uk_user_skill_tags_name;
-CREATE UNIQUE INDEX uk_user_skill_tags_name ON user_skill_tags (lower(name));
+ALTER TABLE user_skill_tags DROP CONSTRAINT IF EXISTS uk_user_skill_tags_name;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_user_skill_tags_name ON user_skill_tags (lower(name));
 
 INSERT INTO tags (id, name) VALUES
     ('11111111-1111-1111-1111-111111111101', 'networking'),
