@@ -47,14 +47,23 @@ public class EventService {
         UUID id = event.getId();
         EventRegistrationStatus registrationStatus =
                 eventRegistrationService.findOwnStatus(id, caller).orElse(null);
-        return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);
+        return EventDetailsResponse.from(
+                event,
+                eventRegistrationService.seatsTaken(id),
+                registrationStatus,
+                transmissionUrlFor(event, registrationStatus));
+    }
+
+    /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */
+    private String transmissionUrlFor(Event event, EventRegistrationStatus registrationStatus) {
+        return registrationStatus == EventRegistrationStatus.REGISTERED ? event.getTransmissionUrl() : null;
     }
 
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {
         Instant now = Instant.now();
         return switch (timeframe == null ? EventTimeframe.UPCOMING : timeframe) {
-            case UPCOMING -> startsAfter(now);
-            case PAST -> startsBeforeOrEqual(now);
+            case UPCOMING -> endsAfter(now);
+            case PAST -> endsBeforeOrEqual(now);
             case ALL -> Specification.unrestricted();
         };
     }
