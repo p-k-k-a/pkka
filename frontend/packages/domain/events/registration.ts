@@ -29,6 +29,10 @@ export function eventRegistrationErrorMessage(error: unknown, action: EventRegis
 }
 
 /** Mirrors the backend: closed once the event has started or `registrationClosesAt` has passed. */
+export function hasEventStarted(startsAt: string, now: number = Date.now()) {
+  return now >= Date.parse(startsAt);
+}
+
 export function isEventRegistrationClosed(
   event: { startsAt: string; registrationClosesAt?: string },
   now: number = Date.now(),

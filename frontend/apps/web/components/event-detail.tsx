@@ -19,7 +19,7 @@ type EventDetailProps = {
 export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
   const { data: response, isLoading, isError, isFetching } = useGetEventBySlug(slug);
   const event = response?.data;
-  const archived = isEventPast(event?.startsAt);
+  const archived = isEventPast(event?.endsAt);
   const eventsBackHref = eventsListHref(variant, archived);
 
   if (isLoading && !event) {

@@ -12,6 +12,12 @@ function toGoogleStamp(iso: string) {
   return new Date(time).toISOString().replace(/[-:]|\.\d{3}/g, "");
 }
 
+// Calendar entry text: the meeting link first, so it is one click away in the calendar app.
+export function eventCalendarDetails(pageUrl: string, meetingUrl?: string) {
+  const page = `Szczegóły wydarzenia: ${pageUrl}`;
+  return meetingUrl ? `Link do spotkania: ${meetingUrl}\n\n${page}` : page;
+}
+
 export function googleCalendarUrl(event: CalendarEvent) {
   const start = toGoogleStamp(event.startsAt);
   const end = toGoogleStamp(event.endsAt);
