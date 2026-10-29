@@ -111,6 +111,7 @@ class EventServiceTest {
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("webinar")
                 .title("Webinar")
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
@@ -118,9 +119,9 @@ class EventServiceTest {
                 .transmissionUrl(MEETING_URL)
                 .audience(Audience.PUBLIC)
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug("webinar", caller)).thenReturn(event);
         when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
 
-        return eventService.getDetails(id, caller).transmissionUrl();
+        return eventService.getDetails("webinar", caller).transmissionUrl();
     }
 }
