@@ -8,6 +8,7 @@ import {
   CircleCheck,
   Download,
   Hourglass,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -21,12 +22,16 @@ import {
   type EventDetailsResponse,
 } from "@pkka/api";
 import {
+  eventCalendarDetails,
   eventRegistrationErrorMessage,
   type EventRegistrationAction,
   formatSeatsRemaining,
   googleCalendarUrl,
+  hasEventStarted,
+  hasMeeting,
   isEventFull,
   isEventRegistrationClosed,
+  joinMeetingLabel,
 } from "@pkka/domain";
 import {
   AlertDialog,
@@ -68,6 +73,10 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const waitlisted = status === EventRegistrationStatus.WAITLISTED;
   const full = isEventFull(event.seatLimit, event.seatsTaken);
   const closed = isEventRegistrationClosed(event);
+  // The backend refuses to sign anyone out once the event has started.
+  const started = hasEventStarted(event.startsAt);
+  const meeting = hasMeeting(event.type);
+  const meetingUrl = event.transmissionUrl;
 
   const refresh = () =>
     Promise.all([
@@ -81,7 +90,8 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({
       ...event,
-      details: `Szczegóły wydarzenia: ${eventPageUrl()}`,
+      location: event.location?.trim() || meetingUrl,
+      details: eventCalendarDetails(eventPageUrl(), meetingUrl),
     });
     setCalendarOpen(false);
     if (url) {
@@ -101,7 +111,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   };
 
   // A toast rather than an inline line: when the event has just started, the refetch
-  // unmounts this component and an inline error would vanish with it.
+  // swaps this view for another one and an inline error would vanish with it.
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
     toast.error(eventRegistrationErrorMessage(error, action), {
@@ -166,11 +176,26 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
             ? "Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje."
             : "Jesteś zapisany na to wydarzenie."}
         </p>
+        {meeting && !meetingUrl ? (
+          <p className="text-muted-foreground text-xs">
+            {waitlisted
+              ? "Link do spotkania dostaniesz, gdy zwolni się dla Ciebie miejsce."
+              : "Link do spotkania pojawi się tutaj, gdy organizator go doda."}
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-3">
-          {waitlisted ? null : (
+          {meetingUrl ? (
+            <Button size="xl" className="gap-2" asChild>
+              <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
+                <Video data-icon="inline-start" />
+                {joinMeetingLabel(meetingUrl)}
+              </a>
+            </Button>
+          ) : null}
+          {waitlisted || started ? null : (
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
-                <Button size="xl" className="gap-2">
+                <Button size="xl" variant={meetingUrl ? "outline" : "default"} className="gap-2">
                   <CalendarPlus data-icon="inline-start" />
                   Dodaj do kalendarza
                 </Button>
@@ -187,14 +212,16 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
               </PopoverContent>
             </Popover>
           )}
-          <Button
-            size="xl"
-            variant="outline"
-            disabled={pending}
-            onClick={() => setConfirmingLeave(true)}
-          >
-            {waitlisted ? "Opuść listę rezerwową" : "Wypisz się"}
-          </Button>
+          {started ? null : (
+            <Button
+              size="xl"
+              variant="outline"
+              disabled={pending}
+              onClick={() => setConfirmingLeave(true)}
+            >
+              {waitlisted ? "Opuść listę rezerwową" : "Wypisz się"}
+            </Button>
+          )}
         </div>
 
         <AlertDialog
