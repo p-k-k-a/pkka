@@ -17,6 +17,7 @@ import pl.edu.agh.backend.security.Caller;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final DiscordAlumnVouch discordAlumnVouch;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -28,7 +29,7 @@ public class ApplicationController {
             description = "The user already has an application under review",
             content = @Content)
     public ApplicationResponse createApplication(@Valid @RequestBody CreateApplicationRequest request, Caller caller) {
-        return applicationService.create(caller, request);
+        return applicationService.create(caller, request, discordAlumnVouch.vouchesFor(caller));
     }
 
     @GetMapping("/me")

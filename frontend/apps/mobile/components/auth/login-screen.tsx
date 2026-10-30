@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { DiscordIcon } from "@pkka/icons/native";
-import { Eyebrow } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
@@ -41,9 +40,6 @@ export function LoginScreen() {
   return (
     <View className="flex-1 items-center justify-center bg-muted px-5 dark:bg-background">
       <View className="w-full gap-0 rounded-3xl border border-border bg-card p-7 shadow-sm shadow-black/5">
-        <Eyebrow onCard className="mb-4">
-          Klub Alumnów WI AGH
-        </Eyebrow>
         <Text
           role="heading"
           aria-level="1"

@@ -191,28 +191,6 @@ class AdminEventServiceTest {
     }
 
     @Test
-    void createRejectsUnknownTags() {
-        when(tagRepository.findByNameIn(Set.of("nope"))).thenReturn(Set.of());
-
-        EventRequest request = new EventRequest(
-                "Warsztat",
-                null,
-                EventType.ONLINE,
-                Instant.parse("2026-09-01T17:00:00Z"),
-                Instant.parse("2026-09-01T19:00:00Z"),
-                null,
-                null,
-                null,
-                null,
-                Audience.PUBLIC,
-                null,
-                null,
-                Set.of("nope"));
-
-        assertThatThrownBy(() -> adminEventService.create(ADMIN, request)).isInstanceOf(ResponseStatusException.class);
-    }
-
-    @Test
     void listUpcomingDelegatesSpecification() {
         when(eventRepository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of()));
@@ -239,5 +217,41 @@ class AdminEventServiceTest {
         adminEventService.delete(id);
 
         verify(eventRepository).delete(event);
+        verify(eventPublisher).publishEvent(new EventDeletedEvent(id));
+    }
+
+    @Test
+    void updatePublishesTheChange() {
+        UUID id = UUID.randomUUID();
+        Event event = Event.builder()
+                .id(id)
+                .title("Warsztat")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.parse("2026-09-01T17:00:00Z"))
+                .endsAt(Instant.parse("2026-09-01T19:00:00Z"))
+                .audience(Audience.PUBLIC)
+                .tags(new HashSet<>())
+                .build();
+        when(eventRepository.findForUpdateById(id)).thenReturn(Optional.of(event));
+        when(eventRepository.saveAndFlush(event)).thenReturn(event);
+
+        EventRequest request = new EventRequest(
+                "Warsztat AI",
+                null,
+                EventType.ONLINE,
+                Instant.parse("2026-09-01T17:00:00Z"),
+                Instant.parse("2026-09-01T19:00:00Z"),
+                null,
+                null,
+                null,
+                null,
+                Audience.ALL_ALUMNI,
+                null,
+                null,
+                Set.of());
+
+        adminEventService.update(id, request);
+
+        verify(eventPublisher).publishEvent(new EventUpdatedEvent(id));
     }
 }

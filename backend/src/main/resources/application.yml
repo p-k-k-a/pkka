@@ -95,6 +95,7 @@ app:
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
   web:
+    base-url: ${WEB_BASE_URL:http://localhost:3000}
     success-url: ${WEB_SUCCESS_URL:http://localhost:3000/dashboard}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL:http://localhost:3000/}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS:http://localhost:3000}
@@ -110,7 +111,9 @@ keycloak:
 
 # Discord
 discord:
-  guild-id: ${DISCORD_GUILD_ID:change-me}
+  bot-token: ${DISCORD_BOT_TOKEN:}
+  application-id: ${DISCORD_APPLICATION_ID:}
+  public-key: ${DISCORD_PUBLIC_KEY:}
 
 # Server
 server:
@@ -215,6 +218,7 @@ app:
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
   web:
+    base-url: ${WEB_BASE_URL:}
     success-url: ${WEB_SUCCESS_URL}
     logout-redirect-url: ${WEB_LOGOUT_REDIRECT_URL}
     cors-allowed-origins: ${WEB_CORS_ALLOWED_ORIGINS}
@@ -229,7 +233,9 @@ keycloak:
   verified-alumn-role: ${KEYCLOAK_VERIFIED_ALUMN_ROLE}
 
 discord:
-  guild-id: ${DISCORD_GUILD_ID}
+  bot-token: ${DISCORD_BOT_TOKEN:}
+  application-id: ${DISCORD_APPLICATION_ID:}
+  public-key: ${DISCORD_PUBLIC_KEY:}
 
 springdoc:
   api-docs:

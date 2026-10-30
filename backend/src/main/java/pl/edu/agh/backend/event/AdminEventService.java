@@ -79,7 +79,7 @@ public class AdminEventService {
                 .audience(request.audience())
                 .coverImageUrl(coverImageReference(request))
                 .reminderLeadTimeMinutes(request.reminderLeadTimeMinutes())
-                .tags(new HashSet<>(resolveTags(request.tags())))
+                .tags(new HashSet<>(findOrCreateTags(request.tags())))
                 .build();
 
         Event created = eventRepository.saveAndFlush(event);
@@ -112,15 +112,17 @@ public class AdminEventService {
             event.setTags(tags);
         }
         tags.clear();
-        tags.addAll(resolveTags(request.tags()));
+        tags.addAll(findOrCreateTags(request.tags()));
         Event saved = eventRepository.saveAndFlush(event);
         eventRegistrationService.fillFreeSeats(saved);
+        eventPublisher.publishEvent(new EventUpdatedEvent(saved.getId()));
         return respond(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
         eventRepository.delete(findOrThrow(id));
+        eventPublisher.publishEvent(new EventDeletedEvent(id));
     }
 
     private AdminEventResponse respond(Event event) {
@@ -143,14 +145,11 @@ public class AdminEventService {
         return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
     }
 
-    private Set<Tag> resolveTags(Set<String> names) {
-        if (names == null || names.isEmpty()) {
+    private Set<Tag> findOrCreateTags(Set<String> names) {
+        if (names.isEmpty()) {
             return Set.of();
         }
-        Set<Tag> found = tagRepository.findByNameIn(names);
-        if (found.size() != names.size()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more tags are invalid");
-        }
-        return found;
+        names.forEach(name -> tagRepository.insertIfAbsent(UUID.randomUUID(), name));
+        return tagRepository.findByNameIn(names);
     }
 }

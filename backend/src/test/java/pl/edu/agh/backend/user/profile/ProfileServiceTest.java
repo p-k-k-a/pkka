@@ -21,10 +21,10 @@ import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.storage.AvatarPresignRequest;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
 import pl.edu.agh.backend.storage.StorageService;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTag;
-import pl.edu.agh.backend.user.UserTagRepository;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +34,7 @@ class ProfileServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Mock
     private ApplicationRepository applicationRepository;
@@ -56,7 +56,7 @@ class ProfileServiceTest {
                 .thenReturn(java.util.Optional.empty());
 
         var response = profileService.updateProfile(
-                "kc-1", new UpdateProfileRequest(null, null, "", null, null, null, null, null));
+                "kc-1", new UpdateProfileRequest(null, null, "", null, null, null, null, null, null));
 
         assertThat(response.company()).isNull();
         assertThat(user.getCompany()).isNull();
@@ -150,6 +150,21 @@ class ProfileServiceTest {
                         ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
     }
 
+    @Test
+    void updateTagsReplacesAssignedTags() {
+        User user = new User();
+        user.setKeycloakId("kc-1");
+        AlumniTag tag = AlumniTag.builder().name("Java").build();
+        tag.setId(UUID.randomUUID());
+        when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
+        when(alumniTagRepository.findByNameKeyIn(List.of("java"))).thenReturn(List.of(tag));
+
+        var tags = profileService.updateTags("kc-1", Set.of("Java"));
+
+        assertThat(tags).hasSize(1);
+        assertThat(tags.getFirst().name()).isEqualTo("Java");
+    }
+
     private static User userWithId(String keycloakId) {
         User user = new User();
         user.setId(UUID.randomUUID());
@@ -158,37 +173,6 @@ class ProfileServiceTest {
     }
 
     private static UpdateProfileRequest avatarRequest(String avatarKey) {
-        return new UpdateProfileRequest(null, null, null, null, null, null, null, avatarKey);
-    }
-
-    @Test
-    void updateTagsRejectsUnknownTagIds() {
-        User user = new User();
-        user.setKeycloakId("kc-1");
-        UUID tagId = UUID.randomUUID();
-        when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(userTagRepository.findAllById(Set.of(tagId))).thenReturn(List.of());
-
-        assertThatThrownBy(() -> profileService.updateTags("kc-1", Set.of(tagId)))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-                });
-    }
-
-    @Test
-    void updateTagsReplacesAssignedTags() {
-        User user = new User();
-        user.setKeycloakId("kc-1");
-        UserTag tag = UserTag.builder().name("Java").build();
-        tag.setId(UUID.randomUUID());
-        when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(userTagRepository.findAllById(Set.of(tag.getId()))).thenReturn(List.of(tag));
-
-        var tags = profileService.updateTags("kc-1", Set.of(tag.getId()));
-
-        assertThat(tags).hasSize(1);
-        assertThat(tags.getFirst().name()).isEqualTo("Java");
+        return new UpdateProfileRequest(null, null, null, null, null, null, null, null, avatarKey);
     }
 }

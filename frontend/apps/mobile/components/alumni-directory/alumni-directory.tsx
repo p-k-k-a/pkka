@@ -101,6 +101,7 @@ export function AlumniDirectory() {
 
       <FlatList
         className="flex-1"
+        showsVerticalScrollIndicator={false}
         data={alumni}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
