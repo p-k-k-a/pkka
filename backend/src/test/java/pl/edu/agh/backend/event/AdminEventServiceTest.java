@@ -100,7 +100,7 @@ class AdminEventServiceTest {
                 EventType.ONLINE,
                 Instant.parse("2026-09-01T17:00:00Z"),
                 Instant.parse("2026-09-01T19:00:00Z"),
-                "https://meet.example.com",
+                "https://meet.google.com/abc-defg-hij",
                 null,
                 40,
                 Instant.parse("2026-08-31T22:00:00Z"),

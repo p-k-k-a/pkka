@@ -31,7 +31,11 @@ public record EventRequest(
         Instant endsAt,
 
         @Size(max = 500)
-        @Pattern(regexp = "(?i)^https?://.+", message = "transmissionUrl must start with http:// or https://")
+        @Pattern(
+                regexp = "(?i)^https://(teams\\.microsoft\\.com|teams\\.live\\.com"
+                        + "|([a-z0-9-]+\\.)*zoom\\.(us|com)|meet\\.google\\.com)/\\S+$",
+                message = "must be a Microsoft Teams, Zoom or Google Meet meeting link")
+        @Schema(example = "https://meet.google.com/abc-defg-hij")
         String transmissionUrl,
 
         @Size(max = 300) String location,

@@ -15,13 +15,12 @@ class EventRequestUrlValidationTest {
             Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
-    void acceptsHttpAndHttpsUrls() {
-        assertThat(violations("https://meet.example.com/x", "https://files.pkka.me/covers/events/a.jpg"))
+    void acceptsAllowedMeetingProvidersAndCoverUrls() {
+        assertThat(violations("https://meet.google.com/abc-defg-hij", "https://files.pkka.me/covers/events/a.jpg"))
                 .isEmpty();
-        assertThat(violations("http://meet.example.com/x", "http://localhost:9000/a.jpg"))
+        assertThat(violations("https://teams.microsoft.com/l/meetup-join/19%3ameeting", "http://localhost:9000/a.jpg"))
                 .isEmpty();
-        assertThat(violations("HTTPS://meet.example.com/x", "Https://files.pkka.me/a.jpg"))
-                .isEmpty();
+        assertThat(violations("https://us02web.zoom.us/j/123456789", null)).isEmpty();
     }
 
     @Test
@@ -41,10 +40,12 @@ class EventRequestUrlValidationTest {
     }
 
     @Test
-    void rejectsOtherSchemes() {
+    void rejectsOtherSchemesAndNonProviderMeetingLinks() {
         assertThat(violations("javascript:alert(1)", "data:image/png;base64,AAAA"))
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .containsExactlyInAnyOrder("transmissionUrl", "coverImageUrl");
+        assertThat(violations("https://meet.example.com/x", null)).hasSize(1);
+        assertThat(violations("http://meet.google.com/abc-defg-hij", null)).hasSize(1);
         assertThat(violations("ftp://example.com/x", null)).hasSize(1);
         assertThat(violations("meet.example.com", null)).hasSize(1);
     }

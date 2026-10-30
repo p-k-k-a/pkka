@@ -26,6 +26,8 @@ import pl.edu.agh.backend.storage.StorageService;
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
 
+    private static final String MEETING_URL = "https://meet.google.com/abc-defg-hij";
+
     @Mock
     private EventRepository eventRepository;
 
@@ -92,6 +94,23 @@ class EventServiceTest {
     }
 
     @Test
+    void getDetailsHandsTheMeetingLinkToAHeldSeat() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.REGISTERED)))
+                .isEqualTo(MEETING_URL);
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromTheWaitlist() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.WAITLISTED)))
+                .isNull();
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromCallersNotSignedUp() {
+        assertThat(meetingLinkSeenWith(Optional.empty())).isNull();
+    }
+
+    @Test
     void getDetailsServesAStoredCoverKeyAsASignedUrl() {
         UUID id = UUID.randomUUID();
         Caller caller = new Caller("sub", Set.of());
@@ -112,5 +131,26 @@ class EventServiceTest {
 
         assertThat(eventService.getDetails("networking-cover", caller).coverImageUrl())
                 .isEqualTo("https://r2.example/signed");
+    }
+
+    private String meetingLinkSeenWith(Optional<EventRegistrationStatus> ownStatus) {
+        String slug = "webinar";
+        UUID id = UUID.randomUUID();
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
+                .id(id)
+                .slug(slug)
+                .title("Webinar")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .transmissionUrl(MEETING_URL)
+                .audience(Audience.PUBLIC)
+                .build();
+        when(eventLookup.findVisibleBySlug(slug, caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
+        when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
+
+        return eventService.getDetails(slug, caller).transmissionUrl();
     }
 }

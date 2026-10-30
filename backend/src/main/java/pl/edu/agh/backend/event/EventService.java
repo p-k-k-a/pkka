@@ -56,7 +56,13 @@ public class EventService {
                 event,
                 eventRegistrationService.seatsTaken(id),
                 registrationStatus,
+                transmissionUrlFor(event, registrationStatus),
                 storageService.resolveUrl(event.getCoverImageUrl()));
+    }
+
+    /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */
+    private String transmissionUrlFor(Event event, EventRegistrationStatus registrationStatus) {
+        return registrationStatus == EventRegistrationStatus.REGISTERED ? event.getTransmissionUrl() : null;
     }
 
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {
