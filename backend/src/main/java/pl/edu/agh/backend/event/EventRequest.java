@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
@@ -29,7 +30,14 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Instant endsAt,
 
-        @Size(max = 500) String transmissionUrl,
+        @Size(max = 500)
+        @Pattern(
+                regexp = "(?i)^https://(teams\\.microsoft\\.com|teams\\.live\\.com"
+                        + "|([a-z0-9-]+\\.)*zoom\\.(us|com)|meet\\.google\\.com)/\\S+$",
+                message = "must be a Microsoft Teams, Zoom or Google Meet meeting link")
+        @Schema(example = "https://meet.google.com/abc-defg-hij")
+        String transmissionUrl,
+
         @Size(max = 300) String location,
         @Min(0) Integer seatLimit,
         Instant registrationClosesAt,
