@@ -33,6 +33,11 @@ public record ProfileResponse(
         String linkedinUrl,
         String githubUrl,
 
+        @Schema(
+                description = "Short-lived signed URL of the avatar (valid for roughly 10-60 minutes, fetch the "
+                        + "profile again for a fresh one); null when none is set")
+        String avatarUrl,
+
         @Schema(description = "From the approved application; not editable here")
         Integer graduationYear,
 
@@ -46,7 +51,7 @@ public record ProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<AlumniTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static ProfileResponse from(User user, AlumnEducation education) {
+    public static ProfileResponse from(User user, AlumnEducation education, String avatarUrl) {
         return new ProfileResponse(
                 user.getId(),
                 user.getFirstName(),
@@ -59,6 +64,7 @@ public record ProfileResponse(
                 user.getPhoneNumber(),
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
+                avatarUrl,
                 education.graduationYear(),
                 education.fieldOfStudy(),
                 education.alumnSince(),

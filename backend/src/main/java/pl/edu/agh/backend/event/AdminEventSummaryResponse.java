@@ -14,13 +14,16 @@ public record AdminEventSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         String location,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
+
+        @Schema(description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL")
         String coverImageUrl,
+
         Integer seatLimit,
 
         @Schema(description = "Admin who created the event; absent for events that predate authorship tracking")
         String authorDisplayName) {
 
-    static AdminEventSummaryResponse from(Event event) {
+    static AdminEventSummaryResponse from(Event event, String coverImageUrl) {
         return new AdminEventSummaryResponse(
                 event.getId(),
                 event.getSlug(),
@@ -30,7 +33,7 @@ public record AdminEventSummaryResponse(
                 event.getEndsAt(),
                 event.getLocation(),
                 event.getAudience(),
-                event.getCoverImageUrl(),
+                coverImageUrl,
                 event.getSeatLimit(),
                 event.getAuthor() == null ? null : event.getAuthor().getDisplayName());
     }

@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventNotFoundException;
 import pl.edu.agh.backend.event.EventRepository;
+import pl.edu.agh.backend.storage.AdminUploadPurpose;
+import pl.edu.agh.backend.storage.StorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -18,35 +20,33 @@ public class AdminMaterialService {
 
     private final MaterialRepository materialRepository;
     private final EventRepository eventRepository;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public Page<AdminMaterialResponse> list(Optional<MaterialType> type, Optional<UUID> eventId, Pageable pageable) {
         Specification<Material> spec = Specification.allOf(
                 MaterialSpecifications.hasType(type.orElse(null)),
                 MaterialSpecifications.hasEventId(eventId.orElse(null)));
-        return materialRepository.findAll(spec, pageable).map(AdminMaterialResponse::from);
+        return materialRepository.findAll(spec, pageable).map(this::respond);
     }
 
     @Transactional(readOnly = true)
     public AdminMaterialResponse get(UUID id) {
-        return materialRepository
-                .findById(id)
-                .map(AdminMaterialResponse::from)
-                .orElseThrow(MaterialNotFoundException::new);
+        return materialRepository.findById(id).map(this::respond).orElseThrow(MaterialNotFoundException::new);
     }
 
     @Transactional
     public AdminMaterialResponse create(MaterialRequest request) {
         Material material = new Material();
         apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
-        return AdminMaterialResponse.from(materialRepository.saveAndFlush(material));
+        return respond(materialRepository.saveAndFlush(material));
     }
 
     @Transactional
     public AdminMaterialResponse update(UUID id, MaterialRequest request) {
         Material material = materialRepository.findById(id).orElseThrow(MaterialNotFoundException::new);
         apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
-        return AdminMaterialResponse.from(materialRepository.saveAndFlush(material));
+        return respond(materialRepository.saveAndFlush(material));
     }
 
     @Transactional
@@ -60,8 +60,12 @@ public class AdminMaterialService {
         material.setTitle(title);
         material.setDescription(description);
         material.setType(type);
-        material.setUrl(url);
+        material.setUrl(storageService.toStoredReference(AdminUploadPurpose.MATERIAL, url));
         material.setEvent(resolveEvent(eventId));
+    }
+
+    private AdminMaterialResponse respond(Material material) {
+        return AdminMaterialResponse.from(material, storageService.resolveUrl(material.getUrl()));
     }
 
     private Event resolveEvent(UUID eventId) {

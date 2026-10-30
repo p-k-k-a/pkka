@@ -22,11 +22,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
+import pl.edu.agh.backend.storage.AdminUploadPurpose;
+import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -47,6 +51,9 @@ class AdminEventServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private AdminEventService adminEventService;
@@ -135,6 +142,52 @@ class AdminEventServiceTest {
                 Set.of());
 
         assertThat(adminEventService.create(ADMIN, request).slug()).isEqualTo("archive-2");
+    }
+
+    @Test
+    void createStoresTheCoverAsAReferenceAndRespondsWithASignedUrl() {
+        User author = new User();
+        when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
+        when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, "covers/events/a.png"))
+                .thenReturn("covers/events/a.png");
+        when(storageService.resolveUrl("covers/events/a.png")).thenReturn("https://r2.example/signed");
+
+        AdminEventResponse response = adminEventService.create(ADMIN, requestWithCover("covers/events/a.png"));
+
+        ArgumentCaptor<Event> captor = ArgumentCaptor.forClass(Event.class);
+        verify(eventRepository).saveAndFlush(captor.capture());
+        assertThat(captor.getValue().getCoverImageUrl()).isEqualTo("covers/events/a.png");
+        assertThat(response.coverImageUrl()).isEqualTo("https://r2.example/signed");
+    }
+
+    @Test
+    void createRejectsACoverReferenceTooLongToStore() {
+        String tooLong = "https://example.com/" + "a".repeat(600);
+        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, tooLong))
+                .thenReturn(tooLong);
+
+        assertThatThrownBy(() -> adminEventService.create(ADMIN, requestWithCover(tooLong)))
+                .isInstanceOfSatisfying(
+                        ResponseStatusException.class,
+                        ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+    }
+
+    private static EventRequest requestWithCover(String coverImageUrl) {
+        return new EventRequest(
+                "Warsztat",
+                null,
+                EventType.ONLINE,
+                Instant.parse("2026-09-01T17:00:00Z"),
+                Instant.parse("2026-09-01T19:00:00Z"),
+                null,
+                null,
+                null,
+                null,
+                Audience.PUBLIC,
+                coverImageUrl,
+                null,
+                null);
     }
 
     @Test
