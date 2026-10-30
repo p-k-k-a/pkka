@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.event.registration;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -38,6 +39,9 @@ public class EventRegistrationController {
                     Who may sign up follows the event's `audience`, exactly like who may see it: `PUBLIC`
                     events are open to every signed-in user, `ALL_ALUMNI` events to verified alumni only.
                     An event the caller cannot see reports 404 rather than 403.
+
+                    The sign-up is counted under `source` in the event's statistics: the link the user
+                    followed, if any, otherwise the client the sign-up was made in.
                     """)
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Seat taken, or a place on the waitlist"),
@@ -50,8 +54,16 @@ public class EventRegistrationController {
                 description = "Already registered, or registration closed",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public EventRegistrationResponse registerForEvent(@PathVariable UUID eventId, Caller caller) {
-        return eventRegistrationService.register(eventId, caller);
+    public EventRegistrationResponse registerForEvent(
+            @PathVariable UUID eventId,
+            @Parameter(
+                            description =
+                                    "Where the link the user followed came from, e.g. `DISCORD` for `?ref=discord`;"
+                                            + " omit it to use the client the sign-up is made in (`WEB` or `MOBILE`)")
+                    @RequestParam(required = false)
+                    RegistrationSource source,
+            Caller caller) {
+        return eventRegistrationService.register(eventId, caller, source);
     }
 
     @GetMapping
