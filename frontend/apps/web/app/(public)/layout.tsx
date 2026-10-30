@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { AGH_PRIVACY_NOTICE_URL } from "@pkka/domain";
 import { PublicSessionRedirect } from "@/components/auth/public-session-redirect";
 import { NavLink } from "@/components/nav-link";
 import { PublicHeaderAuth } from "@/components/layout/public-header-auth";
@@ -55,6 +56,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               Dowiedz się więcej
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
+            <a
+              href={AGH_PRIVACY_NOTICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-band-foreground/70 block hover:underline"
+            >
+              Ochrona danych osobowych
+            </a>
             <p className="text-band-foreground/70">© 2026 Klub Alumnów WI AGH</p>
           </div>
         </div>
