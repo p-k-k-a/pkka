@@ -109,13 +109,11 @@ function IdentityRow({
       {value ? (
         <View
           className={cn(
-            "border-muted-foreground/25 dark:border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
+            "border-muted-foreground/25 dark:border-input bg-muted/40 min-h-12 justify-center rounded-md border px-3 py-3",
             !visible && "opacity-50",
           )}
         >
-          <Text numberOfLines={1} className="text-muted-foreground">
-            {value}
-          </Text>
+          <Text className="text-muted-foreground">{value}</Text>
         </View>
       ) : null}
       {children}
