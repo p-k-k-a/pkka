@@ -1,3 +1,4 @@
+import { ProfileSectionCard } from "@/components/alumni/profile-section-card";
 import { NotificationToggle } from "@/components/profile/notification-toggle";
 import { SettingRow } from "@/components/profile/setting-row";
 import { Separator } from "@/components/ui/separator";
@@ -23,7 +24,7 @@ function ThemeSwitch() {
   const preference = useThemePreference();
 
   return (
-    <View className="bg-muted flex-row rounded-lg p-1">
+    <View className="bg-muted dark:bg-background flex-row rounded-lg p-1">
       {THEME_OPTIONS.map(({ value, label, icon: Icon }) => {
         const selected = preference === value;
         return (
@@ -34,7 +35,7 @@ function ThemeSwitch() {
             onPress={() => void setThemePreference(value)}
             className={cn(
               "flex-1 flex-row items-center justify-center gap-1.5 rounded-md py-2",
-              selected && "bg-background",
+              selected && "bg-background dark:bg-muted",
             )}
           >
             <Icon size={14} color={selected ? theme.foreground : theme.mutedForeground} />
@@ -55,11 +56,8 @@ function ThemeSwitch() {
 
 export function SettingsSection() {
   return (
-    <View className="gap-3">
-      <Text className="text-muted-foreground text-xs font-semibold uppercase tracking-widest">
-        Ustawienia
-      </Text>
-      <View className="border-border gap-4 rounded-2xl border p-4">
+    <ProfileSectionCard title="Ustawienia">
+      <View className="gap-4">
         <View className="gap-3">
           <SettingRow icon={Moon} title="Wygląd" />
           <ThemeSwitch />
@@ -67,6 +65,6 @@ export function SettingsSection() {
         <Separator />
         <NotificationToggle />
       </View>
-    </View>
+    </ProfileSectionCard>
   );
 }

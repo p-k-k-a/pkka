@@ -7,7 +7,7 @@ import { View } from "react-native";
 function SettingIcon({ icon: Icon }: { icon: LucideIcon }) {
   const theme = useThemeColors();
   return (
-    <View className="bg-muted size-9 items-center justify-center rounded-lg">
+    <View className="bg-muted dark:bg-background size-9 items-center justify-center rounded-lg">
       <Icon size={18} color={theme.mutedForeground} />
     </View>
   );
