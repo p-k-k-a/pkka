@@ -10,7 +10,7 @@ import {
   GraduationCap,
   Mail,
 } from "lucide-react";
-import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
+import type { AdminAlumniProfileResponse, AlumniProfileResponse, ProfileResponse } from "@pkka/api";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProfileAside, ProfileAsideItem } from "@/components/profile/profile-aside";
 import { ProfileContactList } from "@/components/profile/profile-contact-list";
@@ -32,7 +32,8 @@ const EDIT_HREF = "/dashboard/profile/edit";
  */
 type ProfileViewProps =
   | { variant: "own"; profile: ProfileResponse }
-  | { variant: "alumn" | "admin"; profile: AlumniProfileResponse; directoryHref: string };
+  | { variant: "alumn"; profile: AlumniProfileResponse; directoryHref: string }
+  | { variant: "admin"; profile: AdminAlumniProfileResponse; directoryHref: string };
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (

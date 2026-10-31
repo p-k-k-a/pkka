@@ -21,7 +21,7 @@ import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
  */
 @Schema(
         description =
-                "Alumni profile; fields hidden by the owner's visibility settings are null on `/api/alumni/{id}` and filled in on `/api/admin/alumni/{id}`")
+                "Public alumni profile visible to verified alumni; fields hidden by the owner's visibility settings are null")
 public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
@@ -31,7 +31,7 @@ public record AlumniProfileResponse(
         String company,
         String bio,
 
-        @Schema(description = "Discord snowflake for deep links; null when not linked (or hidden, for alumni)")
+        @Schema(description = "Discord snowflake for deep links; null when not linked or hidden")
         String discordId,
 
         String linkedinUrl,
@@ -50,18 +50,10 @@ public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static AlumniProfileResponse forAlumni(User user, AlumnEducation education) {
-        return build(user, education, false);
-    }
-
-    public static AlumniProfileResponse forAdmin(User user, AlumnEducation education) {
-        return build(user, education, true);
-    }
-
-    private static AlumniProfileResponse build(User user, AlumnEducation education, boolean revealHiddenFields) {
-        boolean showName = revealHiddenFields || user.isShowName();
-        boolean showEmail = revealHiddenFields || user.isShowEmail();
-        boolean showDiscord = revealHiddenFields || user.isShowDiscord();
+    public static AlumniProfileResponse from(User user, AlumnEducation education) {
+        boolean showName = user.isShowName();
+        boolean showEmail = user.isShowEmail();
+        boolean showDiscord = user.isShowDiscord();
         return new AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
@@ -81,6 +73,6 @@ public record AlumniProfileResponse(
                         .map(UserTagResponse::from)
                         .sorted(Comparator.comparing(UserTagResponse::name))
                         .toList(),
-                new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
+                new ProfileVisibility(showName, showEmail, showDiscord));
     }
 }

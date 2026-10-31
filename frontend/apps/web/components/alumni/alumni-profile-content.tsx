@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import {
   ApiError,
+  type AdminAlumniProfileResponse,
   type AlumniProfileResponse,
   useGetAlumniProfile,
   useGetAlumniProfileForAdmin,
@@ -47,10 +48,11 @@ export function AdminAlumniProfileContent({ id }: { id: string }) {
   );
 }
 
-type AlumniProfileStateProps = {
-  variant: "alumn" | "admin";
+type AlumniProfileStateProps = (
+  | { variant: "alumn"; profile: AlumniProfileResponse | undefined }
+  | { variant: "admin"; profile: AdminAlumniProfileResponse | undefined }
+) & {
   directoryBase: string;
-  profile: AlumniProfileResponse | undefined;
   isPending: boolean;
   isFetching: boolean;
   error: unknown;

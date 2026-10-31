@@ -65,7 +65,7 @@ public class AdminAlumniController {
                         + "(no approved application)",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public AlumniProfileResponse getAlumniProfileForAdmin(@PathVariable UUID id) {
+    public AdminAlumniProfileResponse getAlumniProfileForAdmin(@PathVariable UUID id) {
         return alumniService.getProfileForAdmin(id);
     }
 }

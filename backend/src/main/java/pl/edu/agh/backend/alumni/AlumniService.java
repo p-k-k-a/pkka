@@ -70,11 +70,11 @@ public class AlumniService {
     }
 
     public AlumniProfileResponse getProfile(UUID id) {
-        return AlumniProfileResponse.forAlumni(findAlumnus(id), educationOf(id));
+        return AlumniProfileResponse.from(findAlumnus(id), educationOf(id));
     }
 
-    public AlumniProfileResponse getProfileForAdmin(UUID id) {
-        return AlumniProfileResponse.forAdmin(findAlumnus(id), educationOf(id));
+    public AdminAlumniProfileResponse getProfileForAdmin(UUID id) {
+        return AdminAlumniProfileResponse.from(findAlumnus(id), educationOf(id));
     }
 
     // The returned page must be mapped by the caller while this transaction is still open: the DTOs read
