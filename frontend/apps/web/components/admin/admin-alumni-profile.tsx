@@ -26,7 +26,6 @@ export function AdminAlumniProfile({ id }: { id: string }) {
   return (
     <AlumniProfileState
       directoryBase={ADMIN_ALUMNI_DIRECTORY_HREF}
-      // The backend already decided what an admin sees, so nothing here is hidden.
       profile={profile && { ...profile, visibility: { name: true, email: true, discord: true } }}
       isPending={isPending}
       isFetching={isFetching}
