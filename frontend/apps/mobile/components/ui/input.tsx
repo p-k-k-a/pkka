@@ -1,3 +1,4 @@
+import { MAX_FONT_SCALE } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import { Platform, TextInput } from "react-native";
 
@@ -15,7 +16,7 @@ function Input({
         props.editable === false && "opacity-50",
         className,
       )}
-      maxFontSizeMultiplier={1.3}
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       {...props}
     />
   );

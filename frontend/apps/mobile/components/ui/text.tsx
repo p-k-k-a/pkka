@@ -68,6 +68,8 @@ const ARIA_LEVEL: Partial<Record<TextVariant, string>> = {
   h4: "4",
 };
 
+const MAX_FONT_SCALE = 1.3;
+
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
 function Text({
@@ -87,9 +89,10 @@ function Text({
       className={cn(textVariants({ variant }), textClass, className)}
       role={variant ? ROLE[variant] : undefined}
       aria-level={variant ? ARIA_LEVEL[variant] : undefined}
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       {...props}
     />
   );
 }
 
-export { Text, TextClassContext };
+export { MAX_FONT_SCALE, Text, TextClassContext };
