@@ -595,7 +595,7 @@ class EventRegistrationEndpointTest {
                         .with(csrf()))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transmissionUrl").value(MEETING_URL));
     }
@@ -611,7 +611,7 @@ class EventRegistrationEndpointTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("WAITLISTED"));
 
-        mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
     }
@@ -621,10 +621,10 @@ class EventRegistrationEndpointTest {
         Event event = newOnlineEvent(10);
         registerOtherAlumn(event);
 
-        mockMvc.perform(get("/api/public/events/{id}", event.getId()).with(alumn()))
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
-        mockMvc.perform(get("/api/public/events/{id}", event.getId()))
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
     }

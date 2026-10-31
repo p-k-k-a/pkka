@@ -91,6 +91,35 @@ class EventIntegrationTest {
     }
 
     @Test
+    void listItemsExposeTheirAudience() throws Exception {
+        mockMvc.perform(get("/api/public/events").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].audience".formatted(ALUMNI_ONLY_EVENT_ID))
+                        .value("ALL_ALUMNI"))
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].audience".formatted(PUBLIC_EVENT_ID))
+                        .value("PUBLIC"));
+    }
+
+    @Test
+    void verifiedAlumnCanListOnlyAlumniEvents() throws Exception {
+        mockMvc.perform(get("/api/public/events")
+                        .param("audience", "ALL_ALUMNI")
+                        .with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(ALUMNI_ONLY_EVENT_ID))
+                        .exists())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')]".formatted(PUBLIC_EVENT_ID))
+                        .doesNotExist());
+    }
+
+    @Test
+    void alumniOnlyFilterGivesAnonymousUsersNothing() throws Exception {
+        mockMvc.perform(get("/api/public/events").param("audience", "ALL_ALUMNI"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
     void pastEventsAreExcludedFromList() throws Exception {
         mockMvc.perform(get("/api/public/events"))
                 .andExpect(status().isOk())

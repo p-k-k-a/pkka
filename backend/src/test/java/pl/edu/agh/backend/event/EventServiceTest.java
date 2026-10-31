@@ -56,7 +56,8 @@ class EventServiceTest {
         when(eventRegistrationService.ownStatusByEvent(Caller.anonymous(), List.of(eventId)))
                 .thenReturn(Map.of());
 
-        var page = eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
+        var page =
+                eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, null, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);
@@ -112,15 +113,16 @@ class EventServiceTest {
         Event event = Event.builder()
                 .id(id)
                 .title("Webinar")
+                .slug("webinar")
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
                 .endsAt(Instant.now().plusSeconds(7200))
                 .transmissionUrl(MEETING_URL)
                 .audience(Audience.PUBLIC)
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug("webinar", caller)).thenReturn(event);
         when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
 
-        return eventService.getDetails(id, caller).transmissionUrl();
+        return eventService.getDetails("webinar", caller).transmissionUrl();
     }
 }
