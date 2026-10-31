@@ -9,7 +9,7 @@ import {
   MapPin,
   UserRound,
 } from "lucide-react";
-import { EventRegistrationStatus } from "@pkka/api";
+import { Audience, EventRegistrationStatus } from "@pkka/api";
 import { LabeledDetails } from "@/components/labeled-details";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
@@ -29,6 +29,7 @@ export type EventCalendarCardData = EventSchedule & {
   title: string;
   /** The viewer's own sign-up, when the list endpoint knows it. */
   registrationStatus?: EventRegistrationStatus;
+  audience?: Audience;
 };
 
 type EventCalendarCardProps = {
@@ -69,6 +70,11 @@ export function EventCalendarCard({
         >
           {eventTypeLabelUpper(event.type)}
         </span>
+        {event.audience === Audience.ALL_ALUMNI ? (
+          <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+            Alumni
+          </span>
+        ) : null}
         {event.registrationStatus ? (
           <span
             className={cn(

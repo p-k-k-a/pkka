@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { EventTimeframe, useListEvents } from "@pkka/api";
+import { ArrowLeft, ArrowRight, CalendarX, Check } from "lucide-react";
+import { Audience, EventTimeframe, useListEvents } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventCalendarCard } from "@/components/events/event-calendar-card";
 import { EventsArchiveBand } from "@/components/events/events-archive-band";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
+import { useVerificationStatus } from "@/lib/use-verification-status";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 const PAGE_SIZE = 20;
@@ -17,12 +19,47 @@ type EventsListProps = {
   archive?: boolean;
 };
 
+const AUDIENCE_CHIPS = [
+  { alumniOnly: false, label: "Wszystkie" },
+  { alumniOnly: true, label: "Dla alumnów" },
+];
+
+function AudienceChips({ value, onChange }: { value: boolean; onChange: (next: boolean) => void }) {
+  return (
+    <div role="radiogroup" aria-label="Rodzaj wydarzeń" className="flex flex-wrap gap-2">
+      {AUDIENCE_CHIPS.map((chip) => {
+        const selected = chip.alumniOnly === value;
+        return (
+          <button
+            key={chip.label}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(chip.alumniOnly)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+              selected
+                ? "bg-band-foreground border-band-foreground text-band"
+                : "border-border text-foreground hover:bg-muted",
+            )}
+          >
+            {selected ? <Check className="size-4" aria-hidden="true" /> : null}
+            {chip.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function EventCardSkeleton() {
   return <Skeleton className="bg-muted h-72 w-full rounded-none" />;
 }
 
 export function EventsList({ variant = "public", archive = false }: EventsListProps) {
   const [page, setPage] = useState(0);
+  const [alumniOnly, setAlumniOnly] = useState(false);
+  const { isVerified } = useVerificationStatus();
   const timeframe = archive ? EventTimeframe.PAST : EventTimeframe.UPCOMING;
   const {
     data: response,
@@ -32,6 +69,7 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
     page,
     size: PAGE_SIZE,
     timeframe,
+    ...(isVerified && alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
     ...(archive ? { sort: ["startsAt,desc"] } : {}),
   });
   const pageData = response?.data;
@@ -70,7 +108,16 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
       </section>
 
       <section id="kalendarz" className="bg-background px-4 py-10 md:px-10 md:py-20">
-        <div className="mx-auto max-w-[1280px]">
+        <div className="mx-auto max-w-[1280px] space-y-8">
+          {isVerified ? (
+            <AudienceChips
+              value={alumniOnly}
+              onChange={(next) => {
+                setAlumniOnly(next);
+                setPage(0);
+              }}
+            />
+          ) : null}
           {isLoading ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -80,9 +127,17 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
           ) : isError ? (
             <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
           ) : events.length === 0 ? (
-            <p className="text-muted-foreground">
-              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
-            </p>
+            <div className="bg-muted flex flex-col items-center gap-3 rounded-lg px-6 py-16 text-center">
+              <CalendarX className="text-muted-foreground size-10" strokeWidth={1.5} />
+              <p className="font-heading text-foreground text-xl font-semibold">
+                {archive ? "Archiwum jest puste" : "Na razie nic nie zaplanowaliśmy"}
+              </p>
+              <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
+                {archive
+                  ? "Zakończone wydarzenia pojawią się tutaj."
+                  : "Nowe wydarzenia pojawią się tutaj. Zajrzyj wkrótce."}
+              </p>
+            </div>
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
