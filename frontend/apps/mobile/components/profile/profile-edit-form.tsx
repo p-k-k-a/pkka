@@ -112,7 +112,9 @@ function IdentityRow({
             !visible && "opacity-50",
           )}
         >
-          <Text className="text-muted-foreground">{value}</Text>
+          <Text numberOfLines={1} className="text-muted-foreground">
+            {value}
+          </Text>
         </View>
       ) : null}
       {children}
@@ -227,10 +229,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         </Button>
       </View>
 
-      <FormSection
-        title="Dane podstawowe"
-        description="Imię, nazwisko i e-mail pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
-      >
+      <FormSection title="Dane podstawowe">
         <form.Field name="showName">
           {(field) => (
             <IdentityRow
@@ -293,7 +292,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="np. Senior Java Developer"
+                placeholder="np. Java Developer"
                 autoCapitalize="sentences"
               />
             </FormField>
@@ -361,7 +360,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://www.linkedin.com/in/..."
+                placeholder="linkedin.com/in/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />
@@ -377,7 +376,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://github.com/..."
+                placeholder="github.com/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />

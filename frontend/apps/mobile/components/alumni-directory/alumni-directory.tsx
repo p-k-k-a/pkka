@@ -13,9 +13,9 @@ import {
   type AlumniSortOption,
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react-native";
+import { ArrowUpDown, Search, SlidersHorizontal, X } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, FlatList, RefreshControl, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from "react-native";
 
 type ActiveSheet = "filter" | "sort" | null;
 
@@ -58,16 +58,28 @@ export function AlumniDirectory() {
         </Text>
 
         <View className="justify-center">
-          <View className="absolute bottom-0 left-3 top-0 z-10 justify-center">
+          <View className="pointer-events-none absolute bottom-0 left-3 top-0 z-10 justify-center">
             <Search size={18} color={theme.mutedForeground} />
           </View>
           <Input
             value={query}
             onChangeText={setQuery}
-            placeholder="Szukaj po nazwisku, firmie..."
+            placeholder="Szukaj alumnów"
             autoCapitalize="none"
-            className="pl-10"
+            autoCorrect={false}
+            returnKeyType="search"
+            className="bg-muted focus:border-primary dark:focus:border-primary border-transparent pl-10 pr-11 dark:border-transparent"
           />
+          {query ? (
+            <Pressable
+              onPress={() => setQuery("")}
+              accessibilityRole="button"
+              accessibilityLabel="Wyczyść wyszukiwanie"
+              className="absolute bottom-0 right-0 top-0 z-10 w-11 items-center justify-center"
+            >
+              <X size={18} color={theme.mutedForeground} />
+            </Pressable>
+          ) : null}
         </View>
 
         <View className="flex-row gap-3">
