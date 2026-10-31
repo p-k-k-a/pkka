@@ -1,7 +1,7 @@
 import { useThemeColors } from "@/lib/theme";
 import { ModalBottomSheet } from "@swmansion/react-native-bottom-sheet";
 import { useEffect, useState, type ReactNode } from "react";
-import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type BottomSheetProps = {
@@ -16,7 +16,6 @@ const SCRIM_OPACITIES = [0, 0.4];
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const [index, setIndex] = useState(visible ? 1 : 0);
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         />
       }
     >
-      <View style={{ paddingTop: 12 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 24 }}>
         <View
           style={{
             alignSelf: "center",
@@ -58,14 +57,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
             marginBottom: 16,
           }}
         />
-        <ScrollView
-          style={{ maxHeight: windowHeight - insets.top - 64 }}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-        >
-          {children}
-        </ScrollView>
+        {children}
       </View>
     </ModalBottomSheet>
   );
