@@ -199,7 +199,8 @@ class EventStatisticsEndpointTest {
 
     @Test
     void dailySeriesOfAPastEventEndsOnTheDayItStarted() throws Exception {
-        Instant startsAt = Instant.now().minus(5, ChronoUnit.DAYS);
+        Instant startsAt =
+                LocalDate.now(WARSAW).minusDays(5).atTime(12, 0).atZone(WARSAW).toInstant();
         Event event = newEvent("Minione", 10, startsAt);
         publishedAt(event, startsAt.minus(2, ChronoUnit.DAYS));
 
