@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { CheckboxCard } from "@/components/application/checkbox-card";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
@@ -29,7 +30,7 @@ import {
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
+import { Camera, Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -219,9 +220,10 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bottomOffset={24}
     >
       <View className="items-center gap-3">
-        <View className="border-border bg-muted size-36 items-center justify-center overflow-hidden rounded-full border">
-          <UserRound size={64} color={theme.mutedForeground} strokeWidth={1.5} />
-        </View>
+        <InitialsAvatar
+          name={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
+          size="xl"
+        />
         {/* Mocked — photo upload isn't implemented; the button intentionally does nothing. */}
         <Button variant="outline" size="sm" onPress={() => {}} className="active:bg-muted">
           <Camera size={16} color={theme.foreground} />

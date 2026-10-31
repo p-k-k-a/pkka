@@ -3,6 +3,8 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@source "../../../packages/domain";
+
 @plugin "../lib/theme-plugin.mts";
 
 @theme inline {
