@@ -9,13 +9,14 @@ import { toast } from "sonner";
 import {
   ApiError,
   getGetMyProfileQueryKey,
+  getListAlumniTagsQueryKey,
   useGetMyProfile,
-  useListUserTags,
+  useListAlumniTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
   type UpdateProfileRequest,
-  type UserTagResponse,
+  type AlumniTagResponse,
 } from "@pkka/api";
 import { AvatarPicker } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
@@ -31,13 +32,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
+import {
+  canonicalizeProfileUrl,
+  githubUrlError,
+  linkedinUrlError,
+  phoneNumberError,
+} from "@pkka/domain";
 
 const PROFILE_HREF = "/dashboard/profile";
 const BIO_MAX_LENGTH = 2000;
-const MAX_TAGS = 20;
 
 type UrlField = "linkedinUrl" | "githubUrl";
+type ValidatedField = UrlField | "phoneNumber";
 
 function Field({
   label,
@@ -74,11 +80,11 @@ function Field({
 
 type EditFormFieldsProps = {
   profile: ProfileResponse;
-  availableTags: UserTagResponse[];
+  catalog: AlumniTagResponse[];
   tagsError: boolean;
 };
 
-function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsProps) {
+function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -87,12 +93,14 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const [bio, setBio] = useState(profile.bio ?? "");
   const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedinUrl ?? "");
   const [githubUrl, setGithubUrl] = useState(profile.githubUrl ?? "");
-  const [selectedTagIds, setSelectedTagIds] = useState(profile.tags.map((tag) => tag.id));
+  const [phoneNumber, setPhoneNumber] = useState(profile.phoneNumber ?? "");
+  const [tagNames, setTagNames] = useState(profile.tags.map((tag) => tag.name));
   const [willingToMentor, setWillingToMentor] = useState(profile.willingToMentor);
   const [showName, setShowName] = useState(profile.visibility.name);
   const [showEmail, setShowEmail] = useState(profile.visibility.email);
   const [showDiscord, setShowDiscord] = useState(profile.visibility.discord);
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<UrlField, string>>>({});
+  const [showPhone, setShowPhone] = useState(profile.visibility.phone);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ValidatedField, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
   const updateProfile = useUpdateMyProfile<ApiError>();
@@ -108,10 +116,10 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
   const linkedin = canonicalizeProfileUrl(linkedinUrl);
   const github = canonicalizeProfileUrl(githubUrl);
 
-  const assignedTagIds = profile.tags.map((tag) => tag.id);
+  const assignedTagKeys = profile.tags.map((tag) => tag.name.toLowerCase());
   const tagsChanged =
-    selectedTagIds.length !== assignedTagIds.length ||
-    selectedTagIds.some((id) => !assignedTagIds.includes(id));
+    tagNames.length !== assignedTagKeys.length ||
+    tagNames.some((name) => !assignedTagKeys.includes(name.toLowerCase()));
   const isDirty =
     tagsChanged ||
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
@@ -119,10 +127,12 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     bio.trim() !== (profile.bio ?? "") ||
     linkedin !== canonicalizeProfileUrl(profile.linkedinUrl ?? "") ||
     github !== canonicalizeProfileUrl(profile.githubUrl ?? "") ||
+    phoneNumber.trim() !== (profile.phoneNumber ?? "") ||
     willingToMentor !== profile.willingToMentor ||
     showName !== profile.visibility.name ||
     showEmail !== profile.visibility.email ||
-    showDiscord !== profile.visibility.discord;
+    showDiscord !== profile.visibility.discord ||
+    showPhone !== profile.visibility.phone;
 
   function setUrl(field: UrlField, value: string) {
     if (field === "linkedinUrl") setLinkedinUrl(value);
@@ -134,11 +144,13 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
     event.preventDefault();
     setFormError(null);
 
-    const errors: Partial<Record<UrlField, string>> = {};
+    const errors: Partial<Record<ValidatedField, string>> = {};
     const linkedinError = linkedinUrlError(linkedinUrl);
     const githubError = githubUrlError(githubUrl);
     if (linkedinError) errors.linkedinUrl = linkedinError;
     if (githubError) errors.githubUrl = githubError;
+    const phoneError = phoneNumberError(phoneNumber);
+    if (phoneError) errors.phoneNumber = phoneError;
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -148,8 +160,9 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
       company: company.trim(),
       linkedinUrl: linkedin,
       githubUrl: github,
+      phoneNumber: phoneNumber.trim(),
       willingToMentor,
-      visibility: { name: showName, email: showEmail, discord: showDiscord },
+      visibility: { name: showName, email: showEmail, discord: showDiscord, phone: showPhone },
     };
 
     try {
@@ -161,7 +174,8 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
 
     if (tagsChanged) {
       try {
-        await updateTags.mutateAsync({ data: { tagIds: selectedTagIds } });
+        await updateTags.mutateAsync({ data: { names: tagNames } });
+        await queryClient.invalidateQueries({ queryKey: getListAlumniTagsQueryKey() });
       } catch (error) {
         // The profile itself is already saved, so the cache has to be refreshed
         // even though the tags did not go through.
@@ -266,6 +280,29 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
             </section>
 
             <section className="space-y-5">
+              <SectionHeading>Kontakt</SectionHeading>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Field label="Telefon" htmlFor="phoneNumber" error={fieldErrors.phoneNumber}>
+                  <Input
+                    id="phoneNumber"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(event) => {
+                      setPhoneNumber(event.target.value);
+                      setFieldErrors((errors) => ({ ...errors, phoneNumber: undefined }));
+                    }}
+                    placeholder="+48 600 700 800"
+                    maxLength={32}
+                    aria-invalid={Boolean(fieldErrors.phoneNumber)}
+                    aria-describedby={fieldErrors.phoneNumber ? "phoneNumber-error" : undefined}
+                  />
+                </Field>
+              </div>
+            </section>
+
+            <section className="space-y-5">
               <SectionHeading>Linki</SectionHeading>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Field label="LinkedIn" htmlFor="linkedinUrl" error={fieldErrors.linkedinUrl}>
@@ -299,9 +336,7 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
 
             <section className="space-y-5">
               <SectionHeading>Umiejętności</SectionHeading>
-              <p className="text-muted-foreground text-sm">
-                Wpisz frazę, aby wyszukać tagi. Maksymalnie {MAX_TAGS} umiejętności.
-              </p>
+              <p className="text-muted-foreground text-sm">Wybierz z listy albo wpisz własną.</p>
               {tagsError ? (
                 <Alert variant="destructive">
                   <AlertTriangle />
@@ -312,10 +347,12 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                 </Alert>
               ) : (
                 <TagPicker
-                  availableTags={availableTags}
-                  selectedIds={selectedTagIds}
-                  onChange={setSelectedTagIds}
-                  max={MAX_TAGS}
+                  options={catalog.map((tag) => tag.name)}
+                  value={tagNames}
+                  onChange={setTagNames}
+                  label="Szukaj lub dodaj umiejętność"
+                  placeholder="Wyszukaj lub dodaj…"
+                  allowCreate
                   disabled={isSaving}
                 />
               )}
@@ -351,8 +388,8 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
             <Card className="gap-5 rounded-lg p-5 shadow-none">
               <SectionHeading>Widoczność</SectionHeading>
               <p className="text-muted-foreground text-xs leading-relaxed">
-                Dane pochodzą z Twojego konta - możesz zdecydować, czy są widoczne, ale nie zmienić
-                ich tutaj.
+                Zdecyduj, które dane widzą pozostali alumni. Imię, e-mail i Discord pochodzą z
+                Twojego konta.
               </p>
               <div className="flex flex-col">
                 <VisibilityField
@@ -369,6 +406,15 @@ function EditFormFields({ profile, availableTags, tagsError }: EditFormFieldsPro
                   value={profile.email}
                   checked={showEmail}
                   onCheckedChange={setShowEmail}
+                  disabled={isSaving}
+                />
+                <VisibilityField
+                  id="visibility-phone"
+                  label="Telefon"
+                  value={phoneNumber.trim()}
+                  missingLabel="Brak numeru"
+                  checked={showPhone}
+                  onCheckedChange={setShowPhone}
                   disabled={isSaving}
                 />
                 <VisibilityField
@@ -434,7 +480,7 @@ function EditFormSkeleton() {
 export function ProfileEditForm() {
   const { user } = useAuth();
   const profileQuery = useGetMyProfile();
-  const tagsQuery = useListUserTags();
+  const tagsQuery = useListAlumniTags();
 
   if (!user) return null;
 
@@ -456,15 +502,11 @@ export function ProfileEditForm() {
     );
   }
 
-  // Tags already assigned stay selectable even if the tag catalogue call failed.
-  const availableTags = [
-    ...profile.tags,
-    ...(tagsQuery.data?.data ?? []).filter(
-      (tag) => !profile.tags.some((assigned) => assigned.id === tag.id),
-    ),
-  ];
-
   return (
-    <EditFormFields profile={profile} availableTags={availableTags} tagsError={tagsQuery.isError} />
+    <EditFormFields
+      profile={profile}
+      catalog={tagsQuery.data?.data ?? []}
+      tagsError={tagsQuery.isError}
+    />
   );
 }

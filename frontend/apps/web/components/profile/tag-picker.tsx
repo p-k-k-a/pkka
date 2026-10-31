@@ -1,73 +1,74 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import type { UserTagResponse } from "@pkka/api";
+import { useId, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { TAG_NAME_MAX_LENGTH, TAG_SUGGESTION_LIMIT } from "@pkka/domain";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type TagPickerProps = {
-  availableTags: UserTagResponse[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-  /** Caps the selection and shows a counter; leave out for an unlimited picker. */
-  max?: number;
+  /** Most popular first: with an empty field only the first 20 are listed. */
+  options: string[];
+  value: string[];
+  onChange: (names: string[]) => void;
+  label: string;
+  placeholder: string;
+  allowCreate?: boolean;
   disabled?: boolean;
+  format?: (name: string) => string;
 };
 
-export function TagPicker({ availableTags, selectedIds, onChange, max, disabled }: TagPickerProps) {
+export function TagPicker({
+  options,
+  value,
+  onChange,
+  label,
+  placeholder,
+  allowCreate = false,
+  disabled = false,
+  format = (name) => name,
+}: TagPickerProps) {
+  const id = useId();
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  const selected = useMemo(() => {
-    const byId = new Map(availableTags.map((tag) => [tag.id, tag]));
-    return selectedIds
-      .map((id) => byId.get(id))
-      .filter((tag): tag is UserTagResponse => tag != null);
-  }, [availableTags, selectedIds]);
+  const searchText = query.trim();
+  const searchLower = searchText.toLowerCase();
+  const selectedNamesLower = new Set(value.map((name) => name.toLowerCase()));
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase("pl");
-    if (!q) return [];
+  const available = options.filter((name) => !selectedNamesLower.has(name.toLowerCase()));
+  const matches = searchLower
+    ? available.filter((name) => name.toLowerCase().includes(searchLower))
+    : available.slice(0, TAG_SUGGESTION_LIMIT);
+  const existingNamesLower = new Set([...options, ...value].map((name) => name.toLowerCase()));
+  const offerNewTag = allowCreate && searchLower !== "" && !existingNamesLower.has(searchLower);
+  const items = offerNewTag ? [...matches, searchText] : matches;
+  const isOpen = isFocused && items.length > 0;
 
-    return availableTags
-      .filter((tag) => !selectedIds.includes(tag.id))
-      .filter((tag) => tag.name.toLocaleLowerCase("pl").includes(q))
-      .slice(0, 8);
-  }, [availableTags, selectedIds, query]);
-
-  const isOpen = isFocused && matches.length > 0;
-  const isFull = max !== undefined && selectedIds.length >= max;
-
-  function addTag(id: string) {
-    if (disabled || isFull || selectedIds.includes(id)) return;
-    onChange([...selectedIds, id]);
+  function add(name: string) {
+    if (!disabled && !selectedNamesLower.has(name.toLowerCase())) onChange([...value, name]);
     setQuery("");
-  }
-
-  function removeTag(id: string) {
-    if (disabled) return;
-    onChange(selectedIds.filter((tagId) => tagId !== id));
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {selected.length > 0 ? (
+      {value.length > 0 ? (
         <div className="flex flex-wrap gap-2">
-          {selected.map((tag) => (
+          {value.map((name) => (
             <Badge
-              key={tag.id}
+              key={name}
               variant="secondary"
-              className="bg-muted text-foreground h-auto gap-1 rounded-md px-2.5 py-1 text-xs font-semibold uppercase"
+              className="bg-muted text-foreground h-auto gap-1 rounded-md px-2.5 py-1 text-xs font-semibold"
             >
-              {tag.name}
+              {format(name)}
               <button
                 type="button"
-                aria-label={`Usuń ${tag.name}`}
+                aria-label={`Usuń ${name}`}
                 disabled={disabled}
-                onClick={() => removeTag(tag.id)}
+                onClick={() => onChange(value.filter((tag) => tag !== name))}
                 className="hover:text-destructive ml-0.5 inline-flex"
               >
                 <X className="size-3" />
@@ -77,83 +78,66 @@ export function TagPicker({ availableTags, selectedIds, onChange, max, disabled 
         </div>
       ) : null}
 
-      {/* The suggestions render in a portal so the surrounding card, which clips
-          its content, cannot cut the list off. */}
       <Popover open={isOpen} onOpenChange={(next) => !next && setIsFocused(false)}>
         <PopoverAnchor asChild>
-          {/* Positioned so the sr-only label below resolves against this wrapper
-              instead of escaping the dashboard's scroll container. */}
           <div className="relative">
-            <Label htmlFor="tag-search" className="sr-only">
-              Szukaj umiejętności
+            <Label htmlFor={id} className="sr-only">
+              {label}
             </Label>
             <Input
-              id="tag-search"
-              role="combobox"
-              aria-expanded={isOpen}
-              aria-controls="tag-search-results"
-              aria-autocomplete="list"
-              aria-activedescendant={
-                isOpen && matches[0] ? `tag-search-option-${matches[0].id}` : undefined
-              }
+              id={id}
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setIsFocused(true);
+              }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Wyszukaj umiejętności…"
-              disabled={disabled || isFull}
+              placeholder={placeholder}
+              disabled={disabled}
               autoComplete="off"
-              onKeyDown={(event) => {
-                // The picker lives inside a form — Enter picks the first match
-                // instead of submitting a half-filled form.
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                if (matches[0]) addTag(matches[0].id);
-              }}
+              maxLength={TAG_NAME_MAX_LENGTH}
+              onKeyDown={(event) => event.key === "Enter" && event.preventDefault()}
             />
           </div>
         </PopoverAnchor>
 
         <PopoverContent
           align="start"
-          className="max-h-48 w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
+          side="bottom"
+          avoidCollisions={false}
+          className="max-h-[min(14rem,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) gap-0 overflow-y-auto p-1"
           onOpenAutoFocus={(event) => event.preventDefault()}
+          onMouseDown={(event) => event.preventDefault()}
         >
-          <ul id="tag-search-results" role="listbox" aria-label="Pasujące umiejętności">
-            {matches.map((tag) => (
-              <li key={tag.id}>
-                <button
-                  id={`tag-search-option-${tag.id}`}
-                  type="button"
-                  role="option"
-                  aria-selected={matches[0]?.id === tag.id}
-                  className="hover:bg-muted w-full rounded-md px-3 py-2 text-left text-sm transition-colors"
-                  // Keeps the input focused so the list survives the click.
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => addTag(tag.id)}
-                >
-                  {tag.name}
-                </button>
-              </li>
-            ))}
+          <ul>
+            {items.map((name, index) => {
+              const isNewTagRow = offerNewTag && index === matches.length;
+              return (
+                <li key={isNewTagRow ? "create" : name}>
+                  <button
+                    type="button"
+                    className={cn(
+                      "hover:bg-muted dark:hover:bg-foreground/10 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
+                      isNewTagRow && "font-semibold",
+                    )}
+                    onClick={() => add(name)}
+                  >
+                    {isNewTagRow ? (
+                      <>
+                        <Plus className="size-4" />
+                        Dodaj „{format(name)}”
+                      </>
+                    ) : (
+                      format(name)
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </PopoverContent>
       </Popover>
-
-      <div className="flex items-center justify-between gap-3">
-        {query.trim() && matches.length === 0 ? (
-          <p className="text-muted-foreground text-[13px]">
-            Brak tagów pasujących do „{query.trim()}”.
-          </p>
-        ) : (
-          <span />
-        )}
-        {max !== undefined ? (
-          <span className="text-muted-foreground text-[13px]">
-            {selectedIds.length}/{max}
-          </span>
-        ) : null}
-      </div>
     </div>
   );
 }

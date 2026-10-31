@@ -119,6 +119,7 @@ function ApplicationForm() {
 
   return (
     <KeyboardAwareScrollView
+      showsVerticalScrollIndicator={false}
       style={{ flex: 1, backgroundColor: scheme === "dark" ? theme.background : theme.muted }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"

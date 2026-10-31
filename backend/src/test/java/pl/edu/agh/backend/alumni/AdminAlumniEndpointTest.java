@@ -66,9 +66,11 @@ class AdminAlumniEndpointTest {
         hidden.setLastName("Nowak");
         hidden.setEmail("zdzislaw." + marker + "@example.com");
         hidden.setDiscordId("123456789012345678");
+        hidden.setPhoneNumber("+48600700800");
         hidden.setShowName(false);
         hidden.setShowEmail(false);
         hidden.setShowDiscord(false);
+        hidden.setShowPhone(false);
         hidden = userRepository.save(hidden);
         approve(hidden);
         entityManager.flush();
@@ -115,7 +117,8 @@ class AdminAlumniEndpointTest {
                 .andExpect(jsonPath("$.firstName").value("Zdzisław" + marker))
                 .andExpect(jsonPath("$.lastName").value("Nowak"))
                 .andExpect(jsonPath("$.email").value("zdzislaw." + marker + "@example.com"))
-                .andExpect(jsonPath("$.discordId").value("123456789012345678"));
+                .andExpect(jsonPath("$.discordId").value("123456789012345678"))
+                .andExpect(jsonPath("$.phoneNumber").value("+48600700800"));
     }
 
     @Test

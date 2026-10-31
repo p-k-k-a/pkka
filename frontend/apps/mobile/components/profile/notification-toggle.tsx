@@ -55,9 +55,10 @@ export function NotificationToggle() {
         </View>
         <Switch
           checked={checked}
-          disabled={toggle.isPending}
           accessibilityLabel="Powiadomienia push"
-          onCheckedChange={(next) => toggle.mutate(next)}
+          onCheckedChange={(next) => {
+            if (!toggle.isPending) toggle.mutate(next);
+          }}
         />
       </View>
 

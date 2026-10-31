@@ -21,7 +21,7 @@ public class UserSpecifications {
                 return null;
             }
             query.distinct(true);
-            Join<User, UserTag> tags = root.join("tags");
+            Join<User, AlumniTag> tags = root.join("tags");
             return tags.get("id").in(tagIds);
         };
     }
@@ -64,7 +64,7 @@ public class UserSpecifications {
             }
             query.distinct(true);
             String pattern = likePattern(rawQuery.trim());
-            Join<User, UserTag> tags = root.join("tags", JoinType.LEFT);
+            Join<User, AlumniTag> tags = root.join("tags", JoinType.LEFT);
 
             Predicate nameMatch = cb.or(
                     cb.like(cb.lower(root.get("firstName")), pattern, LIKE_ESCAPE),

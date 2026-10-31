@@ -115,7 +115,7 @@ class AdminMaterialEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"title":"Wydarzenie","fullDescription":"Opis","type":"ONLINE","startsAt":"%s","endsAt":"%s","transmissionUrl":"https://meet.example.com","audience":"PUBLIC","tags":[]}
+                                {"title":"Wydarzenie","fullDescription":"Opis","type":"ONLINE","startsAt":"%s","endsAt":"%s","transmissionUrl":"https://meet.google.com/abc-defg-hij","audience":"PUBLIC","tags":[]}
                                 """.formatted(start, end)))
                 .andExpect(status().isCreated())
                 .andReturn()

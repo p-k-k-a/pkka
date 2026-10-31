@@ -26,7 +26,12 @@ export function AdminAlumniProfile({ id }: { id: string }) {
   return (
     <AlumniProfileState
       directoryBase={ADMIN_ALUMNI_DIRECTORY_HREF}
-      profile={profile && { ...profile, visibility: { name: true, email: true, discord: true } }}
+      profile={
+        profile && {
+          ...profile,
+          visibility: { name: true, email: true, discord: true, phone: true },
+        }
+      }
       isPending={isPending}
       isFetching={isFetching}
       error={error}

@@ -26,11 +26,11 @@ export function RequireAlumni({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex max-w-[720px] flex-col items-start gap-4">
           <Lock className="text-muted-foreground size-6" aria-hidden="true" />
           <h1 className="font-heading text-foreground text-[28px] leading-tight font-semibold">
-            Katalog dostępny dla zweryfikowanych alumnów
+            Dostępne dla zweryfikowanych alumnów
           </h1>
           <p className="text-muted-foreground leading-relaxed">
-            Po zatwierdzeniu wniosku zobaczysz profile innych absolwentów i będziesz mógł się z nimi
-            skontaktować.
+            Po zatwierdzeniu wniosku uzupełnisz swój profil, zobaczysz profile innych absolwentów i
+            będziesz mógł się z nimi skontaktować.
           </p>
           <Button asChild size="xl" className="font-bold">
             <Link href="/dashboard/verification">

@@ -59,6 +59,12 @@ public class User {
     @Column(name = "show_discord", nullable = false)
     private boolean showDiscord = true;
 
+    @Column(name = "phone_number", length = 32)
+    private String phoneNumber;
+
+    @Column(name = "show_phone", nullable = false)
+    private boolean showPhone = false;
+
     @Column(name = "current_position", length = 255)
     private String currentPosition;
 
@@ -83,7 +89,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id"))
     @BatchSize(size = 30)
-    private Set<UserTag> tags = new HashSet<>();
+    private Set<AlumniTag> tags = new HashSet<>();
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

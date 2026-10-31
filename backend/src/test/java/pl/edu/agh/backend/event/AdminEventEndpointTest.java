@@ -2,6 +2,7 @@ package pl.edu.agh.backend.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -13,8 +14,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -78,7 +82,7 @@ class AdminEventEndpointTest {
                   "type": "ONLINE",
                   "startsAt": "%s",
                   "endsAt": "%s",
-                  "transmissionUrl": "https://meet.example.com/event",
+                  "transmissionUrl": "https://meet.google.com/abc-defg-hij",
                   "audience": "%s",
                   "tags": %s
                 }
@@ -118,7 +122,7 @@ class AdminEventEndpointTest {
                 .andExpect(jsonPath("$.title").value("Warsztat admina"))
                 .andExpect(jsonPath("$.type").value("ONLINE"))
                 .andExpect(jsonPath("$.audience").value("PUBLIC"))
-                .andExpect(jsonPath("$.transmissionUrl").value("https://meet.example.com/event"))
+                .andExpect(jsonPath("$.transmissionUrl").value("https://meet.google.com/abc-defg-hij"))
                 .andExpect(jsonPath("$.tags").value(hasItem("ai")));
     }
 
@@ -211,6 +215,57 @@ class AdminEventEndpointTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0",
+                "https://teams.live.com/meet/9876543210",
+                "https://us02web.zoom.us/j/12345678901?pwd=abc",
+                "https://univienna.zoom.us/j/12345678901",
+                "https://zoom.us/my/jan.kowalski",
+                "https://zoom.us/w/12345678901",
+                "https://zoom.com/j/12345678901",
+                "https://meet.google.com/abc-defg-hij"
+            })
+    void acceptsTeamsZoomAndMeetLinks(String transmissionUrl) throws Exception {
+        String created = createEvent(onlineEventJson(Instant.now().plus(3, ChronoUnit.DAYS), transmissionUrl));
+
+        assertThat(JsonPath.<String>read(created, "$.transmissionUrl")).isEqualTo(transmissionUrl);
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "https://meet.example.com/event",
+                "http://meet.google.com/abc-defg-hij",
+                "https://meet.google.com.example.com/abc-defg-hij",
+                "https://zoom.us.example.com/j/12345678901",
+                "https://zoom.com.example.com/j/12345678901",
+                "javascript:alert(1)"
+            })
+    void rejectsLinksOutsideTeamsZoomAndMeet(String transmissionUrl) throws Exception {
+        mockMvc.perform(post("/api/admin/events")
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(onlineEventJson(Instant.now().plus(3, ChronoUnit.DAYS), transmissionUrl)))
+                .andExpect(status().isBadRequest());
+    }
+
+    private static String onlineEventJson(Instant start, String transmissionUrl) {
+        return """
+                {
+                  "title": "Spotkanie online",
+                  "type": "ONLINE",
+                  "startsAt": "%s",
+                  "endsAt": "%s",
+                  "transmissionUrl": "%s",
+                  "audience": "PUBLIC",
+                  "tags": []
+                }
+                """.formatted(start, start.plus(2, ChronoUnit.HOURS), transmissionUrl);
+    }
+
     @Test
     void acceptsAReminderUpToAWeekBeforeTheStart() throws Exception {
         Instant start = Instant.now().plus(10, ChronoUnit.DAYS);
@@ -238,16 +293,35 @@ class AdminEventEndpointTest {
     }
 
     @Test
-    void rejectsUnknownTags() throws Exception {
+    void createsUnknownTagsLowerCasedAndListsThemInTheCatalog() throws Exception {
+        Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
+        Instant end = start.plus(2, ChronoUnit.HOURS);
+
+        String body = createEvent(
+                eventJson("Nowy tag", start.toString(), end.toString(), "PUBLIC", "[\" Hackathon \", \"AI\"]"));
+
+        List<String> tags = JsonPath.read(body, "$.tags");
+        assertThat(tags).containsExactlyInAnyOrder("hackathon", "ai");
+        mockMvc.perform(get("/api/tags").with(JwtTestSupport.asAdmin()))
+                .andExpect(jsonPath("$[?(@.name=='hackathon')]").value(hasSize(1)))
+                .andExpect(jsonPath("$[?(@.name=='ai')]").value(hasSize(1)));
+    }
+
+    @Test
+    void rejectsTagNamesLongerThan32Characters() throws Exception {
         Instant start = Instant.now().plus(3, ChronoUnit.DAYS);
         Instant end = start.plus(2, ChronoUnit.HOURS);
 
         mockMvc.perform(post("/api/admin/events")
-                        .with(JwtTestSupport.asAdmin())
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(eventJson(
-                                "Nieznany tag", start.toString(), end.toString(), "PUBLIC", "[\"does-not-exist\"]")))
+                                "Zły tag",
+                                start.toString(),
+                                end.toString(),
+                                "PUBLIC",
+                                "[\"%s\"]".formatted("x".repeat(33)))))
                 .andExpect(status().isBadRequest());
     }
 

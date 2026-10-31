@@ -11,6 +11,12 @@ import java.util.stream.Collectors;
 public record ApplicationResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ApplicationStatus status,
+
+        @Schema(
+                description = "Whether the applicant holds one of the alumn roles on the club's Discord server",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        boolean discordVouched,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Faculty faculty,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String fieldOfStudy,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) StudyType studyType,
@@ -48,6 +54,7 @@ public record ApplicationResponse(
         return new ApplicationResponse(
                 a.getId(),
                 a.getStatus(),
+                a.isDiscordVouched(),
                 a.getFaculty(),
                 a.getFieldOfStudy(),
                 a.getStudyType(),

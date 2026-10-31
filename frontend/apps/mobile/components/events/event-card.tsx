@@ -1,6 +1,6 @@
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
 import {
-  eventTypeLabelUpper,
   formatEventDateLong,
   formatSeatsCompact,
   registrationStatusLabelUpper,
@@ -26,11 +26,7 @@ function EventCard({ event }: EventCardProps) {
   const card = (
     <View className="bg-muted gap-5 rounded-2xl p-6">
       <View className="flex-row flex-wrap items-center gap-2">
-        <View className="bg-band rounded-lg px-3 py-1">
-          <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
-            {eventTypeLabelUpper(type)}
-          </Text>
-        </View>
+        <EventTypeBadge type={type} />
         {registrationStatus ? (
           <View className="border-muted-foreground/25 dark:border-input rounded-lg border px-3 py-1">
             <Text className="text-foreground text-[11px] font-semibold uppercase tracking-widest">

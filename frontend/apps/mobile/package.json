@@ -29,6 +29,7 @@
     "@rn-primitives/select": "1.4.0",
     "@rn-primitives/separator": "1.4.0",
     "@rn-primitives/slot": "^1.4.0",
+    "@rn-primitives/switch": "^1.5.2",
     "@rn-primitives/toggle": "1.4.0",
     "@rn-primitives/toggle-group": "1.4.0",
     "@swmansion/react-native-bottom-sheet": "0.16.2",

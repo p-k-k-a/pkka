@@ -2,6 +2,7 @@ import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import "@/global.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { configureNotificationHandler, useNotificationRouting } from "@/lib/notifications";
+import { refreshRolesOnApproval } from "@/lib/refresh-roles-on-approval";
 import { NAV_THEME, useAppColorScheme } from "@/lib/theme";
 import { createQueryClient } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
@@ -15,6 +16,7 @@ import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 const queryClient = createQueryClient();
+refreshRolesOnApproval(queryClient);
 configureNotificationHandler();
 
 focusManager.setEventListener((handleFocus) => {

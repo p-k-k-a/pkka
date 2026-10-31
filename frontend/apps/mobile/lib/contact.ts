@@ -23,6 +23,14 @@ export async function openEmail(email: string) {
   }
 }
 
+export async function callPhone(phoneNumber: string) {
+  try {
+    await Linking.openURL(`tel:${phoneNumber.replace(/[ -]/g, "")}`);
+  } catch {
+    Alert.alert("Telefon", phoneNumber);
+  }
+}
+
 export function openDiscordUser(discordId: string) {
   return openWithFallback(
     `discord://-/users/${discordId}`,

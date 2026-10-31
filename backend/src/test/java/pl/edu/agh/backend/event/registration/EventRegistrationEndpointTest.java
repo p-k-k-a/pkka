@@ -60,6 +60,8 @@ class EventRegistrationEndpointTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
+    private static final String MEETING_URL = "https://meet.google.com/abc-defg-hij";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -90,6 +92,13 @@ class EventRegistrationEndpointTest {
 
     private Event newEvent(Audience audience, Integer seatLimit) {
         return newEvent(audience, seatLimit, Instant.now().plus(7, ChronoUnit.DAYS), null);
+    }
+
+    private Event newOnlineEvent(Integer seatLimit) {
+        Event event = newEvent(Audience.PUBLIC, seatLimit);
+        event.setType(EventType.ONLINE);
+        event.setTransmissionUrl(MEETING_URL);
+        return eventRepository.save(event);
     }
 
     private Event newEvent(Audience audience, Integer seatLimit, Instant startsAt, Instant registrationClosesAt) {
@@ -575,6 +584,69 @@ class EventRegistrationEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.registrationStatus").value("WAITLISTED"))
                 .andExpect(jsonPath("$.seatsTaken").value(1));
+    }
+
+    @Test
+    void eventDetails_handTheMeetingLinkToAHeldSeat() throws Exception {
+        Event event = newOnlineEvent(10);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").value(MEETING_URL));
+    }
+
+    @Test
+    void eventDetails_keepTheMeetingLinkFromTheWaitlist() throws Exception {
+        Event event = newOnlineEvent(1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
+    }
+
+    @Test
+    void eventDetails_keepTheMeetingLinkFromCallersNotSignedUp() throws Exception {
+        Event event = newOnlineEvent(10);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
+    }
+
+    @Test
+    void eventList_neverCarriesTheMeetingLink() throws Exception {
+        Tag tag = tagRepository.save(Tag.builder()
+                .name("link-" + UUID.randomUUID().toString().substring(0, 8))
+                .build());
+        Event event = newOnlineEvent(10);
+        event.getTags().add(tag);
+        eventRepository.save(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/public/events").param("tags", tag.getName()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].registrationStatus").value("REGISTERED"))
+                .andExpect(jsonPath("$.content[0].transmissionUrl").doesNotExist());
     }
 
     @Test

@@ -7,10 +7,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import pl.edu.agh.backend.application.AlumnEducation;
+import pl.edu.agh.backend.user.AlumniTagResponse;
 import pl.edu.agh.backend.user.User;
-import pl.edu.agh.backend.user.UserTagResponse;
 
-/** Admin version of {@link AlumniProfileResponse}. Hidden name, email and Discord are filled in. */
+/** Admin version of {@link AlumniProfileResponse}. Hidden name, email, Discord and phone are filled in. */
 @Schema(description = "Alumni profile for admins; fields the alumnus hides from other alumni are still filled in")
 public record AdminAlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
@@ -24,6 +24,7 @@ public record AdminAlumniProfileResponse(
         @Schema(description = "Discord snowflake for deep links; null when not linked")
         String discordId,
 
+        String phoneNumber,
         String linkedinUrl,
         String githubUrl,
 
@@ -37,7 +38,7 @@ public record AdminAlumniProfileResponse(
         LocalDate alumnSince,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<AlumniTagResponse> tags) {
 
     public static AdminAlumniProfileResponse from(User user, AlumnEducation education) {
         return new AdminAlumniProfileResponse(
@@ -49,6 +50,7 @@ public record AdminAlumniProfileResponse(
                 user.getCompany(),
                 user.getBio(),
                 user.getDiscordId(),
+                user.getPhoneNumber(),
                 user.getLinkedinUrl(),
                 user.getGithubUrl(),
                 education.graduationYear(),
@@ -56,8 +58,8 @@ public record AdminAlumniProfileResponse(
                 education.alumnSince(),
                 user.isWillingToMentor(),
                 user.getTags().stream()
-                        .map(UserTagResponse::from)
-                        .sorted(Comparator.comparing(UserTagResponse::name))
+                        .map(AlumniTagResponse::from)
+                        .sorted(Comparator.comparing(AlumniTagResponse::name))
                         .toList());
     }
 }

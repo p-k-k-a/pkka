@@ -11,9 +11,9 @@ import {
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { useListUserTags } from "@pkka/api";
+import { useListAlumniTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
 type FilterSheetProps = {
@@ -41,11 +41,10 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
   // Bumping this on each open remounts them with fresh internal state.
   const [openCount, setOpenCount] = useState(0);
 
-  const tagsQuery = useListUserTags();
-  const tagOptions = useMemo<SelectOption[]>(
-    () => (tagsQuery.data?.data ?? []).map((tag) => ({ id: tag.id, label: tag.name })),
-    [tagsQuery.data],
-  );
+  const tagsQuery = useListAlumniTags();
+  const tagOptions: SelectOption[] = (tagsQuery.data?.data ?? [])
+    .filter((tag) => (tag.usageCount ?? 0) > 0 || draft.tagIds.includes(tag.id))
+    .map((tag) => ({ id: tag.id, label: tag.name }));
 
   useEffect(() => {
     if (visible) {

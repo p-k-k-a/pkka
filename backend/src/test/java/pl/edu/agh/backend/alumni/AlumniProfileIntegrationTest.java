@@ -42,10 +42,10 @@ import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserProvisioningService;
 import pl.edu.agh.backend.user.UserRepository;
-import pl.edu.agh.backend.user.UserTagRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -65,7 +65,7 @@ class AlumniProfileIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserTagRepository userTagRepository;
+    private AlumniTagRepository alumniTagRepository;
 
     @Autowired
     private ApplicationRepository applicationRepository;
@@ -92,7 +92,7 @@ class AlumniProfileIntegrationTest {
         alumn.setLinkedinUrl("https://linkedin.com/in/jankowalski");
         alumn.setGithubUrl("https://github.com/jankowalski");
         alumn.setWillingToMentor(true);
-        alumn.getTags().add(userTagRepository.findAll().getFirst());
+        alumn.getTags().add(alumniTagRepository.findAll().getFirst());
         alumn = userRepository.save(alumn);
 
         // Education facts come from the applicant's approved application.
@@ -278,6 +278,53 @@ class AlumniProfileIntegrationTest {
         User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
         assertThat(updated.isShowEmail()).isFalse();
         assertThat(updated.isShowName()).isTrue();
+    }
+
+    @Test
+    void updatesPhoneNumberViaProfileEndpoint() throws Exception {
+        mockMvc.perform(patch("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\": \"+48 600 700 800\", \"visibility\": {\"phone\": true}}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value("+48 600 700 800"))
+                .andExpect(jsonPath("$.visibility.phone").value(true));
+
+        User updated = userRepository.findByKeycloakId(alumn.getKeycloakId()).orElseThrow();
+        assertThat(updated.getPhoneNumber()).isEqualTo("+48 600 700 800");
+        assertThat(updated.isShowPhone()).isTrue();
+    }
+
+    @Test
+    void rejectsInvalidPhoneNumber() throws Exception {
+        mockMvc.perform(patch("/api/profiles/me")
+                        .with(jwt().jwt(jwt -> jwt.subject(alumn.getKeycloakId()))
+                                .authorities(new SimpleGrantedAuthority("ROLE_USER")))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\": \"zadzwoń do mnie\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void showsPhoneInDirectoryOnlyWhenPublic() throws Exception {
+        alumn.setPhoneNumber("+48600700800");
+        userRepository.save(alumn);
+
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value(nullValue()))
+                .andExpect(jsonPath("$.visibility.phone").value(false));
+
+        alumn.setShowPhone(true);
+        userRepository.save(alumn);
+
+        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value("+48600700800"))
+                .andExpect(jsonPath("$.visibility.phone").value(true));
     }
 
     @Test

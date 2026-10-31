@@ -1,12 +1,10 @@
 import { SkillChips } from "@/components/alumni/skill-chips";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { router } from "expo-router";
 import { ArrowRight, UserRound } from "lucide-react-native";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 type AlumniCardProps = {
   alumn: AlumniListItemResponse;
@@ -18,9 +16,9 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
   const hasSubtitle = !!(alumn.currentPosition || alumn.company);
 
   return (
-    <Card className="gap-5 rounded-2xl p-5">
+    <View className="bg-muted gap-5 rounded-2xl p-6">
       <View className="flex-row gap-4">
-        <View className="border-border bg-muted size-16 items-center justify-center overflow-hidden rounded-xl border">
+        <View className="bg-background size-16 items-center justify-center overflow-hidden rounded-xl">
           <UserRound size={32} color={theme.mutedForeground} strokeWidth={1.5} />
         </View>
         <View className="flex-1 gap-1.5">
@@ -45,13 +43,13 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
         </View>
       </View>
 
-      <Button
-        variant="outline"
+      <Pressable
+        className="bg-background flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2 active:opacity-80"
         onPress={() => router.push({ pathname: "/alumni/[id]", params: { id: alumn.id } })}
       >
-        <Text className="font-semibold">Zobacz profil</Text>
-        <ArrowRight size={16} color={theme.foreground} />
-      </Button>
-    </Card>
+        <Text className="text-accent text-sm font-medium">Zobacz profil</Text>
+        <ArrowRight size={14} color={theme.accent} />
+      </Pressable>
+    </View>
   );
 }
