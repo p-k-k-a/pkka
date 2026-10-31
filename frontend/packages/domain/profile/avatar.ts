@@ -1,3 +1,5 @@
+import { hashString } from "../format/hash";
+
 // Tailwind class names, shared by web and mobile (NativeWind). Both apps scan this
 // package for classes: web via @source in globals.css, mobile via tailwind.config.js.
 const AVATAR_COLORS = [
@@ -17,9 +19,5 @@ export function avatarInitials(name: string) {
 }
 
 export function avatarColors(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]!;
+  return AVATAR_COLORS[hashString(name) % AVATAR_COLORS.length] ?? AVATAR_COLORS[0]!;
 }

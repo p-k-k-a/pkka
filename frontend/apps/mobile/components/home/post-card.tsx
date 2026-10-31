@@ -1,14 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-import { formatPublishedAtCompact } from "@pkka/domain";
+import { formatPublishedAtCompact, placeholderCoverUrl } from "@pkka/domain";
 import type { PostSummaryResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
 import { Pressable, View } from "react-native";
-
-const postImage = require("@/assets/images/post-placeholder.jpg");
 
 type PostCardProps = {
   post: PostSummaryResponse;
@@ -16,11 +14,16 @@ type PostCardProps = {
 
 export function PostCard({ post }: PostCardProps) {
   const theme = useThemeColors();
-  const { title, slug, publishedAt } = post;
+  const { id, title, slug, publishedAt } = post;
 
   const card = (
     <Card className="bg-muted gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-none">
-      <Image source={postImage} contentFit="cover" style={{ width: "100%", aspectRatio: 16 / 9 }} />
+      <Image
+        source={{ uri: placeholderCoverUrl(id) }}
+        contentFit="cover"
+        transition={200}
+        style={{ width: "100%", aspectRatio: 16 / 9 }}
+      />
       <View className="gap-3 px-6 pt-5">
         <Text className="text-muted-foreground text-sm font-semibold">
           {formatPublishedAtCompact(publishedAt)}
