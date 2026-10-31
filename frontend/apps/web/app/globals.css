@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @source "../../../packages/domain";
 
 @plugin "../lib/theme-plugin.mts";
