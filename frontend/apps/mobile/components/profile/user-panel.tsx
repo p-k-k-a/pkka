@@ -1,8 +1,7 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
-import { NotificationToggle } from "@/components/profile/notification-toggle";
+import { SettingsSection } from "@/components/profile/settings-section";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { Separator } from "@/components/ui/separator";
 import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
@@ -245,13 +244,16 @@ export function UserPanel() {
           />
         )}
 
-        <NotificationToggle />
+        <SettingsSection />
 
-        <Separator />
-
-        <Button size="lg" variant="outline" className="w-full" onPress={logout}>
+        <Button
+          size="lg"
+          variant="outline"
+          className="border-destructive/30 active:bg-destructive/10 w-full"
+          onPress={logout}
+        >
           <LogOut size={18} color={colors.destructive} />
-          <Text className="font-bold">Wyloguj się</Text>
+          <Text className="text-destructive font-bold">Wyloguj się</Text>
         </Button>
       </View>
     </ScrollView>
