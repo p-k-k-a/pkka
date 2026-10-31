@@ -229,6 +229,9 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           <Camera size={16} color={theme.foreground} />
           <Text className="group-active:text-foreground">Zmień zdjęcie</Text>
         </Button>
+        <Text className="text-muted-foreground text-center text-[13px]">
+          Dodawanie zdjęć jeszcze nie działa. Na razie pokazujemy Twoje inicjały.
+        </Text>
       </View>
 
       <FormSection title="Dane podstawowe">
