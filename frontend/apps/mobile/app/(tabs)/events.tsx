@@ -89,11 +89,6 @@ function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: 
       )}
     >
       <SlidersHorizontal size={18} color={activeCount > 0 ? theme.accent : theme.foreground} />
-      {activeCount > 0 ? (
-        <View className="bg-accent absolute -right-2 -top-2 size-5 items-center justify-center rounded-full">
-          <Text className="text-accent-foreground text-[11px] font-bold">{activeCount}</Text>
-        </View>
-      ) : null}
     </Pressable>
   );
 }
