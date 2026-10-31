@@ -28,15 +28,14 @@ import {
   graduationYearMax,
   hasRequiredConsents,
   isGraduationYearValid,
+  AGH_PRIVACY_NOTICE_URL,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
   FACULTY_OPTIONS,
   GRADUATION_YEAR_MIN,
   INTEREST_AREAS,
   MEETING_PREFERENCE_OPTIONS,
-  PRIVACY_URL,
   STUDY_TYPE_OPTIONS,
-  TERMS_URL,
 } from "@pkka/domain";
 
 function toggle<T>(list: T[], value: T): T[] {
@@ -400,9 +399,10 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
           />
           <span>
             Zapoznałem/am się z{" "}
-            <ExternalLink href={TERMS_URL}>Regulaminem Klubu Alumnów WI AGH</ExternalLink> oraz{" "}
-            <ExternalLink href={PRIVACY_URL}>Polityką Prywatności</ExternalLink> i akceptuję ich
-            postanowienia.<span className="text-destructive">*</span>
+            <ExternalLink href={AGH_PRIVACY_NOTICE_URL}>
+              informacją o przetwarzaniu danych osobowych przez AGH
+            </ExternalLink>{" "}
+            dla celów działalności Klubu Absolwentów AGH.<span className="text-destructive">*</span>
           </span>
         </Label>
         <Label htmlFor="consent-gdpr" className="items-start gap-4 text-sm leading-6 font-semibold">
@@ -415,8 +415,8 @@ export function VerificationForm({ onSubmitted }: { onSubmitted?: () => void | P
             }
           />
           <span>
-            Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji procesu
-            rejestracji i członkostwa w klubie, zgodnie z przepisami RODO.
+            Wyrażam zgodę na przetwarzanie moich danych osobowych przez AGH dla celów działalności
+            Klubu Absolwentów AGH.
             <span className="text-destructive">*</span>
           </span>
         </Label>
