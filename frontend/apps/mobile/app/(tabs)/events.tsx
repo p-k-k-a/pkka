@@ -1,5 +1,11 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { EventCard } from "@/components/events/event-card";
+import {
+  countActiveEventFilters,
+  EMPTY_EVENT_FILTERS,
+  EventFilterSheet,
+  type EventFilters,
+} from "@/components/events/event-filter-sheet";
 import { CtaCard } from "@/components/home/cta-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
@@ -10,7 +16,7 @@ import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Audience, EventTimeframe, useListEventsInfinite } from "@pkka/api";
 import { router } from "expo-router";
-import { Check } from "lucide-react-native";
+import { SlidersHorizontal } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, View } from "react-native";
 
@@ -69,57 +75,39 @@ function TimeframeTabs({
   );
 }
 
-const AUDIENCE_CHIPS = [
-  { alumniOnly: false, label: "Wszystkie" },
-  { alumniOnly: true, label: "Dla alumnów" },
-];
-
-function AudienceChips({ value, onChange }: { value: boolean; onChange: (next: boolean) => void }) {
+function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: () => void }) {
   const theme = useThemeColors();
 
   return (
-    <View className="flex-row gap-2">
-      {AUDIENCE_CHIPS.map((chip) => {
-        const selected = chip.alumniOnly === value;
-        return (
-          <Pressable
-            key={chip.label}
-            role="radio"
-            accessibilityState={{ checked: selected }}
-            onPress={() => onChange(chip.alumniOnly)}
-            className={cn(
-              "flex-row items-center gap-1.5 rounded-full border px-4 py-2",
-              selected
-                ? "bg-band-foreground border-band-foreground"
-                : "border-muted-foreground/25 dark:border-input",
-            )}
-          >
-            {selected ? <Check size={14} color={theme.band} strokeWidth={3} /> : null}
-            <Text
-              className={cn(
-                "text-[13px] font-semibold",
-                selected ? "text-band" : "text-foreground",
-              )}
-            >
-              {chip.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Filtry"
+      className={cn(
+        "size-10 items-center justify-center rounded-md border",
+        activeCount > 0 ? "border-accent bg-accent/10" : "border-border",
+      )}
+    >
+      <SlidersHorizontal size={18} color={activeCount > 0 ? theme.accent : theme.foreground} />
+      {activeCount > 0 ? (
+        <View className="bg-accent absolute -right-2 -top-2 size-5 items-center justify-center rounded-full">
+          <Text className="text-accent-foreground text-[11px] font-bold">{activeCount}</Text>
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
 function ListHeader({
   timeframe,
   onTimeframeChange,
-  alumniOnly,
-  onAlumniOnlyChange,
+  activeFilterCount,
+  onOpenFilters,
 }: {
   timeframe: EventTimeframe;
   onTimeframeChange: (timeframe: EventTimeframe) => void;
-  alumniOnly: boolean;
-  onAlumniOnlyChange: (next: boolean) => void;
+  activeFilterCount: number;
+  onOpenFilters: () => void;
 }) {
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
@@ -133,8 +121,14 @@ function ListHeader({
         </View>
       )}
       <View className="gap-6 px-5">
-        <TimeframeTabs value={timeframe} onChange={onTimeframeChange} />
-        {isAlumni ? <AudienceChips value={alumniOnly} onChange={onAlumniOnlyChange} /> : null}
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1">
+            <TimeframeTabs value={timeframe} onChange={onTimeframeChange} />
+          </View>
+          {isAlumni ? (
+            <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -142,7 +136,8 @@ function ListHeader({
 
 export default function EventsScreen() {
   const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
-  const [alumniOnly, setAlumniOnly] = useState(false);
+  const [filters, setFilters] = useState<EventFilters>(EMPTY_EVENT_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const isAlumni = useIsAlumni();
   const archive = timeframe === EventTimeframe.PAST;
   const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -150,7 +145,7 @@ export default function EventsScreen() {
       {
         size: PAGE_SIZE,
         timeframe,
-        ...(isAlumni && alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
+        ...(isAlumni && filters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
         ...(archive ? { sort: ["startsAt,desc"] } : {}),
       },
       { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
@@ -159,44 +154,55 @@ export default function EventsScreen() {
   const events = useMemo(() => pageItems(data?.pages), [data]);
 
   return (
-    <FlatList
-      className="flex-1 bg-background"
-      contentContainerClassName="pb-8"
-      showsVerticalScrollIndicator={false}
-      data={events}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View className="px-5">
-          <EventCard event={item} />
-        </View>
-      )}
-      ItemSeparatorComponent={() => <View className="h-6" />}
-      ListHeaderComponent={
-        <ListHeader
-          timeframe={timeframe}
-          onTimeframeChange={setTimeframe}
-          alumniOnly={alumniOnly}
-          onAlumniOnlyChange={setAlumniOnly}
-        />
-      }
-      ListHeaderComponentStyle={{ marginBottom: 24 }}
-      onEndReached={() => {
-        if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-      }}
-      onEndReachedThreshold={END_REACHED_THRESHOLD}
-      ListFooterComponent={
-        isPending || isFetchingNextPage ? (
-          <ActivityIndicator className="py-8" />
-        ) : isError ? (
-          <Text className="py-8 text-center text-sm text-muted-foreground">
-            Nie udało się załadować wydarzeń.
-          </Text>
-        ) : events.length === 0 ? (
-          <Text className="py-8 text-center text-sm text-muted-foreground">
-            {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
-          </Text>
-        ) : null
-      }
-    />
+    <>
+      <FlatList
+        className="flex-1 bg-background"
+        contentContainerClassName="pb-8"
+        showsVerticalScrollIndicator={false}
+        data={events}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View className="px-5">
+            <EventCard event={item} />
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View className="h-6" />}
+        ListHeaderComponent={
+          <ListHeader
+            timeframe={timeframe}
+            onTimeframeChange={setTimeframe}
+            activeFilterCount={countActiveEventFilters(filters)}
+            onOpenFilters={() => setFiltersOpen(true)}
+          />
+        }
+        ListHeaderComponentStyle={{ marginBottom: 24 }}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+        }}
+        onEndReachedThreshold={END_REACHED_THRESHOLD}
+        ListFooterComponent={
+          isPending || isFetchingNextPage ? (
+            <ActivityIndicator className="py-8" />
+          ) : isError ? (
+            <Text className="py-8 text-center text-sm text-muted-foreground">
+              Nie udało się załadować wydarzeń.
+            </Text>
+          ) : events.length === 0 ? (
+            <Text className="py-8 text-center text-sm text-muted-foreground">
+              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
+            </Text>
+          ) : null
+        }
+      />
+      <EventFilterSheet
+        visible={filtersOpen}
+        value={filters}
+        onClose={() => setFiltersOpen(false)}
+        onApply={(next) => {
+          setFilters(next);
+          setFiltersOpen(false);
+        }}
+      />
+    </>
   );
 }
