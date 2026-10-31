@@ -88,7 +88,7 @@ class AdminAlumniEndpointTest {
                 .build());
     }
 
-    // Real tokens always carry USER too; without it the catch-all USER rule would 403 these on its own.
+    // Real tokens always have ROLE_USER. Without it, the catch-all USER rule would return 403 by itself.
     private static RequestPostProcessor admin() {
         return jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
@@ -99,29 +99,23 @@ class AdminAlumniEndpointTest {
     }
 
     @Test
-    void adminListFindsAlumniHidingTheirNameAndShowsTheirSettings() throws Exception {
+    void adminListFindsAlumniHidingTheirName() throws Exception {
         mockMvc.perform(get("/api/admin/alumni").param("q", "Zdzisław" + marker).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(hidden.getId().toString()))
                 .andExpect(jsonPath("$.content[0].firstName").value("Zdzisław" + marker))
-                .andExpect(jsonPath("$.content[0].lastName").value("Nowak"))
-                .andExpect(jsonPath("$.content[0].visibility.name").value(false))
-                .andExpect(jsonPath("$.content[0].visibility.email").value(false))
-                .andExpect(jsonPath("$.content[0].visibility.discord").value(false));
+                .andExpect(jsonPath("$.content[0].lastName").value("Nowak"));
     }
 
     @Test
-    void adminProfileShowsHiddenFieldsAndTheRealSettings() throws Exception {
+    void adminProfileShowsHiddenFields() throws Exception {
         mockMvc.perform(get("/api/admin/alumni/{id}", hidden.getId()).with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Zdzisław" + marker))
                 .andExpect(jsonPath("$.lastName").value("Nowak"))
                 .andExpect(jsonPath("$.email").value("zdzislaw." + marker + "@example.com"))
-                .andExpect(jsonPath("$.discordId").value("123456789012345678"))
-                .andExpect(jsonPath("$.visibility.name").value(false))
-                .andExpect(jsonPath("$.visibility.email").value(false))
-                .andExpect(jsonPath("$.visibility.discord").value(false));
+                .andExpect(jsonPath("$.discordId").value("123456789012345678"));
     }
 
     @Test

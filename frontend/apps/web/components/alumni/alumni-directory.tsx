@@ -1,5 +1,15 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
+import { type PageAlumniListItemResponse, useListAlumni } from "@pkka/api";
+import {
+  ALUMNI_SORT_OPTIONS,
+  buildAlumniParams,
+  type AlumniFilters,
+  type AlumniSortOption,
+} from "@pkka/domain";
 import { AlumniCard } from "@/components/alumni/alumni-card";
 import { AlumniFiltersPanel } from "@/components/alumni/alumni-filters";
 import { Button } from "@/components/ui/button";
@@ -8,48 +18,33 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  ADMIN_ALUMNI_DIRECTORY_HREF,
   ALUMNI_DIRECTORY_HREF,
   parseAlumniSearchParams,
   toAlumniSearchString,
 } from "@/lib/alumni-search-params";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
-import { useRedirectNonAdmin } from "@/lib/use-redirect-non-admin";
-import {
-  getListAlumniForAdminQueryKey,
-  getListAlumniQueryKey,
-  listAlumni,
-  listAlumniForAdmin,
-} from "@pkka/api";
-import {
-  ALUMNI_SORT_OPTIONS,
-  buildAlumniParams,
-  type AlumniFilters,
-  type AlumniSortOption,
-} from "@pkka/domain";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 
-// Admins read `/api/admin/alumni`, which also lists what alumni hide from each other.
-const SOURCES = {
-  alumn: { href: ALUMNI_DIRECTORY_HREF, queryKey: getListAlumniQueryKey, list: listAlumni },
-  admin: {
-    href: ADMIN_ALUMNI_DIRECTORY_HREF,
-    queryKey: getListAlumniForAdminQueryKey,
-    list: listAlumniForAdmin,
-  },
-};
+export function AlumniDirectory() {
+  const directory = useAlumniDirectoryState();
+  const { data, isPending, isError, isPlaceholderData, refetch } = useListAlumni(
+    directory.params,
+    // Keeps the current results on screen while the next page or filter loads.
+    { query: { placeholderData: (previous) => previous } },
+  );
+  return (
+    <AlumniDirectoryView
+      directory={directory}
+      directoryHref={ALUMNI_DIRECTORY_HREF}
+      pageData={data?.status === 200 ? data.data : undefined}
+      isPending={isPending}
+      isError={isError}
+      isPlaceholderData={isPlaceholderData}
+      refetch={refetch}
+    />
+  );
+}
 
-type AlumniDirectoryProps = {
-  variant?: "alumn" | "admin";
-};
-
-export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
-  const isAdmin = variant === "admin";
-  const source = SOURCES[variant];
-  useRedirectNonAdmin(isAdmin);
+export function useAlumniDirectoryState() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -60,7 +55,6 @@ export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
   const [sort, setSort] = useState<AlumniSortOption>(initial.sort);
   const [page, setPage] = useState(initial.page);
   const debouncedQuery = useDebouncedValue(query);
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Kept in the URL so the criteria survive a visit to a profile and can be shared.
   const search = toAlumniSearchString({ query: debouncedQuery, filters, sort, page });
@@ -72,13 +66,30 @@ export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
   }, [search, currentSearch, pathname, router]);
 
   const params = { ...buildAlumniParams(debouncedQuery, filters, sort), page };
-  const { data, isPending, isError, isPlaceholderData, refetch } = useQuery({
-    queryKey: source.queryKey(params),
-    queryFn: ({ signal }) => source.list(params, { signal }),
-    // Keeps the current results on screen while the next page or filter loads.
-    placeholderData: (previous) => previous,
-  });
-  const pageData = data?.status === 200 ? data.data : undefined;
+  return { query, setQuery, filters, setFilters, sort, setSort, page, setPage, search, params };
+}
+
+type AlumniDirectoryViewProps = {
+  directory: ReturnType<typeof useAlumniDirectoryState>;
+  directoryHref: string;
+  pageData: PageAlumniListItemResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+  isPlaceholderData: boolean;
+  refetch: () => unknown;
+};
+
+export function AlumniDirectoryView({
+  directory,
+  directoryHref,
+  pageData,
+  isPending,
+  isError,
+  isPlaceholderData,
+  refetch,
+}: AlumniDirectoryViewProps) {
+  const { query, setQuery, filters, setFilters, sort, setSort, page, setPage, search } = directory;
+  const resultsRef = useRef<HTMLDivElement>(null);
   const alumni = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
@@ -108,9 +119,8 @@ export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
               Znajdź absolwentów WI AGH
             </h1>
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-              {isAdmin
-                ? "Jako admin widzisz ukryte dane alumnów."
-                : "Szukaj po nazwisku, stanowisku lub firmie i odezwij się do osób, które chętnie dzielą się doświadczeniem."}
+              Szukaj po nazwisku, stanowisku lub firmie i odezwij się do osób, które chętnie dzielą
+              się doświadczeniem.
             </p>
           </div>
 
@@ -192,7 +202,7 @@ export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
                     <AlumniCard
                       key={alumn.id}
                       alumn={alumn}
-                      directoryHref={source.href}
+                      directoryHref={directoryHref}
                       search={search}
                     />
                   ))}

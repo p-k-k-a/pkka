@@ -3,25 +3,17 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
-import {
-  ApiError,
-  type AdminAlumniProfileResponse,
-  type AlumniProfileResponse,
-  useGetAlumniProfile,
-  useGetAlumniProfileForAdmin,
-} from "@pkka/api";
+import { ApiError, type AlumniProfileResponse, useGetAlumniProfile } from "@pkka/api";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRedirectNonAdmin } from "@/lib/use-redirect-non-admin";
-import { ADMIN_ALUMNI_DIRECTORY_HREF, ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
+import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
   return (
     <AlumniProfileState
-      variant="alumn"
       directoryBase={ALUMNI_DIRECTORY_HREF}
       profile={data?.status === 200 ? data.data : undefined}
       isPending={isPending}
@@ -32,26 +24,8 @@ export function AlumniProfileContent({ id }: { id: string }) {
   );
 }
 
-export function AdminAlumniProfileContent({ id }: { id: string }) {
-  useRedirectNonAdmin(true);
-  const { data, isPending, error, isFetching, refetch } = useGetAlumniProfileForAdmin(id);
-  return (
-    <AlumniProfileState
-      variant="admin"
-      directoryBase={ADMIN_ALUMNI_DIRECTORY_HREF}
-      profile={data?.status === 200 ? data.data : undefined}
-      isPending={isPending}
-      isFetching={isFetching}
-      error={error}
-      refetch={refetch}
-    />
-  );
-}
-
-type AlumniProfileStateProps = (
-  | { variant: "alumn"; profile: AlumniProfileResponse | undefined }
-  | { variant: "admin"; profile: AdminAlumniProfileResponse | undefined }
-) & {
+type AlumniProfileStateProps = {
+  profile: AlumniProfileResponse | undefined;
   directoryBase: string;
   isPending: boolean;
   isFetching: boolean;
@@ -59,8 +33,7 @@ type AlumniProfileStateProps = (
   refetch: () => unknown;
 };
 
-function AlumniProfileState({
-  variant,
+export function AlumniProfileState({
   directoryBase,
   profile,
   isPending,
@@ -110,7 +83,7 @@ function AlumniProfileState({
     );
   }
 
-  return <ProfileView variant={variant} profile={profile} directoryHref={directoryHref} />;
+  return <ProfileView variant="alumn" profile={profile} directoryHref={directoryHref} />;
 }
 
 function AlumniProfileSkeleton() {

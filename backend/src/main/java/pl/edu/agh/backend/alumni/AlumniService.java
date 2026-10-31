@@ -57,7 +57,7 @@ public class AlumniService {
                 .map(AlumniListItemResponse::from);
     }
 
-    /** Like {@link #search}, but includes alumni who hide their name and lets the query match it. */
+    /** Like {@link #search}, but also finds alumni who hide their name. */
     public Page<AdminAlumniListItemResponse> searchForAdmin(
             String query,
             Set<UUID> tagIds,
@@ -77,12 +77,9 @@ public class AlumniService {
         return AdminAlumniProfileResponse.from(findAlumnus(id), educationOf(id));
     }
 
-    // The returned page must be mapped by the caller while this transaction is still open: the DTOs read
-    // user.getTags(), a LAZY collection. It is intentionally *not* eagerly fetched in the query below (e.g. via
-    // @EntityGraph) — combining a collection fetch join with Pageable would make Hibernate paginate in memory
-    // instead of in SQL (HHH000104: firstResult/maxResults with collection fetch). Instead, User.tags' existing
-    // @BatchSize(30) batches these per-user lazy loads for the whole page into one (or a couple of) extra
-    // queries, so this stays free of both the N+1 and the in-memory pagination problems.
+    // Map the page inside this transaction: the DTOs read user.getTags(), which is lazy.
+    // Tags are not fetched in this query, because a fetch join with paging makes Hibernate page in memory.
+    // @BatchSize on User.tags loads the tags for the whole page in one extra query instead.
     private Page<User> findAlumni(
             String query,
             Set<UUID> tagIds,

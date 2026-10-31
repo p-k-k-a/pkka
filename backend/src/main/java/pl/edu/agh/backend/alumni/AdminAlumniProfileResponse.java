@@ -9,12 +9,8 @@ import java.util.UUID;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserTagResponse;
-import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
 
-/**
- * The admin counterpart of {@link AlumniProfileResponse}: name, email and Discord are always filled in, and
- * {@code visibility} says which of them the alumnus hides from other alumni.
- */
+/** Admin version of {@link AlumniProfileResponse}. Hidden name, email and Discord are filled in. */
 @Schema(description = "Alumni profile for admins; fields the alumnus hides from other alumni are still filled in")
 public record AdminAlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
@@ -41,10 +37,7 @@ public record AdminAlumniProfileResponse(
         LocalDate alumnSince,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
-        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
-
-        @Schema(requiredMode = RequiredMode.REQUIRED, description = "What the alumnus shows to other alumni")
-        ProfileVisibility visibility) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags) {
 
     public static AdminAlumniProfileResponse from(User user, AlumnEducation education) {
         return new AdminAlumniProfileResponse(
@@ -65,7 +58,6 @@ public record AdminAlumniProfileResponse(
                 user.getTags().stream()
                         .map(UserTagResponse::from)
                         .sorted(Comparator.comparing(UserTagResponse::name))
-                        .toList(),
-                new ProfileVisibility(user.isShowName(), user.isShowEmail(), user.isShowDiscord()));
+                        .toList());
     }
 }

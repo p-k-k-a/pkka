@@ -1,4 +1,4 @@
-import { AdminAlumniProfileContent } from "@/components/alumni/alumni-profile-content";
+import { AdminAlumniProfile } from "@/components/admin/admin-alumni-profile";
 
 type DashboardAdminAlumnPageProps = {
   params: Promise<{ id: string }>;
@@ -6,5 +6,5 @@ type DashboardAdminAlumnPageProps = {
 
 export default async function DashboardAdminAlumnPage({ params }: DashboardAdminAlumnPageProps) {
   const { id } = await params;
-  return <AdminAlumniProfileContent id={id} />;
+  return <AdminAlumniProfile id={id} />;
 }

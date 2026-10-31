@@ -1,21 +1,19 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, EyeOff, GraduationCap, Tags } from "lucide-react";
-import type { AdminAlumniListItemResponse, AlumniListItemResponse } from "@pkka/api";
+import { ArrowRight, Briefcase, GraduationCap, Tags } from "lucide-react";
+import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 
 const VISIBLE_TAGS = 3;
 
 type AlumniCardProps = {
-  alumn: AlumniListItemResponse | AdminAlumniListItemResponse;
-  /** The directory the card belongs to; the profile lives under it. */
+  alumn: AlumniListItemResponse;
   directoryHref: string;
   /** The directory's current `?…`, carried to the profile so its back link can return to it. */
   search?: string;
 };
 
 export function AlumniCard({ alumn, directoryHref, search = "" }: AlumniCardProps) {
-  const nameHidden = "visibility" in alumn && !alumn.visibility.name;
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
   const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" @ ");
   const tags = alumn.tags.map((tag) => tag.name);
@@ -33,12 +31,6 @@ export function AlumniCard({ alumn, directoryHref, search = "" }: AlumniCardProp
           <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
             {alumn.graduationYear ? `Rocznik ${alumn.graduationYear}` : "Alumn"}
           </span>
-          {nameHidden ? (
-            <span className="bg-background text-muted-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-              <EyeOff className="size-3.5" aria-hidden="true" />
-              Imię ukryte
-            </span>
-          ) : null}
           {alumn.willingToMentor ? (
             <span className="bg-primary text-primary-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
               <GraduationCap className="size-3.5" aria-hidden="true" />
