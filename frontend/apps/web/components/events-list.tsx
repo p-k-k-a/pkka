@@ -80,13 +80,11 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
   return (
     <div className="flex min-h-full flex-col">
       <section
-        className={`${variant === "dashboard" ? "bg-background" : "bg-muted"} px-4 py-10 md:px-10 md:py-20`}
+        className={`${variant === "dashboard" ? "bg-background" : "bg-muted"} px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8`}
       >
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
-            {archive
-              ? "Wydarzenia, które już się odbyły"
-              : "Nie przegap tego, co dzieje się w Klubie"}
+          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+            {archive ? "Archiwum wydarzeń" : "Wydarzenia"}
           </h1>
           {archive ? (
             <Button asChild variant="link" size="lg" className="text-accent h-auto px-0 underline">
@@ -97,14 +95,16 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
             </Button>
           ) : (
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-              Znajdziesz tutaj informacje o nadchodzących spotkaniach, szkoleniach, turniejach i
-              innych aktywnościach, a także formularze zapisów na najbliższe wydarzenia.
+              Spotkania, szkolenia i warsztaty Klubu. Zapisz się na najbliższe.
             </p>
           )}
         </div>
       </section>
 
-      <section id="kalendarz" className="bg-background flex-1 px-4 py-10 md:px-10 md:py-20">
+      <section
+        id="kalendarz"
+        className={`bg-background flex-1 px-4 md:px-10 ${variant === "dashboard" ? "pb-10 md:pb-20" : "py-10 md:py-20"}`}
+      >
         <div className="mx-auto max-w-[1280px] space-y-8">
           {isVerified ? (
             <AudienceChips
