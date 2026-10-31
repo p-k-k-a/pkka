@@ -80,14 +80,15 @@ export default function EventsScreen() {
   const [filters, setFilters] = useState<EventFilters>(EMPTY_EVENT_FILTERS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const isAlumni = useIsAlumni();
-  const { timeframe } = filters;
+  const appliedFilters = { ...filters, alumniOnly: isAlumni && filters.alumniOnly };
+  const { timeframe } = appliedFilters;
   const archive = timeframe === EventTimeframe.PAST;
   const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useListEventsInfinite(
       {
         size: PAGE_SIZE,
         timeframe,
-        ...(isAlumni && filters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
+        ...(appliedFilters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
         ...(archive ? { sort: ["startsAt,desc"] } : {}),
       },
       { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
@@ -111,7 +112,7 @@ export default function EventsScreen() {
         ItemSeparatorComponent={() => <View className="h-6" />}
         ListHeaderComponent={
           <ListHeader
-            activeFilterCount={countActiveEventFilters(filters)}
+            activeFilterCount={countActiveEventFilters(appliedFilters)}
             onOpenFilters={() => setFiltersOpen(true)}
           />
         }
@@ -136,7 +137,7 @@ export default function EventsScreen() {
       />
       <EventFilterSheet
         visible={filtersOpen}
-        value={filters}
+        value={appliedFilters}
         showAudience={isAlumni}
         onClose={() => setFiltersOpen(false)}
         onApply={(next) => {
