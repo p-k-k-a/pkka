@@ -16,6 +16,13 @@ export const EMPTY_EVENT_FILTERS: EventFilters = {
   alumniOnly: false,
 };
 
+export function countActiveEventFilters(filters: EventFilters) {
+  return (
+    Number(filters.timeframe !== EMPTY_EVENT_FILTERS.timeframe) +
+    Number(filters.alumniOnly !== EMPTY_EVENT_FILTERS.alumniOnly)
+  );
+}
+
 const TIMEFRAME_OPTIONS = [
   {
     value: EventTimeframe.UPCOMING,
@@ -116,14 +123,9 @@ export function EventFilterSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <View className="flex-row items-center justify-between">
-        <Text variant="h3" className="text-2xl font-bold">
-          Filtry
-        </Text>
-        <Pressable onPress={() => setDraft(EMPTY_EVENT_FILTERS)} hitSlop={8}>
-          <Text className="text-accent text-sm font-semibold">Wyczyść</Text>
-        </Pressable>
-      </View>
+      <Text variant="h3" className="text-2xl font-bold">
+        Filtry
+      </Text>
 
       <View className="mt-6 gap-6">
         <RadioSection

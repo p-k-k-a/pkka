@@ -1,6 +1,7 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { EventCard } from "@/components/events/event-card";
 import {
+  countActiveEventFilters,
   EMPTY_EVENT_FILTERS,
   EventFilterSheet,
   type EventFilters,
@@ -32,7 +33,7 @@ const DESCRIPTION =
 const ALUMNI_DESCRIPTION =
   "Przeglądaj spotkania i prelekcje społeczności Alumni WI AGH, także te tylko dla absolwentów.";
 
-function FilterButton({ onPress }: { onPress: () => void }) {
+function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: () => void }) {
   const theme = useThemeColors();
 
   return (
@@ -41,11 +42,22 @@ function FilterButton({ onPress }: { onPress: () => void }) {
       <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
         Filtruj
       </Text>
+      {activeCount > 0 ? (
+        <View className="bg-primary ml-1 size-5 items-center justify-center rounded-full">
+          <Text className="text-primary-foreground text-[11px] font-bold">{activeCount}</Text>
+        </View>
+      ) : null}
     </Button>
   );
 }
 
-function ListHeader({ onOpenFilters }: { onOpenFilters: () => void }) {
+function ListHeader({
+  activeFilterCount,
+  onOpenFilters,
+}: {
+  activeFilterCount: number;
+  onOpenFilters: () => void;
+}) {
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
 
@@ -58,7 +70,7 @@ function ListHeader({ onOpenFilters }: { onOpenFilters: () => void }) {
         </View>
       )}
       <View className="px-5">
-        <FilterButton onPress={onOpenFilters} />
+        <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
       </View>
     </View>
   );
@@ -97,7 +109,12 @@ export default function EventsScreen() {
           </View>
         )}
         ItemSeparatorComponent={() => <View className="h-6" />}
-        ListHeaderComponent={<ListHeader onOpenFilters={() => setFiltersOpen(true)} />}
+        ListHeaderComponent={
+          <ListHeader
+            activeFilterCount={countActiveEventFilters(filters)}
+            onOpenFilters={() => setFiltersOpen(true)}
+          />
+        }
         ListHeaderComponentStyle={{ marginBottom: 24 }}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
