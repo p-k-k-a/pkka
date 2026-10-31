@@ -77,6 +77,10 @@ public class User {
     @Column(name = "github_url", length = 500)
     private String githubUrl;
 
+    /** Object key in the private bucket; never a URL. See {@code StorageService}. */
+    @Column(name = "avatar_key")
+    private String avatarKey;
+
     @Column(name = "willing_to_mentor", nullable = false)
     private boolean willingToMentor = false;
 

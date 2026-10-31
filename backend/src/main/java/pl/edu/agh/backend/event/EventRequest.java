@@ -45,7 +45,15 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Audience audience,
 
-        @Size(max = 500) String coverImageUrl,
+        // Wide enough for the signed download URL an edit form echoes back; what is stored is capped at 500.
+        @Size(max = 2000)
+        @Schema(
+                description = "External http(s) URL, or the `objectKey` of a file uploaded through "
+                        + "`POST /api/admin/files/presign`; an uploaded file's signed URL is accepted too")
+        @Pattern(
+                regexp = "(?i)^(https?://|covers/events/).+$",
+                message = "coverImageUrl must be an http(s) URL or the objectKey of an uploaded cover")
+        String coverImageUrl,
 
         @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
         @Min(1)

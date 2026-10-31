@@ -21,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -35,6 +36,9 @@ class EventServiceTest {
 
     @Mock
     private EventRegistrationService eventRegistrationService;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private EventService eventService;
@@ -106,11 +110,36 @@ class EventServiceTest {
         assertThat(meetingLinkSeenWith(Optional.empty())).isNull();
     }
 
-    private String meetingLinkSeenWith(Optional<EventRegistrationStatus> ownStatus) {
+    @Test
+    void getDetailsServesAStoredCoverKeyAsASignedUrl() {
         UUID id = UUID.randomUUID();
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("networking-cover")
+                .title("Networking")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .audience(Audience.PUBLIC)
+                .coverImageUrl("covers/events/a.png")
+                .build();
+        when(eventLookup.findVisibleBySlug("networking-cover", caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
+        when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(Optional.empty());
+        when(storageService.resolveUrl("covers/events/a.png")).thenReturn("https://r2.example/signed");
+
+        assertThat(eventService.getDetails("networking-cover", caller).coverImageUrl())
+                .isEqualTo("https://r2.example/signed");
+    }
+
+    private String meetingLinkSeenWith(Optional<EventRegistrationStatus> ownStatus) {
+        String slug = "webinar";
+        UUID id = UUID.randomUUID();
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
+                .id(id)
+                .slug(slug)
                 .title("Webinar")
                 .type(EventType.ONLINE)
                 .startsAt(Instant.now().plusSeconds(3600))
@@ -118,9 +147,10 @@ class EventServiceTest {
                 .transmissionUrl(MEETING_URL)
                 .audience(Audience.PUBLIC)
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug(slug, caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
         when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
 
-        return eventService.getDetails(id, caller).transmissionUrl();
+        return eventService.getDetails(slug, caller).transmissionUrl();
     }
 }

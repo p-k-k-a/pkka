@@ -19,7 +19,20 @@ repositories {
 	mavenCentral()
 }
 
+dependencyManagement {
+	imports {
+		mavenBom 'software.amazon.awssdk:bom:2.56.0'
+	}
+}
+
 dependencies {
+	// Cloudflare R2 speaks the S3 API. Only S3Presigner is used (signing is local, no HTTP calls),
+	// so the HTTP client implementations the s3 module drags in are excluded.
+	implementation('software.amazon.awssdk:s3') {
+		exclude group: 'software.amazon.awssdk', module: 'apache5-client'
+		exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+	}
+
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
