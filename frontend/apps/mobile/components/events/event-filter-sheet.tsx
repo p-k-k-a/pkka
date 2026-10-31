@@ -77,16 +77,16 @@ function RadioSection<T>({
             onPress={() => onChange(option.value)}
             className={cn(
               "flex-row items-center gap-3 rounded-lg border px-4 py-3",
-              selected ? "border-accent bg-accent/10" : "border-border",
+              selected ? "border-primary bg-primary/15" : "border-border",
             )}
           >
             <View
               className={cn(
                 "size-5 items-center justify-center rounded-full border-2",
-                selected ? "border-accent" : "border-muted-foreground/40",
+                selected ? "border-primary" : "border-muted-foreground/40",
               )}
             >
-              {selected ? <View className="bg-accent size-2.5 rounded-full" /> : null}
+              {selected ? <View className="bg-primary size-2.5 rounded-full" /> : null}
             </View>
             <View className="flex-1 gap-0.5">
               <Text className="text-foreground text-base font-semibold">{option.label}</Text>
