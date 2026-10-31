@@ -78,7 +78,7 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
   const currentPage = pageData?.number ?? page;
 
   return (
-    <div>
+    <div className="flex min-h-full flex-col">
       <section
         className={`${variant === "dashboard" ? "bg-background" : "bg-muted"} px-4 py-10 md:px-10 md:py-20`}
       >
@@ -107,7 +107,7 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
         </div>
       </section>
 
-      <section id="kalendarz" className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <section id="kalendarz" className="bg-background flex-1 px-4 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[1280px] space-y-8">
           {isVerified ? (
             <AudienceChips
