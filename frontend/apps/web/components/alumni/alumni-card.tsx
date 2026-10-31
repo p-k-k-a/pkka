@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, GraduationCap, Tags } from "lucide-react";
+import { Briefcase, GraduationCap, Tags } from "lucide-react";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { CardLinkFooter } from "@/components/content/card-link-footer";
 import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 const VISIBLE_TAGS = 3;
@@ -63,12 +64,7 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
           </ul>
         ) : null}
 
-        <div className="mt-auto flex justify-end pt-2">
-          <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
-            Zobacz profil
-            <ArrowRight className="size-3.5" aria-hidden="true" />
-          </span>
-        </div>
+        <CardLinkFooter>Zobacz profil</CardLinkFooter>
       </Card>
     </Link>
   );

@@ -56,8 +56,8 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
           {archive ? (
             <Button asChild variant="link" size="lg" className="text-accent h-auto px-0 underline">
               <Link href={eventsListHref(variant)}>
+                <ArrowLeft data-icon="inline-start" />
                 Wróć do nadchodzących wydarzeń
-                <ArrowRight data-icon="inline-end" />
               </Link>
             </Button>
           ) : (

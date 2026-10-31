@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  CalendarPlus,
-  CircleCheck,
-  Download,
-  Hourglass,
-} from "lucide-react";
+import { ArrowUpRight, CalendarPlus, CircleCheck, Download, Hourglass } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -146,9 +139,8 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   if (!isAuthenticated) {
     return (
-      <Button size="xl" className="gap-2" onClick={loginWithKeycloak}>
+      <Button size="xl" onClick={loginWithKeycloak}>
         Zapisz się
-        <ArrowRight data-icon="inline-end" />
       </Button>
     );
   }
@@ -248,9 +240,8 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const hint = seatsHint(event);
   return (
     <div className="space-y-2">
-      <Button size="xl" className="gap-2" disabled={pending} onClick={() => void onJoin()}>
+      <Button size="xl" disabled={pending} onClick={() => void onJoin()}>
         {pending ? "Zapisywanie…" : full ? "Zapisz się na listę rezerwową" : "Zapisz się"}
-        {pending ? null : <ArrowRight data-icon="inline-end" />}
       </Button>
       {hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null}
     </div>

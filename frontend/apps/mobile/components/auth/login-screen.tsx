@@ -3,7 +3,6 @@ import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
-import { ArrowRight } from "lucide-react-native";
 import * as WebBrowser from "expo-web-browser";
 import { View } from "react-native";
 
@@ -56,7 +55,6 @@ export function LoginScreen() {
 
         <Button size="lg" className="w-full" onPress={() => loginWith(KEYCLOAK_URL)}>
           <Text className="text-base font-semibold">Zaloguj się przez SSO</Text>
-          <ArrowRight size={18} color={theme.primaryForeground} />
         </Button>
 
         <View className="my-5 flex-row items-center gap-3">

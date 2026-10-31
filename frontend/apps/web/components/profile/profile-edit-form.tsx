@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
@@ -213,9 +213,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               Edytuj profil
             </h1>
           </div>
-          <Button type="submit" size="xl" className="gap-2" disabled={isSaving || !isDirty}>
+          <Button type="submit" size="xl" disabled={isSaving || !isDirty}>
             {isSaving ? "Zapisywanie…" : "Zapisz zmiany"}
-            {isSaving ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
 
@@ -496,7 +495,10 @@ export function ProfileEditForm() {
           <AlertDescription>Wróć do profilu i spróbuj ponownie.</AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="mt-4">
-          <Link href={PROFILE_HREF}>Wróć do profilu</Link>
+          <Link href={PROFILE_HREF}>
+            <ArrowLeft data-icon="inline-start" />
+            Wróć do profilu
+          </Link>
         </Button>
       </div>
     );

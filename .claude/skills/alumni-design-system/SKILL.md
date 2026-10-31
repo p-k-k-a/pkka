@@ -124,7 +124,7 @@ Tailwind background color, not floating cards on one page background.
 Canonical order seen across the real mockups:
 
 1. **Navbar** — `bg-muted` (surface-blue)
-2. **Hero** — `bg-muted`, big Jost heading + one amber CTA (arrow trailing)
+2. **Hero** — `bg-muted`, big Jost heading + one amber CTA
 3. **Intro** ("Czym jest Klub Alumnów") — `bg-muted`, text + media/CTA
 4. **Highlight** — **`bg-primary`** (amber) band, used once
 5. **Speakers / prelegenci** — `bg-muted`, two-column card + pagination dots
@@ -148,7 +148,14 @@ Rules:
 - **Secondary** (cream) = lower emphasis; **link/underline variant** =
   tertiary/inline action.
 - Sizes: `md` 46px hero/section CTAs · `sm` 34px cards/nav · `xs` 30px chips.
-- Every CTA carries a trailing → arrow unless it reads oddly as one.
+- Arrows mean direction, not emphasis. Use the Lucide icons only (never a `→`
+  text glyph): `ArrowRight` (`data-icon="inline-end"`) for "Następna" and for the
+  "Czytaj dalej" / "Zobacz profil" footer of a card that is itself a link (use
+  `CardLinkFooter`); `ArrowLeft` (`data-icon="inline-start"`) on every "Wróć" link
+  and "Poprzednia"; `ArrowUpRight` for links that leave the app.
+- No arrow on buttons that do something (submit, save, publish, sign up, log in,
+  reapply) or on ordinary nav/CTA buttons. At most one decorative → per page, on
+  the hero's primary CTA.
 - Tags/chips: light-blue for categories, amber for "featured", dark-blue on
   light bands, radius `5px` (never round up to 8/10).
 
