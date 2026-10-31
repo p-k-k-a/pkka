@@ -14,7 +14,7 @@ export function OccupancyLabel({
   if (registered > seatLimit) {
     return (
       <span className="text-destructive font-semibold tabular-nums">
-        {percent}%<span className="sr-only"> — ponad limit miejsc</span>
+        {percent}%<span className="sr-only">, ponad limit miejsc</span>
       </span>
     );
   }

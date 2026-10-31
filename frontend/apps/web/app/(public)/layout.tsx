@@ -42,7 +42,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               PKKA
             </p>
             <p className="text-band-foreground/80 max-w-md text-sm leading-relaxed md:text-base">
-              Klub Alumnów Wydziału Informatyki AGH — społeczność absolwentów, mentoring i
+              Klub Alumnów Wydziału Informatyki AGH. Społeczność absolwentów, mentoring i
               networking.
             </p>
           </div>

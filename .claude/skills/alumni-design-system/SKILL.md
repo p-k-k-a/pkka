@@ -159,6 +159,13 @@ Rules:
 - Tags/chips: light-blue for categories, amber for "featured", dark-blue on
   light bands, radius `5px` (never round up to 8/10).
 
+## Copy
+
+- No em-dash pauses (` — `) in UI text, `aria-label`s or `sr-only` text. They read as
+  machine-written. Split into two sentences, or use a comma or a colon.
+- Ranges use an unspaced en dash: `1990–2010`.
+- A lone `—` is fine as the placeholder for an empty value.
+
 ## Unifying existing screens
 
 When re-skinning a screen that predates this token system:

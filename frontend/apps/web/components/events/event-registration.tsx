@@ -41,7 +41,7 @@ import { buildEventIcs, downloadIcs } from "@/lib/ics";
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
   if (!seats) return null;
-  if (seats.remaining <= 0) return "Brak wolnych miejsc — trafisz na listę rezerwową.";
+  if (seats.remaining <= 0) return "Brak wolnych miejsc, więc trafisz na listę rezerwową.";
   return `Wolne miejsca: ${seats.remaining} z ${seats.limit}.`;
 }
 
