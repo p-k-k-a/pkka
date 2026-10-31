@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarX, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Audience, EventTimeframe, useListEvents } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,17 +127,9 @@ export function EventsList({ variant = "public", archive = false }: EventsListPr
           ) : isError ? (
             <p className="text-destructive font-medium">Nie udało się załadować wydarzeń.</p>
           ) : events.length === 0 ? (
-            <div className="bg-muted flex flex-col items-center gap-3 rounded-lg px-6 py-16 text-center">
-              <CalendarX className="text-muted-foreground size-10" strokeWidth={1.5} />
-              <p className="font-heading text-foreground text-xl font-semibold">
-                {archive ? "Archiwum jest puste" : "Na razie nic nie zaplanowaliśmy"}
-              </p>
-              <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-                {archive
-                  ? "Zakończone wydarzenia pojawią się tutaj."
-                  : "Nowe wydarzenia pojawią się tutaj. Zajrzyj wkrótce."}
-              </p>
-            </div>
+            <p className="text-muted-foreground">
+              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
+            </p>
           ) : (
             <div className="space-y-8">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
