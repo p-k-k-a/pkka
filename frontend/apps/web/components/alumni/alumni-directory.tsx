@@ -112,9 +112,6 @@ export function AlumniDirectoryView({
       <section className="bg-background px-4 py-10 md:px-10 md:py-20">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-8">
           <div className="space-y-6">
-            <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-              Katalog alumnów
-            </p>
             <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
               Znajdź absolwentów WI AGH
             </h1>
