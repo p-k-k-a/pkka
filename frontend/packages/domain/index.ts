@@ -3,7 +3,6 @@ export * from "./application/rules";
 export * from "./events/calendar";
 export * from "./events/registration";
 export * from "./format/datetime";
-export * from "./format/hash";
 export * from "./format/plural";
 export * from "./labels/application";
 export * from "./labels/events";

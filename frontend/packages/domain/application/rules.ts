@@ -41,7 +41,6 @@ export const INTEREST_AREAS = [
   "Relacje i wspólnota",
 ] as const;
 
-// AGH is the data controller for the club; its information clause is linked from the consent
-// step instead of a privacy notice of our own.
-export const AGH_PRIVACY_NOTICE_URL =
-  "https://bezpieczenstwo.agh.edu.pl/ochrona-danych-osobowych/klub-absolwentow-agh";
+// Linked from the consent step. Placeholders until the real documents are published.
+export const TERMS_URL = "https://example.com/regulamin";
+export const PRIVACY_URL = "https://example.com/polityka-prywatnosci";

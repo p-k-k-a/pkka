@@ -29,8 +29,8 @@ const MEETING_PREFERENCE_LABELS: Record<MeetingPreference, string> = {
 };
 
 const CONSENT_LABELS: Record<ConsentType, string> = {
-  REGULATIONS_PRIVACY: "Zapoznanie z informacją o przetwarzaniu danych osobowych przez AGH",
-  GDPR_DATA_PROCESSING: "Zgoda na przetwarzanie danych osobowych przez AGH",
+  REGULATIONS_PRIVACY: "Akceptuję regulamin oraz politykę prywatności",
+  GDPR_DATA_PROCESSING: "Wyrażam zgodę na przetwarzanie moich danych osobowych (RODO)",
 };
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
