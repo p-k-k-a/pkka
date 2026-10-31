@@ -3,41 +3,75 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
-import { ApiError, useGetAlumniProfile } from "@pkka/api";
+import {
+  ApiError,
+  type AlumniProfileResponse,
+  useGetAlumniProfile,
+  useGetAlumniProfileForAdmin,
+} from "@pkka/api";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
-
-function AlumniProfileSkeleton() {
-  return (
-    <div className="px-4 py-10 md:px-10 md:py-20">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-6">
-          <Skeleton className="h-6 w-32 rounded-lg" />
-          <div className="flex items-center gap-6">
-            <Skeleton className="size-24 rounded-full" />
-            <Skeleton className="h-12 w-full max-w-md rounded-lg" />
-          </div>
-          <Skeleton className="h-12 w-40 rounded-lg" />
-          <Skeleton className="h-24 w-full rounded-lg" />
-        </div>
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    </div>
-  );
-}
+import { useRedirectNonAdmin } from "@/lib/use-redirect-non-admin";
+import { ADMIN_ALUMNI_DIRECTORY_HREF, ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
+  return (
+    <AlumniProfileState
+      variant="alumn"
+      directoryBase={ALUMNI_DIRECTORY_HREF}
+      profile={data?.status === 200 ? data.data : undefined}
+      isPending={isPending}
+      isFetching={isFetching}
+      error={error}
+      refetch={refetch}
+    />
+  );
+}
+
+export function AdminAlumniProfileContent({ id }: { id: string }) {
+  useRedirectNonAdmin(true);
+  const { data, isPending, error, isFetching, refetch } = useGetAlumniProfileForAdmin(id);
+  return (
+    <AlumniProfileState
+      variant="admin"
+      directoryBase={ADMIN_ALUMNI_DIRECTORY_HREF}
+      profile={data?.status === 200 ? data.data : undefined}
+      isPending={isPending}
+      isFetching={isFetching}
+      error={error}
+      refetch={refetch}
+    />
+  );
+}
+
+type AlumniProfileStateProps = {
+  variant: "alumn" | "admin";
+  directoryBase: string;
+  profile: AlumniProfileResponse | undefined;
+  isPending: boolean;
+  isFetching: boolean;
+  error: unknown;
+  refetch: () => unknown;
+};
+
+function AlumniProfileState({
+  variant,
+  directoryBase,
+  profile,
+  isPending,
+  isFetching,
+  error,
+  refetch,
+}: AlumniProfileStateProps) {
   // The card passes the directory's criteria along, so going back restores them.
   const searchParams = useSearchParams().toString();
-  const directoryHref = `${ALUMNI_DIRECTORY_HREF}${searchParams ? `?${searchParams}` : ""}`;
+  const directoryHref = `${directoryBase}${searchParams ? `?${searchParams}` : ""}`;
 
   if (isPending) return <AlumniProfileSkeleton />;
 
-  const profile = data?.status === 200 ? data.data : undefined;
   if (!profile) {
     // Every non-2xx throws out of the mutator, so a missing alumn arrives as an ApiError.
     const notFound = error instanceof ApiError && error.status === 404;
@@ -74,5 +108,24 @@ export function AlumniProfileContent({ id }: { id: string }) {
     );
   }
 
-  return <ProfileView variant="alumn" profile={profile} directoryHref={directoryHref} />;
+  return <ProfileView variant={variant} profile={profile} directoryHref={directoryHref} />;
+}
+
+function AlumniProfileSkeleton() {
+  return (
+    <div className="px-4 py-10 md:px-10 md:py-20">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-6">
+          <Skeleton className="h-6 w-32 rounded-lg" />
+          <div className="flex items-center gap-6">
+            <Skeleton className="size-24 rounded-full" />
+            <Skeleton className="h-12 w-full max-w-md rounded-lg" />
+          </div>
+          <Skeleton className="h-12 w-40 rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    </div>
+  );
 }

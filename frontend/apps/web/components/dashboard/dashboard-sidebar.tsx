@@ -62,10 +62,10 @@ const adminItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/admin/events"),
   },
   {
-    href: "/dashboard/alumni",
+    href: "/dashboard/admin/alumni",
     label: "Alumni",
     icon: Users,
-    match: (pathname) => pathname.startsWith("/dashboard/alumni"),
+    match: (pathname) => pathname.startsWith("/dashboard/admin/alumni"),
   },
 ];
 

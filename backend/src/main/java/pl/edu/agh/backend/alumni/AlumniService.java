@@ -52,39 +52,69 @@ public class AlumniService {
             Boolean mentor,
             Integer graduationYearFrom,
             Integer graduationYearTo,
-            boolean showHiddenFields,
+            Pageable pageable) {
+        return findAlumni(query, tagIds, mentor, graduationYearFrom, graduationYearTo, false, pageable)
+                .map(AlumniListItemResponse::from);
+    }
+
+    /** Like {@link #search}, but includes alumni who hide their name and lets the query match it. */
+    public Page<AdminAlumniListItemResponse> searchForAdmin(
+            String query,
+            Set<UUID> tagIds,
+            Boolean mentor,
+            Integer graduationYearFrom,
+            Integer graduationYearTo,
+            Pageable pageable) {
+        return findAlumni(query, tagIds, mentor, graduationYearFrom, graduationYearTo, true, pageable)
+                .map(AdminAlumniListItemResponse::from);
+    }
+
+    public AlumniProfileResponse getProfile(UUID id) {
+        return AlumniProfileResponse.forAlumni(findAlumnus(id), educationOf(id));
+    }
+
+    public AlumniProfileResponse getProfileForAdmin(UUID id) {
+        return AlumniProfileResponse.forAdmin(findAlumnus(id), educationOf(id));
+    }
+
+    // The returned page must be mapped by the caller while this transaction is still open: the DTOs read
+    // user.getTags(), a LAZY collection. It is intentionally *not* eagerly fetched in the query below (e.g. via
+    // @EntityGraph) — combining a collection fetch join with Pageable would make Hibernate paginate in memory
+    // instead of in SQL (HHH000104: firstResult/maxResults with collection fetch). Instead, User.tags' existing
+    // @BatchSize(30) batches these per-user lazy loads for the whole page into one (or a couple of) extra
+    // queries, so this stays free of both the N+1 and the in-memory pagination problems.
+    private Page<User> findAlumni(
+            String query,
+            Set<UUID> tagIds,
+            Boolean mentor,
+            Integer graduationYearFrom,
+            Integer graduationYearTo,
+            boolean includeHiddenNames,
             Pageable pageable) {
         Specification<User> spec = Specification.allOf(
-                UserSpecifications.matchesQuery(query, showHiddenFields),
+                UserSpecifications.matchesQuery(query, includeHiddenNames),
                 UserSpecifications.hasAnyTagId(tagIds),
                 UserSpecifications.isMentor(mentor),
                 UserSpecifications.graduationYearBetween(graduationYearFrom, graduationYearTo),
                 // The directory only ever shows genuine (approved) alumni, never every row of `users`
                 // (which also covers pending/rejected applicants and staff who merely logged in once).
                 AlumniSpecifications.isApprovedAlumnus(),
-                AlumniSpecifications.hasVisibleName(showHiddenFields));
-
-        Page<User> page = userRepository.findAll(spec, sanitizePageable(pageable));
-
-        // Mapped here, while the transaction (and Hibernate session) is still open: `from()` reads
-        // user.getTags(), a LAZY collection. It is intentionally *not* eagerly fetched in the query above
-        // (e.g. via @EntityGraph) — combining a collection fetch join with Pageable would make Hibernate
-        // paginate in memory instead of in SQL (HHH000104: firstResult/maxResults with collection fetch).
-        // Instead, User.tags' existing @BatchSize(30) batches these per-user lazy loads for the whole page
-        // into one (or a couple of) extra queries, so this stays free of both the N+1 and the in-memory
-        // pagination problems.
-        return page.map(user -> AlumniListItemResponse.from(user, showHiddenFields));
+                AlumniSpecifications.hasVisibleName(includeHiddenNames));
+        return userRepository.findAll(spec, sanitizePageable(pageable));
     }
 
-    public AlumniProfileResponse getProfile(UUID id, boolean showHiddenFields) {
-        User user = userRepository.findWithTagsById(id).orElseThrow(() -> new AlumniNotFoundException(id));
+    private User findAlumnus(UUID id) {
+        return userRepository.findWithTagsById(id).orElseThrow(() -> new AlumniNotFoundException(id));
+    }
+
+    private AlumnEducation educationOf(UUID id) {
         Application approvedApplication = applicationRepository
                 .findFirstByApplicantIdAndStatusOrderByReviewedAtDesc(id, ApplicationStatus.APPROVED)
                 // A user that never had an application approved is not a visible alumnus in this
                 // directory, same invariant as the list endpoint — treat it as "not found" rather than
                 // leaking a bare user row with empty education facts.
                 .orElseThrow(() -> new AlumniNotFoundException(id));
-        return AlumniProfileResponse.from(user, AlumnEducation.from(approvedApplication), showHiddenFields);
+        return AlumnEducation.from(approvedApplication);
     }
 
     private Pageable sanitizePageable(Pageable pageable) {

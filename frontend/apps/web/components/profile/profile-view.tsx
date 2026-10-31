@@ -25,13 +25,14 @@ import { getProfileContacts } from "@pkka/domain";
 const EDIT_HREF = "/dashboard/profile/edit";
 
 /**
- * The viewer's own profile (`/api/profiles/me`) and another alumn's public profile
- * (`/api/alumni/{id}`) carry the same fields, so one view renders both. The public
- * one already has whatever the owner hid nulled out by the backend.
+ * The viewer's own profile (`/api/profiles/me`), another alumn's public profile
+ * (`/api/alumni/{id}`) and the admin view of it (`/api/admin/alumni/{id}`) carry the
+ * same fields, so one view renders all three. The public one already has whatever the
+ * owner hid nulled out by the backend; the admin one has it filled in.
  */
 type ProfileViewProps =
   | { variant: "own"; profile: ProfileResponse }
-  | { variant: "alumn"; profile: AlumniProfileResponse; directoryHref: string };
+  | { variant: "alumn" | "admin"; profile: AlumniProfileResponse; directoryHref: string };
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
@@ -47,8 +48,12 @@ function EmptyHint({ children }: { children: React.ReactNode }) {
 export function ProfileView(props: ProfileViewProps) {
   const { profile } = props;
   const isOwn = props.variant === "own";
+  const isAdmin = props.variant === "admin";
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
-  const contacts = getProfileContacts(profile);
+  // getProfileContacts drops what the owner hides; the admin view is the one place that shows it.
+  const contacts = getProfileContacts(
+    isAdmin ? { ...profile, visibility: { name: true, email: true, discord: true } } : profile,
+  );
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
   const role = [profile.currentPosition, profile.company].filter(Boolean).join(" @ ");
   const nameHidden = !profile.visibility.name && fullName.length > 0;
@@ -95,7 +100,7 @@ export function ProfileView(props: ProfileViewProps) {
   return (
     <div className="bg-background px-4 py-10 md:px-10 md:py-20">
       <div className="mx-auto max-w-[1280px]">
-        {props.variant === "alumn" ? (
+        {props.variant !== "own" ? (
           <DetailBackLink href={props.directoryHref} label="Wróć do katalogu" />
         ) : null}
 

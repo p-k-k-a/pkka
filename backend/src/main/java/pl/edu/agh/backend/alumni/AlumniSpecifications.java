@@ -38,9 +38,9 @@ class AlumniSpecifications {
     /**
      * Restricts to alumni who show their name. An entry nobody can identify is not useful to browse, so
      * hiding the name opts out of the directory listing entirely rather than appearing as a nameless card.
-     * Admins ({@code showHiddenFields}) still see everyone.
+     * Admin queries ({@code includeHiddenNames}) still see everyone.
      */
-    Specification<User> hasVisibleName(boolean showHiddenFields) {
-        return (root, query, cb) -> showHiddenFields ? null : cb.isTrue(root.get("showName"));
+    Specification<User> hasVisibleName(boolean includeHiddenNames) {
+        return (root, query, cb) -> includeHiddenNames ? null : cb.isTrue(root.get("showName"));
     }
 }

@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { ArrowRight, Briefcase, EyeOff, GraduationCap, Tags } from "lucide-react";
-import type { AlumniListItemResponse } from "@pkka/api";
+import type { AdminAlumniListItemResponse, AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 const VISIBLE_TAGS = 3;
 
 type AlumniCardProps = {
-  alumn: AlumniListItemResponse;
+  alumn: AlumniListItemResponse | AdminAlumniListItemResponse;
+  /** The directory the card belongs to; the profile lives under it. */
+  directoryHref: string;
   /** The directory's current `?…`, carried to the profile so its back link can return to it. */
   search?: string;
 };
 
-export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
+export function AlumniCard({ alumn, directoryHref, search = "" }: AlumniCardProps) {
+  const nameHidden = "visibility" in alumn && !alumn.visibility.name;
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
   const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" @ ");
   const tags = alumn.tags.map((tag) => tag.name);
@@ -23,7 +25,7 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
 
   return (
     <Link
-      href={`${ALUMNI_DIRECTORY_HREF}/${alumn.id}${search}`}
+      href={`${directoryHref}/${alumn.id}${search}`}
       className="group focus-visible:ring-ring block h-full rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0">
@@ -31,12 +33,12 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
           <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
             {alumn.graduationYear ? `Rocznik ${alumn.graduationYear}` : "Alumn"}
           </span>
-          {alumn.visibility.name ? null : (
+          {nameHidden ? (
             <span className="bg-background text-muted-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
               <EyeOff className="size-3.5" aria-hidden="true" />
               Imię ukryte
             </span>
-          )}
+          ) : null}
           {alumn.willingToMentor ? (
             <span className="bg-primary text-primary-foreground inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
               <GraduationCap className="size-3.5" aria-hidden="true" />

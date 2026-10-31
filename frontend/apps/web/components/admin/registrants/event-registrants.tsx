@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ADMIN_ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 import { format, parseISO } from "date-fns";
 import { Download } from "lucide-react";
 import {
@@ -111,7 +112,7 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
                   <td className="px-6 py-3">
                     {registration.alumnusId ? (
                       <Link
-                        href={`/dashboard/alumni/${registration.alumnusId}`}
+                        href={`${ADMIN_ALUMNI_DIRECTORY_HREF}/${registration.alumnusId}`}
                         className="text-foreground font-semibold underline-offset-4 hover:underline"
                       >
                         {registration.displayName}

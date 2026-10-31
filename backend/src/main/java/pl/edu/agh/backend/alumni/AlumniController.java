@@ -20,15 +20,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import pl.edu.agh.backend.security.Caller;
-import pl.edu.agh.backend.security.Roles;
 
 @RestController
 @RequestMapping("/api/alumni")
 @RequiredArgsConstructor
-@Tag(
-        name = "Alumni",
-        description = "Alumni directory — requires VERIFIED_ALUMN or ADMIN role; admins also see fields alumni hide")
+@Tag(name = "Alumni", description = "Alumni directory — requires VERIFIED_ALUMN role")
 public class AlumniController {
 
     private final AlumniService alumniService;
@@ -62,10 +58,8 @@ public class AlumniController {
             @RequestParam(required = false) Integer graduationYearFrom,
             @RequestParam(required = false) Integer graduationYearTo,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
-                    Pageable pageable,
-            Caller caller) {
-        return alumniService.search(
-                q, tagIds, mentor, graduationYearFrom, graduationYearTo, caller.hasRole(Roles.ADMIN), pageable);
+                    Pageable pageable) {
+        return alumniService.search(q, tagIds, mentor, graduationYearFrom, graduationYearTo, pageable);
     }
 
     @GetMapping("/{id}")
@@ -78,7 +72,7 @@ public class AlumniController {
                         + "(no approved application)",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public AlumniProfileResponse getAlumniProfile(@PathVariable UUID id, Caller caller) {
-        return alumniService.getProfile(id, caller.hasRole(Roles.ADMIN));
+    public AlumniProfileResponse getAlumniProfile(@PathVariable UUID id) {
+        return alumniService.getProfile(id);
     }
 }

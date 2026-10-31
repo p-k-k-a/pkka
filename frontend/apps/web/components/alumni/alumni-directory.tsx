@@ -1,15 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, Search } from "lucide-react";
-import { useListAlumni } from "@pkka/api";
-import {
-  ALUMNI_SORT_OPTIONS,
-  buildAlumniParams,
-  type AlumniFilters,
-  type AlumniSortOption,
-} from "@pkka/domain";
 import { AlumniCard } from "@/components/alumni/alumni-card";
 import { AlumniFiltersPanel } from "@/components/alumni/alumni-filters";
 import { Button } from "@/components/ui/button";
@@ -17,10 +7,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseAlumniSearchParams, toAlumniSearchString } from "@/lib/alumni-search-params";
+import {
+  ADMIN_ALUMNI_DIRECTORY_HREF,
+  ALUMNI_DIRECTORY_HREF,
+  parseAlumniSearchParams,
+  toAlumniSearchString,
+} from "@/lib/alumni-search-params";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { useRedirectNonAdmin } from "@/lib/use-redirect-non-admin";
+import {
+  getListAlumniForAdminQueryKey,
+  getListAlumniQueryKey,
+  listAlumni,
+  listAlumniForAdmin,
+} from "@pkka/api";
+import {
+  ALUMNI_SORT_OPTIONS,
+  buildAlumniParams,
+  type AlumniFilters,
+  type AlumniSortOption,
+} from "@pkka/domain";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-export function AlumniDirectory() {
+// Admins read `/api/admin/alumni`, which also lists what alumni hide from each other.
+const SOURCES = {
+  alumn: { href: ALUMNI_DIRECTORY_HREF, queryKey: getListAlumniQueryKey, list: listAlumni },
+  admin: {
+    href: ADMIN_ALUMNI_DIRECTORY_HREF,
+    queryKey: getListAlumniForAdminQueryKey,
+    list: listAlumniForAdmin,
+  },
+};
+
+type AlumniDirectoryProps = {
+  variant?: "alumn" | "admin";
+};
+
+export function AlumniDirectory({ variant = "alumn" }: AlumniDirectoryProps) {
+  const isAdmin = variant === "admin";
+  const source = SOURCES[variant];
+  useRedirectNonAdmin(isAdmin);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -42,11 +71,13 @@ export function AlumniDirectory() {
     }
   }, [search, currentSearch, pathname, router]);
 
-  const { data, isPending, isError, isPlaceholderData, refetch } = useListAlumni(
-    { ...buildAlumniParams(debouncedQuery, filters, sort), page },
+  const params = { ...buildAlumniParams(debouncedQuery, filters, sort), page };
+  const { data, isPending, isError, isPlaceholderData, refetch } = useQuery({
+    queryKey: source.queryKey(params),
+    queryFn: ({ signal }) => source.list(params, { signal }),
     // Keeps the current results on screen while the next page or filter loads.
-    { query: { placeholderData: (previous) => previous } },
-  );
+    placeholderData: (previous) => previous,
+  });
   const pageData = data?.status === 200 ? data.data : undefined;
   const alumni = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
@@ -77,8 +108,9 @@ export function AlumniDirectory() {
               Znajdź absolwentów WI AGH
             </h1>
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-              Szukaj po nazwisku, stanowisku lub firmie i odezwij się do osób, które chętnie dzielą
-              się doświadczeniem.
+              {isAdmin
+                ? "Jako admin widzisz ukryte dane alumnów."
+                : "Szukaj po nazwisku, stanowisku lub firmie i odezwij się do osób, które chętnie dzielą się doświadczeniem."}
             </p>
           </div>
 
@@ -157,7 +189,12 @@ export function AlumniDirectory() {
                   className={`grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 xl:grid-cols-3 ${isPlaceholderData ? "opacity-60" : ""}`}
                 >
                   {alumni.map((alumn) => (
-                    <AlumniCard key={alumn.id} alumn={alumn} search={search} />
+                    <AlumniCard
+                      key={alumn.id}
+                      alumn={alumn}
+                      directoryHref={source.href}
+                      search={search}
+                    />
                   ))}
                 </div>
                 {totalPages > 1 ? (

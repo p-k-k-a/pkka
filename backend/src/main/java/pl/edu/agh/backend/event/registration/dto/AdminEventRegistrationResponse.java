@@ -22,7 +22,7 @@ public record AdminEventRegistrationResponse(
         @Schema(description = "1-based place in the queue; present only for `WAITLISTED`")
         Integer waitlistPosition,
 
-        @Schema(description = "User id for `/api/alumni/{id}`; present only for verified alumni")
+        @Schema(description = "User id for `/api/admin/alumni/{id}`; present only for verified alumni")
         UUID alumnusId) {
 
     public static AdminEventRegistrationResponse from(

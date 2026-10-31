@@ -21,7 +21,7 @@ import pl.edu.agh.backend.user.profile.dto.ProfileVisibility;
  */
 @Schema(
         description =
-                "Public alumni profile visible to verified alumni and admins; fields hidden by the owner's visibility settings are null, except for admins")
+                "Alumni profile; fields hidden by the owner's visibility settings are null on `/api/alumni/{id}` and filled in on `/api/admin/alumni/{id}`")
 public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
@@ -31,7 +31,7 @@ public record AlumniProfileResponse(
         String company,
         String bio,
 
-        @Schema(description = "Discord snowflake for deep links; null when not linked or hidden")
+        @Schema(description = "Discord snowflake for deep links; null when not linked (or hidden, for alumni)")
         String discordId,
 
         String linkedinUrl,
@@ -50,10 +50,18 @@ public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) List<UserTagResponse> tags,
         @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
 
-    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean showHiddenFields) {
-        boolean showName = showHiddenFields || user.isShowName();
-        boolean showEmail = showHiddenFields || user.isShowEmail();
-        boolean showDiscord = showHiddenFields || user.isShowDiscord();
+    public static AlumniProfileResponse forAlumni(User user, AlumnEducation education) {
+        return build(user, education, false);
+    }
+
+    public static AlumniProfileResponse forAdmin(User user, AlumnEducation education) {
+        return build(user, education, true);
+    }
+
+    private static AlumniProfileResponse build(User user, AlumnEducation education, boolean revealHiddenFields) {
+        boolean showName = revealHiddenFields || user.isShowName();
+        boolean showEmail = revealHiddenFields || user.isShowEmail();
+        boolean showDiscord = revealHiddenFields || user.isShowDiscord();
         return new AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,

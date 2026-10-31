@@ -152,16 +152,6 @@ class AlumniProfileIntegrationTest {
     }
 
     @Test
-    void adminReadsTheDirectoryButNotOtherAlumniEndpoints() throws Exception {
-        var admin = jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        mockMvc.perform(get("/api/alumni/{id}", alumn.getId()).with(admin))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(alumn.getId().toString()));
-        mockMvc.perform(get("/api/alumni").with(admin)).andExpect(status().isOk());
-        mockMvc.perform(get("/api/alumni/tickets").with(admin)).andExpect(status().isForbidden());
-    }
-
-    @Test
     void rejectsUnverifiedUser() throws Exception {
         mockMvc.perform(get("/api/alumni/{id}", alumn.getId())
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_USER"))))
@@ -188,24 +178,6 @@ class AlumniProfileIntegrationTest {
                 .andExpect(jsonPath("$.visibility.name").value(false))
                 .andExpect(jsonPath("$.visibility.email").value(false))
                 .andExpect(jsonPath("$.visibility.discord").value(false));
-    }
-
-    @Test
-    void adminSeesFieldsHiddenByVisibilitySettings() throws Exception {
-        alumn.setShowName(false);
-        alumn.setShowEmail(false);
-        alumn.setShowDiscord(false);
-        userRepository.save(alumn);
-
-        mockMvc.perform(get("/api/alumni/{id}", alumn.getId())
-                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Jan"))
-                .andExpect(jsonPath("$.lastName").value("Kowalski"))
-                .andExpect(jsonPath("$.email").value("jan.kowalski@example.com"))
-                .andExpect(jsonPath("$.discordId").value("123456789012345678"))
-                .andExpect(jsonPath("$.visibility.name").value(false))
-                .andExpect(jsonPath("$.visibility.email").value(false));
     }
 
     @Test
