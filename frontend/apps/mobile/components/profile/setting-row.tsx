@@ -21,7 +21,7 @@ export function SettingRow({
 }: {
   icon: LucideIcon;
   title: string;
-  description: string;
+  description?: string;
   action?: ReactNode;
 }) {
   return (
@@ -29,7 +29,9 @@ export function SettingRow({
       <SettingIcon icon={icon} />
       <View className="flex-1 gap-0.5">
         <Text className="text-foreground text-base font-semibold">{title}</Text>
-        <Text className="text-muted-foreground text-sm leading-5">{description}</Text>
+        {description ? (
+          <Text className="text-muted-foreground text-sm leading-5">{description}</Text>
+        ) : null}
       </View>
       {action}
     </View>

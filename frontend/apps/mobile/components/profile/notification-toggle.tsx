@@ -48,7 +48,7 @@ export function NotificationToggle() {
       <SettingRow
         icon={Bell}
         title="Powiadomienia"
-        description="O nowych wydarzeniach i przypomnieniach o tych, na które się zapisujesz."
+        description="Nowe wydarzenia i przypomnienia"
         action={
           <Switch
             checked={checked}

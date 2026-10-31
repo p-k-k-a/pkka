@@ -61,7 +61,7 @@ export function SettingsSection() {
       </Text>
       <View className="border-border gap-4 rounded-2xl border p-4">
         <View className="gap-3">
-          <SettingRow icon={Moon} title="Wygląd" description="Domyślnie jak w telefonie" />
+          <SettingRow icon={Moon} title="Wygląd" />
           <ThemeSwitch />
         </View>
         <Separator />
