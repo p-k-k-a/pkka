@@ -182,7 +182,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
         await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
         setFormError(
           error instanceof ApiError && error.status === 400
-            ? "Profil zapisany, ale nie udało się zapisać umiejętności - sprawdź wybrane tagi."
+            ? "Profil zapisany, ale nie udało się zapisać umiejętności. Sprawdź wybrane tagi."
             : "Profil zapisany, ale nie udało się zapisać umiejętności. Spróbuj ponownie.",
         );
         return;
@@ -271,7 +271,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   id="bio"
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
-                  placeholder="Napisz kilka słów o sobie - czym się zajmujesz, w czym możesz pomóc innym alumnom…"
+                  placeholder="Napisz kilka słów o sobie: czym się zajmujesz, w czym możesz pomóc innym alumnom…"
                   maxLength={BIO_MAX_LENGTH}
                   className="min-h-32 resize-y"
                 />
@@ -432,7 +432,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               <Card className="gap-5 rounded-lg p-5 shadow-none">
                 <SectionHeading>Wykształcenie</SectionHeading>
                 <p className="text-muted-foreground text-xs leading-relaxed">
-                  Dane z zatwierdzonego wniosku - tylko do odczytu.
+                  Dane z zatwierdzonego wniosku, tylko do odczytu.
                 </p>
                 <DetailList>
                   <DetailRow label="Kierunek" value={profile.fieldOfStudy} />
