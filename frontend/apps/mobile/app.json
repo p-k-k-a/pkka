@@ -125,6 +125,12 @@
       },
       "router": {}
     },
-    "owner": "pkka"
+    "owner": "pkka",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c7520f8c-48d2-4d78-af05-c5eb503e5882"
+    }
   }
 }
