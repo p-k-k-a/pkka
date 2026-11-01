@@ -1,3 +1,4 @@
+import { MAX_FONT_SCALE } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import { Platform, TextInput } from "react-native";
 
@@ -8,13 +9,14 @@ function Input({
   return (
     <TextInput
       className={cn(
-        "border-muted-foreground/25 dark:border-input bg-background text-foreground font-sans placeholder:text-muted-foreground h-12 w-full rounded-md border px-3 text-base",
+        "border-muted-foreground/25 dark:border-input bg-background text-foreground font-sans placeholder:text-muted-foreground h-12 w-full rounded-md border px-3 py-0 text-base",
         Platform.select({
           web: "focus-visible:border-ring focus-visible:ring-ring/50 outline-none transition-all focus-visible:ring-[3px]",
         }),
         props.editable === false && "opacity-50",
         className,
       )}
+      maxFontSizeMultiplier={MAX_FONT_SCALE}
       {...props}
     />
   );

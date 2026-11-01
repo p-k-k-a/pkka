@@ -26,9 +26,10 @@ public class EventController {
     public Page<EventListItemResponse> listEvents(
             @RequestParam(required = false) Set<String> tags,
             @RequestParam(required = false) EventTimeframe timeframe,
+            @RequestParam(required = false) Audience audience,
             @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Caller caller) {
-        return eventService.list(caller, tags, timeframe, pageable);
+        return eventService.list(caller, tags, timeframe, audience, pageable);
     }
 
     @GetMapping("/{slug}")

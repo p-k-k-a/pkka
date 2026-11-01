@@ -99,7 +99,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
                 tagIds: typeof next === "function" ? next(d.tagIds) : next,
               }))
             }
-            placeholder="Wyszukaj umiejętności..."
+            placeholder="Szukaj umiejętności"
             listMaxHeight={SHEET_LIST_MAX_HEIGHT}
             uppercaseChips
           />

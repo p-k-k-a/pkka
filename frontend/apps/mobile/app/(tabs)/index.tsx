@@ -1,5 +1,5 @@
+import { PageHeader } from "@/components/ui/page-header";
 import { CtaCard } from "@/components/home/cta-card";
-import { Hero } from "@/components/home/hero";
 import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
@@ -29,9 +29,9 @@ function ListHeader() {
   const { user } = useAuth();
 
   return (
-    <View className="gap-10">
-      <Hero {...HERO} />
-      <View className="gap-10 px-5">
+    <View className="gap-6">
+      <PageHeader title={HERO.title} description={HERO.body} />
+      <View className="gap-6 px-5">
         {!user && <CtaCard {...CTA} onPrimary={() => router.push("/login")} />}
         <SectionHeading title="Publiczne Aktualności" />
       </View>

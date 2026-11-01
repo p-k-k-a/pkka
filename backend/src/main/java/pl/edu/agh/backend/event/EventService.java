@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,9 +30,18 @@ public class EventService {
     private final EventRegistrationService eventRegistrationService;
 
     public Page<EventListItemResponse> list(
-            Caller caller, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
-        Specification<Event> spec = Specification.allOf(
-                inTimeframe(timeframe), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
+            Caller caller,
+            Collection<String> tagNames,
+            EventTimeframe timeframe,
+            Audience audience,
+            Pageable pageable) {
+        Set<Audience> visible = EventVisibility.audiencesOf(caller);
+        if (audience != null && !visible.contains(audience)) {
+            return Page.empty(pageable);
+        }
+        Set<Audience> audiences = audience == null ? visible : Set.of(audience);
+        Specification<Event> spec =
+                Specification.allOf(inTimeframe(timeframe), audienceIn(audiences), hasAnyTag(tagNames));
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
         List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
