@@ -40,11 +40,19 @@ function ListHeader() {
 }
 
 export default function HomeScreen() {
-  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useListPostsInfinite(
-      { size: PAGE_SIZE },
-      { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
-    );
+  const {
+    data,
+    isPending,
+    isError,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useListPostsInfinite(
+    { size: PAGE_SIZE },
+    { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
+  );
 
   const posts = React.useMemo(() => pageItems(data?.pages), [data]);
 
@@ -53,6 +61,8 @@ export default function HomeScreen() {
       className="flex-1 bg-background"
       contentContainerClassName="pb-8"
       showsVerticalScrollIndicator={false}
+      refreshing={isRefetching}
+      onRefresh={refetch}
       data={posts}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => (
