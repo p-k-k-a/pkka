@@ -291,8 +291,19 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void registerForAnEventThatHasAlreadyStarted_isRejectedAsClosed() throws Exception {
+    void registerForAnEventUnderWay_takesASeat() throws Exception {
         Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(1, ChronoUnit.HOURS), null);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REGISTERED"));
+    }
+
+    @Test
+    void registerForAnEventThatHasEnded_isRejectedAsClosed() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(3, ChronoUnit.HOURS), null);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
@@ -496,15 +507,34 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void unregisterAfterTheEventHasStarted_isRejected() throws Exception {
-        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(1, ChronoUnit.HOURS), null);
+    void unregisterWhileTheEventIsUnderWay_promotesTheFirstPersonQueuing() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1, Instant.now().minus(1, ChronoUnit.HOURS), null);
+        registerCaller(event);
+        String queuedKeycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(queuedKeycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(statusOf(event, queuedKeycloakId)).isEqualTo(EventRegistrationStatus.REGISTERED);
+    }
+
+    @Test
+    void unregisterAfterTheEventHasEnded_isRejected() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(3, ChronoUnit.HOURS), null);
         registerCaller(event);
 
         mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.reason").value("EVENT_ALREADY_STARTED"));
+                .andExpect(jsonPath("$.reason").value("EVENT_ENDED"));
     }
 
     @Test
