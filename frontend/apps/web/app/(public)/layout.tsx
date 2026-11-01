@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { AGH_PRIVACY_NOTICE_URL } from "@pkka/domain";
 import { PublicSessionRedirect } from "@/components/auth/public-session-redirect";
 import { NavLink } from "@/components/nav-link";
@@ -44,17 +43,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               PKKA
             </p>
             <p className="text-band-foreground/80 max-w-md text-sm leading-relaxed md:text-base">
-              Klub Alumnów Wydziału Informatyki AGH — społeczność absolwentów, mentoring i
+              Klub Alumnów Wydziału Informatyki AGH. Społeczność absolwentów, mentoring i
               networking.
             </p>
           </div>
           <div className="space-y-2 text-sm md:text-right">
-            <Link
-              href="/info"
-              className="font-heading text-band-foreground inline-flex items-center gap-2 hover:underline"
-            >
+            <Link href="/info" className="font-heading text-band-foreground hover:underline">
               Dowiedz się więcej
-              <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
             <a
               href={AGH_PRIVACY_NOTICE_URL}

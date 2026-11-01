@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { DiscordIcon } from "@pkka/icons/web";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -20,9 +19,8 @@ export function LoginOptions() {
       </div>
 
       <div className="space-y-3">
-        <Button size="xl" className="w-full gap-2 font-semibold" onClick={loginWithKeycloak}>
+        <Button size="xl" className="w-full font-semibold" onClick={loginWithKeycloak}>
           Zaloguj się przez SSO
-          <ArrowRight data-icon="inline-end" />
         </Button>
 
         <Button
@@ -44,14 +42,8 @@ export function LoginOptions() {
         <div className="bg-border h-px flex-1" />
       </div>
 
-      <Button
-        variant="secondary"
-        size="xl"
-        className="w-full gap-2 font-semibold"
-        onClick={register}
-      >
+      <Button variant="secondary" size="xl" className="w-full font-semibold" onClick={register}>
         Zarejestruj się
-        <ArrowRight data-icon="inline-end" />
       </Button>
     </div>
   );

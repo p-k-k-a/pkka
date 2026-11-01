@@ -45,24 +45,21 @@ public class Application {
     @Builder.Default
     private boolean discordVouched = false;
 
-    @NotNull
+    // The form fields stay empty on an application vouched for by Discord, which skips the form.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private Faculty faculty;
 
-    @NotBlank
     @Size(max = 200)
-    @Column(name = "field_of_study", nullable = false, length = 200)
+    @Column(name = "field_of_study", length = 200)
     private String fieldOfStudy;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "study_type", nullable = false, length = 20)
+    @Column(name = "study_type", length = 20)
     private StudyType studyType;
 
-    @NotNull
     @Min(1919)
-    @Column(name = "graduation_year", nullable = false)
+    @Column(name = "graduation_year")
     private Integer graduationYear;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -79,10 +76,9 @@ public class Application {
     @Builder.Default
     private boolean newsletterSubscription = false;
 
-    @NotBlank
     @Size(max = 32)
     @Pattern(regexp = "^\\+?[0-9 \\-]{7,32}$")
-    @Column(name = "phone_number", nullable = false, length = 32)
+    @Column(name = "phone_number", length = 32)
     private String phoneNumber;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -132,8 +128,9 @@ public class Application {
         this.reviewedBy = reviewer;
     }
 
-    public void autoApprove() {
+    public void approveByDiscordVouch() {
         ensureUnderReview();
+        this.discordVouched = true;
         markApproved();
     }
 
@@ -152,8 +149,12 @@ public class Application {
     }
 
     private void recordOnApplicant() {
-        this.applicant.setGraduationYear(this.graduationYear);
-        this.applicant.setPhoneNumber(this.phoneNumber);
+        if (this.graduationYear != null) {
+            this.applicant.setGraduationYear(this.graduationYear);
+        }
+        if (this.phoneNumber != null) {
+            this.applicant.setPhoneNumber(this.phoneNumber);
+        }
     }
 
     private void ensureUnderReview() {

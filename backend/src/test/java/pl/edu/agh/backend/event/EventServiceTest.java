@@ -112,6 +112,7 @@ class EventServiceTest {
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("webinar")
                 .title("Webinar")
                 .slug("webinar")
                 .type(EventType.ONLINE)

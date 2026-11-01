@@ -83,16 +83,24 @@ export default function EventsScreen() {
   const appliedFilters = { ...filters, alumniOnly: isAlumni && filters.alumniOnly };
   const { timeframe } = appliedFilters;
   const archive = timeframe === EventTimeframe.PAST;
-  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useListEventsInfinite(
-      {
-        size: PAGE_SIZE,
-        timeframe,
-        ...(appliedFilters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
-        ...(archive ? { sort: ["startsAt,desc"] } : {}),
-      },
-      { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
-    );
+  const {
+    data,
+    isPending,
+    isError,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useListEventsInfinite(
+    {
+      size: PAGE_SIZE,
+      timeframe,
+      ...(appliedFilters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
+      ...(archive ? { sort: ["startsAt,desc"] } : {}),
+    },
+    { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
+  );
 
   const events = useMemo(() => pageItems(data?.pages), [data]);
 
@@ -102,6 +110,8 @@ export default function EventsScreen() {
         className="flex-1 bg-background"
         contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
+        refreshing={isRefetching}
+        onRefresh={refetch}
         data={events}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (

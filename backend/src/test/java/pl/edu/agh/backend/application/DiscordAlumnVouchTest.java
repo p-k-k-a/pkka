@@ -74,6 +74,14 @@ class DiscordAlumnVouchTest {
         then(guildMembership).shouldHaveNoInteractions();
     }
 
+    @Test
+    void aUserAlreadyAtHandIsJudgedWithoutLoadingItAgain() {
+        given(guildMembership.holdsAlumnRole(DISCORD_ID)).willReturn(true);
+
+        assertThat(vouch.vouchesFor(userWithDiscordId(DISCORD_ID))).isTrue();
+        then(userRepository).shouldHaveNoInteractions();
+    }
+
     private User userWithDiscordId(String discordId) {
         User user = new User();
         user.setKeycloakId(KEYCLOAK_ID);
