@@ -25,6 +25,7 @@ import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ApplicationServiceTest {
@@ -33,6 +34,7 @@ class ApplicationServiceTest {
             List.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.APPROVED);
 
     private static final int GRADUATION_YEAR = 2020;
+    private static final String PHONE_NUMBER = "+48123456789";
 
     private static final boolean VOUCHED_BY_DISCORD = true;
     private static final boolean NOT_VOUCHED_BY_DISCORD = false;
@@ -45,6 +47,12 @@ class ApplicationServiceTest {
 
     @Mock
     private CallerUserService callerUserService;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private DiscordAlumnVouch discordAlumnVouch;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -131,6 +139,87 @@ class ApplicationServiceTest {
     }
 
     @Test
+    void aDiscordMemberWithoutAnApplicationIsApprovedAtLoginWithoutTheForm() {
+        givenDiscordVouchesAtLogin(Optional.empty());
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verify(applicationRepository).saveAndFlush(savedApplication.capture());
+        Application saved = savedApplication.getValue();
+        assertThat(saved.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(saved.isDiscordVouched()).isTrue();
+        assertThat(saved.getFaculty()).isNull();
+        assertThat(saved.getConsents()).isEmpty();
+    }
+
+    @Test
+    void approvalAtLoginAnnouncesItSoTheAlumnRoleIsGranted() {
+        givenDiscordVouchesAtLogin(Optional.empty());
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verify(eventPublisher).publishEvent(new ApplicationApprovedEvent(applicant.getKeycloakId()));
+    }
+
+    @Test
+    void approvalWithoutTheFormKeepsWhatTheProfileAlreadyHas() {
+        applicant.setGraduationYear(GRADUATION_YEAR);
+        applicant.setPhoneNumber(PHONE_NUMBER);
+        givenDiscordVouchesAtLogin(Optional.empty());
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        assertThat(applicant.getGraduationYear()).isEqualTo(GRADUATION_YEAR);
+        assertThat(applicant.getPhoneNumber()).isEqualTo(PHONE_NUMBER);
+    }
+
+    @Test
+    void aPendingApplicationIsApprovedAtLoginOnceDiscordVouches() {
+        Application pending = pendingApplication();
+        givenDiscordVouchesAtLogin(Optional.of(pending));
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verify(applicationRepository).saveAndFlush(pending);
+        assertThat(pending.getStatus()).isEqualTo(ApplicationStatus.APPROVED);
+        assertThat(pending.isDiscordVouched()).isTrue();
+        assertThat(applicant.getGraduationYear()).isEqualTo(GRADUATION_YEAR);
+    }
+
+    @Test
+    void withoutADiscordVouchNothingChangesAtLogin() {
+        when(userRepository.findByKeycloakId(applicant.getKeycloakId())).thenReturn(Optional.of(applicant));
+        when(discordAlumnVouch.vouchesFor(applicant)).thenReturn(false);
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verify(applicationRepository, never()).saveAndFlush(any());
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void anApprovedAlumnusIsNotCheckedOnDiscordAgain() {
+        when(applicationRepository.existsByApplicantKeycloakIdAndStatus(
+                        applicant.getKeycloakId(), ApplicationStatus.APPROVED))
+                .thenReturn(true);
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verifyNoInteractions(userRepository, discordAlumnVouch, eventPublisher);
+        verify(applicationRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void anUnknownAccountIsLeftAloneAtLogin() {
+        when(userRepository.findByKeycloakId(applicant.getKeycloakId())).thenReturn(Optional.empty());
+
+        applicationService.approveIfDiscordVouched(applicant.getKeycloakId());
+
+        verifyNoInteractions(discordAlumnVouch, eventPublisher);
+        verify(applicationRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
     void getMineReturnsLatestApplication() {
         Application application = Application.builder()
                 .applicant(applicant)
@@ -163,6 +252,25 @@ class ApplicationServiceTest {
         when(applicationRepository.existsByApplicantIdAndStatusIn(applicant.getId(), BLOCKING_STATUSES))
                 .thenReturn(false);
         when(applicationRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    /** Not approved yet is the mock's default: the APPROVED lookup answers false unless stubbed. */
+    private void givenDiscordVouchesAtLogin(Optional<Application> pending) {
+        when(userRepository.findByKeycloakId(applicant.getKeycloakId())).thenReturn(Optional.of(applicant));
+        when(discordAlumnVouch.vouchesFor(applicant)).thenReturn(true);
+        when(applicationRepository.findByApplicantIdAndStatus(applicant.getId(), ApplicationStatus.UNDER_REVIEW))
+                .thenReturn(pending);
+    }
+
+    private Application pendingApplication() {
+        return Application.builder()
+                .applicant(applicant)
+                .faculty(Faculty.WI)
+                .fieldOfStudy("Informatyka")
+                .studyType(StudyType.MASTER)
+                .graduationYear(GRADUATION_YEAR)
+                .phoneNumber(PHONE_NUMBER)
+                .build();
     }
 
     private static User applicant() {
