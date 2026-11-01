@@ -123,7 +123,7 @@ export function VerificationContent() {
               </Card>
             ) : null}
 
-            <DiscordVerifyButton />
+            {!application || isRejected ? <DiscordVerifyButton /> : null}
 
             {showForm ? (
               <div className="space-y-3">

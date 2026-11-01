@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { DiscordIcon } from "@pkka/icons/native";
 import { Text } from "@/components/ui/text";
-import { DISCORD_URL, useAuth } from "@/lib/auth-context";
+import { DISCORD_URL, KEYCLOAK_URL } from "@/lib/auth-config";
+import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
 import { View } from "react-native";
 
-const KEYCLOAK_URL =
-  process.env.EXPO_PUBLIC_KEYCLOAK_URL ??
-  "http://localhost:8080/oauth2/authorization/keycloak-mobile";
-
 export function LoginScreen() {
-  const { loginInBrowser } = useAuth();
+  const { loginBrowser } = useAuth();
   const theme = useThemeColors();
 
   return (
@@ -30,7 +27,7 @@ export function LoginScreen() {
 
         <View className="h-8" />
 
-        <Button size="lg" className="w-full" onPress={() => loginInBrowser(KEYCLOAK_URL)}>
+        <Button size="lg" className="w-full" onPress={() => loginBrowser(KEYCLOAK_URL)}>
           <Text className="text-base font-semibold">Zaloguj się przez SSO</Text>
         </Button>
 
@@ -46,7 +43,7 @@ export function LoginScreen() {
           variant="outline"
           size="lg"
           className="w-full"
-          onPress={() => loginInBrowser(DISCORD_URL)}
+          onPress={() => loginBrowser(DISCORD_URL)}
         >
           <DiscordIcon size={20} color={theme.foreground} />
           <Text className="text-base font-semibold">Kontynuuj przez Discord</Text>
@@ -54,7 +51,7 @@ export function LoginScreen() {
 
         <View className="mt-7 flex-row items-center justify-center">
           <Text variant="muted">Nie masz konta? </Text>
-          <Button variant="link" onPress={() => loginInBrowser(KEYCLOAK_URL)}>
+          <Button variant="link" onPress={() => loginBrowser(KEYCLOAK_URL)}>
             <Text className="font-bold text-accent underline dark:text-primary">
               Zarejestruj się
             </Text>

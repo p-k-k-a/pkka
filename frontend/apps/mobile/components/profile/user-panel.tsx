@@ -12,9 +12,7 @@ import {
   ProfileResponse,
   useGetMine,
   useGetMyProfile,
-  useMe,
 } from "@pkka/api";
-import { isAdmin, isVerifiedAlumn } from "@pkka/domain";
 import { useThemeColors, type THEME } from "@/lib/theme";
 import { router } from "expo-router";
 import { ClipboardList, LogOut, RotateCcw } from "lucide-react-native";
@@ -59,23 +57,17 @@ const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
 };
 
 function DiscordVerifyButton({ colors }: { colors: (typeof THEME)["light"] }) {
-  const { verifyWithDiscord } = useAuth();
+  const { loginDiscord } = useAuth();
 
   return (
-    <Button size="lg" variant="outline" className="w-full" onPress={verifyWithDiscord}>
+    <Button size="lg" variant="outline" className="w-full" onPress={loginDiscord}>
       <DiscordIcon size={18} color={colors.foreground} />
       <Text className="font-bold">Zweryfikuj przez Discord</Text>
     </Button>
   );
 }
 
-function NoApplicationView({
-  colors,
-  canVerifyWithDiscord,
-}: {
-  colors: (typeof THEME)["light"];
-  canVerifyWithDiscord: boolean;
-}) {
+function NoApplicationView({ colors }: { colors: (typeof THEME)["light"] }) {
   return (
     <View className="gap-5">
       <View className="self-start flex-row items-center gap-2 rounded-full border border-destructive bg-destructive/10 px-3 py-1.5">
@@ -93,7 +85,7 @@ function NoApplicationView({
       </View>
 
       <View className="gap-3 mt-2">
-        {canVerifyWithDiscord ? <DiscordVerifyButton colors={colors} /> : null}
+        <DiscordVerifyButton colors={colors} />
 
         <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
           <ClipboardList size={18} color={colors.primaryForeground} />
@@ -141,15 +133,12 @@ function ApplicationStatusView({
   status,
   rejectionReason,
   colors,
-  canVerifyWithDiscord,
 }: {
   status: ApplicationStatus;
   rejectionReason?: string | null;
   colors: (typeof THEME)["light"];
-  canVerifyWithDiscord: boolean;
 }) {
   const cfg = STATUS_CONFIG[status];
-  const rejected = status === ApplicationStatus.REJECTED;
 
   return (
     <View className="gap-5">
@@ -165,22 +154,20 @@ function ApplicationStatusView({
           {cfg.heading}
         </Text>
         <Text className="text-muted-foreground text-sm leading-6">{cfg.description}</Text>
-        {rejected && rejectionReason ? (
+        {status === ApplicationStatus.REJECTED && rejectionReason ? (
           <Text className="text-muted-foreground text-sm leading-6 italic">
             Powód: {rejectionReason}
           </Text>
         ) : null}
       </View>
 
-      {rejected || canVerifyWithDiscord ? (
+      {status === ApplicationStatus.REJECTED ? (
         <View className="gap-3 mt-2">
-          {rejected ? (
-            <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
-              <ClipboardList size={18} color={colors.primaryForeground} />
-              <Text className="font-bold">Złóż wniosek ponownie</Text>
-            </Button>
-          ) : null}
-          {canVerifyWithDiscord ? <DiscordVerifyButton colors={colors} /> : null}
+          <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
+            <ClipboardList size={18} color={colors.primaryForeground} />
+            <Text className="font-bold">Złóż wniosek ponownie</Text>
+          </Button>
+          <DiscordVerifyButton colors={colors} />
         </View>
       ) : null}
     </View>
@@ -229,15 +216,7 @@ export function UserPanel() {
     isLoading: profilePending,
     isError: profileError,
     refetch: refetchProfile,
-  } = useGetMyProfile({ query: { enabled: !isLoading && !loadFailed } });
-  const { data: meData } = useMe();
-  const roles = meData?.data.roles;
-  const canVerifyWithDiscord =
-    !!roles &&
-    !isAdmin(roles) &&
-    !isVerifiedAlumn(roles) &&
-    !!profileData?.data &&
-    !profileData.data.discordId;
+  } = useGetMyProfile({ query: { enabled: isApproved } });
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -260,7 +239,7 @@ export function UserPanel() {
         ) : loadFailed ? (
           <StatusUnavailableView colors={colors} onRetry={() => void refetch()} />
         ) : !application ? (
-          <NoApplicationView colors={colors} canVerifyWithDiscord={canVerifyWithDiscord} />
+          <NoApplicationView colors={colors} />
         ) : isApproved ? (
           <AlumniProfileSection
             profile={profileData?.data}
@@ -272,7 +251,6 @@ export function UserPanel() {
             status={application.status}
             rejectionReason={application.rejectionReason}
             colors={colors}
-            canVerifyWithDiscord={canVerifyWithDiscord}
           />
         )}
 

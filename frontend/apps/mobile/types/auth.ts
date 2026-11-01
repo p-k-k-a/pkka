@@ -4,8 +4,7 @@ export type User = {
 
 export type AuthContextType = {
   user: User | null;
-  login: (at: string, rt: string) => Promise<void>;
   logout: () => Promise<void>;
-  loginInBrowser: (authorizationUrl: string) => Promise<void>;
-  verifyWithDiscord: () => Promise<void>;
+  loginBrowser: (authorizationUrl: string) => Promise<void>;
+  loginDiscord: () => Promise<void>;
 };

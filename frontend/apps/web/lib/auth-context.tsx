@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.assign(backendLogoutUrl());
   }, []);
 
-  const verifyWithDiscord = useCallback(() => {
+  const reloginWithDiscord = useCallback(() => {
     markDiscordVerification();
     logout();
   }, [logout]);
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithDiscord,
       register,
       logout,
-      verifyWithDiscord,
+      reloginWithDiscord,
     }),
     [
       user,
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithDiscord,
       register,
       logout,
-      verifyWithDiscord,
+      reloginWithDiscord,
     ],
   );
 

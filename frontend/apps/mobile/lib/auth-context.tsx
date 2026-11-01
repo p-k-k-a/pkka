@@ -1,3 +1,4 @@
+import { API_URL, DISCORD_URL, REDIRECT_URI } from "@/lib/auth-config";
 import {
   registerForPushNotifications,
   unregisterFromPushNotifications,
@@ -14,9 +15,6 @@ import { AppState } from "react-native";
 
 export const AuthContext = createContext<null | AuthContextType>(null);
 
-export const DISCORD_URL = process.env.EXPO_PUBLIC_DISCORD_URL ?? "";
-const REDIRECT_URI = "pkka://";
-
 type decodedJwtType = {
   sub: string;
 };
@@ -26,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loggingOut = useRef(false);
   const queryClient = useQueryClient();
 
-  const login = async (at: string, rt: string) => {
+  const saveJWT = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
     setUser({ sub: decoded["sub"] });
 
@@ -51,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loginInBrowser = async (authorizationUrl: string) => {
+  const loginBrowser = async (authorizationUrl: string) => {
     if (!authorizationUrl) {
       console.warn("Missing authorization URL — check EXPO_PUBLIC_* env vars");
       return;
@@ -65,16 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const at = params.get("at");
     const rt = params.get("rt");
     if (at && rt) {
-      await login(at, rt);
+      await saveJWT(at, rt);
     } else {
       console.warn("Failed to parse tokens from redirect URL");
     }
   };
 
-  const verifyWithDiscord = async () => {
+  const loginDiscord = async () => {
     if (loggingOut.current) return;
     await logout();
-    await loginInBrowser(DISCORD_URL);
+    await loginBrowser(DISCORD_URL);
   };
 
   const userSub = user?.sub;
@@ -119,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const rt = await SecureStore.getItemAsync("rt");
 
       if (at && rt) {
-        await login(at, rt);
+        await saveJWT(at, rt);
       } else {
         console.warn("Failed to log in from storage");
       }
@@ -130,19 +128,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     configureApi({
-      baseUrl: process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080",
+      baseUrl: API_URL,
       getAuthToken: async () => await SecureStore.getItemAsync("at"),
       getRefreshToken: async () => await SecureStore.getItemAsync("rt"),
       onUnauthenticated: logout,
-      onTokenRefreshed: login,
+      onTokenRefreshed: saveJWT,
     });
   }, []);
 
-  return (
-    <AuthContext value={{ user, login, logout, loginInBrowser, verifyWithDiscord }}>
-      {children}
-    </AuthContext>
-  );
+  return <AuthContext value={{ user, logout, loginBrowser, loginDiscord }}>{children}</AuthContext>;
 }
 
 export const useAuth = () => {
