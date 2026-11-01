@@ -7,11 +7,15 @@ import {
   keycloakLoginUrl,
   registerUrl,
 } from "@/lib/api-config";
-import { markAuthNavigation } from "@/lib/auth-navigation";
+import {
+  markAuthNavigation,
+  markDiscordVerification,
+  takeDiscordVerification,
+} from "@/lib/auth-navigation";
 import type { AuthContextType } from "@/types/auth";
 import { ApiError, configureApi, getMeQueryKey, me } from "@pkka/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo } from "react";
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -64,6 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.assign(backendLogoutUrl());
   }, []);
 
+  const verifyWithDiscord = useCallback(() => {
+    markDiscordVerification();
+    logout();
+  }, [logout]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (takeDiscordVerification() && !isAuthenticated) loginWithDiscord();
+  }, [isLoading, isAuthenticated, loginWithDiscord]);
+
   const value = useMemo(
     () => ({
       user: user ?? null,
@@ -74,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithDiscord,
       register,
       logout,
+      verifyWithDiscord,
     }),
     [
       user,
@@ -84,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithDiscord,
       register,
       logout,
+      verifyWithDiscord,
     ],
   );
 

@@ -11,4 +11,5 @@ export type AuthContextType = {
   loginWithDiscord: () => void;
   register: () => void;
   logout: () => void;
+  verifyWithDiscord: () => void;
 };

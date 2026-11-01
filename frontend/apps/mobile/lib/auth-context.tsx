@@ -5,12 +5,17 @@ import {
 } from "@/lib/notifications";
 import { AuthContextType, User } from "@/types/auth";
 import { configureApi, logoutTokens, refreshTokens } from "@pkka/api";
+import { useQueryClient } from "@tanstack/react-query";
 import * as SecureStore from "expo-secure-store";
+import * as WebBrowser from "expo-web-browser";
 import { jwtDecode } from "jwt-decode";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 
 export const AuthContext = createContext<null | AuthContextType>(null);
+
+export const DISCORD_URL = process.env.EXPO_PUBLIC_DISCORD_URL ?? "";
+const REDIRECT_URI = "pkka://";
 
 type decodedJwtType = {
   sub: string;
@@ -19,6 +24,7 @@ type decodedJwtType = {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const loggingOut = useRef(false);
+  const queryClient = useQueryClient();
 
   const login = async (at: string, rt: string) => {
     const decoded = jwtDecode(at) as decodedJwtType;
@@ -39,9 +45,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       await SecureStore.deleteItemAsync("at");
       await SecureStore.deleteItemAsync("rt");
+      void queryClient.resetQueries();
     } finally {
       loggingOut.current = false;
     }
+  };
+
+  const loginInBrowser = async (authorizationUrl: string) => {
+    if (!authorizationUrl) {
+      console.warn("Missing authorization URL — check EXPO_PUBLIC_* env vars");
+      return;
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(authorizationUrl, REDIRECT_URI);
+    if (result.type !== "success" || !result.url) return;
+
+    const fragment = result.url.split("#")[1] ?? "";
+    const params = new URLSearchParams(fragment);
+    const at = params.get("at");
+    const rt = params.get("rt");
+    if (at && rt) {
+      await login(at, rt);
+    } else {
+      console.warn("Failed to parse tokens from redirect URL");
+    }
+  };
+
+  const verifyWithDiscord = async () => {
+    if (loggingOut.current) return;
+    await logout();
+    await loginInBrowser(DISCORD_URL);
   };
 
   const userSub = user?.sub;
@@ -105,7 +138,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  return <AuthContext value={{ user, login, logout }}>{children}</AuthContext>;
+  return (
+    <AuthContext value={{ user, login, logout, loginInBrowser, verifyWithDiscord }}>
+      {children}
+    </AuthContext>
+  );
 }
 
 export const useAuth = () => {

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { ApplicationSummary } from "@/components/applications/application-summary";
 import { StatusBadge } from "@/components/applications/status-badge";
+import { DiscordVerifyButton } from "@/components/verification/discord-verify-button";
 import { VerificationForm } from "@/components/verification/verification-form";
 
 export function VerificationContent() {
@@ -121,6 +122,8 @@ export function VerificationContent() {
                 <ApplicationSummary application={application} />
               </Card>
             ) : null}
+
+            <DiscordVerifyButton />
 
             {showForm ? (
               <div className="space-y-3">
