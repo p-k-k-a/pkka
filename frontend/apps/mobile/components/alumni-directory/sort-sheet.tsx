@@ -24,14 +24,9 @@ export function SortSheet({ visible, value, onClose, onApply }: SortSheetProps) 
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <View className="gap-1">
-        <Text variant="h3" className="text-2xl font-bold">
-          Sortuj według
-        </Text>
-        <Text className="text-muted-foreground text-sm">
-          Wybierz preferowaną kolejność wyświetlania listy alumnów.
-        </Text>
-      </View>
+      <Text variant="h3" className="text-2xl font-bold">
+        Sortuj według
+      </Text>
 
       <View className="my-4">
         {ALUMNI_SORT_OPTIONS.map((option) => {

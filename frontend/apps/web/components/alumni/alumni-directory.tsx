@@ -113,15 +113,14 @@ export function AlumniDirectoryView({
 
   return (
     <div className="flex flex-col">
-      <section className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <section className="bg-background px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-8">
           <div className="space-y-6">
-            <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
-              Znajdź absolwentów WI AGH
+            <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+              Alumni
             </h1>
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-              Szukaj po nazwisku, stanowisku lub firmie i odezwij się do osób, które chętnie dzielą
-              się doświadczeniem.
+              Szukaj po nazwisku, stanowisku lub firmie.
             </p>
           </div>
 

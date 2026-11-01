@@ -20,8 +20,11 @@ public class DiscordAlumnVouch {
         }
         return userRepository
                 .findByKeycloakId(caller.keycloakId())
-                .map(User::getDiscordId)
-                .map(guildMembership::holdsAlumnRole)
+                .map(this::vouchesFor)
                 .orElse(false);
+    }
+
+    public boolean vouchesFor(User user) {
+        return user.getDiscordId() != null && guildMembership.holdsAlumnRole(user.getDiscordId());
     }
 }

@@ -63,7 +63,7 @@ export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
       <div className="mx-auto max-w-[1280px]">
         <DetailBackLink
           href={eventsBackHref}
-          label={archived ? "Wróć do archiwum" : "Wróć do kalendarza"}
+          label={archived ? "Wróć do archiwum" : "Wróć do wydarzeń"}
         />
 
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">

@@ -1,16 +1,9 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Calendar,
-  CircleCheck,
-  Clock,
-  Hourglass,
-  MapPin,
-  UserRound,
-} from "lucide-react";
-import { EventRegistrationStatus } from "@pkka/api";
+import { Calendar, CircleCheck, Clock, Hourglass, MapPin, UserRound } from "lucide-react";
+import { Audience, EventRegistrationStatus } from "@pkka/api";
 import { LabeledDetails } from "@/components/labeled-details";
+import { CardLinkFooter } from "@/components/content/card-link-footer";
 import { Card } from "@/components/ui/card";
 import { eventDetailHref, type EventPathVariant } from "@/lib/event-paths";
 import {
@@ -29,6 +22,7 @@ export type EventCalendarCardData = EventSchedule & {
   title: string;
   /** The viewer's own sign-up, when the list endpoint knows it. */
   registrationStatus?: EventRegistrationStatus;
+  audience?: Audience;
 };
 
 type EventCalendarCardProps = {
@@ -69,6 +63,11 @@ export function EventCalendarCard({
         >
           {eventTypeLabelUpper(event.type)}
         </span>
+        {event.audience === Audience.ALL_ALUMNI ? (
+          <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+            Alumni
+          </span>
+        ) : null}
         {event.registrationStatus ? (
           <span
             className={cn(
@@ -118,14 +117,7 @@ export function EventCalendarCard({
           </li>
         </ul>
       )}
-      {footer ?? (
-        <div className="mt-auto flex justify-end pt-2">
-          <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
-            Czytaj dalej
-            <ArrowRight className="size-3.5" aria-hidden="true" />
-          </span>
-        </div>
-      )}
+      {footer ?? <CardLinkFooter>Czytaj dalej</CardLinkFooter>}
     </Card>
   );
 

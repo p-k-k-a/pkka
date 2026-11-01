@@ -19,3 +19,13 @@ export function EventTypeBadge({ type, className }: { type: EventType; className
     </View>
   );
 }
+
+export function AlumniOnlyBadge() {
+  return (
+    <View className="bg-band rounded-lg px-3 py-1">
+      <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
+        Alumni
+      </Text>
+    </View>
+  );
+}

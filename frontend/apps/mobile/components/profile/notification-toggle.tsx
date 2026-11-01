@@ -1,4 +1,4 @@
-import { Separator } from "@/components/ui/separator";
+import { SettingRow } from "@/components/profile/setting-row";
 import { Switch } from "@/components/ui/switch";
 import { Text } from "@/components/ui/text";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/lib/notifications";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Bell } from "lucide-react-native";
 import { AppState, Linking, Pressable, View } from "react-native";
 
 const SWITCH_KEY = ["push-switch"];
@@ -43,24 +44,21 @@ export function NotificationToggle() {
   const checked = toggle.isPending ? toggle.variables : status !== "off";
 
   return (
-    <View className="gap-4">
-      <Separator />
-
-      <View className="flex-row items-center justify-between gap-4">
-        <View className="shrink gap-1">
-          <Text className="text-foreground text-base font-semibold">Powiadomienia</Text>
-          <Text className="text-muted-foreground text-sm leading-5">
-            O nowych wydarzeniach i przypomnieniach o tych, na które się zapisujesz.
-          </Text>
-        </View>
-        <Switch
-          checked={checked}
-          accessibilityLabel="Powiadomienia push"
-          onCheckedChange={(next) => {
-            if (!toggle.isPending) toggle.mutate(next);
-          }}
-        />
-      </View>
+    <View className="gap-3">
+      <SettingRow
+        icon={Bell}
+        title="Powiadomienia"
+        description="Nowe wydarzenia i przypomnienia"
+        action={
+          <Switch
+            checked={checked}
+            accessibilityLabel="Powiadomienia push"
+            onCheckedChange={(next) => {
+              if (!toggle.isPending) toggle.mutate(next);
+            }}
+          />
+        }
+      />
 
       {toggle.isError ? (
         <Text className="text-destructive dark:text-foreground text-xs font-semibold">

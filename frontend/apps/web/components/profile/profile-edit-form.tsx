@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowLeft, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
@@ -182,7 +182,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
         await queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
         setFormError(
           error instanceof ApiError && error.status === 400
-            ? "Profil zapisany, ale nie udało się zapisać umiejętności - sprawdź wybrane tagi."
+            ? "Profil zapisany, ale nie udało się zapisać umiejętności. Sprawdź wybrane tagi."
             : "Profil zapisany, ale nie udało się zapisać umiejętności. Spróbuj ponownie.",
         );
         return;
@@ -213,9 +213,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               Edytuj profil
             </h1>
           </div>
-          <Button type="submit" size="xl" className="gap-2" disabled={isSaving || !isDirty}>
+          <Button type="submit" size="xl" disabled={isSaving || !isDirty}>
             {isSaving ? "Zapisywanie…" : "Zapisz zmiany"}
-            {isSaving ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
 
@@ -272,7 +271,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                   id="bio"
                   value={bio}
                   onChange={(event) => setBio(event.target.value)}
-                  placeholder="Napisz kilka słów o sobie - czym się zajmujesz, w czym możesz pomóc innym alumnom…"
+                  placeholder="Napisz kilka słów o sobie: czym się zajmujesz, w czym możesz pomóc innym alumnom…"
                   maxLength={BIO_MAX_LENGTH}
                   className="min-h-32 resize-y"
                 />
@@ -433,7 +432,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               <Card className="gap-5 rounded-lg p-5 shadow-none">
                 <SectionHeading>Wykształcenie</SectionHeading>
                 <p className="text-muted-foreground text-xs leading-relaxed">
-                  Dane z zatwierdzonego wniosku - tylko do odczytu.
+                  Dane z zatwierdzonego wniosku, tylko do odczytu.
                 </p>
                 <DetailList>
                   <DetailRow label="Kierunek" value={profile.fieldOfStudy} />
@@ -496,7 +495,10 @@ export function ProfileEditForm() {
           <AlertDescription>Wróć do profilu i spróbuj ponownie.</AlertDescription>
         </Alert>
         <Button asChild variant="outline" className="mt-4">
-          <Link href={PROFILE_HREF}>Wróć do profilu</Link>
+          <Link href={PROFILE_HREF}>
+            <ArrowLeft data-icon="inline-start" />
+            Wróć do profilu
+          </Link>
         </Button>
       </div>
     );

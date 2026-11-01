@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { avatarColors, avatarInitials } from "@pkka/domain";
 import { cn } from "@/lib/utils";
 
 interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -27,31 +28,6 @@ export function Avatar({
     xl: "size-16 text-lg font-semibold",
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return "";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  };
-
-  const colors = [
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-    "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300",
-    "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
-    "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300",
-    "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-    "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
-  ];
-
-  const getColorClass = (name: string) => {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-  };
-
   const showFallback = !src || hasError;
 
   return (
@@ -59,7 +35,8 @@ export function Avatar({
       className={cn(
         "bg-muted relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border select-none",
         sizeClasses[size],
-        showFallback && getColorClass(fallback || alt),
+        showFallback && avatarColors(fallback || alt).bg,
+        showFallback && avatarColors(fallback || alt).text,
         className,
       )}
       {...props}
@@ -73,7 +50,7 @@ export function Avatar({
           className="aspect-square h-full w-full object-cover"
         />
       ) : (
-        <span>{getInitials(fallback || alt)}</span>
+        <span>{avatarInitials(fallback || alt)}</span>
       )}
     </div>
   );

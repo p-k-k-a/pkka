@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { ApiError } from "@pkka/api";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Button } from "@/components/ui/button";
@@ -92,11 +91,10 @@ export function VerificationContent() {
                     <Button
                       type="button"
                       size="sm"
-                      className="shrink-0 gap-1.5 self-start"
+                      className="shrink-0 self-start"
                       onClick={() => setIsReapplying(true)}
                     >
                       Złóż ponownie
-                      <ArrowRight data-icon="inline-end" />
                     </Button>
                   </div>
                 </div>

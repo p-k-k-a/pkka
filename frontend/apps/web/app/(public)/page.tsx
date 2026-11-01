@@ -34,10 +34,7 @@ export default function HomePage() {
               </Button>
 
               <Button asChild variant="link" size="xl" className="text-accent px-0">
-                <Link href="/info">
-                  Dowiedz się więcej
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
+                <Link href="/info">Dowiedz się więcej</Link>
               </Button>
             </div>
           </div>

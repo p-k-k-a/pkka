@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
+import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventType;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
@@ -15,6 +16,7 @@ public record EventListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String location,
         String coverImageUrl,
 
@@ -34,6 +36,7 @@ public record EventListItemResponse(
                 e.getStartsAt(),
                 e.getEndsAt(),
                 e.getType(),
+                e.getAudience(),
                 e.getLocation(),
                 e.getCoverImageUrl(),
                 e.getSeatLimit(),
