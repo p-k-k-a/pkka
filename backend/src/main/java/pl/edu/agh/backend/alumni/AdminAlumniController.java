@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.user.AlumniTagRepository;
+import pl.edu.agh.backend.user.AlumniTagResponse;
 
 @RestController
 @RequestMapping("/api/admin/alumni")
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminAlumniController {
 
     private final AlumniService alumniService;
+    private final AlumniTagRepository alumniTagRepository;
 
     @GetMapping
     @Operation(summary = "Search and list alumni as an admin", description = """
@@ -52,6 +56,16 @@ public class AdminAlumniController {
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
                     Pageable pageable) {
         return alumniService.searchForAdmin(q, tagIds, mentor, graduationYearFrom, graduationYearTo, pageable);
+    }
+
+    @GetMapping("/tags")
+    @Operation(
+            summary = "List all alumni skill tags with how many alumni have each, including alumni who hide their name",
+            description = "Most used first, then alphabetical")
+    public List<AlumniTagResponse> listAlumniTagsForAdmin() {
+        return alumniTagRepository.findCatalogForAdmin().stream()
+                .sorted(AlumniTagResponse.MOST_USED_FIRST)
+                .toList();
     }
 
     @GetMapping("/{id}")

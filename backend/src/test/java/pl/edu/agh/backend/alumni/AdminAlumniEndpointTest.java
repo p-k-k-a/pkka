@@ -28,6 +28,8 @@ import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.application.Faculty;
 import pl.edu.agh.backend.application.StudyType;
 import pl.edu.agh.backend.support.TestSecurityConfig;
+import pl.edu.agh.backend.user.AlumniTag;
+import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
@@ -50,6 +52,9 @@ class AdminAlumniEndpointTest {
 
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private AlumniTagRepository alumniTagRepository;
 
     @Autowired
     private EntityManager entityManager;
@@ -122,8 +127,26 @@ class AdminAlumniEndpointTest {
     }
 
     @Test
+    void adminTagCatalogCountsAlumniHidingTheirName() throws Exception {
+        String tagName = "Tag" + marker;
+        AlumniTag tag =
+                alumniTagRepository.save(AlumniTag.builder().name(tagName).build());
+        userRepository.findById(hidden.getId()).orElseThrow().getTags().add(tag);
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/admin/alumni/tags").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name == '%s')].usageCount", tagName).value(1));
+        mockMvc.perform(get("/api/alumni/tags").with(verifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name == '%s')].usageCount", tagName).value(0));
+    }
+
+    @Test
     void verifiedAlumnCannotUseTheAdminEndpoints() throws Exception {
         mockMvc.perform(get("/api/admin/alumni").with(verifiedAlumn())).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/alumni/tags").with(verifiedAlumn())).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/alumni/{id}", hidden.getId()).with(verifiedAlumn()))
                 .andExpect(status().isForbidden());
     }
