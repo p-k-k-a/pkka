@@ -1,5 +1,5 @@
 import { createEvent } from "ics";
-import { eventCalendarDetails } from "@pkka/domain";
+import { eventCalendarDetails, eventCalendarLocation } from "@pkka/domain";
 
 type IcsEvent = {
   id: string;
@@ -20,8 +20,7 @@ export function buildEventIcs(event: IcsEvent) {
     // Epoch milliseconds are an absolute instant, so the file is written in UTC.
     start: Date.parse(event.startsAt),
     end: Date.parse(event.endsAt),
-    // An online event has no address, so the meeting link stands in as the location.
-    location: event.location?.trim() || event.transmissionUrl || undefined,
+    location: eventCalendarLocation(event.location, event.transmissionUrl),
     description: eventCalendarDetails(event.url, event.transmissionUrl),
     url: event.url,
   });

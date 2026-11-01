@@ -12,6 +12,11 @@ function toGoogleStamp(iso: string) {
   return new Date(time).toISOString().replace(/[-:]|\.\d{3}/g, "");
 }
 
+// An online event has no address, so the meeting link stands in as the location.
+export function eventCalendarLocation(location?: string, meetingUrl?: string) {
+  return location?.trim() || meetingUrl || undefined;
+}
+
 // Calendar entry text: the meeting link first, so it is one click away in the calendar app.
 export function eventCalendarDetails(pageUrl: string, meetingUrl?: string) {
   const page = `Szczegóły wydarzenia: ${pageUrl}`;

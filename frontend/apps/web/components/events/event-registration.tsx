@@ -23,11 +23,11 @@ import {
 } from "@pkka/api";
 import {
   eventCalendarDetails,
+  eventCalendarLocation,
   eventRegistrationErrorMessage,
   type EventRegistrationAction,
   formatSeatsRemaining,
   googleCalendarUrl,
-  hasEventStarted,
   hasMeeting,
   isEventFull,
   isEventRegistrationClosed,
@@ -73,10 +73,9 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const waitlisted = status === EventRegistrationStatus.WAITLISTED;
   const full = isEventFull(event.seatLimit, event.seatsTaken);
   const closed = isEventRegistrationClosed(event);
-  // The backend refuses to sign anyone out once the event has started.
-  const started = hasEventStarted(event.startsAt);
   const meeting = hasMeeting(event.type);
-  const meetingUrl = event.transmissionUrl;
+  // A link left on an event later switched to in person is not offered.
+  const meetingUrl = meeting ? event.transmissionUrl : undefined;
 
   const refresh = () =>
     Promise.all([
@@ -90,7 +89,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({
       ...event,
-      location: event.location?.trim() || meetingUrl,
+      location: eventCalendarLocation(event.location, meetingUrl),
       details: eventCalendarDetails(eventPageUrl(), meetingUrl),
     });
     setCalendarOpen(false);
@@ -104,14 +103,17 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const downloadCalendarFile = () => {
     setCalendarOpen(false);
     try {
-      downloadIcs(`${event.slug}.ics`, buildEventIcs({ ...event, url: eventPageUrl() }));
+      downloadIcs(
+        `${event.slug}.ics`,
+        buildEventIcs({ ...event, transmissionUrl: meetingUrl, url: eventPageUrl() }),
+      );
     } catch {
       toast.error("Nie udało się przygotować pliku kalendarza.");
     }
   };
 
-  // A toast rather than an inline line: when the event has just started, the refetch
-  // swaps this view for another one and an inline error would vanish with it.
+  // A toast rather than an inline line: when the event has just ended, the refetch
+  // unmounts this component and an inline error would vanish with it.
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
     toast.error(eventRegistrationErrorMessage(error, action), {
@@ -192,7 +194,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
               </a>
             </Button>
           ) : null}
-          {waitlisted || started ? null : (
+          {waitlisted ? null : (
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button size="xl" variant={meetingUrl ? "outline" : "default"} className="gap-2">
@@ -212,16 +214,14 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
               </PopoverContent>
             </Popover>
           )}
-          {started ? null : (
-            <Button
-              size="xl"
-              variant="outline"
-              disabled={pending}
-              onClick={() => setConfirmingLeave(true)}
-            >
-              {waitlisted ? "Opuść listę rezerwową" : "Wypisz się"}
-            </Button>
-          )}
+          <Button
+            size="xl"
+            variant="outline"
+            disabled={pending}
+            onClick={() => setConfirmingLeave(true)}
+          >
+            {waitlisted ? "Opuść listę rezerwową" : "Wypisz się"}
+          </Button>
         </div>
 
         <AlertDialog
