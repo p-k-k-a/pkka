@@ -56,6 +56,17 @@ const STATUS_CONFIG: Record<ApplicationStatus, StatusConfig> = {
   },
 };
 
+function DiscordVerifyButton({ colors }: { colors: (typeof THEME)["light"] }) {
+  const { loginDiscord } = useAuth();
+
+  return (
+    <Button size="lg" variant="outline" className="w-full" onPress={loginDiscord}>
+      <DiscordIcon size={18} color={colors.foreground} />
+      <Text className="font-bold">Zweryfikuj przez Discord</Text>
+    </Button>
+  );
+}
+
 function NoApplicationView({ colors }: { colors: (typeof THEME)["light"] }) {
   return (
     <View className="gap-5">
@@ -74,10 +85,7 @@ function NoApplicationView({ colors }: { colors: (typeof THEME)["light"] }) {
       </View>
 
       <View className="gap-3 mt-2">
-        <Button size="lg" variant="outline" className="w-full" disabled>
-          <DiscordIcon size={18} color={colors.foreground} />
-          <Text className="font-bold">Zweryfikuj przez Discord (wkrótce)</Text>
-        </Button>
+        <DiscordVerifyButton colors={colors} />
 
         <Button size="lg" className="w-full" onPress={() => router.push("/application")}>
           <ClipboardList size={18} color={colors.primaryForeground} />
@@ -159,6 +167,7 @@ function ApplicationStatusView({
             <ClipboardList size={18} color={colors.primaryForeground} />
             <Text className="font-bold">Złóż wniosek ponownie</Text>
           </Button>
+          <DiscordVerifyButton colors={colors} />
         </View>
       ) : null}
     </View>

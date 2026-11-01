@@ -1,10 +1,29 @@
 export const AUTH_RETURN_STORAGE_KEY = "navigated_to_auth";
+const DISCORD_VERIFICATION_STORAGE_KEY = "discord_verification";
 
 export function markAuthNavigation(): void {
   try {
     sessionStorage.setItem(AUTH_RETURN_STORAGE_KEY, "true");
   } catch {
     // sessionStorage unavailable np. Private browsing.
+  }
+}
+
+export function markDiscordVerification(): void {
+  try {
+    sessionStorage.setItem(DISCORD_VERIFICATION_STORAGE_KEY, "true");
+  } catch {
+    // sessionStorage unavailable np. Private browsing.
+  }
+}
+
+export function takeDiscordVerification(): boolean {
+  try {
+    const marked = sessionStorage.getItem(DISCORD_VERIFICATION_STORAGE_KEY) === "true";
+    sessionStorage.removeItem(DISCORD_VERIFICATION_STORAGE_KEY);
+    return marked;
+  } catch {
+    return false;
   }
 }
 
