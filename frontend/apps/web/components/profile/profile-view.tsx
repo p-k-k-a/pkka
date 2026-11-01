@@ -1,15 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Briefcase,
-  CalendarCheck,
-  EyeOff,
-  GraduationCap,
-  Mail,
-} from "lucide-react";
+import { BookOpen, Briefcase, CalendarCheck, EyeOff, GraduationCap, Mail } from "lucide-react";
 import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProfileAside, ProfileAsideItem } from "@/components/profile/profile-aside";
@@ -61,10 +53,7 @@ export function ProfileView(props: ProfileViewProps) {
   // The owner edits; everyone else gets every direct channel the alumn shares.
   const primaryActions = isOwn ? (
     <Button asChild size="xl">
-      <Link href={EDIT_HREF}>
-        Edytuj profil
-        <ArrowRight data-icon="inline-end" />
-      </Link>
+      <Link href={EDIT_HREF}>Edytuj profil</Link>
     </Button>
   ) : contacts.discordUrl || contacts.email ? (
     <>

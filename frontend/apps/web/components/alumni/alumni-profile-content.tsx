@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { ApiError, useGetAlumniProfile } from "@pkka/api";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -67,7 +67,10 @@ export function AlumniProfileContent({ id }: { id: string }) {
             </Button>
           )}
           <Button asChild variant="ghost">
-            <Link href={directoryHref}>Wróć do katalogu</Link>
+            <Link href={directoryHref}>
+              <ArrowLeft data-icon="inline-start" />
+              Wróć do katalogu
+            </Link>
           </Button>
         </div>
       </div>

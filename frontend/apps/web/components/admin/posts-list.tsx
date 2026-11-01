@@ -141,7 +141,7 @@ export function PostsList() {
           ) : posts.length === 0 ? (
             <p className="text-muted-foreground">
               {statusFilter === "ALL"
-                ? "Brak wpisów — napisz pierwszy."
+                ? "Brak wpisów. Napisz pierwszy."
                 : "Brak wpisów o tym statusie."}
             </p>
           ) : (
