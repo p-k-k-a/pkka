@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import pl.edu.agh.backend.application.ApplicationService;
 import pl.edu.agh.backend.user.UserProvisioningService;
 
 @Component
@@ -28,6 +29,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserProvisioningService userProvisioningService;
+    private final ApplicationService applicationService;
 
     @Value("${app.mobile.deep-link-scheme}")
     private String mobileDeepLinkScheme;
@@ -42,6 +44,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if (auth.getPrincipal() instanceof OidcUser oidc) {
             userProvisioningService.syncIdentityFromClaims(
                     oidc.getSubject(), oidc.getGivenName(), oidc.getFamilyName(), oidc.getEmail());
+            approveIfDiscordVouched(oidc.getSubject());
         }
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
@@ -51,6 +54,14 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
             handleMobile(req, res, token);
         } else {
             new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl).onAuthenticationSuccess(req, res, auth);
+        }
+    }
+
+    private void approveIfDiscordVouched(String keycloakId) {
+        try {
+            applicationService.approveIfDiscordVouched(keycloakId);
+        } catch (RuntimeException ex) {
+            log.warn("Discord verification at login failed for {}: {}", keycloakId, ex.getMessage());
         }
     }
 

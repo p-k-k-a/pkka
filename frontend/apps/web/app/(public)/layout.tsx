@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AGH_PRIVACY_NOTICE_URL } from "@pkka/domain";
 import { PublicSessionRedirect } from "@/components/auth/public-session-redirect";
 import { NavLink } from "@/components/nav-link";
 import { PublicHeaderAuth } from "@/components/layout/public-header-auth";
@@ -50,6 +51,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <Link href="/info" className="font-heading text-band-foreground hover:underline">
               Dowiedz się więcej
             </Link>
+            <a
+              href={AGH_PRIVACY_NOTICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-band-foreground/70 block hover:underline"
+            >
+              Ochrona danych osobowych
+            </a>
             <p className="text-band-foreground/70">© 2026 Klub Alumnów WI AGH</p>
           </div>
         </div>
