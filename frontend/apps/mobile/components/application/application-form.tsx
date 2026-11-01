@@ -190,6 +190,7 @@ function ApplicationForm() {
               <SelectField
                 value={field.state.value}
                 options={FACULTY_OPTIONS}
+                title="Wydział"
                 placeholder="Wybierz wydział"
                 onChange={(value) => field.handleChange(value)}
               />
@@ -230,6 +231,7 @@ function ApplicationForm() {
               <SelectField
                 value={field.state.value}
                 options={STUDY_TYPE_OPTIONS}
+                title="Rodzaj studiów"
                 placeholder="Wybierz stopień"
                 onChange={(value) => field.handleChange(value)}
               />
