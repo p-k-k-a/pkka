@@ -34,8 +34,7 @@ public class AdminAlumniController {
     @GetMapping
     @Operation(summary = "Search and list alumni as an admin", description = """
                     Same filters, sorting and paging as `GET /api/alumni`, but alumni who hide their name are
-                    listed too and `q` matches their name. `visibility` says what each alumnus hides from other
-                    alumni.
+                    listed too and `q` matches their name.
                     """)
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "OK"),
