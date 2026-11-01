@@ -9,6 +9,7 @@ public record EventOccupancyResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID eventId,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         Integer seatLimit,
         @Schema(requiredMode = RequiredMode.REQUIRED) int registered,
         @Schema(requiredMode = RequiredMode.REQUIRED) int waitlisted,

@@ -62,8 +62,8 @@ public class EventService {
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {
         Instant now = Instant.now();
         return switch (timeframe == null ? EventTimeframe.UPCOMING : timeframe) {
-            case UPCOMING -> startsAfter(now);
-            case PAST -> startsBeforeOrEqual(now);
+            case UPCOMING -> endsAfter(now);
+            case PAST -> endsBeforeOrEqual(now);
             case ALL -> Specification.unrestricted();
         };
     }
