@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
-import { type PageAlumniListItemResponse, useListAlumni } from "@pkka/api";
+import { type PageAlumniListItemResponse, useListAlumni, useListAlumniTags } from "@pkka/api";
 import {
   ALUMNI_SORT_OPTIONS,
   buildAlumniParams,
@@ -11,7 +11,7 @@ import {
   type AlumniSortOption,
 } from "@pkka/domain";
 import { AlumniCard } from "@/components/alumni/alumni-card";
-import { AlumniFiltersPanel } from "@/components/alumni/alumni-filters";
+import { AlumniFiltersPanel, type AlumniTagsQuery } from "@/components/alumni/alumni-filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,10 +31,12 @@ export function AlumniDirectory() {
     // Keeps the current results on screen while the next page or filter loads.
     { query: { placeholderData: (previous) => previous } },
   );
+  const tagsQuery = useListAlumniTags();
   return (
     <AlumniDirectoryView
       directory={directory}
       directoryHref={ALUMNI_DIRECTORY_HREF}
+      tagsQuery={tagsQuery}
       pageData={data?.status === 200 ? data.data : undefined}
       isPending={isPending}
       isError={isError}
@@ -72,6 +74,7 @@ export function useAlumniDirectoryState() {
 type AlumniDirectoryViewProps = {
   directory: ReturnType<typeof useAlumniDirectoryState>;
   directoryHref: string;
+  tagsQuery: AlumniTagsQuery;
   pageData: PageAlumniListItemResponse | undefined;
   isPending: boolean;
   isError: boolean;
@@ -82,6 +85,7 @@ type AlumniDirectoryViewProps = {
 export function AlumniDirectoryView({
   directory,
   directoryHref,
+  tagsQuery,
   pageData,
   isPending,
   isError,
@@ -168,7 +172,7 @@ export function AlumniDirectoryView({
       <section className="bg-background px-4 pb-10 md:px-10 md:pb-20">
         <div className="mx-auto grid max-w-[1280px] items-start gap-8 lg:grid-cols-[260px_1fr]">
           <aside className="lg:sticky lg:top-6">
-            <AlumniFiltersPanel value={filters} onChange={updateFilters} />
+            <AlumniFiltersPanel tagsQuery={tagsQuery} value={filters} onChange={updateFilters} />
           </aside>
 
           <div ref={resultsRef} className="flex scroll-mt-6 flex-col gap-6">

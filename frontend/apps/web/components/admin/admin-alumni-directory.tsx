@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useListAlumniForAdmin } from "@pkka/api";
+import { useListAlumniForAdmin, useListAlumniTagsForAdmin } from "@pkka/api";
 import { isAdmin } from "@pkka/domain";
 import { AlumniDirectoryView, useAlumniDirectoryState } from "@/components/alumni/alumni-directory";
 import { ADMIN_ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
@@ -24,10 +24,12 @@ export function AdminAlumniDirectory() {
     directory.params,
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
+  const tagsQuery = useListAlumniTagsForAdmin({ query: { enabled: admin } });
   return (
     <AlumniDirectoryView
       directory={directory}
       directoryHref={ADMIN_ALUMNI_DIRECTORY_HREF}
+      tagsQuery={tagsQuery}
       pageData={data?.status === 200 ? data.data : undefined}
       isPending={isPending}
       isError={isError}
