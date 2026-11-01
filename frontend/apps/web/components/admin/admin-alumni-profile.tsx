@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useGetAlumniProfileForAdmin } from "@pkka/api";
 import { isAdmin } from "@pkka/domain";
 import { AlumniProfileState } from "@/components/alumni/alumni-profile-content";
-import { ADMIN_ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 import { useAuth } from "@/lib/auth-context";
 
 export function AdminAlumniProfile({ id }: { id: string }) {
@@ -25,7 +24,6 @@ export function AdminAlumniProfile({ id }: { id: string }) {
   const profile = data?.status === 200 ? data.data : undefined;
   return (
     <AlumniProfileState
-      directoryBase={ADMIN_ALUMNI_DIRECTORY_HREF}
       profile={
         profile && {
           ...profile,

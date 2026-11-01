@@ -11,7 +11,7 @@ import {
   Mail,
 } from "lucide-react";
 import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
-import { DetailBackLink } from "@/components/content/detail-back-link";
+import { HistoryBackButton } from "@/components/content/history-back-button";
 import { ProfileAside, ProfileAsideItem } from "@/components/profile/profile-aside";
 import { ProfileContactList } from "@/components/profile/profile-contact-list";
 import { SectionHeading } from "@/components/profile/section-heading";
@@ -31,7 +31,7 @@ const EDIT_HREF = "/dashboard/profile/edit";
  */
 type ProfileViewProps =
   | { variant: "own"; profile: ProfileResponse }
-  | { variant: "alumn"; profile: AlumniProfileResponse; directoryHref: string };
+  | { variant: "alumn"; profile: AlumniProfileResponse };
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
@@ -90,9 +90,7 @@ export function ProfileView(props: ProfileViewProps) {
   return (
     <div className="bg-background px-4 py-10 md:px-10 md:py-20">
       <div className="mx-auto max-w-[1280px]">
-        {props.variant === "alumn" ? (
-          <DetailBackLink href={props.directoryHref} label="Wróć do katalogu" />
-        ) : null}
+        {props.variant === "alumn" ? <HistoryBackButton className="-ml-2" /> : null}
 
         <div
           className={`grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px] ${isOwn ? "" : "mt-10"}`}

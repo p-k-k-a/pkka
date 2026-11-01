@@ -68,7 +68,7 @@ export function useAlumniDirectoryState() {
   }, [search, currentSearch, pathname, router]);
 
   const params = { ...buildAlumniParams(debouncedQuery, filters, sort), page };
-  return { query, setQuery, filters, setFilters, sort, setSort, page, setPage, search, params };
+  return { query, setQuery, filters, setFilters, sort, setSort, page, setPage, params };
 }
 
 type AlumniDirectoryViewProps = {
@@ -92,7 +92,7 @@ export function AlumniDirectoryView({
   isPlaceholderData,
   refetch,
 }: AlumniDirectoryViewProps) {
-  const { query, setQuery, filters, setFilters, sort, setSort, page, setPage, search } = directory;
+  const { query, setQuery, filters, setFilters, sort, setSort, page, setPage } = directory;
   const resultsRef = useRef<HTMLDivElement>(null);
   const alumni = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
@@ -200,12 +200,7 @@ export function AlumniDirectoryView({
                   className={`grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 xl:grid-cols-3 ${isPlaceholderData ? "opacity-60" : ""}`}
                 >
                   {alumni.map((alumn) => (
-                    <AlumniCard
-                      key={alumn.id}
-                      alumn={alumn}
-                      directoryHref={directoryHref}
-                      search={search}
-                    />
+                    <AlumniCard key={alumn.id} alumn={alumn} directoryHref={directoryHref} />
                   ))}
                 </div>
                 {totalPages > 1 ? (

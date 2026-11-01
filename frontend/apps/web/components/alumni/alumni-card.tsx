@@ -9,11 +9,9 @@ const VISIBLE_TAGS = 3;
 type AlumniCardProps = {
   alumn: AlumniListItemResponse;
   directoryHref: string;
-  /** The directory's current `?…`, carried to the profile so its back link can return to it. */
-  search?: string;
 };
 
-export function AlumniCard({ alumn, directoryHref, search = "" }: AlumniCardProps) {
+export function AlumniCard({ alumn, directoryHref }: AlumniCardProps) {
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
   const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" @ ");
   const tags = alumn.tags.map((tag) => tag.name);
@@ -23,7 +21,7 @@ export function AlumniCard({ alumn, directoryHref, search = "" }: AlumniCardProp
 
   return (
     <Link
-      href={`${directoryHref}/${alumn.id}${search}`}
+      href={`${directoryHref}/${alumn.id}`}
       className="group focus-visible:ring-ring block h-full rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0">

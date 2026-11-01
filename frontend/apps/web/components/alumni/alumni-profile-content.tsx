@@ -1,20 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { ApiError, type AlumniProfileResponse, useGetAlumniProfile } from "@pkka/api";
+import { HistoryBackButton } from "@/components/content/history-back-button";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
   return (
     <AlumniProfileState
-      directoryBase={ALUMNI_DIRECTORY_HREF}
       profile={data?.status === 200 ? data.data : undefined}
       isPending={isPending}
       isFetching={isFetching}
@@ -26,7 +23,6 @@ export function AlumniProfileContent({ id }: { id: string }) {
 
 type AlumniProfileStateProps = {
   profile: AlumniProfileResponse | undefined;
-  directoryBase: string;
   isPending: boolean;
   isFetching: boolean;
   error: unknown;
@@ -34,17 +30,12 @@ type AlumniProfileStateProps = {
 };
 
 export function AlumniProfileState({
-  directoryBase,
   profile,
   isPending,
   isFetching,
   error,
   refetch,
 }: AlumniProfileStateProps) {
-  // The card passes the directory's criteria along, so going back restores them.
-  const searchParams = useSearchParams().toString();
-  const directoryHref = `${directoryBase}${searchParams ? `?${searchParams}` : ""}`;
-
   if (isPending) return <AlumniProfileSkeleton />;
 
   if (!profile) {
@@ -75,15 +66,13 @@ export function AlumniProfileState({
               {isFetching ? "Ładowanie…" : "Spróbuj ponownie"}
             </Button>
           )}
-          <Button asChild variant="ghost">
-            <Link href={directoryHref}>Wróć do katalogu</Link>
-          </Button>
+          <HistoryBackButton />
         </div>
       </div>
     );
   }
 
-  return <ProfileView variant="alumn" profile={profile} directoryHref={directoryHref} />;
+  return <ProfileView variant="alumn" profile={profile} />;
 }
 
 function AlumniProfileSkeleton() {
