@@ -95,9 +95,9 @@ export function SearchMultiSelect({
               key={option.id}
               onPress={() => toggle(option.id)}
               accessibilityLabel={`Usuń: ${option.label}`}
-              className="bg-muted flex-row items-center gap-1 rounded-md px-3 py-1.5 active:opacity-70"
+              className="border-accent/25 bg-accent/10 flex-row items-center gap-1.5 rounded-lg border px-3 py-1 active:opacity-70"
             >
-              <Text className="text-foreground text-xs font-semibold">
+              <Text className="text-foreground text-[11px] font-semibold tracking-wider">
                 {uppercaseChips ? option.label.toUpperCase() : option.label}
               </Text>
               <X size={12} color={theme.mutedForeground} />

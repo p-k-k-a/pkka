@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Audience,
@@ -215,15 +215,8 @@ export function EventForm({ event }: EventFormProps) {
               {isEditing ? "Edytuj wydarzenie" : "Dodaj wydarzenie do kalendarza"}
             </h1>
           </div>
-          <Button
-            type="button"
-            size="xl"
-            className="gap-2"
-            disabled={!canSave}
-            onClick={handleSave}
-          >
+          <Button type="button" size="xl" disabled={!canSave} onClick={handleSave}>
             {isPending ? "Zapisywanie…" : isEditing ? "Zapisz zmiany" : "Opublikuj wydarzenie"}
-            {isPending ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
 

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,8 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final CallerUserService callerUserService;
+    private final UserRepository userRepository;
+    private final DiscordAlumnVouch discordAlumnVouch;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -42,15 +45,13 @@ public class ApplicationService {
                 .newsletterSubscription(request.newsletterSubscription())
                 .phoneNumber(request.phoneNumber())
                 .interests(new ArrayList<>(request.interests()))
-                .discordVouched(vouchedByDiscord)
                 .build();
 
         Instant now = Instant.now();
         request.consents().forEach(type -> application.addConsent(type, now));
 
-        if (application.isDiscordVouched()) {
-            application.autoApprove();
-            eventPublisher.publishEvent(new ApplicationApprovedEvent(applicant.getKeycloakId()));
+        if (vouchedByDiscord) {
+            approveByDiscordVouch(application);
         }
 
         try {
@@ -58,6 +59,33 @@ public class ApplicationService {
         } catch (DataIntegrityViolationException ex) {
             throw new ApplicationAlreadyExistsException();
         }
+    }
+
+    @Transactional
+    public void approveIfDiscordVouched(String keycloakId) {
+        if (applicationRepository.existsByApplicantKeycloakIdAndStatus(keycloakId, ApplicationStatus.APPROVED)) {
+            return;
+        }
+        userRepository
+                .findByKeycloakId(keycloakId)
+                .filter(discordAlumnVouch::vouchesFor)
+                .map(this::pendingOrEmptyApplication)
+                .ifPresent(application -> {
+                    approveByDiscordVouch(application);
+                    applicationRepository.saveAndFlush(application);
+                });
+    }
+
+    private Application pendingOrEmptyApplication(User applicant) {
+        return applicationRepository
+                .findByApplicantIdAndStatus(applicant.getId(), ApplicationStatus.UNDER_REVIEW)
+                .orElseGet(() -> Application.builder().applicant(applicant).build());
+    }
+
+    private void approveByDiscordVouch(Application application) {
+        application.approveByDiscordVouch();
+        eventPublisher.publishEvent(
+                new ApplicationApprovedEvent(application.getApplicant().getKeycloakId()));
     }
 
     /** No local row means no application, so this never provisions one the way the write paths do. */

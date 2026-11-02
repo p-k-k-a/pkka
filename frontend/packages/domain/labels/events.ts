@@ -13,7 +13,7 @@ const REGISTRATION_STATUS_LABELS_UPPER: Record<EventRegistrationStatus, string> 
 
 const AUDIENCE_LABELS: Record<Audience, string> = {
   PUBLIC: "Publiczne",
-  ALL_ALUMNI: "Alumini",
+  ALL_ALUMNI: "Alumni",
   SPECIFIC_GROUP: "Wybrana grupa",
 };
 

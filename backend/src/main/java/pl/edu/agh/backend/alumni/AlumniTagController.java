@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ProblemDetail;
@@ -34,8 +33,7 @@ public class AlumniTagController {
             description = "Most used first, then alphabetical")
     public List<AlumniTagResponse> listAlumniTags() {
         return alumniTagRepository.findCatalog().stream()
-                .sorted(Comparator.comparing(AlumniTagResponse::usageCount, Comparator.reverseOrder())
-                        .thenComparing(AlumniTagResponse::name, String.CASE_INSENSITIVE_ORDER))
+                .sorted(AlumniTagResponse.MOST_USED_FIRST)
                 .toList();
     }
 

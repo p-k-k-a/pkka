@@ -93,16 +93,13 @@ export function AnnouncementsSection({ variant = "public" }: AnnouncementsSectio
 
   return (
     <div>
-      <section className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <section className="bg-background px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8">
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
+          <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
             Aktualności
-          </p>
-          <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
-            Co słychać w Klubie Alumnów
           </h1>
           <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-            Ogłoszenia, relacje i informacje od zespołu Klubu oraz Wydziału Informatyki AGH.
+            Ogłoszenia i relacje od Klubu oraz Wydziału Informatyki AGH.
           </p>
         </div>
       </section>

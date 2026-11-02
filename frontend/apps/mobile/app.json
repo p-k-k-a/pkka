@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "pkka",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pkka.app"
@@ -19,7 +18,6 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "userInterfaceStyle": "automatic",
       "package": "com.pkka.app",
@@ -127,6 +125,12 @@
       },
       "router": {}
     },
-    "owner": "pkka"
+    "owner": "pkka",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c7520f8c-48d2-4d78-af05-c5eb503e5882"
+    }
   }
 }

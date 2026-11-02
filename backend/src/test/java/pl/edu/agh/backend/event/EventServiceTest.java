@@ -60,7 +60,8 @@ class EventServiceTest {
         when(eventRegistrationService.ownStatusByEvent(Caller.anonymous(), List.of(eventId)))
                 .thenReturn(Map.of());
 
-        var page = eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
+        var page =
+                eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, null, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);

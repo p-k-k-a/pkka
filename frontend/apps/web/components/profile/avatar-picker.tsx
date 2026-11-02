@@ -31,7 +31,7 @@ export function AvatarPicker({ fallback }: AvatarPickerProps) {
           Zmień zdjęcie
         </Button>
         <p className="text-muted-foreground text-center text-[13px] sm:text-left">
-          Dodawanie zdjęć jeszcze nie działa — na razie wyświetlamy Twoje inicjały.
+          Dodawanie zdjęć jeszcze nie działa. Na razie wyświetlamy Twoje inicjały.
         </p>
       </div>
     </div>

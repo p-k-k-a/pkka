@@ -1,13 +1,21 @@
+import { useIsAlumni } from "@/components/auth/require-alumni";
 import { EventCard } from "@/components/events/event-card";
+import {
+  countActiveEventFilters,
+  EMPTY_EVENT_FILTERS,
+  EventFilterSheet,
+  type EventFilters,
+} from "@/components/events/event-filter-sheet";
 import { CtaCard } from "@/components/home/cta-card";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { END_REACHED_THRESHOLD, nextPageParam, pageItems } from "@/lib/pagination";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
-import { EventTimeframe, useListEventsInfinite } from "@pkka/api";
+import { useThemeColors } from "@/lib/theme";
+import { Audience, EventTimeframe, useListEventsInfinite } from "@pkka/api";
 import { router } from "expo-router";
+import { SlidersHorizontal } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
@@ -20,117 +28,133 @@ const CTA = {
   primaryLabel: "Zaloguj się do portalu",
 };
 
-const TIMEFRAMES = [
-  { value: EventTimeframe.UPCOMING, label: "Nadchodzące" },
-  { value: EventTimeframe.PAST, label: "Archiwum" },
-];
+const DESCRIPTION =
+  "Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH. Dołącz do nas i buduj sieć kontaktów.";
+const ALUMNI_DESCRIPTION =
+  "Przeglądaj spotkania i prelekcje społeczności Alumni WI AGH, także te tylko dla absolwentów.";
 
-function TimeframeTabs({
-  value,
-  onChange,
-}: {
-  value: EventTimeframe;
-  onChange: (timeframe: EventTimeframe) => void;
-}) {
+function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: () => void }) {
+  const theme = useThemeColors();
+
   return (
-    <ToggleGroup
-      type="single"
-      variant="outline"
-      value={value}
-      onValueChange={(next) => {
-        if (next) onChange(next as EventTimeframe);
-      }}
-    >
-      {TIMEFRAMES.map((option, index) => (
-        <ToggleGroupItem
-          key={option.value}
-          value={option.value}
-          isFirst={index === 0}
-          isLast={index === TIMEFRAMES.length - 1}
-          className={cn(
-            "h-10 flex-1",
-            value === option.value
-              ? "bg-primary/15 border-primary active:bg-primary/25"
-              : "active:bg-muted",
-          )}
-        >
-          <Text className="text-foreground text-[13px] font-bold">{option.label}</Text>
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+    <Button variant="outline" className="active:bg-muted" onPress={onPress}>
+      <SlidersHorizontal size={16} color={theme.foreground} />
+      <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
+        Filtruj
+      </Text>
+      {activeCount > 0 ? (
+        <View className="bg-primary ml-1 size-5 items-center justify-center rounded-full">
+          <Text className="text-primary-foreground text-[11px] font-bold">{activeCount}</Text>
+        </View>
+      ) : null}
+    </Button>
   );
 }
 
 function ListHeader({
-  timeframe,
-  onTimeframeChange,
+  activeFilterCount,
+  onOpenFilters,
 }: {
-  timeframe: EventTimeframe;
-  onTimeframeChange: (timeframe: EventTimeframe) => void;
+  activeFilterCount: number;
+  onOpenFilters: () => void;
 }) {
   const { user } = useAuth();
+  const isAlumni = useIsAlumni();
 
   return (
-    <View className="gap-10">
-      <PageHeader
-        title="Wydarzenia"
-        description="Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH. Dołącz do nas i buduj sieć kontaktów."
-      />
+    <View className="gap-6">
+      <PageHeader title="Wydarzenia" description={isAlumni ? ALUMNI_DESCRIPTION : DESCRIPTION} />
       {!user && (
         <View className="px-5">
           <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
         </View>
       )}
       <View className="px-5">
-        <TimeframeTabs value={timeframe} onChange={onTimeframeChange} />
+        <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
       </View>
     </View>
   );
 }
 
 export default function EventsScreen() {
-  const [timeframe, setTimeframe] = useState<EventTimeframe>(EventTimeframe.UPCOMING);
+  const [filters, setFilters] = useState<EventFilters>(EMPTY_EVENT_FILTERS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const isAlumni = useIsAlumni();
+  const appliedFilters = { ...filters, alumniOnly: isAlumni && filters.alumniOnly };
+  const { timeframe } = appliedFilters;
   const archive = timeframe === EventTimeframe.PAST;
-  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useListEventsInfinite(
-      { size: PAGE_SIZE, timeframe, ...(archive ? { sort: ["startsAt,desc"] } : {}) },
-      { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
-    );
+  const {
+    data,
+    isPending,
+    isError,
+    isRefetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useListEventsInfinite(
+    {
+      size: PAGE_SIZE,
+      timeframe,
+      ...(appliedFilters.alumniOnly ? { audience: Audience.ALL_ALUMNI } : {}),
+      ...(archive ? { sort: ["startsAt,desc"] } : {}),
+    },
+    { query: { initialPageParam: 0, getNextPageParam: nextPageParam } },
+  );
 
   const events = useMemo(() => pageItems(data?.pages), [data]);
 
   return (
-    <FlatList
-      className="flex-1 bg-background"
-      contentContainerClassName="pb-8"
-      showsVerticalScrollIndicator={false}
-      data={events}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View className="px-5">
-          <EventCard event={item} />
-        </View>
-      )}
-      ItemSeparatorComponent={() => <View className="h-6" />}
-      ListHeaderComponent={<ListHeader timeframe={timeframe} onTimeframeChange={setTimeframe} />}
-      ListHeaderComponentStyle={{ marginBottom: 24 }}
-      onEndReached={() => {
-        if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-      }}
-      onEndReachedThreshold={END_REACHED_THRESHOLD}
-      ListFooterComponent={
-        isPending || isFetchingNextPage ? (
-          <ActivityIndicator className="py-8" />
-        ) : isError ? (
-          <Text className="py-8 text-center text-sm text-muted-foreground">
-            Nie udało się załadować wydarzeń.
-          </Text>
-        ) : events.length === 0 ? (
-          <Text className="py-8 text-center text-sm text-muted-foreground">
-            {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
-          </Text>
-        ) : null
-      }
-    />
+    <>
+      <FlatList
+        className="flex-1 bg-background"
+        contentContainerClassName="pb-8"
+        showsVerticalScrollIndicator={false}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+        data={events}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View className="px-5">
+            <EventCard event={item} />
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View className="h-6" />}
+        ListHeaderComponent={
+          <ListHeader
+            activeFilterCount={countActiveEventFilters(appliedFilters)}
+            onOpenFilters={() => setFiltersOpen(true)}
+          />
+        }
+        ListHeaderComponentStyle={{ marginBottom: 24 }}
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+        }}
+        onEndReachedThreshold={END_REACHED_THRESHOLD}
+        ListFooterComponent={
+          isPending || isFetchingNextPage ? (
+            <ActivityIndicator className="py-8" />
+          ) : isError ? (
+            <Text className="py-8 text-center text-sm text-muted-foreground">
+              Nie udało się załadować wydarzeń.
+            </Text>
+          ) : events.length === 0 ? (
+            <Text className="py-8 text-center text-sm text-muted-foreground">
+              {archive ? "Brak wydarzeń w archiwum." : "Brak nadchodzących wydarzeń."}
+            </Text>
+          ) : null
+        }
+      />
+      <EventFilterSheet
+        visible={filtersOpen}
+        value={appliedFilters}
+        showAudience={isAlumni}
+        onClose={() => setFiltersOpen(false)}
+        onApply={(next) => {
+          setFilters(next);
+          setFiltersOpen(false);
+        }}
+      />
+    </>
   );
 }

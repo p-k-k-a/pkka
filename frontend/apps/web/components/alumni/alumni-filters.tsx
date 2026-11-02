@@ -1,6 +1,6 @@
 "use client";
 
-import { useListAlumniTags } from "@pkka/api";
+import type { AlumniTagResponse } from "@pkka/api";
 import {
   ALUMNI_YEAR_MAX,
   ALUMNI_YEAR_MIN,
@@ -30,13 +30,19 @@ function FilterHeading({ htmlFor, children }: { htmlFor?: string; children: Reac
   );
 }
 
+export type AlumniTagsQuery = {
+  data?: { data: AlumniTagResponse[] };
+  isPending: boolean;
+  isError: boolean;
+};
+
 type AlumniFiltersPanelProps = {
+  tagsQuery: AlumniTagsQuery;
   value: AlumniFilters;
   onChange: (filters: AlumniFilters) => void;
 };
 
-export function AlumniFiltersPanel({ value, onChange }: AlumniFiltersPanelProps) {
-  const tagsQuery = useListAlumniTags();
+export function AlumniFiltersPanel({ tagsQuery, value, onChange }: AlumniFiltersPanelProps) {
   const catalog = tagsQuery.data?.data ?? [];
   const [fromYear, toYear] = value.yearRange;
   const activeCount = countActiveAlumniFilters(value);

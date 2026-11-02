@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVerificationStatus } from "@/lib/use-verification-status";
@@ -33,10 +33,7 @@ export function RequireAlumni({ children }: { children: React.ReactNode }) {
             będziesz mógł się z nimi skontaktować.
           </p>
           <Button asChild size="xl" className="font-bold">
-            <Link href="/dashboard/verification">
-              Zweryfikuj się
-              <ArrowRight data-icon="inline-end" />
-            </Link>
+            <Link href="/dashboard/verification">Zweryfikuj się</Link>
           </Button>
         </div>
       </section>

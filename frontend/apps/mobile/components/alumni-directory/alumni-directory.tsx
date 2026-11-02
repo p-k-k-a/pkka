@@ -58,15 +58,17 @@ export function AlumniDirectory() {
         </Text>
 
         <View className="justify-center">
-          <View className="absolute bottom-0 left-3 top-0 z-10 justify-center">
+          <View className="pointer-events-none absolute bottom-0 left-3 top-0 z-10 justify-center">
             <Search size={18} color={theme.mutedForeground} />
           </View>
           <Input
             value={query}
             onChangeText={setQuery}
-            placeholder="Szukaj po nazwisku, firmie..."
+            placeholder="Szukaj alumnów"
             autoCapitalize="none"
-            className="pl-10"
+            autoCorrect={false}
+            returnKeyType="search"
+            className="bg-muted focus:border-primary dark:focus:border-primary border-transparent pl-10 dark:border-transparent"
           />
         </View>
 

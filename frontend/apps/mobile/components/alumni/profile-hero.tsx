@@ -1,8 +1,9 @@
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import { useThemeColors } from "@/lib/theme";
-import { HeartHandshake, UserRound } from "lucide-react-native";
+import { HeartHandshake } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
@@ -16,19 +17,18 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
 
   return (
     <View className="gap-6">
-      <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
-        <UserRound size={96} color={theme.mutedForeground} strokeWidth={1.5} />
-      </View>
-
       <View className="gap-1">
         {profile.visibility.name && name ? (
-          <Text
-            role="heading"
-            aria-level="1"
-            className="font-heading text-foreground text-[33px] font-semibold leading-tight tracking-tight"
-          >
-            {name}
-          </Text>
+          <View className="flex-row items-center gap-4">
+            <InitialsAvatar name={name} size="lg" />
+            <Text
+              role="heading"
+              aria-level="1"
+              className="font-heading text-foreground flex-1 text-[33px] font-semibold leading-tight tracking-tight"
+            >
+              {name}
+            </Text>
+          </View>
         ) : null}
         {alumnSinceDate ? (
           <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">

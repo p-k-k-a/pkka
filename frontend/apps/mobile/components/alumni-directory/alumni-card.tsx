@@ -1,9 +1,10 @@
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { SkillChips } from "@/components/alumni/skill-chips";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { router } from "expo-router";
-import { ArrowRight, UserRound } from "lucide-react-native";
+import { ArrowRight } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type AlumniCardProps = {
@@ -18,9 +19,7 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
   return (
     <View className="bg-muted gap-5 rounded-2xl p-6">
       <View className="flex-row gap-4">
-        <View className="bg-background size-16 items-center justify-center overflow-hidden rounded-xl">
-          <UserRound size={32} color={theme.mutedForeground} strokeWidth={1.5} />
-        </View>
+        <InitialsAvatar name={name} />
         <View className="flex-1 gap-1.5">
           <View className="gap-0.5">
             <Text className="font-heading text-foreground text-lg font-semibold leading-tight">

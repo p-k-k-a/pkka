@@ -1,3 +1,4 @@
+import { ProseContent } from "@/components/content/prose-content";
 import { Text } from "@/components/ui/text";
 import { formatPublishedAtCompact } from "@pkka/domain";
 import type { PostResponse } from "@pkka/api";
@@ -30,10 +31,7 @@ export function BlogPostView({ post }: BlogPostViewProps) {
 
         <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="font-heading text-foreground text-xl font-semibold">O wpisie</Text>
-          <Text className="text-foreground/90 text-base leading-7">{post.content}</Text>
-        </View>
+        <ProseContent content={post.content} />
       </View>
     </ScrollView>
   );

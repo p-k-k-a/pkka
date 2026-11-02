@@ -32,7 +32,7 @@ export function VisibilityField({
         id={id}
         // The visible label only reads "Widoczne"/"Ukryte", so the field name
         // has to come from here for screen readers.
-        aria-label={`${label} — widoczne dla alumnów`}
+        aria-label={`${label}: widoczne dla alumnów`}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled || !hasValue}

@@ -20,9 +20,13 @@ public record AdminEventRegistrationResponse(
         Instant registeredAt,
 
         @Schema(description = "1-based place in the queue; present only for `WAITLISTED`")
-        Integer waitlistPosition) {
+        Integer waitlistPosition,
 
-    public static AdminEventRegistrationResponse from(EventRegistration registration, Integer waitlistPosition) {
+        @Schema(description = "User id for `/api/admin/alumni/{id}`; present only for verified alumni")
+        UUID alumnusId) {
+
+    public static AdminEventRegistrationResponse from(
+            EventRegistration registration, Integer waitlistPosition, boolean alumnus) {
         User user = registration.getUser();
         return new AdminEventRegistrationResponse(
                 registration.getId(),
@@ -30,6 +34,7 @@ public record AdminEventRegistrationResponse(
                 user.getEmail(),
                 registration.getStatus(),
                 registration.getRegisteredAt(),
-                waitlistPosition);
+                waitlistPosition,
+                alumnus ? user.getId() : null);
     }
 }

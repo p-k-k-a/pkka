@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-import { formatPublishedAtCompact } from "@pkka/domain";
+import { formatPublishedAtCompact, placeholderCoverUrl } from "@pkka/domain";
 import type { PostSummaryResponse } from "@pkka/api";
+import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -13,11 +14,17 @@ type PostCardProps = {
 
 export function PostCard({ post }: PostCardProps) {
   const theme = useThemeColors();
-  const { title, slug, publishedAt } = post;
+  const { id, title, slug, publishedAt } = post;
 
   const card = (
-    <Card className="bg-muted gap-0 rounded-3xl border-0 p-6 shadow-none">
-      <View className="gap-3">
+    <Card className="bg-muted gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-none">
+      <Image
+        source={{ uri: placeholderCoverUrl(id) }}
+        contentFit="cover"
+        transition={200}
+        style={{ width: "100%", aspectRatio: 16 / 9 }}
+      />
+      <View className="gap-3 px-6 pt-5">
         <Text className="text-muted-foreground text-sm font-semibold">
           {formatPublishedAtCompact(publishedAt)}
         </Text>
@@ -30,7 +37,7 @@ export function PostCard({ post }: PostCardProps) {
         </Text>
       </View>
 
-      <View className="bg-background mt-5 flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2">
+      <View className="bg-background mx-6 mb-6 mt-5 flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2">
         <Text className="text-accent text-sm font-medium">Czytaj więcej</Text>
         <ArrowRight size={14} color={theme.accent} />
       </View>

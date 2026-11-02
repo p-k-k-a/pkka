@@ -1,4 +1,4 @@
-import { EventTypeBadge } from "@/components/events/event-type-badge";
+import { AlumniOnlyBadge, EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
 import {
   formatEventDateLong,
@@ -6,7 +6,7 @@ import {
   registrationStatusLabelUpper,
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { EventType, type EventListItemResponse } from "@pkka/api";
+import { Audience, EventType, type EventListItemResponse } from "@pkka/api";
 import { Link } from "expo-router";
 import { ArrowRight, Calendar, Link2, MapPin, Users } from "lucide-react-native";
 import { Pressable, View } from "react-native";
@@ -17,8 +17,17 @@ type EventCardProps = {
 
 function EventCard({ event }: EventCardProps) {
   const theme = useThemeColors();
-  const { slug, title, startsAt, type, location, seatLimit, seatsTaken, registrationStatus } =
-    event;
+  const {
+    slug,
+    title,
+    startsAt,
+    type,
+    audience,
+    location,
+    seatLimit,
+    seatsTaken,
+    registrationStatus,
+  } = event;
   const seatsLabel = formatSeatsCompact(seatLimit, seatsTaken);
   const isOnline = type === EventType.ONLINE;
   const LocationIcon = isOnline ? Link2 : MapPin;
@@ -27,6 +36,7 @@ function EventCard({ event }: EventCardProps) {
     <View className="bg-muted gap-5 rounded-2xl p-6">
       <View className="flex-row flex-wrap items-center gap-2">
         <EventTypeBadge type={type} />
+        {audience === Audience.ALL_ALUMNI ? <AlumniOnlyBadge /> : null}
         {registrationStatus ? (
           <View className="border-muted-foreground/25 dark:border-input rounded-lg border px-3 py-1">
             <Text className="text-foreground text-[11px] font-semibold uppercase tracking-widest">

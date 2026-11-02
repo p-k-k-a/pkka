@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.security.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +28,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.test.util.ReflectionTestUtils;
+import pl.edu.agh.backend.application.ApplicationService;
 import pl.edu.agh.backend.user.UserProvisioningService;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +39,9 @@ class BffAuthenticationSuccessHandlerTest {
 
     @Mock
     private UserProvisioningService userProvisioningService;
+
+    @Mock
+    private ApplicationService applicationService;
 
     @InjectMocks
     private BffAuthenticationSuccessHandler handler;
@@ -61,6 +66,29 @@ class BffAuthenticationSuccessHandlerTest {
         handler.onAuthenticationSuccess(request, response, auth);
 
         verify(userProvisioningService).syncIdentityFromClaims("kc-web-user", "Jan", "Kowalski", "jan@example.com");
+        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/dashboard");
+    }
+
+    @Test
+    void loginApprovesAUserVouchedForByDiscord() throws Exception {
+        OAuth2AuthenticationToken auth =
+                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
+
+        handler.onAuthenticationSuccess(request, response, auth);
+
+        verify(applicationService).approveIfDiscordVouched("kc-web-user");
+    }
+
+    @Test
+    void aFailedDiscordCheckStillLogsTheUserIn() throws Exception {
+        OAuth2AuthenticationToken auth =
+                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
+        doThrow(new IllegalStateException("Discord is down"))
+                .when(applicationService)
+                .approveIfDiscordVouched("kc-web-user");
+
+        handler.onAuthenticationSuccess(request, response, auth);
+
         assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/dashboard");
     }
 

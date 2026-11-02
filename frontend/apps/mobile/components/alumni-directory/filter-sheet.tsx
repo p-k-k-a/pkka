@@ -64,7 +64,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
         <View className="flex-row items-center justify-between">
           <HeaderText>Rok ukończenia</HeaderText>
           <Text className="text-foreground text-sm font-semibold">
-            {draft.yearRange[0]} — {draft.yearRange[1]}
+            {draft.yearRange[0]}–{draft.yearRange[1]}
           </Text>
         </View>
         <RangeSlider
@@ -99,7 +99,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
                 tagIds: typeof next === "function" ? next(d.tagIds) : next,
               }))
             }
-            placeholder="Wyszukaj umiejętności..."
+            placeholder="Szukaj umiejętności"
             listMaxHeight={SHEET_LIST_MAX_HEIGHT}
             uppercaseChips
           />

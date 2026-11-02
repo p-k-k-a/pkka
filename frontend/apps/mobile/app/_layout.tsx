@@ -1,9 +1,10 @@
+import { useEffect } from "react";
 import { BottomSheetProvider } from "@/components/ui/bottom-sheet-provider";
 import "@/global.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { configureNotificationHandler, useNotificationRouting } from "@/lib/notifications";
 import { refreshRolesOnApproval } from "@/lib/refresh-roles-on-approval";
-import { NAV_THEME, useAppColorScheme } from "@/lib/theme";
+import { NAV_THEME, restoreThemePreference, useAppColorScheme } from "@/lib/theme";
 import { createQueryClient } from "@pkka/api";
 import { ThemeProvider } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
@@ -29,6 +30,9 @@ focusManager.setEventListener((handleFocus) => {
 export default function RootLayout() {
   const colorScheme = useAppColorScheme();
   useNotificationRouting();
+  useEffect(() => {
+    void restoreThemePreference();
+  }, []);
 
   return (
     <KeyboardProvider>

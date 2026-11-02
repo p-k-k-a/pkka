@@ -42,7 +42,7 @@ export function TagPicker({
       onChange={onChange}
       onCreate={(name) => onChange((prev) => [...prev, name])}
       maxLength={TAG_NAME_MAX_LENGTH}
-      placeholder="Wyszukaj lub dodaj..."
+      placeholder="Szukaj lub dodaj"
       uppercaseChips
     />
   );

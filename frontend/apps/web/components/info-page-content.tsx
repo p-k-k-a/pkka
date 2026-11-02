@@ -9,7 +9,7 @@ const HIGHLIGHTS = [
     icon: Users,
     title: "Społeczność",
     description:
-      "Ludzie, którzy przeszli podobną drogę — od juniora do managera, od inżyniera do lidera.",
+      "Ludzie, którzy przeszli podobną drogę: od juniora do managera, od inżyniera do lidera.",
   },
   {
     icon: GraduationCap,
@@ -43,7 +43,7 @@ export function InfoPageContent() {
               ludzi, którzy chcą się rozwijać, wspierać i realnie pomagać sobie w karierze.
             </p>
             <p>
-              Do Klubu mogą dołączyć absolwentki i absolwenci kierunków informatycznych AGH – także
+              Do Klubu mogą dołączyć absolwentki i absolwenci kierunków informatycznych AGH, także
               studiów podyplomowych.
             </p>
           </div>

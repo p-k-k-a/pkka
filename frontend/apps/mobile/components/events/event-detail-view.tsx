@@ -1,3 +1,4 @@
+import { ProseContent } from "@/components/content/prose-content";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
 import { formatEventDateShort, formatSeatsRemaining, formatTimeRange } from "@pkka/domain";
@@ -117,12 +118,13 @@ export function EventDetailView({ event }: EventDetailViewProps) {
           ) : null}
         </View>
 
-        <View className="h-px bg-border" />
+        {event.fullDescription ? (
+          <>
+            <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="font-heading text-foreground text-xl font-semibold">O wydarzeniu</Text>
-          <Text className="text-foreground/90 text-base leading-7">{event.fullDescription}</Text>
-        </View>
+            <ProseContent content={event.fullDescription} />
+          </>
+        ) : null}
       </View>
     </ScrollView>
   );

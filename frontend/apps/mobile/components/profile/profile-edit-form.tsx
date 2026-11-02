@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { CheckboxCard } from "@/components/application/checkbox-card";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
@@ -29,7 +30,7 @@ import {
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
+import { Camera, Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
@@ -108,7 +109,7 @@ function IdentityRow({
       {value ? (
         <View
           className={cn(
-            "border-muted-foreground/25 dark:border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
+            "border-muted-foreground/25 dark:border-input bg-muted/40 min-h-12 justify-center rounded-md border px-3 py-3",
             !visible && "opacity-50",
           )}
         >
@@ -217,20 +218,21 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bottomOffset={24}
     >
       <View className="items-center gap-3">
-        <View className="border-border bg-muted size-36 items-center justify-center overflow-hidden rounded-full border">
-          <UserRound size={64} color={theme.mutedForeground} strokeWidth={1.5} />
-        </View>
+        <InitialsAvatar
+          name={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
+          size="xl"
+        />
         {/* Mocked — photo upload isn't implemented; the button intentionally does nothing. */}
         <Button variant="outline" size="sm" onPress={() => {}} className="active:bg-muted">
           <Camera size={16} color={theme.foreground} />
           <Text className="group-active:text-foreground">Zmień zdjęcie</Text>
         </Button>
+        <Text className="text-muted-foreground text-center text-[13px]">
+          Dodawanie zdjęć jeszcze nie działa. Na razie pokazujemy Twoje inicjały.
+        </Text>
       </View>
 
-      <FormSection
-        title="Dane podstawowe"
-        description="Imię, nazwisko i e-mail pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
-      >
+      <FormSection title="Dane podstawowe">
         <form.Field name="showName">
           {(field) => (
             <IdentityRow
@@ -293,7 +295,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="np. Senior Java Developer"
+                placeholder="np. Java Developer"
                 autoCapitalize="sentences"
               />
             </FormField>
@@ -361,7 +363,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://www.linkedin.com/in/..."
+                placeholder="linkedin.com/in/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />
@@ -377,7 +379,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://github.com/..."
+                placeholder="github.com/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />
