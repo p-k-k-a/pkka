@@ -10,18 +10,24 @@ public record MaterialResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String description,
         @Schema(requiredMode = RequiredMode.REQUIRED) MaterialType type,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String url,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Signed, short-lived download URL when the material is an uploaded file, "
+                        + "otherwise the external URL")
+        String url,
+
         UUID eventId,
         String eventTitle,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt) {
 
-    static MaterialResponse from(Material material) {
+    static MaterialResponse from(Material material, String url) {
         return new MaterialResponse(
                 material.getId(),
                 material.getTitle(),
                 material.getDescription(),
                 material.getType(),
-                material.getUrl(),
+                url,
                 material.getEvent() != null ? material.getEvent().getId() : null,
                 material.getEvent() != null ? material.getEvent().getTitle() : null,
                 material.getCreatedAt());

@@ -18,6 +18,8 @@ public record EventListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
         String location,
+
+        @Schema(description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL")
         String coverImageUrl,
 
         @Schema(description = "Absent when the event has no seat limit")
@@ -28,7 +30,8 @@ public record EventListItemResponse(
 
         @Schema(description = "The requesting user's own sign-up; absent when they are not signed up or anonymous")
         EventRegistrationStatus registrationStatus) {
-    public static EventListItemResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
+    public static EventListItemResponse from(
+            Event e, long seatsTaken, EventRegistrationStatus registrationStatus, String coverImageUrl) {
         return new EventListItemResponse(
                 e.getId(),
                 e.getSlug(),
@@ -38,7 +41,7 @@ public record EventListItemResponse(
                 e.getType(),
                 e.getAudience(),
                 e.getLocation(),
-                e.getCoverImageUrl(),
+                coverImageUrl,
                 e.getSeatLimit(),
                 (int) seatsTaken,
                 registrationStatus);
