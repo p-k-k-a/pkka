@@ -14,7 +14,9 @@ import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.storage.AvatarPresignRequest;
+import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
+import pl.edu.agh.backend.storage.StorageNotConfiguredException;
 import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.AlumniTag;
 import pl.edu.agh.backend.user.AlumniTagRepository;
@@ -63,11 +65,10 @@ public class ProfileService {
         if (request.avatarKey() != null) {
             String avatarKey = blankToNull(request.avatarKey().trim());
             if (avatarKey != null && !storageService.isConfigured()) {
-                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "File storage is not configured");
+                throw new StorageNotConfiguredException();
             }
             if (avatarKey != null && !storageService.isAvatarKeyOwnedBy(user.getId(), avatarKey)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
+                throw new InvalidFileException(
                         "avatarKey must be the objectKey of an avatar uploaded through the avatar presign endpoint");
             }
             user.setAvatarKey(avatarKey);

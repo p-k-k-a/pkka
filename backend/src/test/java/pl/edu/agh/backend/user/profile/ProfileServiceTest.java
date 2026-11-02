@@ -19,7 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.storage.AvatarPresignRequest;
+import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
+import pl.edu.agh.backend.storage.StorageNotConfiguredException;
 import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.AlumniTag;
 import pl.edu.agh.backend.user.AlumniTagRepository;
@@ -97,9 +99,7 @@ class ProfileServiceTest {
                 .thenReturn(false);
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/someone-else/a.png")))
-                .isInstanceOfSatisfying(
-                        ResponseStatusException.class,
-                        ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+                .isInstanceOf(InvalidFileException.class);
         assertThat(user.getAvatarKey()).isEqualTo("avatars/old.png");
     }
 
@@ -110,9 +110,7 @@ class ProfileServiceTest {
         when(storageService.isConfigured()).thenReturn(false);
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/a.png")))
-                .isInstanceOfSatisfying(
-                        ResponseStatusException.class,
-                        ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE));
+                .isInstanceOf(StorageNotConfiguredException.class);
     }
 
     @Test

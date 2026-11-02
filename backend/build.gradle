@@ -33,6 +33,7 @@ dependencies {
 		exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
 	}
 
+	implementation 'com.github.ben-manes.caffeine:caffeine'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'

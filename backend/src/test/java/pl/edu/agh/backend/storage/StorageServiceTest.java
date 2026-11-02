@@ -19,8 +19,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -112,16 +110,16 @@ class StorageServiceTest {
 
     @Test
     void rejectsContentTypesOutsideTheWhitelist() {
-        assertStatus(() -> storage.presignAvatar(USER_ID, "image/svg+xml", 1024), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
-        assertStatus(() -> storage.presignAvatar(USER_ID, "application/pdf", 1024), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+        assertStatus(() -> storage.presignAvatar(USER_ID, "image/svg+xml", 1024), UnsupportedFileTypeException.class);
+        assertStatus(() -> storage.presignAvatar(USER_ID, "application/pdf", 1024), UnsupportedFileTypeException.class);
         assertStatus(
-                () -> storage.presignAvatar(USER_ID, "image/png; charset=x", 1024), HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                () -> storage.presignAvatar(USER_ID, "image/png; charset=x", 1024), UnsupportedFileTypeException.class);
         assertStatus(
                 () -> storage.presignAdminUpload(AdminUploadPurpose.MATERIAL, "text/html", 1024),
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                UnsupportedFileTypeException.class);
         assertStatus(
                 () -> storage.presignAdminUpload(AdminUploadPurpose.EVENT_COVER, "application/pdf", 1024),
-                HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                UnsupportedFileTypeException.class);
     }
 
     @Test
@@ -129,22 +127,22 @@ class StorageServiceTest {
         long mb = 1024L * 1024L;
 
         storage.presignAvatar(USER_ID, "image/png", 2 * mb);
-        assertStatus(() -> storage.presignAvatar(USER_ID, "image/png", 2 * mb + 1), HttpStatus.CONTENT_TOO_LARGE);
+        assertStatus(() -> storage.presignAvatar(USER_ID, "image/png", 2 * mb + 1), FileTooLargeException.class);
 
         storage.presignAdminUpload(AdminUploadPurpose.EVENT_COVER, "image/png", 5 * mb);
         assertStatus(
                 () -> storage.presignAdminUpload(AdminUploadPurpose.EVENT_COVER, "image/png", 5 * mb + 1),
-                HttpStatus.CONTENT_TOO_LARGE);
+                FileTooLargeException.class);
 
         storage.presignAdminUpload(AdminUploadPurpose.MATERIAL, "video/mp4", 100 * mb);
         assertStatus(
                 () -> storage.presignAdminUpload(AdminUploadPurpose.MATERIAL, "video/mp4", 100 * mb + 1),
-                HttpStatus.CONTENT_TOO_LARGE);
+                FileTooLargeException.class);
     }
 
     @Test
     void rejectsEmptyFiles() {
-        assertStatus(() -> storage.presignAvatar(USER_ID, "image/png", 0), HttpStatus.BAD_REQUEST);
+        assertStatus(() -> storage.presignAvatar(USER_ID, "image/png", 0), InvalidFileException.class);
     }
 
     @Test
@@ -175,10 +173,10 @@ class StorageServiceTest {
         StorageService unconfigured = unconfigured();
 
         assertThat(unconfigured.isConfigured()).isFalse();
-        assertStatus(() -> unconfigured.presignAvatar(USER_ID, "image/png", 1024), HttpStatus.SERVICE_UNAVAILABLE);
+        assertStatus(() -> unconfigured.presignAvatar(USER_ID, "image/png", 1024), StorageNotConfiguredException.class);
         assertStatus(
                 () -> unconfigured.presignAdminUpload(AdminUploadPurpose.MATERIAL, "application/pdf", 1024),
-                HttpStatus.SERVICE_UNAVAILABLE);
+                StorageNotConfiguredException.class);
     }
 
     // --- avatar ownership --------------------------------------------------------------------------
@@ -252,34 +250,36 @@ class StorageServiceTest {
     @Test
     void aKeyForAnotherPurposeIsRejected() {
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, MATERIAL_KEY), HttpStatus.BAD_REQUEST);
-        assertStatus(() -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, COVER_KEY), HttpStatus.BAD_REQUEST);
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, MATERIAL_KEY),
+                InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, COVER_KEY), InvalidFileException.class);
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, storage.resolveUrl(COVER_KEY)),
-                HttpStatus.BAD_REQUEST);
+                InvalidFileException.class);
     }
 
     @Test
     void valuesThatAreNeitherUrlNorOurKeyAreRejected() {
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/x.pdf"),
-                HttpStatus.BAD_REQUEST);
+                InvalidFileException.class);
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/../" + MATERIAL_KEY),
-                HttpStatus.BAD_REQUEST);
+                InvalidFileException.class);
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "meet.google.com/x"),
-                HttpStatus.BAD_REQUEST);
+                InvalidFileException.class);
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY.toUpperCase(Locale.ROOT)),
-                HttpStatus.BAD_REQUEST);
+                InvalidFileException.class);
     }
 
     @Test
     void aKeyCannotBeStoredWhileStorageIsNotConfigured() {
         assertStatus(
                 () -> unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY),
-                HttpStatus.SERVICE_UNAVAILABLE);
+                StorageNotConfiguredException.class);
     }
 
     // --- downloads ---------------------------------------------------------------------------------
@@ -348,11 +348,8 @@ class StorageServiceTest {
         return UriUtils.decode(signedHeaders, StandardCharsets.UTF_8);
     }
 
-    private static void assertStatus(Runnable call, HttpStatus expected) {
-        assertThatThrownBy(call::run)
-                .isInstanceOfSatisfying(
-                        ResponseStatusException.class,
-                        ex -> assertThat(ex.getStatusCode()).isEqualTo(expected));
+    private static void assertStatus(Runnable call, Class<? extends RuntimeException> expected) {
+        assertThatThrownBy(call::run).isInstanceOf(expected);
     }
 
     /** The service only reads the time to decide whether a cached URL is still worth handing out. */

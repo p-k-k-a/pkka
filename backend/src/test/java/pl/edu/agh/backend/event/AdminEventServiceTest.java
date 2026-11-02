@@ -22,14 +22,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.storage.AdminUploadPurpose;
+import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
@@ -168,9 +167,7 @@ class AdminEventServiceTest {
                 .thenReturn(tooLong);
 
         assertThatThrownBy(() -> adminEventService.create(ADMIN, requestWithCover(tooLong)))
-                .isInstanceOfSatisfying(
-                        ResponseStatusException.class,
-                        ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+                .isInstanceOf(InvalidFileException.class);
     }
 
     private static EventRequest requestWithCover(String coverImageUrl) {

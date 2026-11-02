@@ -1,18 +1,16 @@
 package pl.edu.agh.backend.storage;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -62,8 +60,7 @@ public class StorageService implements AutoCloseable {
     private final S3Presigner presigner;
     private final String bucket;
     private final URI endpoint;
-    private final Clock clock;
-    private final Map<String, CachedUrl> downloadUrls = new ConcurrentHashMap<>();
+    private final Cache<String, String> downloadUrls;
 
     /**
      * @param presigner {@code null} when storage is not configured
@@ -73,7 +70,12 @@ public class StorageService implements AutoCloseable {
         this.presigner = presigner;
         this.bucket = bucket;
         this.endpoint = endpoint;
-        this.clock = clock;
+        // An entry is dropped MIN_REMAINING_VALIDITY before its URL dies, so a cached URL is always safe to hand out.
+        this.downloadUrls = Caffeine.newBuilder()
+                .maximumSize(MAX_CACHED_URLS)
+                .expireAfterWrite(DOWNLOAD_URL_TTL.minus(MIN_REMAINING_VALIDITY))
+                .ticker(() -> clock.millis() * 1_000_000L)
+                .build();
     }
 
     public boolean isConfigured() {
@@ -106,7 +108,7 @@ public class StorageService implements AutoCloseable {
      * (what the read endpoints return, and clients echo back when an edit form is saved unchanged) is reduced to
      * its key, so an expiring link never lands in the database.
      *
-     * @throws ResponseStatusException 400 for anything else, 503 for a key while storage is not configured
+     * @throws InvalidFileException for anything else, {@link StorageNotConfiguredException} for a key while storage is not configured
      */
     public String toStoredReference(AdminUploadPurpose purpose, String input) {
         if (input == null || input.isBlank()) {
@@ -122,8 +124,7 @@ public class StorageService implements AutoCloseable {
             value = ownKey;
         }
         if (!category.isValidKey(value)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new InvalidFileException(
                     "Expected an http(s) URL or the objectKey of a file uploaded for " + purpose);
         }
         requireConfigured();
@@ -147,25 +148,20 @@ public class StorageService implements AutoCloseable {
     }
 
     private String presignDownload(String key) {
-        Instant now = clock.instant();
-        CachedUrl cached = downloadUrls.get(key);
-        if (cached != null && cached.expiresAt().isAfter(now.plus(MIN_REMAINING_VALIDITY))) {
-            return cached.url();
-        }
-        if (downloadUrls.size() >= MAX_CACHED_URLS) {
-            downloadUrls.values().removeIf(entry -> !entry.expiresAt().isAfter(now));
-            if (downloadUrls.size() >= MAX_CACHED_URLS) {
-                downloadUrls.clear();
-            }
-        }
-        var presigned = presigner.presignGetObject(GetObjectPresignRequest.builder()
-                .signatureDuration(DOWNLOAD_URL_TTL)
-                .getObjectRequest(
-                        GetObjectRequest.builder().bucket(bucket).key(key).build())
-                .build());
-        CachedUrl fresh = new CachedUrl(presigned.url().toExternalForm(), presigned.expiration());
-        downloadUrls.put(key, fresh);
-        return fresh.url();
+        return downloadUrls.get(key, this::signDownload);
+    }
+
+    private String signDownload(String key) {
+        return presigner
+                .presignGetObject(GetObjectPresignRequest.builder()
+                        .signatureDuration(DOWNLOAD_URL_TTL)
+                        .getObjectRequest(GetObjectRequest.builder()
+                                .bucket(bucket)
+                                .key(key)
+                                .build())
+                        .build())
+                .url()
+                .toExternalForm();
     }
 
     private PresignedUploadResponse presignUpload(
@@ -173,14 +169,12 @@ public class StorageService implements AutoCloseable {
         requireConfigured();
         String normalizedType = contentType.trim().toLowerCase(Locale.ROOT);
         String extension = category.extensionFor(normalizedType)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Content type is not allowed here: " + normalizedType));
+                .orElseThrow(() -> new UnsupportedFileTypeException(normalizedType));
         if (sizeBytes <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sizeBytes must be positive");
+            throw new InvalidFileException("sizeBytes must be positive");
         }
         if (sizeBytes > category.maxBytes()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONTENT_TOO_LARGE, "File is larger than the " + category.maxBytes() + " byte limit");
+            throw new FileTooLargeException(category.maxBytes());
         }
 
         String key = keyPrefix + "/" + UUID.randomUUID() + "." + extension;
@@ -202,7 +196,7 @@ public class StorageService implements AutoCloseable {
 
     private void requireConfigured() {
         if (!isConfigured()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "File storage is not configured");
+            throw new StorageNotConfiguredException();
         }
     }
 
@@ -256,6 +250,4 @@ public class StorageService implements AutoCloseable {
             presigner.close();
         }
     }
-
-    private record CachedUrl(String url, Instant expiresAt) {}
 }

@@ -11,16 +11,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.tag.Tag;
 import pl.edu.agh.backend.event.tag.TagRepository;
 import pl.edu.agh.backend.infrastructure.slug.SlugUtils;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.storage.AdminUploadPurpose;
+import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.CallerUserService;
 
@@ -136,7 +135,7 @@ public class AdminEventService {
     private String coverImageReference(EventRequest request) {
         String reference = storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, request.coverImageUrl());
         if (reference != null && reference.length() > MAX_STORED_COVER_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "coverImageUrl is too long");
+            throw new InvalidFileException("coverImageUrl is too long");
         }
         return reference;
     }
