@@ -54,10 +54,10 @@ public class UserSpecifications {
 
     /**
      * Free-text match against the profile fields available locally: first/last name (only when the owner has not
-     * hidden their name), position, company, and assigned skill tag names. A left join is used for tags so that
+     * hidden their name, unless {@code includeHiddenNames}), position, company, and assigned skill tag names. A left join is used for tags so that
      * users without any tags can still match on the other fields.
      */
-    public Specification<User> matchesQuery(String rawQuery) {
+    public Specification<User> matchesQuery(String rawQuery, boolean includeHiddenNames) {
         return (root, query, cb) -> {
             if (rawQuery == null || rawQuery.isBlank()) {
                 return null;
@@ -66,11 +66,12 @@ public class UserSpecifications {
             String pattern = likePattern(rawQuery.trim());
             Join<User, AlumniTag> tags = root.join("tags", JoinType.LEFT);
 
-            Predicate nameMatch = cb.and(
-                    cb.isTrue(root.get("showName")),
-                    cb.or(
-                            cb.like(cb.lower(root.get("firstName")), pattern, LIKE_ESCAPE),
-                            cb.like(cb.lower(root.get("lastName")), pattern, LIKE_ESCAPE)));
+            Predicate nameMatch = cb.or(
+                    cb.like(cb.lower(root.get("firstName")), pattern, LIKE_ESCAPE),
+                    cb.like(cb.lower(root.get("lastName")), pattern, LIKE_ESCAPE));
+            if (!includeHiddenNames) {
+                nameMatch = cb.and(cb.isTrue(root.get("showName")), nameMatch);
+            }
 
             return cb.or(
                     nameMatch,

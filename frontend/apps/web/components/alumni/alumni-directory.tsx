@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Search } from "lucide-react";
-import { useListAlumni } from "@pkka/api";
+import { type PageAlumniListItemResponse, useListAlumni, useListAlumniTags } from "@pkka/api";
 import {
   ALUMNI_SORT_OPTIONS,
   buildAlumniParams,
@@ -11,16 +11,42 @@ import {
   type AlumniSortOption,
 } from "@pkka/domain";
 import { AlumniCard } from "@/components/alumni/alumni-card";
-import { AlumniFiltersPanel } from "@/components/alumni/alumni-filters";
+import { AlumniFiltersPanel, type AlumniTagsQuery } from "@/components/alumni/alumni-filters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { parseAlumniSearchParams, toAlumniSearchString } from "@/lib/alumni-search-params";
+import {
+  ALUMNI_DIRECTORY_HREF,
+  parseAlumniSearchParams,
+  toAlumniSearchString,
+} from "@/lib/alumni-search-params";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 
 export function AlumniDirectory() {
+  const directory = useAlumniDirectoryState();
+  const { data, isPending, isError, isPlaceholderData, refetch } = useListAlumni(
+    directory.params,
+    // Keeps the current results on screen while the next page or filter loads.
+    { query: { placeholderData: (previous) => previous } },
+  );
+  const tagsQuery = useListAlumniTags();
+  return (
+    <AlumniDirectoryView
+      directory={directory}
+      directoryHref={ALUMNI_DIRECTORY_HREF}
+      tagsQuery={tagsQuery}
+      pageData={data?.status === 200 ? data.data : undefined}
+      isPending={isPending}
+      isError={isError}
+      isPlaceholderData={isPlaceholderData}
+      refetch={refetch}
+    />
+  );
+}
+
+export function useAlumniDirectoryState() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,7 +57,6 @@ export function AlumniDirectory() {
   const [sort, setSort] = useState<AlumniSortOption>(initial.sort);
   const [page, setPage] = useState(initial.page);
   const debouncedQuery = useDebouncedValue(query);
-  const resultsRef = useRef<HTMLDivElement>(null);
 
   // Kept in the URL so the criteria survive a visit to a profile and can be shared.
   const search = toAlumniSearchString({ query: debouncedQuery, filters, sort, page });
@@ -42,12 +67,33 @@ export function AlumniDirectory() {
     }
   }, [search, currentSearch, pathname, router]);
 
-  const { data, isPending, isError, isPlaceholderData, refetch } = useListAlumni(
-    { ...buildAlumniParams(debouncedQuery, filters, sort), page },
-    // Keeps the current results on screen while the next page or filter loads.
-    { query: { placeholderData: (previous) => previous } },
-  );
-  const pageData = data?.status === 200 ? data.data : undefined;
+  const params = { ...buildAlumniParams(debouncedQuery, filters, sort), page };
+  return { query, setQuery, filters, setFilters, sort, setSort, page, setPage, params };
+}
+
+type AlumniDirectoryViewProps = {
+  directory: ReturnType<typeof useAlumniDirectoryState>;
+  directoryHref: string;
+  tagsQuery: AlumniTagsQuery;
+  pageData: PageAlumniListItemResponse | undefined;
+  isPending: boolean;
+  isError: boolean;
+  isPlaceholderData: boolean;
+  refetch: () => unknown;
+};
+
+export function AlumniDirectoryView({
+  directory,
+  directoryHref,
+  tagsQuery,
+  pageData,
+  isPending,
+  isError,
+  isPlaceholderData,
+  refetch,
+}: AlumniDirectoryViewProps) {
+  const { query, setQuery, filters, setFilters, sort, setSort, page, setPage } = directory;
+  const resultsRef = useRef<HTMLDivElement>(null);
   const alumni = pageData?.content ?? [];
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
@@ -125,7 +171,7 @@ export function AlumniDirectory() {
       <section className="bg-background px-4 pb-10 md:px-10 md:pb-20">
         <div className="mx-auto grid max-w-[1280px] items-start gap-8 lg:grid-cols-[260px_1fr]">
           <aside className="lg:sticky lg:top-6">
-            <AlumniFiltersPanel value={filters} onChange={updateFilters} />
+            <AlumniFiltersPanel tagsQuery={tagsQuery} value={filters} onChange={updateFilters} />
           </aside>
 
           <div ref={resultsRef} className="flex scroll-mt-6 flex-col gap-6">
@@ -153,7 +199,7 @@ export function AlumniDirectory() {
                   className={`grid grid-cols-1 gap-8 transition-opacity md:grid-cols-2 xl:grid-cols-3 ${isPlaceholderData ? "opacity-60" : ""}`}
                 >
                   {alumni.map((alumn) => (
-                    <AlumniCard key={alumn.id} alumn={alumn} search={search} />
+                    <AlumniCard key={alumn.id} alumn={alumn} directoryHref={directoryHref} />
                   ))}
                 </div>
                 {totalPages > 1 ? (

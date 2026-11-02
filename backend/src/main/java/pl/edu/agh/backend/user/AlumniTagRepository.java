@@ -21,6 +21,15 @@ public interface AlumniTagRepository extends JpaRepository<AlumniTag, UUID> {
             """)
     List<AlumniTagResponse> findCatalog();
 
+    @Query("""
+            select new pl.edu.agh.backend.user.AlumniTagResponse(t.id, t.name, (
+                select count(u) from User u join u.tags assigned
+                where assigned = t and exists (
+                    select 1 from Application a where a.applicant = u and a.status = 'APPROVED')))
+            from AlumniTag t
+            """)
+    List<AlumniTagResponse> findCatalogForAdmin();
+
     @Modifying
     @Query(
             value = "insert into user_skill_tags (id, name) values (:id, :name) on conflict do nothing",

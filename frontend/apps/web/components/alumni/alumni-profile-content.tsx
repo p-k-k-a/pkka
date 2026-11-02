@@ -1,43 +1,43 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
-import { ApiError, useGetAlumniProfile } from "@pkka/api";
+import { AlertTriangle } from "lucide-react";
+import { ApiError, type AlumniProfileResponse, useGetAlumniProfile } from "@pkka/api";
+import { HistoryBackButton } from "@/components/content/history-back-button";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
-
-function AlumniProfileSkeleton() {
-  return (
-    <div className="px-4 py-10 md:px-10 md:py-20">
-      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-6">
-          <Skeleton className="h-6 w-32 rounded-lg" />
-          <div className="flex items-center gap-6">
-            <Skeleton className="size-24 rounded-full" />
-            <Skeleton className="h-12 w-full max-w-md rounded-lg" />
-          </div>
-          <Skeleton className="h-12 w-40 rounded-lg" />
-          <Skeleton className="h-24 w-full rounded-lg" />
-        </div>
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    </div>
-  );
-}
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
-  // The card passes the directory's criteria along, so going back restores them.
-  const searchParams = useSearchParams().toString();
-  const directoryHref = `${ALUMNI_DIRECTORY_HREF}${searchParams ? `?${searchParams}` : ""}`;
+  return (
+    <AlumniProfileState
+      profile={data?.status === 200 ? data.data : undefined}
+      isPending={isPending}
+      isFetching={isFetching}
+      error={error}
+      refetch={refetch}
+    />
+  );
+}
 
+type AlumniProfileStateProps = {
+  profile: AlumniProfileResponse | undefined;
+  isPending: boolean;
+  isFetching: boolean;
+  error: unknown;
+  refetch: () => unknown;
+};
+
+export function AlumniProfileState({
+  profile,
+  isPending,
+  isFetching,
+  error,
+  refetch,
+}: AlumniProfileStateProps) {
   if (isPending) return <AlumniProfileSkeleton />;
 
-  const profile = data?.status === 200 ? data.data : undefined;
   if (!profile) {
     // Every non-2xx throws out of the mutator, so a missing alumn arrives as an ApiError.
     const notFound = error instanceof ApiError && error.status === 404;
@@ -66,16 +66,30 @@ export function AlumniProfileContent({ id }: { id: string }) {
               {isFetching ? "Ładowanie…" : "Spróbuj ponownie"}
             </Button>
           )}
-          <Button asChild variant="ghost">
-            <Link href={directoryHref}>
-              <ArrowLeft data-icon="inline-start" />
-              Wróć do katalogu
-            </Link>
-          </Button>
+          <HistoryBackButton />
         </div>
       </div>
     );
   }
 
-  return <ProfileView variant="alumn" profile={profile} directoryHref={directoryHref} />;
+  return <ProfileView variant="alumn" profile={profile} />;
+}
+
+function AlumniProfileSkeleton() {
+  return (
+    <div className="px-4 py-10 md:px-10 md:py-20">
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-6">
+          <Skeleton className="h-6 w-32 rounded-lg" />
+          <div className="flex items-center gap-6">
+            <Skeleton className="size-24 rounded-full" />
+            <Skeleton className="h-12 w-full max-w-md rounded-lg" />
+          </div>
+          <Skeleton className="h-12 w-40 rounded-lg" />
+          <Skeleton className="h-24 w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    </div>
+  );
 }
