@@ -76,6 +76,7 @@ public class EventStatisticsService {
                             event.getId(),
                             event.getTitle(),
                             event.getStartsAt(),
+                            event.getEndsAt(),
                             event.getSeatLimit(),
                             (int) held,
                             waitlisted.getOrDefault(event.getId(), 0L).intValue(),

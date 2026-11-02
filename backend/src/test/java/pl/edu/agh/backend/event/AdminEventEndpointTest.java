@@ -352,6 +352,22 @@ class AdminEventEndpointTest {
     }
 
     @Test
+    void listsAnEventUnderWayAsUpcomingUntilItEnds() throws Exception {
+        Instant start = Instant.now().minus(30, ChronoUnit.MINUTES);
+        Instant end = Instant.now().plus(30, ChronoUnit.MINUTES);
+        createEvent(eventJson("Trwające", start.toString(), end.toString(), "PUBLIC", "[]"));
+
+        mockMvc.perform(get("/api/admin/events").param("timeframe", "UPCOMING").with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Trwające"));
+
+        mockMvc.perform(get("/api/admin/events").param("timeframe", "PAST").with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
     void updatesEventFields() throws Exception {
         Instant start = Instant.now().plus(4, ChronoUnit.DAYS);
         Instant end = start.plus(2, ChronoUnit.HOURS);

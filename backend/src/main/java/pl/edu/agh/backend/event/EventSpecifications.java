@@ -10,12 +10,14 @@ import pl.edu.agh.backend.event.tag.Tag;
 @UtilityClass
 public class EventSpecifications {
 
-    public Specification<Event> startsAfter(Instant dateTime) {
-        return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("startsAt"), dateTime);
+    // An event stays upcoming until it ends, so one under way (e.g. an online meeting people are
+    // still joining) is not archived the moment it starts.
+    public Specification<Event> endsAfter(Instant dateTime) {
+        return (root, query, cb) -> dateTime == null ? null : cb.greaterThan(root.get("endsAt"), dateTime);
     }
 
-    public Specification<Event> startsBeforeOrEqual(Instant dateTime) {
-        return (root, query, cb) -> dateTime == null ? null : cb.lessThanOrEqualTo(root.get("startsAt"), dateTime);
+    public Specification<Event> endsBeforeOrEqual(Instant dateTime) {
+        return (root, query, cb) -> dateTime == null ? null : cb.lessThanOrEqualTo(root.get("endsAt"), dateTime);
     }
 
     public Specification<Event> audienceIn(Collection<Audience> audiences) {

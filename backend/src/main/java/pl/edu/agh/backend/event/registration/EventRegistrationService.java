@@ -85,8 +85,8 @@ public class EventRegistrationService {
     public void unregister(UUID eventId, Caller caller) {
         User user = callerUserService.getOrCreate(caller);
         Event event = eventLookup.findVisibleForUpdate(eventId, caller);
-        if (hasStarted(event)) {
-            throw EventRegistrationConflictException.eventAlreadyStarted(eventId);
+        if (hasEnded(event)) {
+            throw EventRegistrationConflictException.eventEnded(eventId);
         }
 
         EventRegistration registration = eventRegistrationRepository
@@ -105,14 +105,15 @@ public class EventRegistrationService {
     /**
      * Moves as many people from the head of the waitlist onto a seat as the event has free seats — one after
      * a cancellation, possibly several after the seat limit is raised, everyone once the limit is lifted.
-     * Nobody is promoted once the event has started, since the seat is no use to them any more.
+     * Promotion goes on while the event is under way, since an online meeting can still be joined; nobody is
+     * promoted once it has ended.
      *
      * <p>{@code MANDATORY} because the caller must already hold the lock on the event row: two promotions
      * running side by side would read the same head of the queue.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void fillFreeSeats(Event event) {
-        if (hasStarted(event)) {
+        if (hasEnded(event)) {
             return;
         }
         eventRegistrationRepository.flush();
@@ -207,10 +208,12 @@ public class EventRegistrationService {
 
     private boolean isRegistrationClosed(Event event) {
         Instant closesAt = event.getRegistrationClosesAt();
-        return hasStarted(event) || (closesAt != null && !Instant.now(clock).isBefore(closesAt));
+        return hasEnded(event) || (closesAt != null && !Instant.now(clock).isBefore(closesAt));
     }
 
-    private boolean hasStarted(Event event) {
-        return !Instant.now(clock).isBefore(event.getStartsAt());
+    // An event is open until it ends, not until it starts: people can still sign up for, leave, or be
+    // promoted into a meeting that is under way.
+    private boolean hasEnded(Event event) {
+        return !Instant.now(clock).isBefore(event.getEndsAt());
     }
 }
