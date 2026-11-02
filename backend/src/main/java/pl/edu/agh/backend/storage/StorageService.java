@@ -4,6 +4,8 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.LinkedHashMap;
@@ -11,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -54,6 +57,8 @@ public class StorageService implements AutoCloseable {
 
     private static final int MAX_CACHED_URLS = 5_000;
 
+    private static final int MAX_DOWNLOAD_NAME_LENGTH = 150;
+
     /** Set by the HTTP client itself (and forbidden to set from browser code), so not handed to callers. */
     private static final Set<String> CLIENT_MANAGED_HEADERS = Set.of("host", "content-length");
 
@@ -96,10 +101,29 @@ public class StorageService implements AutoCloseable {
      * Whether {@code key} is an avatar this service issued for {@code userId}. Avatars live under the user's own
      * key folder, so one user cannot point their profile at someone else's file.
      */
-    public boolean isAvatarKeyOwnedBy(UUID userId, String key) {
-        return isConfigured()
-                && key.startsWith(UploadCategory.AVATAR.keyPrefix() + "/" + userId + "/")
+    boolean isAvatarKeyOwnedBy(UUID userId, String key) {
+        return key.startsWith(UploadCategory.AVATAR.keyPrefix() + "/" + userId + "/")
                 && UploadCategory.AVATAR.isValidKey(key);
+    }
+
+    /**
+     * Turns the {@code avatarKey} a user sent into what gets stored: {@code null} for blank (removes the avatar),
+     * otherwise the trimmed key, which must be an avatar this service issued for {@code userId}.
+     *
+     * @throws InvalidFileException when the key is not the user's own avatar upload
+     * @throws StorageNotConfiguredException for a key while storage is not configured
+     */
+    public String toStoredAvatarKey(UUID userId, String input) {
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+        requireConfigured();
+        String key = input.trim();
+        if (!isAvatarKeyOwnedBy(userId, key)) {
+            throw new InvalidFileException(
+                    "avatarKey must be the objectKey of an avatar uploaded through the avatar presign endpoint");
+        }
+        return key;
     }
 
     /**
@@ -137,6 +161,19 @@ public class StorageService implements AutoCloseable {
      * is, which is what the API did before storage existed.
      */
     public String resolveUrl(String stored) {
+        return resolveUrl(stored, null);
+    }
+
+    /**
+     * Like {@link #resolveUrl(String)}, but the signed URL makes the browser save the file as
+     * {@code downloadName.<extension of the key>} instead of the random {@code <uuid>.<ext>} it is stored under.
+     * Meant for files people download (materials); images shown inline do not need it.
+     */
+    public String resolveDownloadUrl(String stored, String downloadName) {
+        return resolveUrl(stored, downloadName);
+    }
+
+    private String resolveUrl(String stored, String downloadName) {
         if (stored == null || stored.isBlank()) {
             return null;
         }
@@ -144,24 +181,50 @@ public class StorageService implements AutoCloseable {
             return stored;
         }
         // A key we cannot sign (storage not configured) is not worth handing out as a broken link.
-        return isConfigured() ? presignDownload(stored) : null;
+        return isConfigured() ? presignDownload(stored, downloadName) : null;
     }
 
-    private String presignDownload(String key) {
-        return downloadUrls.get(key, this::signDownload);
+    private String presignDownload(String key, String downloadName) {
+        String disposition = downloadName == null ? null : contentDisposition(downloadName, key);
+        // The URL carries the disposition, so one object can have one cached URL per download name.
+        String cacheKey = disposition == null ? key : key + '\n' + disposition;
+        return downloadUrls.get(cacheKey, ignored -> signDownload(key, disposition));
     }
 
-    private String signDownload(String key) {
+    private String signDownload(String key, String contentDisposition) {
+        GetObjectRequest.Builder object =
+                GetObjectRequest.builder().bucket(bucket).key(key);
+        if (contentDisposition != null) {
+            object.responseContentDisposition(contentDisposition);
+        }
         return presigner
                 .presignGetObject(GetObjectPresignRequest.builder()
                         .signatureDuration(DOWNLOAD_URL_TTL)
-                        .getObjectRequest(GetObjectRequest.builder()
-                                .bucket(bucket)
-                                .key(key)
-                                .build())
+                        .getObjectRequest(object.build())
                         .build())
                 .url()
                 .toExternalForm();
+    }
+
+    /** {@code attachment} header with an ASCII fallback name and the full UTF-8 name (RFC 6266 / 5987). */
+    static String contentDisposition(String downloadName, String key) {
+        String extension = key.substring(key.lastIndexOf('.') + 1);
+        String base = downloadName
+                .replaceAll("[\\p{Cntrl}\\\\/:*?\"<>|]", " ")
+                .replaceAll("\\s+", " ")
+                .strip();
+        if (base.length() > MAX_DOWNLOAD_NAME_LENGTH) {
+            base = base.substring(0, MAX_DOWNLOAD_NAME_LENGTH).strip();
+        }
+        if (base.isEmpty()) {
+            base = "download";
+        }
+        String fileName = base + "." + extension;
+        String ascii = Normalizer.normalize(fileName, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replaceAll("[^\\x20-\\x7E]", "_");
+        return "attachment; filename=\"" + ascii + "\"; filename*=UTF-8''"
+                + UriUtils.encode(fileName, StandardCharsets.UTF_8);
     }
 
     private PresignedUploadResponse presignUpload(

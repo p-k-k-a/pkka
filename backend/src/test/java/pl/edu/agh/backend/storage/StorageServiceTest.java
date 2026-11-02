@@ -216,9 +216,49 @@ class StorageServiceTest {
     }
 
     @Test
-    void noAvatarIsOwnedWhenStorageIsNotConfigured() {
-        assertThat(unconfigured().isAvatarKeyOwnedBy(USER_ID, "avatars/" + USER_ID + "/x.png"))
-                .isFalse();
+    void anAvatarKeyCannotBeStoredWhileStorageIsNotConfigured() {
+        assertStatus(
+                () -> unconfigured().toStoredAvatarKey(USER_ID, "avatars/" + USER_ID + "/x.png"),
+                StorageNotConfiguredException.class);
+    }
+
+    @Test
+    void anAvatarKeyIsStoredTrimmedAndBlankRemovesIt() {
+        String key = storage.presignAvatar(USER_ID, "image/png", 1024).objectKey();
+
+        assertThat(storage.toStoredAvatarKey(USER_ID, "  " + key + " ")).isEqualTo(key);
+        assertThat(storage.toStoredAvatarKey(USER_ID, "  ")).isNull();
+        assertThat(unconfigured().toStoredAvatarKey(USER_ID, "")).isNull();
+        assertStatus(
+                () -> storage.toStoredAvatarKey(USER_ID, "avatars/" + UUID.randomUUID() + "/a.png"),
+                InvalidFileException.class);
+    }
+
+    @Test
+    void aDownloadNameMakesTheBrowserSaveTheFileUnderThatName() {
+        URI url = URI.create(storage.resolveDownloadUrl(MATERIAL_KEY, "Prezentacja: Łódź/AI \"2026\""));
+
+        String query = UriUtils.decode(url.getRawQuery(), StandardCharsets.UTF_8);
+        assertThat(query)
+                .contains("response-content-disposition=attachment; filename=\"Prezentacja _odz AI 2026.pdf\"")
+                .contains("filename*=UTF-8''Prezentacja%20%C5%81%C3%B3d%C5%BA%20AI%202026.pdf");
+        assertThat(url.getPath()).isEqualTo("/pkka-files/" + MATERIAL_KEY);
+    }
+
+    @Test
+    void aBlankDownloadNameFallsBackAndExternalUrlsAreUntouched() {
+        assertThat(StorageService.contentDisposition(" / ", MATERIAL_KEY)).contains("filename=\"download.pdf\"");
+        assertThat(storage.resolveDownloadUrl("https://youtu.be/abc", "Title")).isEqualTo("https://youtu.be/abc");
+        assertThat(unconfigured().resolveDownloadUrl(MATERIAL_KEY, "Title")).isNull();
+    }
+
+    @Test
+    void downloadUrlsAreCachedPerDownloadName() {
+        String first = storage.resolveDownloadUrl(MATERIAL_KEY, "A");
+
+        assertThat(storage.resolveDownloadUrl(MATERIAL_KEY, "A")).isEqualTo(first);
+        assertThat(storage.resolveDownloadUrl(MATERIAL_KEY, "B")).isNotEqualTo(first);
+        assertThat(storage.resolveUrl(MATERIAL_KEY)).doesNotContain("response-content-disposition");
     }
 
     // --- stored references (admin input) -----------------------------------------------------------

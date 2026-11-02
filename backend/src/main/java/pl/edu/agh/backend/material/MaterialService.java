@@ -27,6 +27,7 @@ public class MaterialService {
                 MaterialSpecifications.visibleTo(caller));
         return materialRepository
                 .findAll(spec, pageable)
-                .map(material -> MaterialResponse.from(material, storageService.resolveUrl(material.getUrl())));
+                .map(material -> MaterialResponse.from(
+                        material, storageService.resolveDownloadUrl(material.getUrl(), material.getTitle())));
     }
 }

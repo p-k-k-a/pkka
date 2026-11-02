@@ -65,7 +65,8 @@ public class AdminMaterialService {
     }
 
     private AdminMaterialResponse respond(Material material) {
-        return AdminMaterialResponse.from(material, storageService.resolveUrl(material.getUrl()));
+        return AdminMaterialResponse.from(
+                material, storageService.resolveDownloadUrl(material.getUrl(), material.getTitle()));
     }
 
     private Event resolveEvent(UUID eventId) {

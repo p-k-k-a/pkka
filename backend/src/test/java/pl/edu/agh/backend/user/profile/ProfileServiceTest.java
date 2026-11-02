@@ -3,6 +3,7 @@ package pl.edu.agh.backend.user.profile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,8 +70,7 @@ class ProfileServiceTest {
         User user = userWithId("kc-1");
         String key = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.isConfigured()).thenReturn(true);
-        when(storageService.isAvatarKeyOwnedBy(user.getId(), key)).thenReturn(true);
+        when(storageService.toStoredAvatarKey(user.getId(), "  " + key + " ")).thenReturn(key);
         when(storageService.resolveUrl(key)).thenReturn("https://r2.example/signed");
 
         var response = profileService.updateProfile("kc-1", avatarRequest("  " + key + " "));
@@ -94,9 +94,8 @@ class ProfileServiceTest {
         User user = userWithId("kc-1");
         user.setAvatarKey("avatars/old.png");
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.isConfigured()).thenReturn(true);
-        when(storageService.isAvatarKeyOwnedBy(user.getId(), "avatars/someone-else/a.png"))
-                .thenReturn(false);
+        when(storageService.toStoredAvatarKey(user.getId(), "avatars/someone-else/a.png"))
+                .thenThrow(new InvalidFileException("not yours"));
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/someone-else/a.png")))
                 .isInstanceOf(InvalidFileException.class);
@@ -107,7 +106,8 @@ class ProfileServiceTest {
     void updateProfileAnswers503ForAnAvatarWhenStorageIsNotConfigured() {
         User user = userWithId("kc-1");
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.isConfigured()).thenReturn(false);
+        when(storageService.toStoredAvatarKey(user.getId(), "avatars/a.png"))
+                .thenThrow(new StorageNotConfiguredException());
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/a.png")))
                 .isInstanceOf(StorageNotConfiguredException.class);
@@ -124,7 +124,7 @@ class ProfileServiceTest {
 
         profileService.updateProfile("kc-1", avatarRequest("  "));
         assertThat(user.getAvatarKey()).isNull();
-        verify(storageService, never()).isAvatarKeyOwnedBy(any(), any());
+        verify(storageService, never()).toStoredAvatarKey(any(), eq("avatars/old.png"));
     }
 
     @Test
