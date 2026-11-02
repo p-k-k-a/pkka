@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'pl.edu.agh'
-version = '0.0.1-SNAPSHOT'
+version = '1.3.0'
 
 java {
 	toolchain {
