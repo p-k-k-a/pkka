@@ -319,7 +319,7 @@ export function EventForm({ event }: EventFormProps) {
               </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-4 pb-56">
               <SectionTitle>Tagi wydarzenia</SectionTitle>
               <TagPicker
                 options={catalogTags.map((tag) => tag.name).sort()}

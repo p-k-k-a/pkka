@@ -333,7 +333,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               </div>
             </section>
 
-            <section className="space-y-5">
+            <section className="space-y-5 pb-56">
               <SectionHeading>Umiejętności</SectionHeading>
               <p className="text-muted-foreground text-sm">Wybierz z listy albo wpisz własną.</p>
               {tagsError ? (
