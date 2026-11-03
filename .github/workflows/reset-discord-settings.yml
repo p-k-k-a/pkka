@@ -1,0 +1,46 @@
+name: Reset Discord bot settings
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RESET to clear the bot's server, channel, role and event posts on production
+        required: true
+        type: string
+
+jobs:
+  reset:
+    name: Clear the settings on the VM
+    if: inputs.confirm == 'RESET'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    concurrency:
+      group: deploy-backend-production
+      cancel-in-progress: false
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      VM_NAME: ${{ vars.AZURE_VM_NAME }}
+    steps:
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Back up the databases and clear the settings
+        run: |
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
+            --command-id RunShellScript \
+            --scripts "sudo -H -u pkka-deploy bash -c 'cd /opt/pkka/deploy && ./backup.sh && docker compose -f docker-compose.prod.yml exec -T app-db psql -U pkka -d pkka -v ON_ERROR_STOP=1 -c \"DELETE FROM event_discord_posts; DELETE FROM discord_settings;\" && echo PKKA_RESET_RESULT=OK'" \
+            --output json > result.json || echo "::warning::az exited with status $?"
+          jq -r '.value[]?.message' result.json 2>/dev/null | tee reset.log || true
+          if ! grep -q '^PKKA_RESET_RESULT=OK' reset.log; then
+            echo "::error::Reset did not finish with PKKA_RESET_RESULT=OK"
+            exit 1
+          fi
