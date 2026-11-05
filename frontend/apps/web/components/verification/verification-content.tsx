@@ -17,6 +17,7 @@ import { VerificationForm } from "@/components/verification/verification-form";
 export function VerificationContent() {
   const router = useRouter();
   const {
+    user,
     admin,
     application,
     isAuthLoading,
@@ -142,7 +143,7 @@ export function VerificationContent() {
               </div>
             ) : null}
 
-            <DeleteAccount />
+            <DeleteAccount accountEmail={user?.email} />
           </div>
         )}
       </div>

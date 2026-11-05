@@ -17,13 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function DeleteAccount() {
+export function DeleteAccount({ accountEmail }: { accountEmail?: string | null }) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const deleteAccount = useDeleteMyAccount({
     mutation: { onSuccess: () => window.location.assign("/") },
   });
   const busy = deleteAccount.isPending || deleteAccount.isSuccess;
+  const emailMatches = email.trim().toLowerCase() === accountEmail?.toLowerCase();
 
   const close = () => {
     if (busy) return;
@@ -74,7 +75,7 @@ export function DeleteAccount() {
             <AlertDialogCancel disabled={busy}>Anuluj</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              disabled={!email.trim() || busy}
+              disabled={!emailMatches || busy}
               onClick={(event) => {
                 event.preventDefault();
                 deleteAccount.mutate({ data: { email: email.trim() } });
