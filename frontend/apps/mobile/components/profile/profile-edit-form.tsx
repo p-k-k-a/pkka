@@ -398,11 +398,11 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         {([canSubmit, isSubmitting]) => (
           <Button
             size="lg"
-            className="mt-2 w-full"
+            className="w-full"
             disabled={!canSubmit || isSubmitting}
             onPress={() => form.handleSubmit()}
           >
-            <Text className="text-sm font-bold uppercase tracking-widest">
+            <Text className="flex-1 text-center text-sm font-bold uppercase tracking-widest">
               {isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
             </Text>
           </Button>
