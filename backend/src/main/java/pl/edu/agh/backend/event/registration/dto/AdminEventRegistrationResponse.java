@@ -11,8 +11,11 @@ import pl.edu.agh.backend.user.User;
 public record AdminEventRegistrationResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID registrationId,
 
-        @Schema(requiredMode = RequiredMode.REQUIRED) String displayName,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String email,
+        @Schema(description = "Missing when the person deleted their account")
+        String displayName,
+
+        @Schema(description = "Missing when the person deleted their account")
+        String email,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) EventRegistrationStatus status,
 
@@ -30,8 +33,8 @@ public record AdminEventRegistrationResponse(
         User user = registration.getUser();
         return new AdminEventRegistrationResponse(
                 registration.getId(),
-                user.getFirstName() + " " + user.getLastName(),
-                user.getEmail(),
+                user == null ? null : user.getFirstName() + " " + user.getLastName(),
+                user == null ? null : user.getEmail(),
                 registration.getStatus(),
                 registration.getRegisteredAt(),
                 waitlistPosition,

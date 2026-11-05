@@ -2,13 +2,17 @@ package pl.edu.agh.backend.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pl.edu.agh.backend.support.JwtTestSupport.asAdmin;
 import static pl.edu.agh.backend.support.JwtTestSupport.asUser;
 
 import java.time.Instant;
@@ -118,8 +122,6 @@ class AccountDeletionIntegrationTest {
         jdbc.update("insert into survey_submissions values (?, ?, ?, now())", UUID.randomUUID(), survey, user.getId());
         jdbc.update("insert into device_tokens values ('token', ?, 'ANDROID', now(), now())", user.getId());
         jdbc.update("insert into push_tickets values ('ticket', 'token', now())");
-        Event past = newEvent(Instant.now().minus(1, ChronoUnit.DAYS), null);
-        register(past, user, EventRegistrationStatus.REGISTERED);
 
         deleteAccount(EMAIL).andExpect(status().isNoContent());
 
@@ -196,6 +198,24 @@ class AccountDeletionIntegrationTest {
                         String.class,
                         event.getId()))
                 .containsExactlyInAnyOrder("SIGNED_UP", "CANCELLED");
+    }
+
+    @Test
+    void keepsPastSignUpsForTheStatisticsWithoutThePerson() throws Exception {
+        Event past = newEvent(Instant.now().minus(1, ChronoUnit.DAYS), null);
+        register(past, user, EventRegistrationStatus.REGISTERED);
+
+        deleteAccount(EMAIL).andExpect(status().isNoContent());
+
+        assertThat(count(
+                        "select count(*) from event_registrations where event_id = ? and user_id is null",
+                        past.getId()))
+                .isEqualTo(1);
+        mockMvc.perform(get("/api/admin/events/{id}/registrations", past.getId())
+                        .with(asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].displayName").value(nullValue()))
+                .andExpect(jsonPath("$[0].email").value(nullValue()));
     }
 
     @Test
