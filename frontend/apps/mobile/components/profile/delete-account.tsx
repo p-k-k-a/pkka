@@ -5,6 +5,7 @@ import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
 import { ApiError, useDeleteMyAccount } from "@pkka/api";
+import { router } from "expo-router";
 import { Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Keyboard, Pressable, View } from "react-native";
@@ -14,7 +15,14 @@ export function DeleteAccount() {
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const deleteAccount = useDeleteMyAccount({ mutation: { onSuccess: () => void logout() } });
+  const deleteAccount = useDeleteMyAccount({
+    mutation: {
+      onSuccess: () => {
+        router.back();
+        void logout();
+      },
+    },
+  });
   const busy = deleteAccount.isPending || deleteAccount.isSuccess;
 
   const openSheet = () => {
@@ -30,9 +38,9 @@ export function DeleteAccount() {
 
   return (
     <>
-      <Button size="lg" variant="ghost" className="w-full" onPress={openSheet}>
+      <Button size="lg" variant="outline" className="w-full" onPress={openSheet}>
         <Trash2 size={18} color={colors.destructive} />
-        <Text className="text-destructive font-bold">Usuń konto</Text>
+        <Text className="font-bold">Usuń konto</Text>
       </Button>
 
       <BottomSheet visible={open} onClose={close}>
