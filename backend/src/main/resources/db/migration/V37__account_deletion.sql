@@ -29,3 +29,9 @@ ALTER TABLE events
     DROP CONSTRAINT events_author_id_fkey,
     ADD CONSTRAINT fk_events_author
         FOREIGN KEY (author_id) REFERENCES users (id) ON DELETE SET NULL;
+
+ALTER TABLE event_registrations
+    ALTER COLUMN user_id DROP NOT NULL,
+    DROP CONSTRAINT event_registrations_user_id_fkey,
+    ADD CONSTRAINT fk_event_registrations_user
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL;
