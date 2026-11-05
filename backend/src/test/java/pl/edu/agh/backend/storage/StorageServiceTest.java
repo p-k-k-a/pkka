@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 /** Presigning is local signing, so these run without R2, Spring or Docker. */
@@ -373,6 +374,26 @@ class StorageServiceTest {
     @Test
     void differentKeysGetDifferentUrls() {
         assertThat(storage.resolveUrl(MATERIAL_KEY)).isNotEqualTo(storage.resolveUrl(COVER_KEY));
+    }
+
+    // --- deletes -----------------------------------------------------------------------------------
+
+    @Test
+    void deleteUrlIsShortLivedAndSignedForTheObject() {
+        String key = "avatars/" + USER_ID + "/0f3a1c8e-1111-4000-8000-000000000003.png";
+
+        URI url = URI.create(storage.presignDelete(key));
+
+        assertThat(url.getPath()).isEqualTo("/pkka-files/" + key);
+        assertThat(url.getQuery()).contains("X-Amz-Expires=60").contains("X-Amz-Signature=");
+    }
+
+    @Test
+    void deleteSkipsWhatIsNotOurs() {
+        storage.delete(null);
+        storage.delete("https://example.com/a.png");
+
+        verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
     }
 
     // --- helpers -----------------------------------------------------------------------------------
