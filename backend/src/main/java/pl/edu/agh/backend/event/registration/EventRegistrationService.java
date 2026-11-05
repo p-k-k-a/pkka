@@ -92,6 +92,21 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())
                 .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
+        cancel(event, user, registration);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelUpcomingRegistrations(User user) {
+        eventRegistrationRepository
+                .findUpcomingEventIds(user.getId(), Instant.now(clock))
+                .forEach(eventId -> eventLookup
+                        .findForUpdate(eventId)
+                        .ifPresent(event -> eventRegistrationRepository
+                                .findByEventIdAndUserId(eventId, user.getId())
+                                .ifPresent(registration -> cancel(event, user, registration))));
+    }
+
+    private void cancel(Event event, User user, EventRegistration registration) {
         boolean freedASeat = registration.getStatus() == EventRegistrationStatus.REGISTERED;
         eventRegistrationRepository.delete(registration);
         recordActivity(

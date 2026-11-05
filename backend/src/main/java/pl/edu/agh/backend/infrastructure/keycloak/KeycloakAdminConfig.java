@@ -1,5 +1,7 @@
 package pl.edu.agh.backend.infrastructure.keycloak;
 
+import jakarta.ws.rs.client.ClientBuilder;
+import java.util.concurrent.TimeUnit;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -29,6 +31,10 @@ public class KeycloakAdminConfig {
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
+                .resteasyClient(ClientBuilder.newBuilder()
+                        .connectTimeout(2, TimeUnit.SECONDS)
+                        .readTimeout(5, TimeUnit.SECONDS)
+                        .build())
                 .build();
     }
 }

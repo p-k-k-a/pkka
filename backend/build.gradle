@@ -26,8 +26,8 @@ dependencyManagement {
 }
 
 dependencies {
-	// Cloudflare R2 speaks the S3 API. Only S3Presigner is used (signing is local, no HTTP calls),
-	// so the HTTP client implementations the s3 module drags in are excluded.
+	// Cloudflare R2 speaks the S3 API. Only S3Presigner is used (signing is local, a presigned URL is
+	// called with Spring's own client), so the HTTP client implementations the s3 module drags in are excluded.
 	implementation('software.amazon.awssdk:s3') {
 		exclude group: 'software.amazon.awssdk', module: 'apache5-client'
 		exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
