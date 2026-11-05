@@ -1,5 +1,4 @@
 import { AlumniProfileView } from "@/components/alumni/alumni-profile-view";
-import { DeleteAccount } from "@/components/profile/delete-account";
 import { SettingsSection } from "@/components/profile/settings-section";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -263,8 +262,6 @@ export function UserPanel() {
           <LogOut size={18} color={colors.destructive} />
           <Text className="font-bold">Wyloguj się</Text>
         </Button>
-
-        <DeleteAccount />
       </View>
     </ScrollView>
   );
