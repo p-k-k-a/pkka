@@ -73,6 +73,7 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
                     select r.* from event_registrations r
                     join events e on e.id = r.event_id
                     where r.reminder_sent_at is null
+                      and r.user_id is not null
                       and r.status = 'REGISTERED'
                       and e.deleted_at is null
                       and e.reminder_lead_time_minutes is not null
