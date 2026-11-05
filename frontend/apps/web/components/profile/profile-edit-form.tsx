@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -441,6 +442,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                 </DetailList>
               </Card>
             ) : null}
+
+            <DeleteAccount />
           </div>
         </div>
       </div>
