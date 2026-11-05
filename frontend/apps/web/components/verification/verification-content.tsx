@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { ApplicationSummary } from "@/components/applications/application-summary";
 import { StatusBadge } from "@/components/applications/status-badge";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { DiscordVerifyButton } from "@/components/verification/discord-verify-button";
 import { VerificationForm } from "@/components/verification/verification-form";
 
@@ -140,6 +141,8 @@ export function VerificationContent() {
                 />
               </div>
             ) : null}
+
+            <DeleteAccount />
           </div>
         )}
       </div>
