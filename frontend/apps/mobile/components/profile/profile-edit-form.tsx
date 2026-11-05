@@ -33,6 +33,7 @@ import { router } from "expo-router";
 import { Camera, Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -397,16 +398,18 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         {([canSubmit, isSubmitting]) => (
           <Button
             size="lg"
-            className="mt-2 w-full"
+            className="w-full"
             disabled={!canSubmit || isSubmitting}
             onPress={() => form.handleSubmit()}
           >
-            <Text className="text-sm font-bold uppercase tracking-widest">
+            <Text className="flex-1 text-center text-sm font-bold uppercase tracking-widest">
               {isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
             </Text>
           </Button>
         )}
       </form.Subscribe>
+
+      <DeleteAccount accountEmail={profile.email} />
     </KeyboardAwareScrollView>
   );
 }
