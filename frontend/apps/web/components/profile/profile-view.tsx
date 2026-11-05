@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BookOpen, Briefcase, CalendarCheck, EyeOff, GraduationCap, Mail } from "lucide-react";
 import type { AlumniProfileResponse, ProfileResponse } from "@pkka/api";
 import { HistoryBackButton } from "@/components/content/history-back-button";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { ProfileAside, ProfileAsideItem } from "@/components/profile/profile-aside";
 import { ProfileContactList } from "@/components/profile/profile-contact-list";
 import { SectionHeading } from "@/components/profile/section-heading";
@@ -183,16 +184,21 @@ export function ProfileView(props: ProfileViewProps) {
             ) : null}
 
             {isOwn ? (
-              <ProfileAside title="Widoczność">
-                <p className="text-muted-foreground -mt-2 text-[13px]">
-                  Tak Twoje dane widzą pozostali alumni.
-                </p>
-                <VisibilitySummary
-                  visibility={profile.visibility}
-                  discordConnected={Boolean(profile.discordId)}
-                  phoneSet={Boolean(profile.phoneNumber)}
-                />
-              </ProfileAside>
+              <>
+                <ProfileAside title="Widoczność">
+                  <p className="text-muted-foreground -mt-2 text-[13px]">
+                    Tak Twoje dane widzą pozostali alumni.
+                  </p>
+                  <VisibilitySummary
+                    visibility={profile.visibility}
+                    discordConnected={Boolean(profile.discordId)}
+                    phoneSet={Boolean(profile.phoneNumber)}
+                  />
+                </ProfileAside>
+                <ProfileAside title="Konto">
+                  <DeleteAccount />
+                </ProfileAside>
+              </>
             ) : null}
           </div>
         </div>
