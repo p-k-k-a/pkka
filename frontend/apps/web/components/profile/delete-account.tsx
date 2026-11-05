@@ -34,13 +34,8 @@ export function DeleteAccount() {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        className="text-destructive hover:text-destructive -ml-3"
-        onClick={() => setOpen(true)}
-      >
-        <Trash2 data-icon="inline-start" />
+      <Button type="button" variant="outline" className="w-full" onClick={() => setOpen(true)}>
+        <Trash2 data-icon="inline-start" className="text-destructive" />
         Usuń konto
       </Button>
 
