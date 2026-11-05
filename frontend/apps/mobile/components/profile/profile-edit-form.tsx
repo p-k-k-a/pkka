@@ -409,7 +409,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         )}
       </form.Subscribe>
 
-      <DeleteAccount />
+      <DeleteAccount accountEmail={profile.email} />
     </KeyboardAwareScrollView>
   );
 }

@@ -10,7 +10,7 @@ import { Trash2 } from "lucide-react-native";
 import { useState } from "react";
 import { Keyboard, Pressable, View } from "react-native";
 
-export function DeleteAccount() {
+export function DeleteAccount({ accountEmail }: { accountEmail?: string | null }) {
   const colors = useThemeColors();
   const { logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -24,6 +24,7 @@ export function DeleteAccount() {
     },
   });
   const busy = deleteAccount.isPending || deleteAccount.isSuccess;
+  const emailMatches = email.trim().toLowerCase() === accountEmail?.toLowerCase();
 
   const openSheet = () => {
     setEmail("");
@@ -82,7 +83,7 @@ export function DeleteAccount() {
           <Button
             size="lg"
             variant="destructive"
-            disabled={!email.trim() || busy}
+            disabled={!emailMatches || busy}
             onPress={() => deleteAccount.mutate({ data: { email: email.trim() } })}
           >
             <Text className="font-bold">{busy ? "Usuwanie…" : "Usuń konto na zawsze"}</Text>
