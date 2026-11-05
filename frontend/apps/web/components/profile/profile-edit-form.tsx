@@ -443,7 +443,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               </Card>
             ) : null}
 
-            <DeleteAccount />
+            <DeleteAccount accountEmail={profile.email} />
           </div>
         </div>
       </div>
