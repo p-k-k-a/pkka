@@ -12,6 +12,7 @@ import {
 } from "@pkka/domain";
 import { AlumniCard } from "@/components/alumni/alumni-card";
 import { AlumniFiltersPanel, type AlumniTagsQuery } from "@/components/alumni/alumni-filters";
+import { AlumniSectionTabs } from "@/components/alumni/alumni-section-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ export function AlumniDirectory() {
     <AlumniDirectoryView
       directory={directory}
       directoryHref={ALUMNI_DIRECTORY_HREF}
+      tabs={<AlumniSectionTabs />}
       tagsQuery={tagsQuery}
       pageData={data?.status === 200 ? data.data : undefined}
       isPending={isPending}
@@ -74,6 +76,7 @@ export function useAlumniDirectoryState() {
 type AlumniDirectoryViewProps = {
   directory: ReturnType<typeof useAlumniDirectoryState>;
   directoryHref: string;
+  tabs?: React.ReactNode;
   tagsQuery: AlumniTagsQuery;
   pageData: PageAlumniListItemResponse | undefined;
   isPending: boolean;
@@ -85,6 +88,7 @@ type AlumniDirectoryViewProps = {
 export function AlumniDirectoryView({
   directory,
   directoryHref,
+  tabs,
   tagsQuery,
   pageData,
   isPending,
@@ -119,6 +123,7 @@ export function AlumniDirectoryView({
             <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
               Alumni
             </h1>
+            {tabs}
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
               Szukaj po nazwisku, stanowisku lub firmie.
             </p>
