@@ -175,7 +175,11 @@ export function PostsList() {
                             label: published ? "Opublikowano" : "Utworzono",
                             value: dateLabel,
                           },
-                          { icon: UserRound, label: "Autor", value: post.authorDisplayName },
+                          {
+                            icon: UserRound,
+                            label: "Autor",
+                            value: post.authorDisplayName ?? "nieznany",
+                          },
                         ]}
                       />
                       <div className="mt-auto flex flex-wrap items-center gap-2 pt-2">
