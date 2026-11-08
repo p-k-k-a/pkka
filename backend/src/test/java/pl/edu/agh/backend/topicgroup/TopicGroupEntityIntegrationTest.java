@@ -3,6 +3,7 @@ package pl.edu.agh.backend.topicgroup;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.persistence.EntityManager;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -37,6 +39,12 @@ class TopicGroupEntityIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    @Autowired
+    private EntityManager entityManager;
+
     private User newUser() {
         User user = new User();
         user.setKeycloakId(UUID.randomUUID().toString());
@@ -58,6 +66,11 @@ class TopicGroupEntityIntegrationTest {
                 .proposedName(proposedName)
                 .description("Chcemy wymieniać się doświadczeniem z wdrożeń AI.")
                 .build();
+    }
+
+    private void deleteAccount(User user) {
+        jdbc.update("delete from users where id = ?", user.getId());
+        entityManager.clear();
     }
 
     @Test
@@ -153,5 +166,41 @@ class TopicGroupEntityIntegrationTest {
                 .isInstanceOf(InvalidTopicGroupRequestStateException.class);
         assertThatThrownBy(() -> request.reject(admin, "Jeszcze raz"))
                 .isInstanceOf(InvalidTopicGroupRequestStateException.class);
+    }
+
+    @Test
+    void deletingTheOwnersAccountLeavesTheGroupWithoutAnOwner() {
+        User owner = newUser();
+        TopicGroup group = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", owner));
+
+        deleteAccount(owner);
+
+        assertThat(topicGroupRepository.findById(group.getId()))
+                .hasValueSatisfying(saved -> assertThat(saved.getOwner()).isNull());
+    }
+
+    @Test
+    void deletingTheRequestersAccountDeletesTheirRequests() {
+        User requester = newUser();
+        TopicGroupRequest request = topicGroupRequestRepository.saveAndFlush(newRequest(requester, "Grupa AI"));
+
+        deleteAccount(requester);
+
+        assertThat(topicGroupRequestRepository.findById(request.getId())).isEmpty();
+    }
+
+    @Test
+    void deletingTheReviewersAccountKeepsTheReviewedRequest() {
+        User admin = newUser();
+        TopicGroupRequest request = topicGroupRequestRepository.saveAndFlush(newRequest(newUser(), "Grupa AI"));
+        request.reject(admin, "Zbyt wąski temat.");
+        topicGroupRequestRepository.saveAndFlush(request);
+
+        deleteAccount(admin);
+
+        assertThat(topicGroupRequestRepository.findById(request.getId())).hasValueSatisfying(saved -> {
+            assertThat(saved.getStatus()).isEqualTo(TopicGroupRequestStatus.REJECTED);
+            assertThat(saved.getReviewedBy()).isNull();
+        });
     }
 }

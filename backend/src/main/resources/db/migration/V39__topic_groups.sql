@@ -4,7 +4,7 @@ CREATE TABLE topic_groups
     slug        VARCHAR(255) NOT NULL,
     name        VARCHAR(200) NOT NULL,
     description TEXT,
-    owner_id    UUID         NOT NULL,
+    owner_id    UUID,
     created_at  TIMESTAMPTZ  NOT NULL,
     updated_at  TIMESTAMPTZ  NOT NULL,
     version     BIGINT       NOT NULL DEFAULT 0,
@@ -12,7 +12,7 @@ CREATE TABLE topic_groups
     CONSTRAINT pk_topic_groups       PRIMARY KEY (id),
     CONSTRAINT uq_topic_groups_slug  UNIQUE (slug),
     CONSTRAINT uq_topic_groups_name  UNIQUE (name),
-    CONSTRAINT fk_topic_groups_owner FOREIGN KEY (owner_id) REFERENCES users (id)
+    CONSTRAINT fk_topic_groups_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_topic_groups_owner ON topic_groups (owner_id);
@@ -33,8 +33,8 @@ CREATE TABLE topic_group_requests
     version          BIGINT        NOT NULL DEFAULT 0,
 
     CONSTRAINT pk_topic_group_requests               PRIMARY KEY (id),
-    CONSTRAINT fk_topic_group_requests_requester     FOREIGN KEY (requester_id)     REFERENCES users (id),
-    CONSTRAINT fk_topic_group_requests_reviewed_by   FOREIGN KEY (reviewed_by_id)   REFERENCES users (id),
+    CONSTRAINT fk_topic_group_requests_requester     FOREIGN KEY (requester_id)     REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_topic_group_requests_reviewed_by   FOREIGN KEY (reviewed_by_id)   REFERENCES users (id) ON DELETE SET NULL,
     CONSTRAINT fk_topic_group_requests_created_group FOREIGN KEY (created_group_id) REFERENCES topic_groups (id),
     CONSTRAINT chk_topic_group_requests_status       CHECK (status IN ('UNDER_REVIEW', 'APPROVED', 'REJECTED'))
 );

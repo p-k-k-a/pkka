@@ -2,7 +2,6 @@ package pl.edu.agh.backend.topicgroup;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
@@ -50,9 +49,8 @@ public class TopicGroup {
     private String description;
 
     /** The group's own admin — the alumn who asked for it, not a club admin. */
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "owner_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
     private User owner;
 
     @CreatedDate
