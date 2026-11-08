@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/alumni")
@@ -72,7 +73,7 @@ public class AlumniController {
                         + "(no approved application)",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public AlumniProfileResponse getAlumniProfile(@PathVariable UUID id) {
-        return alumniService.getProfile(id);
+    public AlumniProfileResponse getAlumniProfile(@PathVariable UUID id, Caller caller) {
+        return alumniService.getProfile(id, caller);
     }
 }

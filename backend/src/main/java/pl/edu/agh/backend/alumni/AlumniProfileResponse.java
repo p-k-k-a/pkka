@@ -50,9 +50,14 @@ public record AlumniProfileResponse(
 
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<AlumniTagResponse> tags,
-        @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) ProfileVisibility visibility,
 
-    public static AlumniProfileResponse from(User user, AlumnEducation education) {
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Whether the caller has this alumn in their contacts")
+        boolean isContact) {
+
+    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean isContact) {
         boolean showName = user.isShowName();
         boolean showEmail = user.isShowEmail();
         boolean showDiscord = user.isShowDiscord();
@@ -77,6 +82,7 @@ public record AlumniProfileResponse(
                         .map(AlumniTagResponse::from)
                         .sorted(Comparator.comparing(AlumniTagResponse::name))
                         .toList(),
-                ProfileVisibility.of(user));
+                ProfileVisibility.of(user),
+                isContact);
     }
 }
