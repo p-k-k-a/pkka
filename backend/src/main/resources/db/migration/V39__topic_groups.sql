@@ -35,7 +35,7 @@ CREATE TABLE topic_group_requests
     CONSTRAINT pk_topic_group_requests               PRIMARY KEY (id),
     CONSTRAINT fk_topic_group_requests_requester     FOREIGN KEY (requester_id)     REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_topic_group_requests_reviewed_by   FOREIGN KEY (reviewed_by_id)   REFERENCES users (id) ON DELETE SET NULL,
-    CONSTRAINT fk_topic_group_requests_created_group FOREIGN KEY (created_group_id) REFERENCES topic_groups (id),
+    CONSTRAINT fk_topic_group_requests_created_group FOREIGN KEY (created_group_id) REFERENCES topic_groups (id) ON DELETE SET NULL,
     CONSTRAINT chk_topic_group_requests_status       CHECK (status IN ('UNDER_REVIEW', 'APPROVED', 'REJECTED'))
 );
 

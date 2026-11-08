@@ -203,4 +203,21 @@ class TopicGroupEntityIntegrationTest {
             assertThat(saved.getReviewedBy()).isNull();
         });
     }
+
+    @Test
+    void deletingAGroupKeepsTheRequestThatCreatedIt() {
+        User requester = newUser();
+        TopicGroupRequest request = topicGroupRequestRepository.saveAndFlush(newRequest(requester, "Grupa AI"));
+        TopicGroup group = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", requester));
+        request.approve(newUser(), group);
+        topicGroupRequestRepository.saveAndFlush(request);
+
+        jdbc.update("delete from topic_groups where id = ?", group.getId());
+        entityManager.clear();
+
+        assertThat(topicGroupRequestRepository.findById(request.getId())).hasValueSatisfying(saved -> {
+            assertThat(saved.getStatus()).isEqualTo(TopicGroupRequestStatus.APPROVED);
+            assertThat(saved.getCreatedGroup()).isNull();
+        });
+    }
 }
