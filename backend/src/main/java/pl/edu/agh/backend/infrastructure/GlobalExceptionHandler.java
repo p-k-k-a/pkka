@@ -33,6 +33,10 @@ import pl.edu.agh.backend.survey.SurveyHasSubmissionsException;
 import pl.edu.agh.backend.survey.SurveyNotActiveException;
 import pl.edu.agh.backend.survey.SurveyNotFoundException;
 import pl.edu.agh.backend.ticket.TicketNotFoundException;
+import pl.edu.agh.backend.topicgroup.InvalidTopicGroupRequestStateException;
+import pl.edu.agh.backend.topicgroup.TopicGroupNameTakenException;
+import pl.edu.agh.backend.topicgroup.TopicGroupRequestAlreadyOpenException;
+import pl.edu.agh.backend.topicgroup.TopicGroupRequestNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -204,6 +208,34 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleFileTooLarge(FileTooLargeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONTENT_TOO_LARGE, ex.getMessage());
         problem.setTitle("File too large");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicGroupRequestNotFoundException.class)
+    public ProblemDetail handleTopicGroupRequestNotFound(TopicGroupRequestNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Topic group request not found");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicGroupRequestAlreadyOpenException.class)
+    public ProblemDetail handleTopicGroupRequestAlreadyOpen(TopicGroupRequestAlreadyOpenException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Topic group request already open");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicGroupNameTakenException.class)
+    public ProblemDetail handleTopicGroupNameTaken(TopicGroupNameTakenException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Topic group name taken");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidTopicGroupRequestStateException.class)
+    public ProblemDetail handleInvalidTopicGroupRequestState(InvalidTopicGroupRequestStateException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Invalid topic group request state");
         return problem;
     }
 
