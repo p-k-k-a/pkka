@@ -53,6 +53,12 @@ public class TopicGroup {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+    @Column(name = "discord_role_id", length = 32)
+    private String discordRoleId;
+
+    @Column(name = "discord_channel_id", length = 32)
+    private String discordChannelId;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

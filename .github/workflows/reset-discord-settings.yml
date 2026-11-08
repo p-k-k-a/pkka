@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: Type RESET to clear the bot's server, channel, role and event posts on production
+        description: Type RESET to clear the bot's server, channel, role, event posts and topic group links on production
         required: true
         type: string
 
@@ -37,7 +37,7 @@ jobs:
             --resource-group "$RESOURCE_GROUP" \
             --name "$VM_NAME" \
             --command-id RunShellScript \
-            --scripts "sudo -H -u pkka-deploy bash -c 'cd /opt/pkka/deploy && ./backup.sh && docker compose -f docker-compose.prod.yml exec -T app-db psql -U pkka -d pkka -v ON_ERROR_STOP=1 -c \"DELETE FROM event_discord_posts; DELETE FROM discord_settings;\" && echo PKKA_RESET_RESULT=OK'" \
+            --scripts "sudo -H -u pkka-deploy bash -c 'cd /opt/pkka/deploy && ./backup.sh && docker compose -f docker-compose.prod.yml exec -T app-db psql -U pkka -d pkka -v ON_ERROR_STOP=1 -c \"DELETE FROM event_discord_posts; DELETE FROM discord_settings; UPDATE topic_groups SET discord_role_id = NULL, discord_channel_id = NULL;\" && echo PKKA_RESET_RESULT=OK'" \
             --output json > result.json || echo "::warning::az exited with status $?"
           jq -r '.value[]?.message' result.json 2>/dev/null | tee reset.log || true
           if ! grep -q '^PKKA_RESET_RESULT=OK' reset.log; then

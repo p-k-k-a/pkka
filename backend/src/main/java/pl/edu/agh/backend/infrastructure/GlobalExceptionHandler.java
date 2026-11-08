@@ -35,6 +35,7 @@ import pl.edu.agh.backend.survey.SurveyNotFoundException;
 import pl.edu.agh.backend.ticket.TicketNotFoundException;
 import pl.edu.agh.backend.topicgroup.InvalidTopicGroupRequestStateException;
 import pl.edu.agh.backend.topicgroup.TopicGroupNameTakenException;
+import pl.edu.agh.backend.topicgroup.TopicGroupNotFoundException;
 import pl.edu.agh.backend.topicgroup.TopicGroupRequestAlreadyOpenException;
 import pl.edu.agh.backend.topicgroup.TopicGroupRequestNotFoundException;
 
@@ -208,6 +209,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleFileTooLarge(FileTooLargeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONTENT_TOO_LARGE, ex.getMessage());
         problem.setTitle("File too large");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicGroupNotFoundException.class)
+    public ProblemDetail handleTopicGroupNotFound(TopicGroupNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Topic group not found");
         return problem;
     }
 

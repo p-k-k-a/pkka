@@ -2,7 +2,8 @@
 
 Backend rozmawia z Discordem na dwa sposoby:
 
-- **wychodząco** (token bota): publikuje, edytuje i usuwa ogłoszenia wydarzeń, sprawdza role członka przy wniosku.
+- **wychodząco** (token bota): publikuje, edytuje i usuwa ogłoszenia wydarzeń, sprawdza role członka przy wniosku,
+  tworzy role i prywatne kanały kół zainteresowań.
   Działa z każdego komputera, bez niczego dodatkowego.
 - **przychodząco** (webhook): Discord wysyła `/setup` na `POST /api/public/discord/interactions`.
   Discord musi dosięgnąć tego adresu po HTTPS, więc lokalnie potrzebny jest tunel (krok 4).
@@ -16,9 +17,14 @@ wpisany w produkcyjną zepsułby komendę na prodzie.
 2. *General Information*: skopiuj **Application ID** i **Public Key**.
 3. *Bot* → *Reset Token*: skopiuj token.
 4. Bot prywatny: *Installation* → *Install Link* = **None**, potem *Bot* → **Public Bot** wyłączone.
-5. Załóż własny serwer testowy z kanałem `#ogloszenia` i rolą `@Absolwent`.
-6. Zaproś bota (uprawnienia: wyświetlanie kanału, wysyłanie wiadomości, osadzanie linków):
-   `https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=19456`
+5. Załóż własny serwer testowy z kanałem `#ogloszenia`, rolą `@Absolwent` i kategorią `Koła`.
+6. Zaproś bota (uprawnienia: wyświetlanie kanału, wysyłanie wiadomości, osadzanie linków, zarządzanie kanałami,
+   rolami i wiadomościami):
+   `https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=268463120`
+
+   Bot zaproszony wcześniej z `permissions=19456` nie ma uprawnień do kół. Otwórz nowy link jeszcze raz,
+   a Discord dopisze brakujące uprawnienia do roli bota. Bot potrzebuje zarządzania wiadomościami, bo może nadać
+   właścicielowi koła tylko to uprawnienie, które sam ma.
 
 ## 2. Zmienne w `backend/.env`
 
@@ -64,8 +70,8 @@ Adres tunelu zmienia się przy każdym starcie — po restarcie wpisz go w porta
 
 ## 5. `/setup`
 
-- `/setup channel:#ogloszenia role:@Absolwent` → na kanale wiadomość potwierdzająca, u ciebie odpowiedź
-  widoczna tylko dla ciebie. Komendy nie widać? Odśwież klienta Discorda (Ctrl+R).
+- `/setup channel:#ogloszenia role:@Absolwent groups_category:Koła` → na kanale wiadomość potwierdzająca, u ciebie
+  odpowiedź widoczna tylko dla ciebie. Komendy nie widać? Odśwież klienta Discorda (Ctrl+R).
 - `/setup` bez opcji pokazuje bieżące ustawienia.
 - Odmowy: `role:@everyone`, kanał, na którym bot nie ma uprawnień.
 - Baza: `SELECT * FROM discord_settings;`
@@ -76,8 +82,8 @@ Ogłoszenia i weryfikację da się sprawdzić bez kroku 4 — wystarczy wstawić
 po włączeniu *Tryb dewelopera* w Discordzie: prawy przycisk → *Kopiuj ID*):
 
 ```sql
-INSERT INTO discord_settings (guild_id, announcements_channel_id, alumn_role_id)
-VALUES ('<id serwera>', '<id kanału>', '<id roli>');
+INSERT INTO discord_settings (guild_id, announcements_channel_id, alumn_role_id, groups_category_id)
+VALUES ('<id serwera>', '<id kanału>', '<id roli>', '<id kategorii>');
 ```
 
 ## 6. Ogłoszenia wydarzeń
@@ -96,6 +102,21 @@ Utwórz w panelu admina wydarzenie dla odbiorców **publiczne** albo **wszyscy a
 - Złożony wniosek alumna od razu przechodzi na zaakceptowany, a użytkownik dostaje `verified-alumn`
   (Keycloak → *Users* → *Role mapping*; do nowego tokena trzeba się przelogować).
 - Bez roli wniosek zostaje w kolejce do ręcznej oceny. Powód widać w logu (DEBUG na profilu dev).
+
+## 8. Koła zainteresowań
+
+Zatwierdź wniosek o koło (`POST /api/admin/topic-group-requests/{id}/approve`, np. w Swaggerze):
+
+- w kategorii z `groups_category` powstaje kanał nazwany slugiem koła i rola nazwana jak koło,
+- kanał widzą tylko osoby z tą rolą i admini serwera,
+- właściciel koła z podpiętym Discordem ma na kanale zarządzanie wiadomościami (*Edytuj kanał* → *Uprawnienia*),
+- rola ląduje pod rolą bota, więc bot może ją potem nadawać.
+
+Bez kategorii, bez tokenu bota albo przy błędzie Discorda koło powstaje bez roli i kanału, a powód widać w logu.
+`GET /api/admin/topic-groups` pokazuje stan powiązania w polu `discord`: `LINKED`, `MISSING` albo `NOT_CONFIGURED`.
+`POST /api/admin/topic-groups/{id}/discord` tworzy brakującą rolę lub kanał i niczego nie dubluje.
+
+Baza: `SELECT name, discord_role_id, discord_channel_id FROM topic_groups;`
 
 ## Sprzątanie
 
