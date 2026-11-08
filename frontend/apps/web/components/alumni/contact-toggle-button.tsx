@@ -39,7 +39,7 @@ export function ContactToggleButton({ alumnId, isContact }: ContactToggleButtonP
     } finally {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: getGetAlumniProfileQueryKey(alumnId) }),
-        queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: getListContactsQueryKey(), refetchType: "all" }),
       ]);
       setPending(false);
     }

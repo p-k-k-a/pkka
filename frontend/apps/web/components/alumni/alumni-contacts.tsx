@@ -36,7 +36,10 @@ export function AlumniContacts() {
   const refresh = (alumnId: string) =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: getListContactsQueryKey() }),
-      queryClient.invalidateQueries({ queryKey: getGetAlumniProfileQueryKey(alumnId) }),
+      queryClient.invalidateQueries({
+        queryKey: getGetAlumniProfileQueryKey(alumnId),
+        refetchType: "all",
+      }),
     ]);
 
   const restore = async (alumnId: string) => {
