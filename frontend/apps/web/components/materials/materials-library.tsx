@@ -97,18 +97,14 @@ export function MaterialsLibrary() {
 
   return (
     <div className="flex flex-col">
-      <section className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <section className="bg-background px-4 pt-10 pb-6 md:px-10 md:pt-16 md:pb-8">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-8">
           <div className="space-y-6">
-            <p className="bg-accent/10 text-accent inline-flex rounded-lg px-3 py-1 text-xs font-semibold tracking-widest uppercase">
-              Materiały klubu
-            </p>
-            <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
-              Nagrania i prezentacje z wydarzeń
+            <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+              Materiały
             </h1>
             <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-              Wróć do minionych spotkań albo nadrób te, które Cię ominęły. Materiały otwierają się w
-              nowej karcie.
+              Nagrania i prezentacje z wydarzeń klubu. Otwierają się w nowej karcie.
             </p>
           </div>
 

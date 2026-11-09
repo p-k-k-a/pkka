@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   EventTimeframe,
@@ -133,7 +133,6 @@ export function MaterialForm({ material }: MaterialFormProps) {
             onClick={handleSave}
           >
             {isPending ? "Zapisywanie…" : isEditing ? "Zapisz zmiany" : "Dodaj materiał"}
-            {isPending ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
 
