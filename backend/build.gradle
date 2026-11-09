@@ -45,6 +45,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-flyway'
     implementation 'org.flywaydb:flyway-database-postgresql'
+	// Mail goes out through MailService; its sender is built in MailConfig from MAIL_*, not from spring.mail.*.
+	// Thymeleaf only renders mail templates (no MVC views), so the core library is enough.
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.thymeleaf:thymeleaf'
     runtimeOnly 'org.postgresql:postgresql'
 
 	compileOnly 'org.projectlombok:lombok'

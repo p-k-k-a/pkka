@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!--/* Shared frame of every mail. Mail clients ignore <style> blocks unevenly, so styles are inline. */-->
+<html lang="pl" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${subject}">PKKA</title>
+</head>
+<body style="margin:0;padding:0;background-color:#EDF1FA;font-family:Arial,Helvetica,sans-serif;color:#486284;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EDF1FA;">
+    <tr>
+        <td align="center" style="padding:24px 16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="max-width:560px;background-color:#FFFFFF;border-radius:12px;">
+                <tr>
+                    <td style="padding:20px 32px;background-color:#022749;border-radius:12px 12px 0 0;">
+                        <span style="color:#FFFFFF;font-size:18px;font-weight:bold;">Klub Alumnów WI AGH</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:32px;font-size:15px;line-height:1.6;">
+                        <div th:replace="${content}">Treść wiadomości</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:20px 32px;border-top:1px solid #EDF1FA;font-size:12px;line-height:1.5;color:#486284;">
+                        Masz pytania? Odpowiedz na tę wiadomość.<br>
+                        <a th:href="${webBaseUrl}" th:text="${webBaseUrl}" style="color:#0F6AB6;">pkka.me</a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
