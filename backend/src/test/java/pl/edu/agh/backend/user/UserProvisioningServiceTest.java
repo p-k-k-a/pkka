@@ -8,12 +8,14 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
 
@@ -25,6 +27,9 @@ class UserProvisioningServiceTest {
 
     @Mock
     private KeycloakUserService keycloakUserService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserProvisioningService provisioningService;
@@ -112,5 +117,43 @@ class UserProvisioningServiceTest {
 
         verify(userRepository).save(any(User.class));
         verify(keycloakUserService).fetchDiscordId(eq("kc-new"));
+    }
+
+    @Test
+    void syncIdentityAsksForAWelcomeMailWhileTheUserHasNotHadOne() {
+        User user = new User();
+        user.setKeycloakId("kc-1");
+        user.setDiscordId("linked");
+        when(userRepository.findByKeycloakId("kc-1")).thenReturn(Optional.of(user));
+
+        provisioningService.syncIdentityFromClaims("kc-1", "Ala", "Nowak", "ala@example.com");
+
+        verify(eventPublisher).publishEvent(new WelcomeMailDueEvent(user.getId()));
+    }
+
+    @Test
+    void syncIdentityDoesNotWelcomeTwice() {
+        User user = new User();
+        user.setKeycloakId("kc-1");
+        user.setDiscordId("linked");
+        user.setEmail("ala@example.com");
+        user.setWelcomeMailSentAt(Instant.parse("2026-11-01T10:00:00Z"));
+        when(userRepository.findByKeycloakId("kc-1")).thenReturn(Optional.of(user));
+
+        provisioningService.syncIdentityFromClaims("kc-1", "Ala", "Nowak", "ala@example.com");
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void syncIdentityWithoutAnAddressWelcomesNobody() {
+        User user = new User();
+        user.setKeycloakId("kc-1");
+        user.setDiscordId("linked");
+        when(userRepository.findByKeycloakId("kc-1")).thenReturn(Optional.of(user));
+
+        provisioningService.syncIdentityFromClaims("kc-1", "Ala", "Nowak", null);
+
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }
