@@ -1,0 +1,7 @@
+Wydarzenie odwołane
+
+Wydarzenie „[(${title})]”, zaplanowane na [(${startsAt})], zostało odwołane. Twój zapis został anulowany i nie musisz nic robić.
+
+Przepraszamy za zmianę planów. Inne wydarzenia Klubu: [(${webBaseUrl})]/events
+
+[# th:insert="~{footer.txt}" /]
