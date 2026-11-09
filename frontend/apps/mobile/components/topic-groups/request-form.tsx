@@ -12,9 +12,7 @@ import {
 import {
   TOPIC_GROUP_DESCRIPTION_MAX_LENGTH,
   TOPIC_GROUP_NAME_MAX_LENGTH,
-  TOPIC_GROUP_NAME_TAKEN_MESSAGE,
-  TOPIC_GROUP_REQUEST_OPEN_MESSAGE,
-  TOPIC_GROUP_REQUEST_SUBMIT_ERROR_MESSAGE,
+  topicGroupRequestSubmitErrorMessage,
 } from "@pkka/domain";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,15 +28,6 @@ function FieldError({ field }: { field: AnyFieldApi }) {
       {field.state.meta.errors.join(". ")}
     </Text>
   );
-}
-
-function submitErrorMessage(error: unknown) {
-  if (error instanceof ApiError && error.status === 409) {
-    return error.message.includes("name taken")
-      ? TOPIC_GROUP_NAME_TAKEN_MESSAGE
-      : TOPIC_GROUP_REQUEST_OPEN_MESSAGE;
-  }
-  return TOPIC_GROUP_REQUEST_SUBMIT_ERROR_MESSAGE;
 }
 
 export function TopicGroupRequestForm() {
@@ -57,11 +46,15 @@ export function TopicGroupRequestForm() {
           data: { name: value.name.trim(), description: value.description.trim() },
         });
       } catch (error) {
-        setSubmitError(submitErrorMessage(error));
+        const apiError = error instanceof ApiError ? error : null;
+        setSubmitError(topicGroupRequestSubmitErrorMessage(apiError?.status, apiError?.body));
+        if (apiError?.status === 409) {
+          void queryClient.invalidateQueries({ queryKey: getListMyTopicGroupRequestsQueryKey() });
+        }
         return;
       }
       await queryClient.invalidateQueries({ queryKey: getListMyTopicGroupRequestsQueryKey() });
-      router.back();
+      router.dismissTo("/(tabs)/alumni");
     },
   });
 

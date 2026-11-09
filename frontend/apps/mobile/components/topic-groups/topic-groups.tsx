@@ -46,7 +46,7 @@ export function TopicGroups() {
         <View className="py-16">
           <ActivityIndicator />
         </View>
-      ) : isError ? (
+      ) : isError && !latest ? (
         <Text className="text-muted-foreground py-16 text-center text-sm">
           Nie udało się załadować Twojego wniosku.
         </Text>
