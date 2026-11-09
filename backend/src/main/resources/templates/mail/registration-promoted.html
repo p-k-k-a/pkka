@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
+<body>
+<main>
+    <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;">Zwolniło się miejsce</h1>
+    <p style="margin:0 0 16px;">
+        Ktoś zrezygnował z udziału, więc przenieśliśmy Cię z listy rezerwowej na listę zapisanych.
+        Twoje miejsce na wydarzeniu jest potwierdzone.
+    </p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+        <tr>
+            <td style="padding:0 16px 4px 0;color:#16212F;font-weight:bold;">Wydarzenie</td>
+            <td style="padding:0 0 4px;" th:text="${title}">Warsztaty</td>
+        </tr>
+        <tr>
+            <td style="padding:0 16px 4px 0;color:#16212F;font-weight:bold;">Termin</td>
+            <td style="padding:0 0 4px;" th:text="${startsAt}">1 grudnia 2026 o 18:00</td>
+        </tr>
+        <tr th:if="${location != null and !#strings.isEmpty(location)}">
+            <td style="padding:0 16px 4px 0;color:#16212F;font-weight:bold;">Miejsce</td>
+            <td style="padding:0 0 4px;" th:text="${location}">D17, sala 1.38</td>
+        </tr>
+    </table>
+    <a th:href="${webBaseUrl + '/events/' + slug}"
+       style="display:inline-block;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
+        Szczegóły wydarzenia
+    </a>
+    <p style="margin:24px 0 0;">Jeśli nie możesz przyjść, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.</p>
+</main>
+</body>
+</html>
