@@ -1,4 +1,5 @@
 import { MaterialType } from "@pkka/api";
+import { pluralPl } from "../format/plural";
 
 // Mirrors the constraints on the backend's MaterialRequest.
 export const MATERIAL_TITLE_MAX = 300;
@@ -37,10 +38,11 @@ function parseUrl(url: string) {
   }
 }
 
-// Exactly the backend's @Pattern on MaterialRequest.url. URL parsing would be laxer
-// (it accepts "HTTPS://…" or "https:example.com"), letting the form save a link the
-// API then rejects with a 400.
-const MATERIAL_URL_PATTERN = /^https?:\/\/.+/;
+// The link half of the backend's @Pattern on MaterialRequest.url; the other half, the
+// objectKey of an uploaded file, is never typed by hand. URL parsing would be laxer
+// (it accepts "https:example.com"), letting the form save a link the API then rejects
+// with a 400.
+const MATERIAL_URL_PATTERN = /^https?:\/\/.+/i;
 
 /** Same rule as the backend: an http(s) URL within the length limit. */
 export function isValidMaterialUrl(url: string) {
@@ -100,13 +102,5 @@ export function youtubeThumbnailUrl(url: string) {
 
 /** "1 materiał", "3 materiały", "5 materiałów" — Polish plural forms. */
 export function formatMaterialCount(count: number) {
-  const lastDigit = count % 10;
-  const lastTwo = count % 100;
-  const noun =
-    count === 1
-      ? "materiał"
-      : lastDigit >= 2 && lastDigit <= 4 && (lastTwo < 12 || lastTwo > 14)
-        ? "materiały"
-        : "materiałów";
-  return `${count} ${noun}`;
+  return `${count} ${pluralPl(count, "materiał", "materiały", "materiałów")}`;
 }
