@@ -93,6 +93,7 @@ public class AdminEventService {
     @Transactional
     public AdminEventResponse update(UUID id, EventRequest request) {
         Event event = eventRepository.findForUpdateById(id).orElseThrow(() -> new EventNotFoundException(id));
+        EventScheduleChangedEvent before = EventScheduleChangedEvent.before(event);
         event.setTitle(request.title());
         event.setFullDescription(request.fullDescription());
         event.setType(request.type());
@@ -115,13 +116,32 @@ public class AdminEventService {
         Event saved = eventRepository.saveAndFlush(event);
         eventRegistrationService.fillFreeSeats(saved);
         eventPublisher.publishEvent(new EventUpdatedEvent(saved.getId()));
+        if (before.anyChange(saved) && isUpcoming(before.previousStartsAt(), saved.getStartsAt())) {
+            eventPublisher.publishEvent(before);
+        }
         return respond(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
-        eventRepository.delete(findOrThrow(id));
+        Event event = findOrThrow(id);
+        eventRepository.delete(event);
         eventPublisher.publishEvent(new EventDeletedEvent(id));
+        if (isUpcoming(event.getStartsAt())) {
+            eventPublisher.publishEvent(
+                    new EventCancelledEvent(id, event.getTitle(), event.getSlug(), event.getStartsAt()));
+        }
+    }
+
+    /** Only people signed up for something still ahead are told about a change; a past event's edit is a fix. */
+    private static boolean isUpcoming(Instant... startTimes) {
+        Instant now = Instant.now();
+        for (Instant startsAt : startTimes) {
+            if (startsAt.isAfter(now)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private AdminEventResponse respond(Event event) {

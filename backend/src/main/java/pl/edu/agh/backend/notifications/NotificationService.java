@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.edu.agh.backend.event.Event;
+import pl.edu.agh.backend.event.EventCancelledEvent;
+import pl.edu.agh.backend.event.EventScheduleChangedEvent;
 import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
 import pl.edu.agh.backend.notifications.expo.ExpoPushMessage;
 import pl.edu.agh.backend.notifications.expo.SendOutcome;
@@ -63,6 +65,39 @@ public class NotificationService {
                 "Zwolniło się miejsce",
                 "Zwolniło się miejsce i masz zapis na wydarzenie „%s”, %s".formatted(event.getTitle(), startsAt),
                 event.getSlug());
+    }
+
+    public void announceChange(Event event, EventScheduleChangedEvent before, Collection<UUID> userIds) {
+        String body = before.timeChanged(event)
+                ? "„%s”: nowy termin %s"
+                        .formatted(
+                                event.getTitle(),
+                                STARTS_AT.format(event.getStartsAt().atZone(POLAND)))
+                : "„%s”: zmiana miejsca".formatted(event.getTitle());
+        pushToSignedUp(userIds, NotificationType.EVENT_CHANGED, "Zmiana w wydarzeniu", body, event.getSlug());
+    }
+
+    public void announceCancellation(EventCancelledEvent cancelled, Collection<UUID> userIds) {
+        pushToSignedUp(
+                userIds,
+                NotificationType.EVENT_CANCELLED,
+                "Wydarzenie odwołane",
+                "„%s” (%s) zostało odwołane"
+                        .formatted(
+                                cancelled.title(),
+                                STARTS_AT.format(cancelled.startsAt().atZone(POLAND))),
+                cancelled.slug());
+    }
+
+    public void announceMessage(Event event, String subject, Collection<UUID> userIds) {
+        pushToSignedUp(userIds, NotificationType.EVENT_MESSAGE, event.getTitle(), subject, event.getSlug());
+    }
+
+    private void pushToSignedUp(
+            Collection<UUID> userIds, NotificationType type, String title, String body, String eventSlug) {
+        if (!userIds.isEmpty()) {
+            push(deviceTokenRepository.findByUserIdIn(userIds), type, title, body, eventSlug);
+        }
     }
 
     private Set<String> push(
