@@ -66,7 +66,13 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
           <p className="text-muted-foreground text-sm leading-relaxed">
             Grupa została utworzona, a Ty jesteś jej właścicielem.
           </p>
-          <Button type="button" variant="link" className="self-start px-0" onClick={onPropose}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={onPropose}
+          >
             Zaproponuj kolejną grupę
           </Button>
         </>
