@@ -1,0 +1,3 @@
+Cześć [(${name})]!
+
+[# th:insert="~{footer.txt}" /]
