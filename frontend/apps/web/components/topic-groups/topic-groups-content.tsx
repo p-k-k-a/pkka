@@ -39,7 +39,12 @@ export function TopicGroupsContent() {
                   await refetch();
                   setIsProposing(false);
                 }}
-                onConflict={() => void refetch()}
+                onConflict={async () => {
+                  const { data: fresh } = await refetch();
+                  if (fresh?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
+                    setIsProposing(false);
+                  }
+                }}
               />
             ) : null}
           </div>
