@@ -159,10 +159,10 @@ export function MaterialForm({ material }: MaterialFormProps) {
             <section className="space-y-5">
               <SectionTitle>Link</SectionTitle>
               <div className="space-y-2">
-                <FieldLabel htmlFor="material-url">Adres materiału</FieldLabel>
                 <Input
                   id="material-url"
                   type="url"
+                  aria-label="Adres materiału"
                   value={url}
                   maxLength={MATERIAL_URL_MAX}
                   placeholder="https://www.youtube.com/watch?v=…"
