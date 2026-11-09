@@ -80,4 +80,20 @@ class MailTemplatesTest {
         assertThat(html).doesNotContain("Miejsce");
         assertThat(text).doesNotContain("Miejsce");
     }
+
+    @Test
+    void welcome_greetsByNameWhenItIsKnown() {
+        String html = mail.render("welcome.html", "Witamy w PKKA", Map.of("firstName", "Ala"));
+        String text = mail.render("welcome.txt", "Witamy w PKKA", Map.of("firstName", "Ala"));
+
+        assertThat(html).contains("Cześć Ala!", "href=\"https://pkka.me/dashboard\"");
+        assertThat(text).startsWith("Cześć Ala!").contains("https://pkka.me/dashboard");
+    }
+
+    @Test
+    void welcome_greetsPlainlyWithoutAName() {
+        String text = mail.render("welcome.txt", "Witamy w PKKA", Map.of("firstName", ""));
+
+        assertThat(text).startsWith("Cześć!");
+    }
 }

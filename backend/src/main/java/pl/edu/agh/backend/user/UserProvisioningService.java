@@ -3,9 +3,11 @@ package pl.edu.agh.backend.user;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
 
 @Service
@@ -15,6 +17,7 @@ public class UserProvisioningService {
 
     private final UserRepository userRepository;
     private final KeycloakUserService keycloakUserService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Ensures a local user row exists for the given Keycloak subject. No external calls — safe to
@@ -47,6 +50,9 @@ public class UserProvisioningService {
         }
         if (user.getDiscordId() == null) {
             keycloakUserService.fetchDiscordId(keycloakId).ifPresent(user::setDiscordId);
+        }
+        if (user.getWelcomeMailSentAt() == null && StringUtils.hasText(user.getEmail())) {
+            eventPublisher.publishEvent(new WelcomeMailDueEvent(user.getId()));
         }
     }
 
