@@ -2,6 +2,7 @@ import type { TopicGroupRequestStatus } from "@pkka/api";
 
 export const TOPIC_GROUP_NAME_MAX_LENGTH = 200;
 export const TOPIC_GROUP_DESCRIPTION_MAX_LENGTH = 2000;
+export const TOPIC_GROUP_REJECTION_REASON_MAX_LENGTH = 1000;
 
 const NAME_TAKEN_TITLE = "Topic group name taken";
 
@@ -20,4 +21,12 @@ export function topicGroupRequestSubmitErrorMessage(status: number | undefined, 
   return (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE
     ? "Grupa o tej nazwie już istnieje. Wybierz inną nazwę."
     : "Masz już wniosek w trakcie rozpatrywania. Kolejny złożysz po decyzji administracji.";
+}
+
+export function topicGroupRequestReviewErrorMessage(status: number | undefined, body: unknown) {
+  if (status === 409 && (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE) {
+    return "Grupa o tej nazwie już istnieje. Odrzuć wniosek i poproś o inną nazwę.";
+  }
+  if (status === 409 || status === 404) return "Ten wniosek został już rozpatrzony.";
+  return "Nie udało się zapisać decyzji. Odśwież stronę i spróbuj ponownie.";
 }
