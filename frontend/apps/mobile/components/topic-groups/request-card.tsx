@@ -60,7 +60,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
             </View>
           ) : null}
           <Button size="lg" className="mt-1 w-full" onPress={onPropose}>
-            <Text className="text-base font-semibold">Zaproponuj ponownie</Text>
+            <Text className="text-center text-base font-semibold">Zaproponuj ponownie</Text>
           </Button>
         </>
       ) : null}
