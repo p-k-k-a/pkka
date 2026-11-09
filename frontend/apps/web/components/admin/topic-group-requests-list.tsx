@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { TopicGroupRequestStatus, useListAdminTopicGroupRequests } from "@pkka/api";
+import {
+  getListAdminTopicGroupRequestsQueryKey,
+  TopicGroupRequestStatus,
+  useListAdminTopicGroupRequests,
+} from "@pkka/api";
 import { isAdmin } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +20,7 @@ const PAGE_SIZE = 20;
 
 export function TopicGroupRequestsList() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { isLoading, user } = useAuth();
   const admin = isAdmin(user?.roles);
   const [page, setPage] = useState(0);
@@ -29,7 +35,6 @@ export function TopicGroupRequestsList() {
     data: response,
     isLoading: isListLoading,
     isError,
-    refetch,
   } = useListAdminTopicGroupRequests(
     { status: TopicGroupRequestStatus.UNDER_REVIEW, page, size: PAGE_SIZE },
     { query: { enabled: admin } },
@@ -49,6 +54,11 @@ export function TopicGroupRequestsList() {
   const totalPages = pageData?.totalPages ?? 0;
   const currentPage = pageData?.number ?? page;
 
+  const onReviewed = () => {
+    if (requests.length === 1 && page > 0) setPage(page - 1);
+    void queryClient.invalidateQueries({ queryKey: getListAdminTopicGroupRequestsQueryKey() });
+  };
+
   return (
     <SectionShell
       title="Grupy tematyczne"
@@ -56,9 +66,9 @@ export function TopicGroupRequestsList() {
       as="section"
     >
       <div className="max-w-3xl space-y-4">
-        <h3 className="text-accent text-xs font-semibold tracking-widest uppercase">
+        <p className="text-accent text-xs font-semibold tracking-widest uppercase">
           Wnioski o nową grupę{totalElements > 0 ? ` · ${totalElements}` : ""}
-        </h3>
+        </p>
 
         {isListLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
@@ -71,11 +81,7 @@ export function TopicGroupRequestsList() {
         ) : (
           <>
             {requests.map((request) => (
-              <TopicGroupRequestItem
-                key={request.id}
-                request={request}
-                onReviewed={() => void refetch()}
-              />
+              <TopicGroupRequestItem key={request.id} request={request} onReviewed={onReviewed} />
             ))}
 
             {totalPages > 1 ? (

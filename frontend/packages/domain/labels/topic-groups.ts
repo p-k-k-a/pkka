@@ -23,10 +23,12 @@ export function topicGroupRequestSubmitErrorMessage(status: number | undefined, 
     : "Masz już wniosek w trakcie rozpatrywania. Kolejny złożysz po decyzji administracji.";
 }
 
+export function isTopicGroupNameTaken(status: number | undefined, body: unknown) {
+  return status === 409 && (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE;
+}
+
 export function topicGroupRequestReviewErrorMessage(status: number | undefined, body: unknown) {
-  if (status === 409 && (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE) {
-    return "Grupa o tej nazwie już istnieje. Odrzuć wniosek i poproś o inną nazwę.";
-  }
-  if (status === 409 || status === 404) return "Ten wniosek został już rozpatrzony.";
-  return "Nie udało się zapisać decyzji. Odśwież stronę i spróbuj ponownie.";
+  return isTopicGroupNameTaken(status, body)
+    ? "Grupa o tej nazwie już istnieje. Odrzuć wniosek i poproś o inną nazwę."
+    : "Nie udało się zapisać decyzji. Odśwież stronę i spróbuj ponownie.";
 }

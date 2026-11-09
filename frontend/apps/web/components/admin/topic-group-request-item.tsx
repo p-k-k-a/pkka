@@ -10,6 +10,7 @@ import {
 } from "@pkka/api";
 import {
   formatEventDateLong,
+  isTopicGroupNameTaken,
   TOPIC_GROUP_REJECTION_REASON_MAX_LENGTH,
   topicGroupRequestReviewErrorMessage,
 } from "@pkka/domain";
@@ -31,9 +32,14 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
   const mutation = {
     onSuccess: onReviewed,
     onError: (error: ApiError) => {
+      const reviewedElsewhere =
+        error.status === 404 ||
+        (error.status === 409 && !isTopicGroupNameTaken(error.status, error.body));
+      if (reviewedElsewhere) {
+        onReviewed();
+        return;
+      }
       setActionError(topicGroupRequestReviewErrorMessage(error.status, error.body));
-      // Unless the name is taken, a 409 means the request was reviewed in the meantime.
-      if (error.status === 409 || error.status === 404) onReviewed();
     },
   };
   const approveMutation = useApproveTopicGroupRequest<ApiError>({ mutation });
@@ -109,6 +115,7 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
             <Textarea
               id={reasonId}
               required
+              autoFocus
               maxLength={TOPIC_GROUP_REJECTION_REASON_MAX_LENGTH}
               placeholder="Powód zostanie pokazany wnioskodawcy"
               value={reason}
@@ -126,6 +133,7 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
               onClick={() => {
                 setShowRejectForm(false);
                 setReason("");
+                setActionError(null);
               }}
             >
               Anuluj
