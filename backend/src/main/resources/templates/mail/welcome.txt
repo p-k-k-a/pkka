@@ -1,0 +1,12 @@
+[# th:if="${!#strings.isEmpty(firstName)}"]Cześć [(${firstName})]![/][# th:if="${#strings.isEmpty(firstName)}"]Cześć![/]
+
+Dziękujemy za założenie konta na platformie Klubu Alumnów Wydziału Informatyki AGH. Teraz możesz:
+- zapisywać się na wydarzenia Klubu,
+- złożyć wniosek o status alumna, który otwiera katalog alumnów i materiały,
+- połączyć konto z Discordem Klubu.
+
+Przejdź do platformy: [(${webBaseUrl})]/dashboard
+
+Jeśli to nie Ty zakładałeś konto, odpowiedz na tę wiadomość, a je usuniemy.
+
+[# th:insert="~{footer.txt}" /]
