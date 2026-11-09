@@ -36,6 +36,12 @@ public class Event {
     private UUID id;
 
     @NotBlank
+    @Size(max = 255)
+    @Column(name = "slug", nullable = false, updatable = false, length = 255)
+    @ToString.Include
+    private String slug;
+
+    @NotBlank
     @Size(max = 200)
     @Column(name = "title", nullable = false, length = 200)
     @ToString.Include
@@ -80,6 +86,9 @@ public class Event {
 
     @Column(name = "cover_image_url", length = 500)
     private String coverImageUrl;
+
+    @Column(name = "reminder_lead_time_minutes")
+    private Integer reminderLeadTimeMinutes;
 
     /** The admin who created the event; absent for events that predate authorship tracking. */
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,0 +1,48 @@
+name: Build Android app
+
+# Starts the Android build on EAS for a release (see RELEASING.md). The build runs on
+# Expo's servers and the job does not wait for it; the APK appears on expo.dev.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Start EAS build
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      BUILD_MESSAGE: ${{ github.event.release.tag_name || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      # EAS CLI reads the app config, whose plugins come from node_modules.
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Start the build
+        working-directory: frontend/apps/mobile
+        run: >-
+          pnpm dlx eas-cli@24.8.0 build
+          --platform android
+          --profile production
+          --non-interactive
+          --no-wait
+          --message "$BUILD_MESSAGE"

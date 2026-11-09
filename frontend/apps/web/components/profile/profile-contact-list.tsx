@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import type { ProfileContacts } from "@pkka/domain";
 import { DiscordIcon, GithubIcon, LinkedinIcon } from "@pkka/icons/web";
 
@@ -30,7 +30,7 @@ function ContactItem({
 }
 
 export function ProfileContactList({ contacts }: { contacts: ProfileContacts }) {
-  const { email, discordUrl, linkedinUrl, githubUrl } = contacts;
+  const { email, discordUrl, phoneNumber, linkedinUrl, githubUrl } = contacts;
 
   return (
     <ul className="space-y-5">
@@ -40,6 +40,14 @@ export function ProfileContactList({ contacts }: { contacts: ProfileContacts }) 
           href={`mailto:${email}`}
         >
           {email}
+        </ContactItem>
+      ) : null}
+      {phoneNumber ? (
+        <ContactItem
+          icon={<Phone className={ICON_CLASS} aria-hidden="true" />}
+          href={`tel:${phoneNumber.replace(/[ -]/g, "")}`}
+        >
+          {phoneNumber}
         </ContactItem>
       ) : null}
       {discordUrl ? (

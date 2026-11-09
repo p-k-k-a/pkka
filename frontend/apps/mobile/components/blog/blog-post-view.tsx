@@ -1,3 +1,4 @@
+import { ProseContent } from "@/components/content/prose-content";
 import { Text } from "@/components/ui/text";
 import { formatPublishedAtCompact } from "@pkka/domain";
 import type { PostResponse } from "@pkka/api";
@@ -16,22 +17,21 @@ export function BlogPostView({ post }: BlogPostViewProps) {
     >
       <View className="gap-6 px-5 pt-5">
         <View className="gap-2">
-          <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <Text className="text-muted-foreground text-sm font-semibold">
             {formatPublishedAtCompact(post.publishedAt)}
           </Text>
-          <Text variant="h1" className="text-left text-3xl leading-tight">
+          <Text
+            role="heading"
+            aria-level="1"
+            className="font-heading text-foreground text-[28px] font-semibold leading-tight tracking-tight"
+          >
             {post.title}
           </Text>
         </View>
 
         <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="text-xs font-bold uppercase tracking-widest text-foreground">
-            O wpisie
-          </Text>
-          <Text className="leading-7 text-muted-foreground">{post.content}</Text>
-        </View>
+        <ProseContent content={post.content} />
       </View>
     </ScrollView>
   );

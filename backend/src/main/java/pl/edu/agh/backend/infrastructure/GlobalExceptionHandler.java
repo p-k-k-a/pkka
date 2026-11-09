@@ -2,6 +2,7 @@ package pl.edu.agh.backend.infrastructure;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -17,12 +18,31 @@ import pl.edu.agh.backend.event.registration.EventRegistrationConflictException;
 import pl.edu.agh.backend.event.registration.EventRegistrationNotFoundException;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakRoleAssignmentException;
 import pl.edu.agh.backend.material.MaterialNotFoundException;
+import pl.edu.agh.backend.notifications.DeviceTokenConflictException;
 import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
+import pl.edu.agh.backend.storage.FileTooLargeException;
+import pl.edu.agh.backend.storage.InvalidFileException;
+import pl.edu.agh.backend.storage.StorageNotConfiguredException;
+import pl.edu.agh.backend.storage.UnsupportedFileTypeException;
+import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
+import pl.edu.agh.backend.survey.InvalidSurveyException;
+import pl.edu.agh.backend.survey.SurveyAlreadySubmittedException;
+import pl.edu.agh.backend.survey.SurveyHasSubmissionsException;
+import pl.edu.agh.backend.survey.SurveyNotActiveException;
+import pl.edu.agh.backend.survey.SurveyNotFoundException;
+import pl.edu.agh.backend.ticket.TicketNotFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DeviceTokenConflictException.class)
+    public ProblemDetail handleDeviceTokenConflict(DeviceTokenConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Device token already registered");
+        return problem;
+    }
 
     @ExceptionHandler(DeviceTokenNotFoundException.class)
     public ProblemDetail handleDeviceTokenNotFound(DeviceTokenNotFoundException ex) {
@@ -103,10 +123,96 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(SurveyNotFoundException.class)
+    public ProblemDetail handleSurveyNotFound(SurveyNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Survey not found");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyNotActiveException.class)
+    public ProblemDetail handleSurveyNotActive(SurveyNotActiveException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey not active");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyAlreadySubmittedException.class)
+    public ProblemDetail handleSurveyAlreadySubmitted(SurveyAlreadySubmittedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey already submitted");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidSurveyAnswerException.class)
+    public ProblemDetail handleInvalidSurveyAnswer(InvalidSurveyAnswerException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid survey answer");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidSurveyException.class)
+    public ProblemDetail handleInvalidSurvey(InvalidSurveyException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid survey");
+        return problem;
+    }
+
+    @ExceptionHandler(SurveyHasSubmissionsException.class)
+    public ProblemDetail handleSurveyHasSubmissions(SurveyHasSubmissionsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Survey has submissions");
+        return problem;
+    }
+
+    @ExceptionHandler(TicketNotFoundException.class)
+    public ProblemDetail handleTicketNotFound(TicketNotFoundException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Ticket not found");
+        return problem;
+    }
+
     @ExceptionHandler(MaterialNotFoundException.class)
     public ProblemDetail handleMaterialNotFound(MaterialNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Material not found");
+        return problem;
+    }
+
+    @ExceptionHandler(StorageNotConfiguredException.class)
+    public ProblemDetail handleStorageNotConfigured(StorageNotConfiguredException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problem.setTitle("File storage not configured");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ProblemDetail handleInvalidFile(InvalidFileException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid file");
+        return problem;
+    }
+
+    @ExceptionHandler(UnsupportedFileTypeException.class)
+    public ProblemDetail handleUnsupportedFileType(UnsupportedFileTypeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
+        problem.setTitle("Unsupported file type");
+        return problem;
+    }
+
+    @ExceptionHandler(FileTooLargeException.class)
+    public ProblemDetail handleFileTooLarge(FileTooLargeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONTENT_TOO_LARGE, ex.getMessage());
+        problem.setTitle("File too large");
+        return problem;
+    }
+
+    /** A {@code ?sort=} naming a property the entity doesn't have — the client's mistake, not a server error. */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ProblemDetail handleUnknownSortProperty(PropertyReferenceException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Cannot sort by unknown property '%s'".formatted(ex.getPropertyName()));
+        problem.setTitle("Invalid sort");
         return problem;
     }
 

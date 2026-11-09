@@ -1,22 +1,20 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, GraduationCap, Sparkles } from "lucide-react";
+import { Briefcase, GraduationCap, Tags } from "lucide-react";
 import type { AlumniListItemResponse } from "@pkka/api";
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { ALUMNI_DIRECTORY_HREF } from "@/lib/alumni-search-params";
+import { CardLinkFooter } from "@/components/content/card-link-footer";
 
 const VISIBLE_TAGS = 3;
 
-// Mirrors EventCalendarCard: flat muted tile, band chip, icon rows, "read more" footer.
 type AlumniCardProps = {
   alumn: AlumniListItemResponse;
-  /** The directory's current `?…`, carried to the profile so its back link can return to it. */
-  search?: string;
+  directoryHref: string;
 };
 
-export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
+export function AlumniCard({ alumn, directoryHref }: AlumniCardProps) {
   const name = [alumn.firstName, alumn.lastName].filter(Boolean).join(" ") || "Alumn";
-  const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" · ");
+  const role = [alumn.currentPosition, alumn.company].filter(Boolean).join(" @ ");
   const tags = alumn.tags.map((tag) => tag.name);
   const tagsLabel =
     tags.slice(0, VISIBLE_TAGS).join(", ") +
@@ -24,7 +22,7 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
 
   return (
     <Link
-      href={`${ALUMNI_DIRECTORY_HREF}/${alumn.id}${search}`}
+      href={`${directoryHref}/${alumn.id}`}
       className="group focus-visible:ring-ring block h-full rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none"
     >
       <Card className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0">
@@ -57,19 +55,14 @@ export function AlumniCard({ alumn, search = "" }: AlumniCardProps) {
             ) : null}
             {tagsLabel ? (
               <li className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                <Tags className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>{tagsLabel}</span>
               </li>
             ) : null}
           </ul>
         ) : null}
 
-        <div className="mt-auto flex justify-end pt-2">
-          <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
-            Zobacz profil
-            <ArrowRight className="size-3.5" aria-hidden="true" />
-          </span>
-        </div>
+        <CardLinkFooter>Zobacz profil</CardLinkFooter>
       </Card>
     </Link>
   );

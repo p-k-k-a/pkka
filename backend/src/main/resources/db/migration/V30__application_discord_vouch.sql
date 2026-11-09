@@ -1,0 +1,2 @@
+ALTER TABLE applications
+    ADD COLUMN discord_vouched BOOLEAN NOT NULL DEFAULT FALSE;

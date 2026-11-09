@@ -11,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -23,7 +22,6 @@ import pl.edu.agh.backend.user.User;
 @Table(name = "applications", indexes = @Index(name = "idx_applications_status", columnList = "status, created_at"))
 @EntityListeners(AuditingEntityListener.class)
 @Getter
-@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(toBuilder = true)
@@ -43,24 +41,25 @@ public class Application {
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.UNDER_REVIEW;
 
-    @NotNull
+    @Column(name = "discord_vouched", nullable = false)
+    @Builder.Default
+    private boolean discordVouched = false;
+
+    // The form fields stay empty on an application vouched for by Discord, which skips the form.
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private Faculty faculty;
 
-    @NotBlank
     @Size(max = 200)
-    @Column(name = "field_of_study", nullable = false, length = 200)
+    @Column(name = "field_of_study", length = 200)
     private String fieldOfStudy;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "study_type", nullable = false, length = 20)
+    @Column(name = "study_type", length = 20)
     private StudyType studyType;
 
-    @NotNull
     @Min(1919)
-    @Column(name = "graduation_year", nullable = false)
+    @Column(name = "graduation_year")
     private Integer graduationYear;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -77,10 +76,9 @@ public class Application {
     @Builder.Default
     private boolean newsletterSubscription = false;
 
-    @NotBlank
     @Size(max = 32)
     @Pattern(regexp = "^\\+?[0-9 \\-]{7,32}$")
-    @Column(name = "phone_number", nullable = false, length = 32)
+    @Column(name = "phone_number", length = 32)
     private String phoneNumber;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
@@ -126,26 +124,42 @@ public class Application {
 
     public void approve(User reviewer) {
         ensureUnderReview();
-        this.status = ApplicationStatus.APPROVED;
-        this.applicant.setGraduationYear(this.graduationYear);
-        markReviewed(reviewer);
+        markApproved();
+        this.reviewedBy = reviewer;
+    }
+
+    public void approveByDiscordVouch() {
+        ensureUnderReview();
+        this.discordVouched = true;
+        markApproved();
     }
 
     public void reject(User reviewer, String reason) {
         ensureUnderReview();
         this.status = ApplicationStatus.REJECTED;
         this.rejectionReason = reason;
-        markReviewed(reviewer);
+        this.reviewedBy = reviewer;
+        this.reviewedAt = Instant.now();
+    }
+
+    private void markApproved() {
+        this.status = ApplicationStatus.APPROVED;
+        this.reviewedAt = Instant.now();
+        recordOnApplicant();
+    }
+
+    private void recordOnApplicant() {
+        if (this.graduationYear != null) {
+            this.applicant.setGraduationYear(this.graduationYear);
+        }
+        if (this.phoneNumber != null) {
+            this.applicant.setPhoneNumber(this.phoneNumber);
+        }
     }
 
     private void ensureUnderReview() {
         if (this.status != ApplicationStatus.UNDER_REVIEW) {
             throw new InvalidApplicationStateException(this.id, this.status);
         }
-    }
-
-    private void markReviewed(User reviewer) {
-        this.reviewedBy = reviewer;
-        this.reviewedAt = Instant.now();
     }
 }

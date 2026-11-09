@@ -65,7 +65,7 @@ const adminItems: SidebarItem[] = [
   },
   {
     href: "/dashboard/posts",
-    label: "Blog",
+    label: "Aktualności",
     icon: Newspaper,
     match: (pathname) => pathname.startsWith("/dashboard/posts"),
   },
@@ -80,6 +80,12 @@ const adminItems: SidebarItem[] = [
     label: "Materiały",
     icon: Library,
     match: (pathname) => pathname.startsWith("/dashboard/admin/materials"),
+  },
+  {
+    href: "/dashboard/admin/alumni",
+    label: "Alumni",
+    icon: Users,
+    match: (pathname) => pathname.startsWith("/dashboard/admin/alumni"),
   },
 ];
 

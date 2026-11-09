@@ -61,11 +61,11 @@ export function RangeSlider({ min, max, low, high, step = 1, onChange }: RangeSl
   return (
     <View className="py-2" onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
       <View className="h-6 justify-center">
-        <View className="bg-muted h-1 rounded-full" />
+        <View className="bg-input h-1 rounded-full" />
         {width > 0 ? (
           <>
             <View
-              className="bg-foreground absolute h-1 rounded-full"
+              className="bg-primary absolute h-1 rounded-full"
               style={{
                 left: valueToX(low) + THUMB / 2,
                 width: Math.max(valueToX(high) - valueToX(low), 0),
@@ -74,7 +74,7 @@ export function RangeSlider({ min, max, low, high, step = 1, onChange }: RangeSl
             <View
               {...responders.low.panHandlers}
               hitSlop={12}
-              className="border-foreground bg-background absolute size-6 rounded-full border-2"
+              className="border-foreground dark:border-primary bg-background absolute size-6 rounded-full border-2"
               // When both thumbs sit at max, lift the low thumb above the high
               // thumb so it stays grabbable (only the low thumb can still move).
               style={{ left: valueToX(low), zIndex: low === max ? 2 : 1 }}
@@ -82,7 +82,7 @@ export function RangeSlider({ min, max, low, high, step = 1, onChange }: RangeSl
             <View
               {...responders.high.panHandlers}
               hitSlop={12}
-              className="border-foreground bg-background absolute size-6 rounded-full border-2"
+              className="border-foreground dark:border-primary bg-background absolute size-6 rounded-full border-2"
               style={{ left: valueToX(high), zIndex: 1 }}
             />
           </>

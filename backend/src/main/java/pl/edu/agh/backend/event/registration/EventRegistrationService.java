@@ -29,6 +29,7 @@ public class EventRegistrationService {
 
     private final EventLookup eventLookup;
     private final EventRegistrationRepository eventRegistrationRepository;
+    private final RegistrationActivityRepository registrationActivityRepository;
     private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
@@ -62,6 +63,8 @@ public class EventRegistrationService {
         } catch (DataIntegrityViolationException ex) {
             throw EventRegistrationConflictException.alreadyRegistered(eventId);
         }
+        recordActivity(
+                event, user, takesASeat ? RegistrationActivityType.SIGNED_UP : RegistrationActivityType.WAITLISTED);
 
         return toResponse(registration, event, seatsTaken + (takesASeat ? 1 : 0));
     }
@@ -89,8 +92,25 @@ public class EventRegistrationService {
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())
                 .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
+        cancel(event, user, registration);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelUpcomingRegistrations(User user) {
+        eventRegistrationRepository
+                .findUpcomingEventIds(user.getId(), Instant.now(clock))
+                .forEach(eventId -> eventLookup
+                        .findForUpdate(eventId)
+                        .ifPresent(event -> eventRegistrationRepository
+                                .findByEventIdAndUserId(eventId, user.getId())
+                                .ifPresent(registration -> cancel(event, user, registration))));
+    }
+
+    private void cancel(Event event, User user, EventRegistration registration) {
         boolean freedASeat = registration.getStatus() == EventRegistrationStatus.REGISTERED;
         eventRegistrationRepository.delete(registration);
+        recordActivity(
+                event, user, freedASeat ? RegistrationActivityType.CANCELLED : RegistrationActivityType.LEFT_WAITLIST);
 
         if (freedASeat) {
             fillFreeSeats(event);
@@ -163,6 +183,15 @@ public class EventRegistrationService {
                 .map(userId -> eventRegistrationRepository.findOwnRegistrations(userId, eventIds).stream()
                         .collect(Collectors.toMap(OwnRegistration::eventId, OwnRegistration::status)))
                 .orElseGet(Map::of);
+    }
+
+    private void recordActivity(Event event, User user, RegistrationActivityType type) {
+        registrationActivityRepository.save(RegistrationActivity.builder()
+                .event(event)
+                .user(user)
+                .type(type)
+                .occurredAt(Instant.now(clock))
+                .build());
     }
 
     private EventRegistrationResponse toResponse(EventRegistration registration, Event event, long seatsTaken) {

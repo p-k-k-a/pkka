@@ -19,7 +19,7 @@ public class UserSpecifications {
                 return null;
             }
             query.distinct(true);
-            Join<User, UserTag> tags = root.join("tags");
+            Join<User, AlumniTag> tags = root.join("tags");
             return tags.get("id").in(tagIds);
         };
     }
@@ -52,23 +52,24 @@ public class UserSpecifications {
 
     /**
      * Free-text match against the profile fields available locally: first/last name (only when the owner has not
-     * hidden their name), position, company, and assigned skill tag names. A left join is used for tags so that
+     * hidden their name, unless {@code includeHiddenNames}), position, company, and assigned skill tag names. A left join is used for tags so that
      * users without any tags can still match on the other fields.
      */
-    public Specification<User> matchesQuery(String rawQuery) {
+    public Specification<User> matchesQuery(String rawQuery, boolean includeHiddenNames) {
         return (root, query, cb) -> {
             if (rawQuery == null || rawQuery.isBlank()) {
                 return null;
             }
             query.distinct(true);
             String pattern = LikePatterns.contains(rawQuery.trim());
-            Join<User, UserTag> tags = root.join("tags", JoinType.LEFT);
+            Join<User, AlumniTag> tags = root.join("tags", JoinType.LEFT);
 
-            Predicate nameMatch = cb.and(
-                    cb.isTrue(root.get("showName")),
-                    cb.or(
-                            cb.like(cb.lower(root.get("firstName")), pattern, LikePatterns.ESCAPE),
-                            cb.like(cb.lower(root.get("lastName")), pattern, LikePatterns.ESCAPE)));
+            Predicate nameMatch = cb.or(
+                    cb.like(cb.lower(root.get("firstName")), pattern, LikePatterns.ESCAPE),
+                    cb.like(cb.lower(root.get("lastName")), pattern, LikePatterns.ESCAPE));
+            if (!includeHiddenNames) {
+                nameMatch = cb.and(cb.isTrue(root.get("showName")), nameMatch);
+            }
 
             return cb.or(
                     nameMatch,

@@ -1,0 +1,485 @@
+package pl.edu.agh.backend.notifications;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.application.Application;
+import pl.edu.agh.backend.application.ApplicationRepository;
+import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.application.Faculty;
+import pl.edu.agh.backend.application.StudyType;
+import pl.edu.agh.backend.event.*;
+import pl.edu.agh.backend.event.registration.EventRegistration;
+import pl.edu.agh.backend.event.registration.EventRegistrationRepository;
+import pl.edu.agh.backend.event.registration.EventRegistrationService;
+import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
+import pl.edu.agh.backend.notifications.expo.ExpoPushClient;
+import pl.edu.agh.backend.notifications.expo.ExpoPushMessage;
+import pl.edu.agh.backend.notifications.expo.SendOutcome;
+import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserRepository;
+
+/** No {@code @Transactional}: the announcement fires on commit, which a rolled-back test never reaches. */
+@SpringBootTest(properties = {"app.notifications.reminder-cron=-", "app.notifications.receipt-cron=-"})
+@Testcontainers
+@Import(EventNotificationTest.TestSecurityBeans.class)
+class EventNotificationTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+
+    @MockitoBean
+    private ExpoPushClient expoPushClient;
+
+    @Autowired
+    private AdminEventService adminEventService;
+
+    @Autowired
+    private EventReminderScheduler eventReminderScheduler;
+
+    @Autowired
+    private DeviceTokenRepository deviceTokenRepository;
+
+    @Autowired
+    private EventRegistrationRepository eventRegistrationRepository;
+
+    @Autowired
+    private EventRegistrationService eventRegistrationService;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    @Autowired
+    private EventRepository eventRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private PushTicketRepository pushTicketRepository;
+
+    /** The announcement is @Async, so assertions wait for the executor rather than racing it. */
+    private static final long SEND_TIMEOUT_MS = 5000;
+
+    private static final long QUIET_PERIOD_MS = 500;
+
+    private Caller admin;
+
+    @BeforeEach
+    void setUp() {
+        eventRegistrationRepository.deleteAll();
+        deviceTokenRepository.deleteAll();
+        pushTicketRepository.deleteAll();
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
+    }
+
+    private User saveUser() {
+        User user = new User();
+        user.setKeycloakId(UUID.randomUUID().toString());
+        return userRepository.save(user);
+    }
+
+    private User userWithDevice(String token, boolean approvedAlumn) {
+        User user = saveUser();
+        if (approvedAlumn) {
+            applicationRepository.save(Application.builder()
+                    .applicant(user)
+                    .status(ApplicationStatus.APPROVED)
+                    .faculty(Faculty.WI)
+                    .fieldOfStudy("Informatyka")
+                    .studyType(StudyType.MASTER)
+                    .graduationYear(2020)
+                    .phoneNumber("+48123456789")
+                    .reviewedAt(Instant.parse("2021-06-15T10:00:00Z"))
+                    .build());
+        }
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user)
+                .token(token)
+                .platform(DevicePlatform.ANDROID)
+                .build());
+        return user;
+    }
+
+    private EventRequest request(Audience audience, Instant startsAt, Integer reminderLeadTimeMinutes) {
+        return new EventRequest(
+                "Warsztaty",
+                null,
+                EventType.ONLINE,
+                startsAt,
+                startsAt.plus(2, ChronoUnit.HOURS),
+                null,
+                null,
+                null,
+                null,
+                audience,
+                null,
+                reminderLeadTimeMinutes,
+                Set.of());
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<ExpoPushMessage> captureSentMessages() {
+        ArgumentCaptor<List<ExpoPushMessage>> captor = ArgumentCaptor.forClass(List.class);
+        verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    void creatingAPublicEvent_announcesToEveryRegisteredDevice() {
+        userWithDevice("ExponentPushToken[alumn]", true);
+        userWithDevice("ExponentPushToken[plain]", false);
+
+        AdminEventResponse created = adminEventService.create(
+                admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
+
+        List<ExpoPushMessage> sent = captureSentMessages();
+        assertThat(sent).hasSize(2);
+        assertThat(sent).allSatisfy(message -> {
+            assertThat(message.channelId()).isEqualTo("events");
+            assertThat(message.title()).isEqualTo("Nowe wydarzenie");
+            assertThat(message.data())
+                    .containsEntry("type", "EVENT_ANNOUNCEMENT")
+                    .containsEntry("target", created.slug());
+        });
+    }
+
+    @Test
+    void creatingAnAlumniOnlyEvent_skipsUsersWithoutAnApprovedApplication() {
+        userWithDevice("ExponentPushToken[alumn]", true);
+        userWithDevice("ExponentPushToken[plain]", false);
+
+        adminEventService.create(
+                admin, request(Audience.ALL_ALUMNI, Instant.now().plus(7, ChronoUnit.DAYS), null));
+
+        assertThat(captureSentMessages()).extracting(ExpoPushMessage::to).containsExactly("ExponentPushToken[alumn]");
+    }
+
+    @Test
+    void anAcceptedAnnouncement_leavesATicketToCheckForItsReceipt() {
+        userWithDevice("ExponentPushToken[attendee]", false);
+        when(expoPushClient.send(any()))
+                .thenReturn(new SendOutcome(Map.of("ticket-1", "ExponentPushToken[attendee]"), Set.of()));
+
+        adminEventService.create(admin, request(Audience.PUBLIC, Instant.now().plus(7, ChronoUnit.DAYS), null));
+
+        awaitUntil(() -> pushTicketRepository.existsById("ticket-1"));
+        assertThat(pushTicketRepository.findById("ticket-1"))
+                .hasValueSatisfying(
+                        ticket -> assertThat(ticket.getDevice().getToken()).isEqualTo("ExponentPushToken[attendee]"));
+    }
+
+    private Event registerFor(Instant startsAt, Integer leadTimeMinutes) {
+        return registerFor(startsAt, leadTimeMinutes, Instant.now().minus(1, ChronoUnit.DAYS));
+    }
+
+    private Event registerFor(Instant startsAt, Integer leadTimeMinutes, Instant registeredAt) {
+        return registerFor(startsAt, leadTimeMinutes, registeredAt, EventRegistrationStatus.REGISTERED);
+    }
+
+    private Event registerFor(
+            Instant startsAt, Integer leadTimeMinutes, Instant registeredAt, EventRegistrationStatus status) {
+        Event event = saveEvent(startsAt, leadTimeMinutes);
+        register(event, userWithDevice("ExponentPushToken[attendee]", false), registeredAt, status);
+        return event;
+    }
+
+    private Event saveEvent(Instant startsAt, Integer leadTimeMinutes) {
+        return eventRepository.save(Event.builder()
+                .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
+                .type(EventType.ONLINE)
+                .startsAt(startsAt)
+                .endsAt(startsAt.plus(2, ChronoUnit.HOURS))
+                .audience(Audience.PUBLIC)
+                .reminderLeadTimeMinutes(leadTimeMinutes)
+                .build());
+    }
+
+    private void register(Event event, User user, Instant registeredAt, EventRegistrationStatus status) {
+        EventRegistration registration = eventRegistrationRepository.save(EventRegistration.builder()
+                .event(event)
+                .user(user)
+                .status(status)
+                .build());
+        jdbcTemplate.update(
+                "update event_registrations set registered_at = ? where id = ?",
+                Timestamp.from(registeredAt),
+                registration.getId());
+    }
+
+    @Test
+    void aDueReminder_isSentOnceAndThenMarked() {
+        Event event = registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+
+        eventReminderScheduler.sendDueReminders();
+
+        List<ExpoPushMessage> sent = captureSentMessages();
+        assertThat(sent).hasSize(1);
+        assertThat(sent.getFirst().channelId()).isEqualTo("reminders");
+        assertThat(sent.getFirst().title()).isEqualTo("Przypomnienie");
+        assertThat(sent.getFirst().data()).containsEntry("type", "EVENT_REMINDER");
+        assertThat(eventRegistrationRepository.findAll().stream()
+                        .filter(r -> r.getEvent().getId().equals(event.getId()))
+                        .allMatch(r -> r.getReminderSentAt() != null))
+                .isTrue();
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        verify(expoPushClient, never()).send(any());
+    }
+
+    /** Regression: a refused batch must leave the reminder due, not silently consume it. */
+    @Test
+    void aRefusedSend_leavesTheReminderDueForTheNextSweep() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of("ExponentPushToken[attendee]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        assertThat(eventRegistrationRepository.findAll())
+                .allSatisfy(registration ->
+                        assertThat(registration.getReminderSentAt()).isNull());
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(any());
+    }
+
+    @Test
+    void aPartlyRefusedSend_retriesOnlyTheUsersItMissed() {
+        Event event = saveEvent(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        Instant dayAgo = Instant.now().minus(1, ChronoUnit.DAYS);
+        register(
+                event, userWithDevice("ExponentPushToken[reached]", false), dayAgo, EventRegistrationStatus.REGISTERED);
+        register(event, userWithDevice("ExponentPushToken[missed]", false), dayAgo, EventRegistrationStatus.REGISTERED);
+        when(expoPushClient.send(any()))
+                .thenReturn(new SendOutcome(
+                        Map.of("ticket-1", "ExponentPushToken[reached]"), Set.of("ExponentPushToken[missed]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        assertThat(captureSentMessages()).extracting(ExpoPushMessage::to).containsExactly("ExponentPushToken[missed]");
+    }
+
+    @Test
+    void aUserWithOneAcceptedDevice_isNotRemindedAgain() {
+        Event event = saveEvent(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        User user = userWithDevice("ExponentPushToken[phone]", false);
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user)
+                .token("ExponentPushToken[tablet]")
+                .platform(DevicePlatform.ANDROID)
+                .build());
+        register(event, user, Instant.now().minus(1, ChronoUnit.DAYS), EventRegistrationStatus.REGISTERED);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of("ExponentPushToken[tablet]")));
+
+        eventReminderScheduler.sendDueReminders();
+
+        reset(expoPushClient);
+        when(expoPushClient.send(any())).thenReturn(new SendOutcome(Map.of(), Set.of()));
+        eventReminderScheduler.sendDueReminders();
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void aReminderStillOutsideItsLeadTime_isNotSent() {
+        registerFor(Instant.now().plus(5, ChronoUnit.DAYS), 60);
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void aRegistrationInsideTheLeadTime_isNeverReminded() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60, Instant.now());
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void anEventWithoutALeadTime_neverReminds() {
+        registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), null);
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void aDeletedEvent_isNeverReminded() {
+        Event event = registerFor(Instant.now().plus(30, ChronoUnit.MINUTES), 60);
+        adminEventService.delete(event.getId());
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void aWaitlistedRegistration_isNeverReminded() {
+        registerFor(
+                Instant.now().plus(30, ChronoUnit.MINUTES),
+                60,
+                Instant.now().minus(1, ChronoUnit.DAYS),
+                EventRegistrationStatus.WAITLISTED);
+
+        eventReminderScheduler.sendDueReminders();
+
+        verify(expoPushClient, never()).send(any());
+    }
+
+    private Event fullEventHeldBy(User seatHolder) {
+        Event event = eventRepository.save(Event.builder()
+                .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
+                .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))
+                .audience(Audience.PUBLIC)
+                .seatLimit(1)
+                .build());
+        register(event, seatHolder, Instant.now().minus(1, ChronoUnit.DAYS), EventRegistrationStatus.REGISTERED);
+        return event;
+    }
+
+    private void waitlist(Event event, User user) {
+        register(event, user, Instant.now().minus(1, ChronoUnit.HOURS), EventRegistrationStatus.WAITLISTED);
+    }
+
+    private void giveUpSeat(Event event, User seatHolder) {
+        eventRegistrationService.unregister(event.getId(), new Caller(seatHolder.getKeycloakId(), Set.of()));
+    }
+
+    @Test
+    void aFreedSeat_tellsTheNextPersonOnTheWaitlist() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        waitlist(event, userWithDevice("ExponentPushToken[waiting]", false));
+
+        giveUpSeat(event, seatHolder);
+
+        List<ExpoPushMessage> sent = captureSentMessages();
+        assertThat(sent).hasSize(1);
+        ExpoPushMessage message = sent.getFirst();
+        String startsAt = DateTimeFormatter.ofPattern("dd.MM 'o' HH:mm")
+                .format(event.getStartsAt().atZone(ZoneId.of("Europe/Warsaw")));
+        assertThat(message.to()).isEqualTo("ExponentPushToken[waiting]");
+        assertThat(message.channelId()).isEqualTo("registrations");
+        assertThat(message.title()).isEqualTo("Zwolniło się miejsce");
+        assertThat(message.body())
+                .isEqualTo("Zostałeś automatycznie zapisany na wydarzenie „Warsztaty”, %s".formatted(startsAt));
+        assertThat(message.data())
+                .containsEntry("type", "REGISTRATION_PROMOTED")
+                .containsEntry("target", event.getSlug());
+    }
+
+    @Test
+    void aPromotedUserWithoutADevice_getsNoPush() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        User waiting = saveUser();
+        waitlist(event, waiting);
+
+        giveUpSeat(event, seatHolder);
+
+        assertThat(eventRegistrationRepository.findByEventIdAndUserId(event.getId(), waiting.getId()))
+                .hasValueSatisfying(registration ->
+                        assertThat(registration.getStatus()).isEqualTo(EventRegistrationStatus.REGISTERED));
+        verify(expoPushClient, after(QUIET_PERIOD_MS).never()).send(any());
+    }
+
+    @Test
+    void aRolledBackPromotion_tellsNobody() {
+        User seatHolder = saveUser();
+        Event event = fullEventHeldBy(seatHolder);
+        waitlist(event, userWithDevice("ExponentPushToken[waiting]", false));
+
+        transactionTemplate.executeWithoutResult(transaction -> {
+            giveUpSeat(event, seatHolder);
+            transaction.setRollbackOnly();
+        });
+
+        verify(expoPushClient, after(QUIET_PERIOD_MS).never()).send(any());
+    }
+
+    private static void awaitUntil(java.util.function.BooleanSupplier condition) {
+        long deadline = System.currentTimeMillis() + SEND_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            if (condition.getAsBoolean()) {
+                return;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        throw new AssertionError("condition was not met within %d ms".formatted(SEND_TIMEOUT_MS));
+    }
+
+    @TestConfiguration
+    static class TestSecurityBeans {
+        @Bean
+        ClientRegistrationRepository clientRegistrationRepository() {
+            return mock(ClientRegistrationRepository.class);
+        }
+
+        @Bean
+        JwtDecoder jwtDecoder() {
+            return mock(JwtDecoder.class);
+        }
+    }
+}

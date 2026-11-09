@@ -23,6 +23,8 @@ export type ThemeTokens = {
   band: string;
   brandInk: string;
   bandForeground: string;
+  chart1: string;
+  chart2: string;
 };
 
 // Values taken straight from PALETTE are on the Figma system; literal hex means the role
@@ -52,6 +54,8 @@ export const THEME: Record<"light" | "dark", ThemeTokens> = {
     band: PALETTE.blue[600],
     brandInk: "#3a2300",
     bandForeground: "#edf1fa",
+    chart1: PALETTE.blue[400],
+    chart2: PALETTE.orange[600],
   },
   dark: {
     background: PALETTE.blue[700],
@@ -76,6 +80,8 @@ export const THEME: Record<"light" | "dark", ThemeTokens> = {
     band: PALETTE.blue[700],
     brandInk: "#3a2300",
     bandForeground: "#edf1fa",
+    chart1: PALETTE.blue[300],
+    chart2: PALETTE.orange[600],
   },
 };
 

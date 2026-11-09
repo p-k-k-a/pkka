@@ -19,11 +19,8 @@ export function PublicHeaderAuth() {
           Wyloguj
         </Button>
       ) : (
-        <Button asChild size="sm" className="gap-1.5">
-          <Link href="/login">
-            Zaloguj się
-            <span aria-hidden="true">→</span>
-          </Link>
+        <Button asChild size="sm">
+          <Link href="/login">Zaloguj się</Link>
         </Button>
       )}
     </div>

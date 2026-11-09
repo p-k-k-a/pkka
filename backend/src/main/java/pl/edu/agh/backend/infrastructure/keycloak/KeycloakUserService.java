@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.infrastructure.keycloak;
 
 import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,16 @@ public class KeycloakUserService {
         } catch (RuntimeException ex) {
             log.warn("Failed to fetch Discord identity for Keycloak user {}: {}", keycloakUserId, ex.getMessage());
             return Optional.empty();
+        }
+    }
+
+    public void deleteUser(String keycloakUserId) {
+        try (Response response = keycloakAdmin.realm(realm).users().delete(keycloakUserId)) {
+            int status = response.getStatus();
+            if (status != 204 && status != 404) {
+                throw new IllegalStateException(
+                        "Keycloak answered %d when deleting user %s".formatted(status, keycloakUserId));
+            }
         }
     }
 }

@@ -14,12 +14,16 @@ import pl.edu.agh.backend.event.tag.Tag;
 
 public record EventDetailsResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant startsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         String location,
+
+        @Schema(description = "Meeting link; absent unless the requesting user holds a seat (REGISTERED)")
+        String transmissionUrl,
 
         @Schema(description = "Absent when the event has no seat limit")
         Integer seatLimit,
@@ -29,25 +33,37 @@ public record EventDetailsResponse(
 
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
+
+        @Schema(description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL")
         String coverImageUrl,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Set<String> tags,
 
         @Schema(description = "The requesting user's own sign-up; absent when they are not signed up or anonymous")
         EventRegistrationStatus registrationStatus) {
-    public static EventDetailsResponse from(Event e, long seatsTaken, EventRegistrationStatus registrationStatus) {
+
+    /** {@code transmissionUrl} and {@code coverImageUrl} are supplied by the service (visibility and signing). */
+    public static EventDetailsResponse from(
+            Event e,
+            long seatsTaken,
+            EventRegistrationStatus registrationStatus,
+            String transmissionUrl,
+            String coverImageUrl) {
         return new EventDetailsResponse(
                 e.getId(),
+                e.getSlug(),
                 e.getTitle(),
                 e.getFullDescription(),
                 e.getType(),
                 e.getStartsAt(),
                 e.getEndsAt(),
                 e.getLocation(),
+                transmissionUrl,
                 e.getSeatLimit(),
                 (int) seatsTaken,
                 e.getRegistrationClosesAt(),
                 e.getAudience(),
-                e.getCoverImageUrl(),
+                coverImageUrl,
                 e.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
                 registrationStatus);
     }

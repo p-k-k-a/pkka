@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { ApiError } from "@pkka/api";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Button } from "@/components/ui/button";
@@ -11,11 +10,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { ApplicationSummary } from "@/components/applications/application-summary";
 import { StatusBadge } from "@/components/applications/status-badge";
+import { DeleteAccount } from "@/components/profile/delete-account";
+import { DiscordVerifyButton } from "@/components/verification/discord-verify-button";
 import { VerificationForm } from "@/components/verification/verification-form";
 
 export function VerificationContent() {
   const router = useRouter();
   const {
+    user,
     admin,
     application,
     isAuthLoading,
@@ -92,11 +94,10 @@ export function VerificationContent() {
                     <Button
                       type="button"
                       size="sm"
-                      className="shrink-0 gap-1.5 self-start"
+                      className="shrink-0 self-start"
                       onClick={() => setIsReapplying(true)}
                     >
                       Złóż ponownie
-                      <ArrowRight data-icon="inline-end" />
                     </Button>
                   </div>
                 </div>
@@ -124,6 +125,8 @@ export function VerificationContent() {
               </Card>
             ) : null}
 
+            {!application || isRejected ? <DiscordVerifyButton /> : null}
+
             {showForm ? (
               <div className="space-y-3">
                 {isRejected ? (
@@ -139,6 +142,8 @@ export function VerificationContent() {
                 />
               </div>
             ) : null}
+
+            <DeleteAccount accountEmail={user?.email} />
           </div>
         )}
       </div>

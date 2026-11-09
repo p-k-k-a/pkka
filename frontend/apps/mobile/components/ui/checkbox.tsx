@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useTheme } from "@react-navigation/native";
+import { useThemeColors } from "@/lib/theme";
 import { Check } from "lucide-react-native";
 import { Pressable } from "react-native";
 
@@ -10,7 +10,7 @@ type CheckboxProps = {
 };
 
 function Checkbox({ checked, onCheckedChange, className }: CheckboxProps) {
-  const { colors } = useTheme();
+  const theme = useThemeColors();
 
   return (
     <Pressable
@@ -19,12 +19,12 @@ function Checkbox({ checked, onCheckedChange, className }: CheckboxProps) {
       hitSlop={8}
       onPress={() => onCheckedChange(!checked)}
       className={cn(
-        "border-foreground bg-background size-6 shrink-0 items-center justify-center rounded-sm border-2",
-        checked && "bg-foreground",
+        "border-muted-foreground bg-background size-6 shrink-0 items-center justify-center rounded-md border-2",
+        checked && "border-primary bg-primary",
         className,
       )}
     >
-      {checked ? <Check size={15} strokeWidth={3.5} color={colors.background} /> : null}
+      {checked ? <Check size={15} strokeWidth={3.5} color={theme.primaryForeground} /> : null}
     </Pressable>
   );
 }

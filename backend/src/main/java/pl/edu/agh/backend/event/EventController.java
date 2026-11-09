@@ -3,7 +3,6 @@ package pl.edu.agh.backend.event;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
@@ -27,14 +26,15 @@ public class EventController {
     public Page<EventListItemResponse> listEvents(
             @RequestParam(required = false) Set<String> tags,
             @RequestParam(required = false) EventTimeframe timeframe,
+            @RequestParam(required = false) Audience audience,
             @ParameterObject @PageableDefault(size = 20, sort = "startsAt") Pageable pageable,
             Caller caller) {
-        return eventService.list(caller, tags, timeframe, pageable);
+        return eventService.list(caller, tags, timeframe, audience, pageable);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Details of a single event")
-    public EventDetailsResponse getEventById(@PathVariable UUID id, Caller caller) {
-        return eventService.getDetails(id, caller);
+    @GetMapping("/{slug}")
+    @Operation(summary = "Details of a single event by its slug")
+    public EventDetailsResponse getEventBySlug(@PathVariable String slug, Caller caller) {
+        return eventService.getDetails(slug, caller);
     }
 }

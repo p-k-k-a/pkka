@@ -1,4 +1,4 @@
-import { Audience, EventType } from "@pkka/api";
+import { Audience, EventRegistrationStatus, EventType } from "@pkka/api";
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   ONLINE: "Online",
@@ -6,14 +6,23 @@ const EVENT_TYPE_LABELS: Record<EventType, string> = {
   HYBRID: "Hybrydowo",
 };
 
+const REGISTRATION_STATUS_LABELS_UPPER: Record<EventRegistrationStatus, string> = {
+  REGISTERED: "ZAPISANO",
+  WAITLISTED: "LISTA REZERWOWA",
+};
+
 const AUDIENCE_LABELS: Record<Audience, string> = {
   PUBLIC: "Publiczne",
-  ALL_ALUMNI: "Alumini",
+  ALL_ALUMNI: "Alumni",
   SPECIFIC_GROUP: "Wybrana grupa",
 };
 
 export function eventTypeLabelUpper(type: EventType) {
   return EVENT_TYPE_LABELS[type].toUpperCase();
+}
+
+export function registrationStatusLabelUpper(status: EventRegistrationStatus) {
+  return REGISTRATION_STATUS_LABELS_UPPER[status];
 }
 
 export function audienceLabel(audience: Audience) {

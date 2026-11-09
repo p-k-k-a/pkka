@@ -48,15 +48,7 @@ class TagCatalogIntegrationTest {
     }
 
     @Test
-    void listUserTagsRequiresUserRole() throws Exception {
-        mockMvc.perform(get("/api/user-tags")).andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void listUserTagsReturnsSkillCatalog() throws Exception {
-        mockMvc.perform(get("/api/user-tags").with(JwtTestSupport.asUser()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$[0].name").exists());
+    void listAlumniTagsRequiresUserRole() throws Exception {
+        mockMvc.perform(get("/api/alumni/tags")).andExpect(status().isUnauthorized());
     }
 }

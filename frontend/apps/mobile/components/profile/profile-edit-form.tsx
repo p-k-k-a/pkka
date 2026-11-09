@@ -1,3 +1,4 @@
+import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { CheckboxCard } from "@/components/application/checkbox-card";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
@@ -6,16 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
-import { canonicalizeProfileUrl, githubUrlError, linkedinUrlError } from "@pkka/domain";
-import { THEME } from "@/lib/theme";
+import {
+  canonicalizeProfileUrl,
+  githubUrlError,
+  linkedinUrlError,
+  phoneNumberError,
+} from "@pkka/domain";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
   getGetMyProfileQueryKey,
   getGetMyTagsQueryKey,
+  getListAlumniTagsQueryKey,
   useGetMyProfile,
   useGetMyTags,
-  useListUserTags,
+  useListAlumniTags,
   useUpdateMyProfile,
   useUpdateMyTags,
   type ProfileResponse,
@@ -23,9 +30,10 @@ import {
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Camera, Eye, EyeOff, UserRound } from "lucide-react-native";
+import { Camera, Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -34,6 +42,7 @@ const FIELD_LABELS: Record<string, string> = {
   company: "Firma",
   linkedinUrl: "LinkedIn",
   githubUrl: "GitHub",
+  phoneNumber: "Telefon",
 };
 
 // The client validates the same rules, so a 400 means the two drifted apart — name the
@@ -62,11 +71,14 @@ function IdentityRow({
   label,
   value,
   field,
+  children,
 }: {
   label: string;
   value?: string;
   field: AnyFieldApi;
+  children?: React.ReactNode;
 }) {
+  const theme = useThemeColors();
   const visible = field.state.value as boolean;
   return (
     <View className="gap-2">
@@ -86,9 +98,9 @@ function IdentityRow({
           className="border-border active:bg-muted flex-row items-center gap-1.5 rounded-full border px-3 py-1.5"
         >
           {visible ? (
-            <Eye size={14} color={THEME.light.mutedForeground} />
+            <Eye size={14} color={theme.mutedForeground} />
           ) : (
-            <EyeOff size={14} color={THEME.light.mutedForeground} />
+            <EyeOff size={14} color={theme.mutedForeground} />
           )}
           <Text className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">
             {visible ? "Widoczne" : "Ukryte"}
@@ -98,21 +110,23 @@ function IdentityRow({
       {value ? (
         <View
           className={cn(
-            "border-input bg-muted/40 h-12 justify-center rounded-md border px-3",
+            "border-muted-foreground/25 dark:border-input bg-muted/40 min-h-12 justify-center rounded-md border px-3 py-3",
             !visible && "opacity-50",
           )}
         >
           <Text className="text-muted-foreground">{value}</Text>
         </View>
       ) : null}
+      {children}
     </View>
   );
 }
 
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
+  const theme = useThemeColors();
   const queryClient = useQueryClient();
 
-  const availableTagsQuery = useListUserTags();
+  const availableTagsQuery = useListAlumniTags();
   const myTagsQuery = useGetMyTags();
   const updateMyTags = useUpdateMyTags();
   const updateMyProfile = useUpdateMyProfile();
@@ -133,22 +147,25 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bio: profile.bio ?? "",
       linkedinUrl: profile.linkedinUrl ?? "",
       githubUrl: profile.githubUrl ?? "",
+      phoneNumber: profile.phoneNumber ?? "",
       willingToMentor: profile.willingToMentor,
       showName: profile.visibility.name,
       showEmail: profile.visibility.email,
       showDiscord: profile.visibility.discord,
-      tagIds: [] as string[],
+      showPhone: profile.visibility.phone,
+      tagNames: [] as string[],
     },
     onSubmit: async ({ value }) => {
       setSubmitError(null);
       if (seededTagsRef.current) {
         try {
-          await updateMyTags.mutateAsync({ data: { tagIds: value.tagIds } });
+          await updateMyTags.mutateAsync({ data: { names: value.tagNames } });
           queryClient.invalidateQueries({ queryKey: getGetMyTagsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListAlumniTagsQueryKey() });
         } catch (saveException) {
           setSubmitError(
             saveException instanceof ApiError && saveException.status === 400
-              ? "Któraś z wybranych umiejętności jest nieaktualna. Odśwież i spróbuj ponownie."
+              ? "Któraś z umiejętności ma niedozwoloną nazwę. Popraw ją i spróbuj ponownie."
               : "Nie udało się zapisać umiejętności. Spróbuj ponownie.",
           );
           return;
@@ -164,11 +181,13 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             bio: trimmed(value.bio),
             linkedinUrl: canonicalizeProfileUrl(value.linkedinUrl),
             githubUrl: canonicalizeProfileUrl(value.githubUrl),
+            phoneNumber: trimmed(value.phoneNumber),
             willingToMentor: value.willingToMentor,
             visibility: {
               name: value.showName,
               email: value.showEmail,
               discord: value.showDiscord,
+              phone: value.showPhone,
             },
           },
         });
@@ -187,32 +206,34 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
   // Seed the picker with the user's saved tags once they load
   useEffect(() => {
     if (seededTagsRef.current || !myTagsQuery.isSuccess) return;
-    form.setFieldValue("tagIds", myTagsQuery.data?.data?.map((tag) => tag.id) ?? []);
+    form.setFieldValue("tagNames", myTagsQuery.data?.data?.map((tag) => tag.name) ?? []);
     seededTagsRef.current = true;
   }, [myTagsQuery.isSuccess, myTagsQuery.data, form]);
 
   return (
     <KeyboardAwareScrollView
-      style={{ flex: 1, backgroundColor: THEME.light.background }}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1, backgroundColor: theme.background }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"
       bottomOffset={24}
     >
       <View className="items-center gap-3">
-        <View className="border-border bg-muted size-36 items-center justify-center overflow-hidden rounded-full border">
-          <UserRound size={64} color={THEME.light.mutedForeground} strokeWidth={1.5} />
-        </View>
+        <InitialsAvatar
+          name={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
+          size="xl"
+        />
         {/* Mocked — photo upload isn't implemented; the button intentionally does nothing. */}
         <Button variant="outline" size="sm" onPress={() => {}} className="active:bg-muted">
-          <Camera size={16} color={THEME.light.foreground} />
+          <Camera size={16} color={theme.foreground} />
           <Text className="group-active:text-foreground">Zmień zdjęcie</Text>
         </Button>
+        <Text className="text-muted-foreground text-center text-[13px]">
+          Dodawanie zdjęć jeszcze nie działa. Na razie pokazujemy Twoje inicjały.
+        </Text>
       </View>
 
-      <FormSection
-        title="Dane podstawowe"
-        description="Pochodzą z Twojego konta, możesz je ukryć na profilu, ale nie edytować."
-      >
+      <FormSection title="Dane podstawowe">
         <form.Field name="showName">
           {(field) => (
             <IdentityRow
@@ -230,6 +251,41 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             {(field) => <IdentityRow label="Discord" field={field} />}
           </form.Field>
         ) : null}
+        <form.Field name="showPhone">
+          {(visibility) => (
+            <IdentityRow label="Telefon" field={visibility}>
+              <form.Field
+                name="phoneNumber"
+                validators={{ onBlur: ({ value }) => phoneNumberError(value) }}
+              >
+                {(field) => (
+                  <>
+                    <Input
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                      onBlur={field.handleBlur}
+                      placeholder="+48 600 700 800"
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                      maxLength={32}
+                    />
+                    <FieldError field={field} />
+                  </>
+                )}
+              </form.Field>
+            </IdentityRow>
+          )}
+        </form.Field>
+        <form.Field name="willingToMentor">
+          {(field) => (
+            <CheckboxCard
+              title="Jestem otwarty na mentoring"
+              description="Inni alumni będą to widzieć."
+              checked={field.state.value}
+              onCheckedChange={field.handleChange}
+            />
+          )}
+        </form.Field>
       </FormSection>
 
       <FormSection title="O Tobie" description="Puste pola nie pojawią się na Twoim profilu.">
@@ -240,7 +296,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="np. Senior Java Developer"
+                placeholder="np. Java Developer"
                 autoCapitalize="sentences"
               />
             </FormField>
@@ -278,27 +334,16 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             </FormField>
           )}
         </form.Field>
-
-        <form.Field name="willingToMentor">
-          {(field) => (
-            <CheckboxCard
-              title="Jestem otwarty na mentoring"
-              description="Inni alumni będą to widzieć."
-              checked={field.state.value}
-              onCheckedChange={field.handleChange}
-            />
-          )}
-        </form.Field>
       </FormSection>
 
       <FormSection
         title="Umiejętności"
-        description="Wybierz technologie i obszary, w których się specjalizujesz."
+        description="Wybierz technologie i obszary, w których się specjalizujesz. Jeśli czegoś brakuje na liście, dodaj własną."
       >
-        <form.Field name="tagIds">
+        <form.Field name="tagNames">
           {(field) => (
             <TagPicker
-              options={availableTags}
+              catalog={availableTags}
               value={field.state.value}
               onChange={field.handleChange}
               loading={tagsLoading}
@@ -319,7 +364,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://www.linkedin.com/in/..."
+                placeholder="linkedin.com/in/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />
@@ -335,7 +380,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
                 value={field.state.value}
                 onChangeText={field.handleChange}
                 onBlur={field.handleBlur}
-                placeholder="https://github.com/..."
+                placeholder="github.com/..."
                 autoCapitalize="none"
                 keyboardType="url"
               />
@@ -353,16 +398,18 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         {([canSubmit, isSubmitting]) => (
           <Button
             size="lg"
-            className="mt-2 w-full"
+            className="w-full"
             disabled={!canSubmit || isSubmitting}
             onPress={() => form.handleSubmit()}
           >
-            <Text className="text-sm font-bold uppercase tracking-widest">
+            <Text className="flex-1 text-center text-sm font-bold uppercase tracking-widest">
               {isSubmitting ? "Zapisywanie..." : "Zapisz zmiany"}
             </Text>
           </Button>
         )}
       </form.Subscribe>
+
+      <DeleteAccount accountEmail={profile.email} />
     </KeyboardAwareScrollView>
   );
 }

@@ -13,14 +13,13 @@ import {
   graduationYearError,
   hasRequiredConsents,
   isGraduationYearValid,
+  AGH_PRIVACY_NOTICE_URL,
   APPLICATION_CONFLICT_MESSAGE,
   APPLICATION_SUBMIT_ERROR_MESSAGE,
   FACULTY_OPTIONS,
   INTEREST_AREAS,
   MEETING_PREFERENCE_OPTIONS,
-  PRIVACY_URL,
   STUDY_TYPE_OPTIONS,
-  TERMS_URL,
 } from "@pkka/domain";
 import {
   ApiError,
@@ -31,6 +30,7 @@ import {
   type MeetingPreference,
   type StudyType,
 } from "@pkka/api";
+import { useAppColorScheme, useThemeColors } from "@/lib/theme";
 import { useTheme } from "@react-navigation/native";
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -53,6 +53,8 @@ function FieldError({ field }: { field: AnyFieldApi }) {
 
 function ApplicationForm() {
   const { colors } = useTheme();
+  const theme = useThemeColors();
+  const scheme = useAppColorScheme();
   const queryClient = useQueryClient();
   const { mutateAsync: submitApplication } = useCreateApplication();
   const phoneInputRef = useRef<PhoneInput>(null);
@@ -116,7 +118,8 @@ function ApplicationForm() {
 
   return (
     <KeyboardAwareScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1, backgroundColor: scheme === "dark" ? theme.background : theme.muted }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 32, gap: 24 }}
       keyboardShouldPersistTaps="handled"
       bottomOffset={24}
@@ -154,8 +157,8 @@ function ApplicationForm() {
                 style={{
                   height: 48,
                   borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: 8,
+                  borderColor: scheme === "dark" ? theme.input : `${theme.mutedForeground}40`,
+                  borderRadius: 5,
                   backgroundColor: colors.background,
                   paddingHorizontal: 12,
                   flexDirection: "row",
@@ -187,6 +190,7 @@ function ApplicationForm() {
               <SelectField
                 value={field.state.value}
                 options={FACULTY_OPTIONS}
+                title="Wydział"
                 placeholder="Wybierz wydział"
                 onChange={(value) => field.handleChange(value)}
               />
@@ -227,6 +231,7 @@ function ApplicationForm() {
               <SelectField
                 value={field.state.value}
                 options={STUDY_TYPE_OPTIONS}
+                title="Rodzaj studiów"
                 placeholder="Wybierz stopień"
                 onChange={(value) => field.handleChange(value)}
               />
@@ -337,18 +342,11 @@ function ApplicationForm() {
                 Zapoznałem/am się z{" "}
                 <Text
                   className="text-sm font-bold underline"
-                  onPress={() => WebBrowser.openBrowserAsync(TERMS_URL)}
+                  onPress={() => WebBrowser.openBrowserAsync(AGH_PRIVACY_NOTICE_URL)}
                 >
-                  Regulaminem Klubu Alumnów WI AGH
+                  informacją o przetwarzaniu danych osobowych przez AGH
                 </Text>{" "}
-                oraz{" "}
-                <Text
-                  className="text-sm font-bold underline"
-                  onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)}
-                >
-                  Polityką Prywatności
-                </Text>{" "}
-                i akceptuję ich postanowienia.*
+                dla celów działalności Klubu Absolwentów AGH.*
               </ConsentRow>
               <FieldError field={field} />
             </View>
@@ -364,8 +362,8 @@ function ApplicationForm() {
           {(field) => (
             <View className="gap-2">
               <ConsentRow checked={field.state.value} onCheckedChange={field.handleChange}>
-                Wyrażam zgodę na przetwarzanie moich danych osobowych w celu realizacji procesu
-                rejestracji i członkostwa w klubie, zgodnie z przepisami RODO.*
+                Wyrażam zgodę na przetwarzanie moich danych osobowych przez AGH dla celów
+                działalności Klubu Absolwentów AGH.*
               </ConsentRow>
               <FieldError field={field} />
             </View>

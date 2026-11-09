@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Limit;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,17 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
     Optional<EventRegistration> findByEventIdAndUserId(UUID eventId, UUID userId);
 
     long countByEventIdAndStatus(UUID eventId, EventRegistrationStatus status);
+
+    @Query("""
+            select r.event.id
+            from EventRegistration r
+            where r.user.id = :userId and r.event.startsAt > :now
+            order by r.event.id
+            """)
+    List<UUID> findUpcomingEventIds(@Param("userId") UUID userId, @Param("now") Instant now);
+
+    @EntityGraph(attributePaths = "user")
+    List<EventRegistration> findByEventIdOrderByRegisteredAtAscIdAsc(UUID eventId);
 
     @Query("select r.status from EventRegistration r where r.event.id = :eventId and r.user.id = :userId")
     Optional<EventRegistrationStatus> findStatus(@Param("eventId") UUID eventId, @Param("userId") UUID userId);
@@ -56,6 +68,20 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
             @Param("userId") UUID userId, @Param("eventIds") Collection<UUID> eventIds);
 
     record EventSeatCount(UUID eventId, long seatsTaken) {}
+
+    @Query(value = """
+                    select r.* from event_registrations r
+                    join events e on e.id = r.event_id
+                    where r.reminder_sent_at is null
+                      and r.user_id is not null
+                      and r.status = 'REGISTERED'
+                      and e.deleted_at is null
+                      and e.reminder_lead_time_minutes is not null
+                      and e.starts_at > now()
+                      and e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute') <= now()
+                      and r.registered_at <= e.starts_at - (e.reminder_lead_time_minutes * interval '1 minute')
+                    """, nativeQuery = true)
+    List<EventRegistration> findDueForReminder();
 
     record OwnRegistration(UUID eventId, EventRegistrationStatus status) {}
 }

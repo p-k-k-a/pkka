@@ -1,5 +1,10 @@
-import { ProfileEditContent } from "@/components/profile/profile-edit-content";
+import { RequireAlumni } from "@/components/alumni/require-alumni";
+import { ProfileEditForm } from "@/components/profile/profile-edit-form";
 
 export default function DashboardProfileEditPage() {
-  return <ProfileEditContent />;
+  return (
+    <RequireAlumni>
+      <ProfileEditForm />
+    </RequireAlumni>
+  );
 }

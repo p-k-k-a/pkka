@@ -77,6 +77,7 @@ class EventRegistrationConcurrencyTest {
     void concurrentRegistrations_neverOversellTheEventAndQueueTheRest() throws Exception {
         event = eventRepository.save(Event.builder()
                 .title("Concurrency test event")
+                .slug("concurrency-test-event-" + UUID.randomUUID())
                 .type(EventType.IN_PERSON)
                 .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))
@@ -131,6 +132,7 @@ class EventRegistrationConcurrencyTest {
     void concurrentCancellations_promoteExactlyOneQueuedUserPerFreedSeat() throws Exception {
         event = eventRepository.save(Event.builder()
                 .title("Concurrent cancellations")
+                .slug("concurrent-cancellations-" + UUID.randomUUID())
                 .type(EventType.IN_PERSON)
                 .startsAt(Instant.now().plus(7, ChronoUnit.DAYS))
                 .endsAt(Instant.now().plus(7, ChronoUnit.DAYS).plus(2, ChronoUnit.HOURS))

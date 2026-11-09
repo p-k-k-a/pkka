@@ -10,6 +10,7 @@ import pl.edu.agh.backend.event.tag.Tag;
 
 public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String fullDescription,
         @Schema(requiredMode = RequiredMode.REQUIRED) EventType type,
@@ -24,7 +25,15 @@ public record AdminEventResponse(
 
         Instant registrationClosesAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Audience audience,
+
+        @Schema(
+                description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL; "
+                        + "sending it back unchanged on update is fine")
         String coverImageUrl,
+
+        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
+        Integer reminderLeadTimeMinutes,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Set<String> tags,
 
         @Schema(description = "Admin who created the event; absent for events that predate authorship tracking")
@@ -33,9 +42,10 @@ public record AdminEventResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminEventResponse from(Event event, long seatsTaken) {
+    static AdminEventResponse from(Event event, long seatsTaken, String coverImageUrl) {
         return new AdminEventResponse(
                 event.getId(),
+                event.getSlug(),
                 event.getTitle(),
                 event.getFullDescription(),
                 event.getType(),
@@ -47,7 +57,8 @@ public record AdminEventResponse(
                 (int) seatsTaken,
                 event.getRegistrationClosesAt(),
                 event.getAudience(),
-                event.getCoverImageUrl(),
+                coverImageUrl,
+                event.getReminderLeadTimeMinutes(),
                 event.getTags().stream().map(Tag::getName).collect(Collectors.toSet()),
                 event.getAuthor() == null ? null : event.getAuthor().getDisplayName(),
                 event.getCreatedAt(),

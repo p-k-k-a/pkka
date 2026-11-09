@@ -28,7 +28,7 @@ export default function AlumnDetailScreen() {
             <ActivityIndicator />
           </View>
         ) : profile ? (
-          <ScrollView contentContainerClassName="px-4 py-8">
+          <ScrollView contentContainerClassName="px-4 py-8" showsVerticalScrollIndicator={false}>
             <AlumniProfileView profile={profile} />
           </ScrollView>
         ) : (

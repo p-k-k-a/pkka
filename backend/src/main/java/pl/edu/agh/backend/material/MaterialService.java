@@ -9,12 +9,14 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 
 @Service
 @RequiredArgsConstructor
 public class MaterialService {
 
     private final MaterialRepository materialRepository;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public Page<MaterialResponse> list(
@@ -24,6 +26,9 @@ public class MaterialService {
                 MaterialSpecifications.hasType(type.orElse(null)),
                 MaterialSpecifications.hasEventId(eventId.orElse(null)),
                 MaterialSpecifications.visibleTo(caller));
-        return materialRepository.findAll(spec, pageable).map(MaterialResponse::from);
+        return materialRepository
+                .findAll(spec, pageable)
+                .map(material -> MaterialResponse.from(
+                        material, storageService.resolveDownloadUrl(material.getUrl(), material.getTitle())));
     }
 }

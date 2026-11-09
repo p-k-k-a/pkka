@@ -9,10 +9,11 @@ import {
   EMPTY_ALUMNI_FILTERS,
   type AlumniFilters,
 } from "@pkka/domain";
+import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { useListUserTags } from "@pkka/api";
+import { useListAlumniTags } from "@pkka/api";
 import { Check } from "lucide-react-native";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Pressable, View } from "react-native";
 
 type FilterSheetProps = {
@@ -33,17 +34,17 @@ function HeaderText({ children }: { children: ReactNode }) {
 }
 
 export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetProps) {
+  const theme = useThemeColors();
   const [draft, setDraft] = useState<AlumniFilters>(value);
   // The sheet keeps its children mounted while closed, so the pickers would
   // otherwise reopen still holding the previous search text and expanded list.
   // Bumping this on each open remounts them with fresh internal state.
   const [openCount, setOpenCount] = useState(0);
 
-  const tagsQuery = useListUserTags();
-  const tagOptions = useMemo<SelectOption[]>(
-    () => (tagsQuery.data?.data ?? []).map((tag) => ({ id: tag.id, label: tag.name })),
-    [tagsQuery.data],
-  );
+  const tagsQuery = useListAlumniTags();
+  const tagOptions: SelectOption[] = (tagsQuery.data?.data ?? [])
+    .filter((tag) => (tag.usageCount ?? 0) > 0 || draft.tagIds.includes(tag.id))
+    .map((tag) => ({ id: tag.id, label: tag.name }));
 
   useEffect(() => {
     if (visible) {
@@ -63,7 +64,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
         <View className="flex-row items-center justify-between">
           <HeaderText>Rok ukończenia</HeaderText>
           <Text className="text-foreground text-sm font-semibold">
-            {draft.yearRange[0]} — {draft.yearRange[1]}
+            {draft.yearRange[0]}–{draft.yearRange[1]}
           </Text>
         </View>
         <RangeSlider
@@ -98,7 +99,7 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
                 tagIds: typeof next === "function" ? next(d.tagIds) : next,
               }))
             }
-            placeholder="Wyszukaj umiejętności..."
+            placeholder="Szukaj umiejętności"
             listMaxHeight={SHEET_LIST_MAX_HEIGHT}
             uppercaseChips
           />
@@ -120,7 +121,9 @@ export function FilterSheet({ visible, value, onClose, onApply }: FilterSheetPro
               draft.mentorOnly ? "border-primary bg-primary" : "border-muted-foreground/40",
             )}
           >
-            {draft.mentorOnly ? <Check size={14} color="white" strokeWidth={3} /> : null}
+            {draft.mentorOnly ? (
+              <Check size={14} color={theme.primaryForeground} strokeWidth={3} />
+            ) : null}
           </View>
           <Text className="text-foreground text-base">Tylko chętni do mentoringu</Text>
         </Pressable>

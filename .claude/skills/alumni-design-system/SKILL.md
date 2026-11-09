@@ -93,9 +93,29 @@ mobile's `tailwind.config.js` colour map stay hand-written, and only need
 touching when a token is added or removed, not when a value changes.
 
 Fonts are separate: web loads Jost + Montserrat via `next/font/google` in
-`app/layout.tsx` (`--font-jost` / `--font-montserrat`). Mobile declares
-`fontFamily.heading/sans` in `tailwind.config.js` but **loads no font file
-yet** — `font-heading` currently falls back to the system face there.
+`app/layout.tsx` (`--font-jost` / `--font-montserrat`). Mobile bundles the TTFs
+in `assets/fonts/` and registers them with the `expo-font` config plugin in
+`app.json` (weighted families, so `font-semibold` resolves natively; adding a
+weight needs a native rebuild). `Text` defaults to `font-sans`, heading variants
+use `font-heading`, and `cn()` in `lib/utils.ts` knows both families so
+tailwind-merge lets `font-heading` override the base.
+
+## Mobile colour rules (light + dark)
+
+- Colours come from semantic tokens only: `className` utilities for views/text,
+  `useThemeColors()` from `lib/theme.ts` for imperative props (lucide icons,
+  sheet surfaces, tab bar). Avoid `THEME.light.*` and hex literals for anything
+  that should follow the scheme.
+- Dark tokens collide: `card` = `muted` = `secondary` = `popover` (`#2e4058`)
+  and `background` = `band` (`#011125`). A `bg-muted` element on a card, or a
+  `bg-band` chip on the page, disappears in dark — pick the surface against
+  its actual parent.
+- Light tokens collide too: `border` = `input` = `muted` = `#edf1fa`, invisible
+  on white. Field and outline borders use `border-muted-foreground/25
+dark:border-input`.
+- Selected states use an amber tint (`bg-primary/15 border-primary`), never an
+  inverted `bg-foreground` fill.
+- Check every visual change in both schemes before merging.
 
 ## Page rhythm — bands of tone
 
@@ -104,7 +124,7 @@ Tailwind background color, not floating cards on one page background.
 Canonical order seen across the real mockups:
 
 1. **Navbar** — `bg-muted` (surface-blue)
-2. **Hero** — `bg-muted`, big Jost heading + one amber CTA (arrow trailing)
+2. **Hero** — `bg-muted`, big Jost heading + one amber CTA
 3. **Intro** ("Czym jest Klub Alumnów") — `bg-muted`, text + media/CTA
 4. **Highlight** — **`bg-primary`** (amber) band, used once
 5. **Speakers / prelegenci** — `bg-muted`, two-column card + pagination dots
@@ -128,9 +148,23 @@ Rules:
 - **Secondary** (cream) = lower emphasis; **link/underline variant** =
   tertiary/inline action.
 - Sizes: `md` 46px hero/section CTAs · `sm` 34px cards/nav · `xs` 30px chips.
-- Every CTA carries a trailing → arrow unless it reads oddly as one.
+- Arrows mean direction, not emphasis. Use the Lucide icons only (never a `→`
+  text glyph): `ArrowRight` (`data-icon="inline-end"`) for "Następna" and for the
+  "Czytaj dalej" / "Zobacz profil" footer of a card that is itself a link (use
+  `CardLinkFooter`); `ArrowLeft` (`data-icon="inline-start"`) on every "Wróć" link
+  and "Poprzednia"; `ArrowUpRight` for links that leave the app.
+- No arrow on buttons that do something (submit, save, publish, sign up, log in,
+  reapply) or on ordinary nav/CTA buttons. At most one decorative → per page, on
+  the hero's primary CTA.
 - Tags/chips: light-blue for categories, amber for "featured", dark-blue on
   light bands, radius `5px` (never round up to 8/10).
+
+## Copy
+
+- No dash pauses (` — `, ` – ` or ` - `) in UI text, `aria-label`s or `sr-only` text. They read as
+  machine-written. Split into two sentences, or use a comma or a colon.
+- Ranges use an unspaced en dash: `1990–2010`.
+- A lone `—` is fine as the placeholder for an empty value.
 
 ## Unifying existing screens
 

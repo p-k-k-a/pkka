@@ -19,6 +19,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -51,6 +52,9 @@ class DeviceTokenEndpointTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private String keycloakId;
 
@@ -120,18 +124,18 @@ class DeviceTokenEndpointTest {
     }
 
     @Test
-    void registerTokenOfAnotherAccount_movesItToTheCaller() throws Exception {
-        deviceOwnedBy(UUID.randomUUID().toString(), token("shared"));
+    void registerWithTokenHeldByAnotherUser_isConflict() throws Exception {
+        String owner = UUID.randomUUID().toString();
+        deviceOwnedBy(owner, token("theirs"));
 
-        register(token("shared")).andExpect(status().isNoContent());
+        register(token("theirs")).andExpect(status().isConflict());
 
         assertThat(deviceTokenRepository
-                        .findById(token("shared"))
+                        .findById(token("theirs"))
                         .orElseThrow()
                         .getUser()
                         .getKeycloakId())
-                .isEqualTo(keycloakId);
-        assertThat(deviceTokenRepository.count()).isEqualTo(1);
+                .isEqualTo(owner);
     }
 
     @Test
@@ -144,7 +148,21 @@ class DeviceTokenEndpointTest {
     }
 
     @Test
+    void unregister_alsoForgetsItsPendingTickets() throws Exception {
+        register(token("aaa")).andExpect(status().isNoContent());
+        jdbcTemplate.update(
+                "insert into push_tickets (ticket_id, token, created_at) values ('ticket-1', ?, now())", token("aaa"));
+
+        unregister(token("aaa")).andExpect(status().isNoContent());
+
+        deviceTokenRepository.flush();
+        assertThat(jdbcTemplate.queryForObject("select count(*) from push_tickets", Integer.class))
+                .isZero();
+    }
+
+    @Test
     void unregisterSomeoneElsesToken_isNotFound() throws Exception {
+        register(token("mine")).andExpect(status().isNoContent());
         deviceOwnedBy(UUID.randomUUID().toString(), token("theirs"));
 
         unregister(token("theirs")).andExpect(status().isNotFound());

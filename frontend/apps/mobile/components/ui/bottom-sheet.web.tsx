@@ -1,4 +1,4 @@
-import { THEME } from "@/lib/theme";
+import { useThemeColors } from "@/lib/theme";
 import { type ReactNode } from "react";
 import { Modal, Pressable, View } from "react-native";
 
@@ -12,6 +12,7 @@ type BottomSheetProps = {
 // codegenNativeComponent, which does not exist on web — importing it breaks the
 // `expo export --platform web` bundle. Web gets this Modal-based equivalent instead.
 export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+  const theme = useThemeColors();
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
@@ -22,7 +23,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
         <Pressable
           onPress={(e) => e.stopPropagation()}
           style={{
-            backgroundColor: THEME.light.background,
+            backgroundColor: theme.background,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingHorizontal: 20,
@@ -36,7 +37,7 @@ export function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
               width: 48,
               height: 5,
               borderRadius: 999,
-              backgroundColor: THEME.light.mutedForeground,
+              backgroundColor: theme.mutedForeground,
               opacity: 0.3,
               marginBottom: 16,
             }}

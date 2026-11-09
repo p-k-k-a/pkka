@@ -21,9 +21,12 @@ import org.springframework.data.jpa.domain.Specification;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
+
+    private static final String MEETING_URL = "https://meet.google.com/abc-defg-hij";
 
     @Mock
     private EventRepository eventRepository;
@@ -33,6 +36,9 @@ class EventServiceTest {
 
     @Mock
     private EventRegistrationService eventRegistrationService;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private EventService eventService;
@@ -54,7 +60,8 @@ class EventServiceTest {
         when(eventRegistrationService.ownStatusByEvent(Caller.anonymous(), List.of(eventId)))
                 .thenReturn(Map.of());
 
-        var page = eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, PageRequest.of(0, 10));
+        var page =
+                eventService.list(Caller.anonymous(), Set.of(), EventTimeframe.UPCOMING, null, PageRequest.of(0, 10));
 
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().getFirst().seatsTaken()).isEqualTo(3);
@@ -67,6 +74,7 @@ class EventServiceTest {
         Caller caller = new Caller("sub", Set.of());
         Event event = Event.builder()
                 .id(id)
+                .slug("networking")
                 .title("Networking")
                 .type(EventType.IN_PERSON)
                 .startsAt(Instant.now().plusSeconds(3600))
@@ -74,14 +82,76 @@ class EventServiceTest {
                 .seatLimit(5)
                 .audience(Audience.PUBLIC)
                 .build();
-        when(eventLookup.findVisible(id, caller)).thenReturn(event);
+        when(eventLookup.findVisibleBySlug("networking", caller)).thenReturn(event);
         when(eventRegistrationService.seatsTaken(id)).thenReturn(5L);
         when(eventRegistrationService.findOwnStatus(id, caller))
                 .thenReturn(Optional.of(EventRegistrationStatus.WAITLISTED));
 
-        var details = eventService.getDetails(id, caller);
+        var details = eventService.getDetails("networking", caller);
 
+        assertThat(details.slug()).isEqualTo("networking");
         assertThat(details.seatsTaken()).isEqualTo(5);
         assertThat(details.registrationStatus()).isEqualTo(EventRegistrationStatus.WAITLISTED);
+    }
+
+    @Test
+    void getDetailsHandsTheMeetingLinkToAHeldSeat() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.REGISTERED)))
+                .isEqualTo(MEETING_URL);
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromTheWaitlist() {
+        assertThat(meetingLinkSeenWith(Optional.of(EventRegistrationStatus.WAITLISTED)))
+                .isNull();
+    }
+
+    @Test
+    void getDetailsKeepsTheMeetingLinkFromCallersNotSignedUp() {
+        assertThat(meetingLinkSeenWith(Optional.empty())).isNull();
+    }
+
+    @Test
+    void getDetailsServesAStoredCoverKeyAsASignedUrl() {
+        UUID id = UUID.randomUUID();
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
+                .id(id)
+                .slug("networking-cover")
+                .title("Networking")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .audience(Audience.PUBLIC)
+                .coverImageUrl("covers/events/a.png")
+                .build();
+        when(eventLookup.findVisibleBySlug("networking-cover", caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
+        when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(Optional.empty());
+        when(storageService.resolveUrl("covers/events/a.png")).thenReturn("https://r2.example/signed");
+
+        assertThat(eventService.getDetails("networking-cover", caller).coverImageUrl())
+                .isEqualTo("https://r2.example/signed");
+    }
+
+    private String meetingLinkSeenWith(Optional<EventRegistrationStatus> ownStatus) {
+        String slug = "webinar";
+        UUID id = UUID.randomUUID();
+        Caller caller = new Caller("sub", Set.of());
+        Event event = Event.builder()
+                .id(id)
+                .slug(slug)
+                .title("Webinar")
+                .type(EventType.ONLINE)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .transmissionUrl(MEETING_URL)
+                .audience(Audience.PUBLIC)
+                .build();
+        when(eventLookup.findVisibleBySlug(slug, caller)).thenReturn(event);
+        when(eventRegistrationService.seatsTaken(id)).thenReturn(0L);
+        when(eventRegistrationService.findOwnStatus(id, caller)).thenReturn(ownStatus);
+
+        return eventService.getDetails(slug, caller).transmissionUrl();
     }
 }

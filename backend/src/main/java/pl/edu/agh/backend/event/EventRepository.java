@@ -16,6 +16,11 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
     @NullMarked
     Optional<Event> findById(UUID id);
 
+    @EntityGraph(attributePaths = "tags")
+    Optional<Event> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
     /** {@code SELECT ... FOR UPDATE} — the serialization point for seat booking. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Event> findForUpdateById(UUID id);

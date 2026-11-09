@@ -45,7 +45,9 @@ public class Material {
 
     @NotBlank
     @Size(max = 2000)
-    @Pattern(regexp = "^https?://.+", message = "url must start with http:// or https://")
+    @Pattern(
+            regexp = "(?i)^(https?://|materials/).+$",
+            message = "url must be an http(s) URL or the objectKey of an uploaded material")
     @Column(nullable = false, length = 2000)
     private String url;
 

@@ -3,13 +3,17 @@ package pl.edu.agh.backend.event;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
+import pl.edu.agh.backend.infrastructure.validation.TagNames;
 
 public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotBlank @Size(max = 200)
@@ -26,7 +30,14 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Instant endsAt,
 
-        @Size(max = 500) String transmissionUrl,
+        @Size(max = 500)
+        @Pattern(
+                regexp = "(?i)^https://(teams\\.microsoft\\.com|teams\\.live\\.com"
+                        + "|([a-z0-9-]+\\.)*zoom\\.(us|com)|meet\\.google\\.com)/\\S+$",
+                message = "must be a Microsoft Teams, Zoom or Google Meet meeting link")
+        @Schema(example = "https://meet.google.com/abc-defg-hij")
+        String transmissionUrl,
+
         @Size(max = 300) String location,
         @Min(0) Integer seatLimit,
         Instant registrationClosesAt,
@@ -34,8 +45,23 @@ public record EventRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         Audience audience,
 
-        @Size(max = 500) String coverImageUrl,
-        Set<@NotBlank @Size(max = 32) String> tags) {
+        // Wide enough for the signed download URL an edit form echoes back; what is stored is capped at 500.
+        @Size(max = 2000)
+        @Schema(
+                description = "External http(s) URL, or the `objectKey` of a file uploaded through "
+                        + "`POST /api/admin/files/presign`; an uploaded file's signed URL is accepted too")
+        @Pattern(
+                regexp = "(?i)^(https?://|covers/events/).+$",
+                message = "coverImageUrl must be an http(s) URL or the objectKey of an uploaded cover")
+        String coverImageUrl,
+
+        @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
+        @Min(1)
+        @Max(7 * 24 * 60)
+        Integer reminderLeadTimeMinutes,
+
+        @Schema(description = "Lower-cased on save; names not in the catalog are created")
+        Set<@NotBlank @Size(max = TagNames.MAX_LENGTH) String> tags) {
 
     public EventRequest {
         title = trimToNull(title);
@@ -43,7 +69,12 @@ public record EventRequest(
         transmissionUrl = trimToNull(transmissionUrl);
         location = trimToNull(location);
         coverImageUrl = trimToNull(coverImageUrl);
-        tags = tags == null || tags.isEmpty() ? new HashSet<>() : new HashSet<>(tags);
+        tags = tags == null
+                ? new HashSet<>()
+                : tags.stream()
+                        .map(TagNames::normalize)
+                        .map(TagNames::key)
+                        .collect(Collectors.toCollection(HashSet::new));
     }
 
     @AssertTrue(message = "endsAt must be after startsAt")

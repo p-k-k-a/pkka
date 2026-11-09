@@ -42,17 +42,17 @@ public class AdminEventController {
         return adminEventService.list(timeframe == null ? EventTimeframe.ALL : timeframe, pageable);
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Get a single event regardless of audience or start date")
+    @GetMapping("/by-slug/{slug}")
+    @Operation(summary = "Get a single event by its slug, regardless of audience or start date")
     @ApiResponse(responseCode = "200", description = "Event details")
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
-    public AdminEventResponse getAdminEvent(@PathVariable UUID id) {
-        return adminEventService.get(id);
+    public AdminEventResponse getAdminEventBySlug(@PathVariable String slug) {
+        return adminEventService.getBySlug(slug);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Create an event")
+    @Operation(summary = "Create an event with a slug generated from the title")
     @ApiResponse(responseCode = "201", description = "Event created")
     public AdminEventResponse createAdminEvent(@Valid @RequestBody EventRequest request, Caller caller) {
         return adminEventService.create(caller, request);
@@ -62,7 +62,7 @@ public class AdminEventController {
     @Operation(
             summary = "Replace an event's editable fields",
             description = "Full replacement: every editable field is taken from the body, "
-                    + "so omitted optional fields are cleared.")
+                    + "so omitted optional fields are cleared. The slug never changes.")
     @ApiResponse(responseCode = "200", description = "Event updated")
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
     public AdminEventResponse updateAdminEvent(@PathVariable UUID id, @Valid @RequestBody EventRequest request) {

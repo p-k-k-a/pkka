@@ -37,8 +37,8 @@ public class EventRegistration {
     @JoinColumn(name = "event_id", nullable = false, updatable = false)
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", updatable = false)
     private User user;
 
     @NotNull
@@ -51,6 +51,9 @@ public class EventRegistration {
     @Column(name = "registered_at", nullable = false, updatable = false)
     @ToString.Include
     private Instant registeredAt;
+
+    @Column(name = "reminder_sent_at")
+    private Instant reminderSentAt;
 
     @Override
     public boolean equals(Object o) {

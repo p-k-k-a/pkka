@@ -60,4 +60,23 @@ class EventLookupTest {
 
         assertThat(found.getAudience()).isEqualTo(Audience.ALL_ALUMNI);
     }
+
+    @Test
+    void findVisibleBySlugHidesAlumniOnlyEventFromAnonymousUser() {
+        Event alumniEvent = Event.builder()
+                .id(UUID.randomUUID())
+                .slug("alumni-only")
+                .title("Alumni only")
+                .type(EventType.IN_PERSON)
+                .startsAt(Instant.now().plusSeconds(3600))
+                .endsAt(Instant.now().plusSeconds(7200))
+                .audience(Audience.ALL_ALUMNI)
+                .build();
+        when(eventRepository.findBySlug("alumni-only")).thenReturn(java.util.Optional.of(alumniEvent));
+
+        assertThatThrownBy(() -> eventLookup.findVisibleBySlug("alumni-only", Caller.anonymous()))
+                .isInstanceOf(EventNotFoundException.class);
+        assertThat(eventLookup.findVisibleBySlug("alumni-only", new Caller("sub", Set.of(Roles.VERIFIED_ALUMN))))
+                .isSameAs(alumniEvent);
+    }
 }

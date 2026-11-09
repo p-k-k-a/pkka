@@ -1,12 +1,8 @@
-import { Badge } from "@/components/ui/badge";
+import { ProseContent } from "@/components/content/prose-content";
+import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
-import {
-  eventTypeLabelUpper,
-  formatEventDateShort,
-  formatSeatsRemaining,
-  formatTimeRange,
-} from "@pkka/domain";
-import { THEME } from "@/lib/theme";
+import { formatEventDateShort, formatSeatsRemaining, formatTimeRange } from "@pkka/domain";
+import { useThemeColors } from "@/lib/theme";
 import { EventType, type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
@@ -45,6 +41,7 @@ function InfoRow({
 }
 
 export function EventDetailView({ event }: EventDetailViewProps) {
+  const theme = useThemeColors();
   const { title, type, startsAt, endsAt, location, seatLimit, seatsTaken, coverImageUrl, tags } =
     event;
 
@@ -59,7 +56,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
       showsVerticalScrollIndicator={false}
     >
       <View className="gap-6 px-5 pt-5">
-        <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+        <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
           {hasImage ? (
             <Image
               source={{ uri: coverImageUrl }}
@@ -67,21 +64,23 @@ export function EventDetailView({ event }: EventDetailViewProps) {
               style={{ width: "100%", height: "100%" }}
             />
           ) : (
-            <ImageIcon size={56} color={THEME.light.border} />
+            <ImageIcon size={56} color={theme.mutedForeground} strokeWidth={1.25} />
           )}
         </View>
 
         <View className="gap-3">
-          <Badge variant="default" className="self-start">
-            <Text>{eventTypeLabelUpper(type)}</Text>
-          </Badge>
-          <Text variant="h1" className="text-left text-3xl leading-tight">
+          <EventTypeBadge type={type} className="self-start" />
+          <Text
+            role="heading"
+            aria-level="1"
+            className="font-heading text-foreground text-[28px] font-semibold leading-tight tracking-tight"
+          >
             {title}
           </Text>
           {(tags ?? []).length > 0 ? (
             <View className="flex-row flex-wrap gap-x-3 gap-y-1">
               {(tags ?? []).map((tag) => (
-                <Text key={tag} className="text-sm text-muted-foreground">
+                <Text key={tag} className="text-accent text-sm font-medium">
                   #{tag}
                 </Text>
               ))}
@@ -91,20 +90,20 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
         <View className="gap-4">
           <InfoRow
-            icon={<Calendar size={18} color={THEME.light.foreground} />}
+            icon={<Calendar size={18} color={theme.accent} />}
             value={formatEventDateShort(startsAt)}
             sub={formatTimeRange(startsAt, endsAt)}
           />
 
           {isOnline ? (
             <InfoRow
-              icon={<Link2 size={18} color={THEME.light.foreground} />}
+              icon={<Link2 size={18} color={theme.accent} />}
               value="Link do spotkania"
               sub="Link dostępny po zalogowaniu" // TODO: ask client if this should be configurable option in admin panel (maybe we want public events to be joinable only by logged users)
             />
           ) : location ? (
             <InfoRow
-              icon={<MapPin size={18} color={THEME.light.foreground} />}
+              icon={<MapPin size={18} color={theme.accent} />}
               label="Lokalizacja"
               value={location}
             />
@@ -112,21 +111,20 @@ export function EventDetailView({ event }: EventDetailViewProps) {
 
           {seats ? (
             <InfoRow
-              icon={<Users size={18} color={THEME.light.foreground} />}
+              icon={<Users size={18} color={theme.accent} />}
               value={`Pozostało ${seats.remaining} miejsc`}
               sub={`Limit: ${seats.limit} osób`}
             />
           ) : null}
         </View>
 
-        <View className="h-px bg-border" />
+        {event.fullDescription ? (
+          <>
+            <View className="h-px bg-border" />
 
-        <View className="gap-3">
-          <Text className="text-xs font-bold uppercase tracking-widest text-foreground">
-            O wydarzeniu
-          </Text>
-          <Text className="leading-7 text-muted-foreground">{event.fullDescription}</Text>
-        </View>
+            <ProseContent content={event.fullDescription} />
+          </>
+        ) : null}
       </View>
     </ScrollView>
   );

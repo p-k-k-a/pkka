@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVerificationStatus } from "@/lib/use-verification-status";
@@ -15,8 +15,8 @@ type RequireAlumniProps = {
 /** The alumni endpoints answer 403 to anyone without the VERIFIED_ALUMN role. */
 export function RequireAlumni({
   children,
-  title = "Katalog dostępny dla zweryfikowanych alumnów",
-  description = "Po zatwierdzeniu wniosku zobaczysz profile innych absolwentów i będziesz mógł się z nimi skontaktować.",
+  title = "Dostępne dla zweryfikowanych alumnów",
+  description = "Po zatwierdzeniu wniosku uzupełnisz swój profil, zobaczysz profile innych absolwentów i będziesz mógł się z nimi skontaktować.",
 }: RequireAlumniProps) {
   // isLoading, not isPending: the application query stays pending forever when
   // it is disabled for admins.
@@ -40,10 +40,7 @@ export function RequireAlumni({
           </h1>
           <p className="text-muted-foreground leading-relaxed">{description}</p>
           <Button asChild size="xl" className="font-bold">
-            <Link href="/dashboard/verification">
-              Zweryfikuj się
-              <ArrowRight data-icon="inline-end" />
-            </Link>
+            <Link href="/dashboard/verification">Zweryfikuj się</Link>
           </Button>
         </div>
       </section>

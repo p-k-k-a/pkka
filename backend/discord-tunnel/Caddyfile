@@ -1,0 +1,12 @@
+:8090 {
+	@discord {
+		method POST
+		path /api/public/discord/interactions
+	}
+	handle @discord {
+		reverse_proxy host.docker.internal:8080
+	}
+	handle {
+		respond 404
+	}
+}

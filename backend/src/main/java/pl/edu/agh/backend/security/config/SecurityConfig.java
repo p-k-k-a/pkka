@@ -51,7 +51,8 @@ public class SecurityConfig {
     public SecurityFilterChain apiSecurityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            ApplicationRepository applicationRepository) {
+            ApplicationRepository applicationRepository,
+            CookieCsrfTokenRepository csrfTokenRepository) {
 
         // session read when it exists (web), not created for mobile
         // CSRF enabled for web sessions, ignored for mobile
@@ -59,10 +60,11 @@ public class SecurityConfig {
         http.securityMatcher("/api/**")
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                         .ignoringRequestMatchers(SecurityConfig::hasBearerToken)
-                        .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout"))
+                        .ignoringRequestMatchers("/api/public/auth/refresh", "/api/public/auth/logout")
+                        .ignoringRequestMatchers("/api/public/discord/interactions"))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .addFilterAfter(
                         new ApprovedAlumnRoleFilter(applicationRepository), BearerTokenAuthenticationFilter.class)
@@ -97,7 +99,8 @@ public class SecurityConfig {
             ClientRegistrationRepository clientRegistrationRepository,
             OAuth2AuthorizationRequestResolver discordBypassResolver,
             BffAuthenticationSuccessHandler bffHandler,
-            JwtDecoder jwtDecoder) {
+            JwtDecoder jwtDecoder,
+            CookieCsrfTokenRepository csrfTokenRepository) {
 
         OidcClientInitiatedLogoutSuccessHandler oidcLogout =
                 new OidcClientInitiatedLogoutSuccessHandler(clientRegistrationRepository);
@@ -105,7 +108,7 @@ public class SecurityConfig {
 
         http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(new XorCsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 "/",
@@ -128,7 +131,7 @@ public class SecurityConfig {
                                 PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout"))
                         .logoutSuccessHandler(oidcLogout)
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID", "XSRF-TOKEN"));
+                        .deleteCookies("JSESSIONID"));
 
         return http.build();
     }

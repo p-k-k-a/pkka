@@ -79,8 +79,8 @@ function ToggleGroupItem({
           "min-w-0 shrink-0 rounded-none shadow-none",
           isFirst && "rounded-l-md",
           isLast && "rounded-r-md",
-          (context.variant === "outline" || variant === "outline") && "border-l-0",
-          (context.variant === "outline" || variant === "outline") && isFirst && "border-l",
+          (context.variant === "outline" || variant === "outline") && !isFirst && "-ml-px",
+          ToggleGroupPrimitive.utils.getIsSelected(value, props.value) && "z-10",
           Platform.select({
             web: "flex-1 focus:z-10 focus-visible:z-10",
           }),

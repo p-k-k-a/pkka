@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import pl.edu.agh.backend.event.dto.EventListItemResponse;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -27,11 +29,21 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventLookup eventLookup;
     private final EventRegistrationService eventRegistrationService;
+    private final StorageService storageService;
 
     public Page<EventListItemResponse> list(
-            Caller caller, Collection<String> tagNames, EventTimeframe timeframe, Pageable pageable) {
-        Specification<Event> spec = Specification.allOf(
-                inTimeframe(timeframe), audienceIn(EventVisibility.audiencesOf(caller)), hasAnyTag(tagNames));
+            Caller caller,
+            Collection<String> tagNames,
+            EventTimeframe timeframe,
+            Audience audience,
+            Pageable pageable) {
+        Set<Audience> visible = EventVisibility.audiencesOf(caller);
+        if (audience != null && !visible.contains(audience)) {
+            return Page.empty(pageable);
+        }
+        Set<Audience> audiences = audience == null ? visible : Set.of(audience);
+        Specification<Event> spec =
+                Specification.allOf(inTimeframe(timeframe), audienceIn(audiences), hasAnyTag(tagNames));
 
         Page<Event> events = eventRepository.findAll(spec, pageable);
         List<UUID> ids = events.getContent().stream().map(Event::getId).toList();
@@ -39,14 +51,28 @@ public class EventService {
         Map<UUID, EventRegistrationStatus> ownStatus = eventRegistrationService.ownStatusByEvent(caller, ids);
 
         return events.map(event -> EventListItemResponse.from(
-                event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
+                event,
+                seatsTaken.getOrDefault(event.getId(), 0L),
+                ownStatus.get(event.getId()),
+                storageService.resolveUrl(event.getCoverImageUrl())));
     }
 
-    public EventDetailsResponse getDetails(UUID id, Caller caller) {
-        Event event = eventLookup.findVisible(id, caller);
+    public EventDetailsResponse getDetails(String slug, Caller caller) {
+        Event event = eventLookup.findVisibleBySlug(slug, caller);
+        UUID id = event.getId();
         EventRegistrationStatus registrationStatus =
                 eventRegistrationService.findOwnStatus(id, caller).orElse(null);
-        return EventDetailsResponse.from(event, eventRegistrationService.seatsTaken(id), registrationStatus);
+        return EventDetailsResponse.from(
+                event,
+                eventRegistrationService.seatsTaken(id),
+                registrationStatus,
+                transmissionUrlFor(event, registrationStatus),
+                storageService.resolveUrl(event.getCoverImageUrl()));
+    }
+
+    /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */
+    private String transmissionUrlFor(Event event, EventRegistrationStatus registrationStatus) {
+        return registrationStatus == EventRegistrationStatus.REGISTERED ? event.getTransmissionUrl() : null;
     }
 
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {

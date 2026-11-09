@@ -32,7 +32,7 @@ export function VisibilityField({
         id={id}
         // The visible label only reads "Widoczne"/"Ukryte", so the field name
         // has to come from here for screen readers.
-        aria-label={`${label} — widoczne dla alumnów`}
+        aria-label={`${label}: widoczne dla alumnów`}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled || !hasValue}
@@ -60,7 +60,7 @@ export function VisibilityField({
           <TooltipTrigger asChild>
             <span tabIndex={0}>{toggle}</span>
           </TooltipTrigger>
-          <TooltipContent>Najpierw uzupełnij te dane na swoim koncie.</TooltipContent>
+          <TooltipContent>Najpierw uzupełnij te dane.</TooltipContent>
         </Tooltip>
       )}
     </div>

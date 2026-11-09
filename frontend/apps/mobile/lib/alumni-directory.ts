@@ -3,8 +3,6 @@ import { useListAlumniInfinite, type AlumniListItemResponse } from "@pkka/api";
 import { buildAlumniParams, type AlumniFilters, type AlumniSortOption } from "@pkka/domain";
 import { useMemo } from "react";
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 type UseAlumniDirectoryArgs = {
   query: string;
   filters: AlumniFilters;
@@ -12,7 +10,7 @@ type UseAlumniDirectoryArgs = {
 };
 
 export function useAlumniDirectory({ query, filters, sort }: UseAlumniDirectoryArgs) {
-  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
+  const debouncedQuery = useDebouncedValue(query);
   const params = buildAlumniParams(debouncedQuery, filters, sort);
 
   const result = useListAlumniInfinite(params, {

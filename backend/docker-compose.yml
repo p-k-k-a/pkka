@@ -110,6 +110,27 @@ services:
     networks:
       - iam-network
 
+  discord-proxy:
+    profiles: ["discord"]
+    image: caddy:2
+    container_name: pkka-discord-proxy
+    volumes:
+      - ./discord-tunnel/Caddyfile:/etc/caddy/Caddyfile:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - iam-network
+
+  discord-tunnel:
+    profiles: ["discord"]
+    image: cloudflare/cloudflared:latest
+    container_name: pkka-discord-tunnel
+    command: tunnel --no-autoupdate --url http://discord-proxy:8090
+    depends_on:
+      - discord-proxy
+    networks:
+      - iam-network
+
 volumes:
   postgres_data:
   app_postgres_data:

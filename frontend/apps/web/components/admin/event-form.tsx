@@ -3,15 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Audience,
   EventType,
-  getGetAdminEventQueryKey,
-  getGetEventByIdQueryKey,
+  getGetAdminEventBySlugQueryKey,
+  getGetEventBySlugQueryKey,
   getListAdminEventsQueryKey,
+  getListEventOccupancyQueryKey,
   getListEventsQueryKey,
+  getListTagsQueryKey,
+  getGetEventStatisticsQueryKey,
+  getListEventRegistrationsQueryKey,
   useCreateAdminEvent,
   useListTags,
   useUpdateAdminEvent,
@@ -20,13 +24,13 @@ import {
 } from "@pkka/api";
 import { FieldLabel } from "@/components/admin/field-label";
 import { SectionTitle } from "@/components/content/section-title";
+import { TagPicker } from "@/components/profile/tag-picker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
+import { eventDetailHref } from "@/lib/event-paths";
 import {
   AUDIENCE_OPTIONS,
   EVENT_TYPE_OPTIONS,
@@ -53,6 +57,14 @@ function parseSeatLimit(value: string) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
+const REMINDER_OPTIONS = [
+  { value: "", label: "Bez przypomnienia" },
+  { value: "60", label: "1 godzina przed" },
+  { value: "180", label: "3 godziny przed" },
+  { value: "1440", label: "24 godziny przed" },
+  { value: "2880", label: "2 dni przed" },
+];
+
 export function EventForm({ event }: EventFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -75,6 +87,9 @@ export function EventForm({ event }: EventFormProps) {
     event?.audience ?? Audience.PUBLIC,
   );
   const [selectedTags, setSelectedTags] = useState<string[]>(event?.tags ?? []);
+  const [reminderLeadTime, setReminderLeadTime] = useState(
+    event?.reminderLeadTimeMinutes != null ? String(event.reminderLeadTimeMinutes) : "",
+  );
 
   const { data: tagsResponse } = useListTags();
   const catalogTags = tagsResponse?.data ?? [];
@@ -93,11 +108,15 @@ export function EventForm({ event }: EventFormProps) {
   const onSaved = () => {
     queryClient.invalidateQueries({ queryKey: getListAdminEventsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListTagsQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListEventOccupancyQueryKey() });
     if (event) {
-      queryClient.invalidateQueries({ queryKey: getGetAdminEventQueryKey(event.id) });
-      queryClient.invalidateQueries({ queryKey: getGetEventByIdQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getGetEventStatisticsQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getListEventRegistrationsQueryKey(event.id) });
+      queryClient.invalidateQueries({ queryKey: getGetAdminEventBySlugQueryKey(event.slug) });
+      queryClient.invalidateQueries({ queryKey: getGetEventBySlugQueryKey(event.slug) });
     }
-    router.push(ADMIN_EVENTS_PATH);
+    router.push(event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH);
   };
 
   const createEvent = useCreateAdminEvent({ mutation: { onSuccess: onSaved } });
@@ -127,6 +146,7 @@ export function EventForm({ event }: EventFormProps) {
       registrationClosesAt: registrationClosesAtIso,
       audience,
       coverImageUrl: event?.coverImageUrl,
+      reminderLeadTimeMinutes: reminderLeadTime === "" ? undefined : Number(reminderLeadTime),
       tags: selectedTags,
     }),
     [
@@ -136,6 +156,7 @@ export function EventForm({ event }: EventFormProps) {
       fullDescription,
       location,
       registrationClosesAtIso,
+      reminderLeadTime,
       seatLimit,
       selectedTags,
       startsAtIso,
@@ -154,19 +175,13 @@ export function EventForm({ event }: EventFormProps) {
     }
   };
 
-  const toggleTag = (name: string) => {
-    setSelectedTags((current) =>
-      current.includes(name) ? current.filter((tag) => tag !== name) : [...current, name],
-    );
-  };
-
   return (
     <div className="bg-background px-4 py-10 md:px-10 md:py-16">
       <div className="mx-auto max-w-[1280px]">
         <Button asChild variant="ghost" size="sm" className="mb-8 -ml-2">
-          <Link href={ADMIN_EVENTS_PATH}>
+          <Link href={event ? `${ADMIN_EVENTS_PATH}/${event.slug}` : ADMIN_EVENTS_PATH}>
             <ArrowLeft data-icon="inline-start" />
-            Wróć do listy wydarzeń
+            {event ? "Wróć do wydarzenia" : "Wróć do listy wydarzeń"}
           </Link>
         </Button>
 
@@ -179,15 +194,8 @@ export function EventForm({ event }: EventFormProps) {
               {isEditing ? "Edytuj wydarzenie" : "Dodaj wydarzenie do kalendarza"}
             </h1>
           </div>
-          <Button
-            type="button"
-            size="xl"
-            className="gap-2"
-            disabled={!canSave}
-            onClick={handleSave}
-          >
+          <Button type="button" size="xl" disabled={!canSave} onClick={handleSave}>
             {isPending ? "Zapisywanie…" : isEditing ? "Zapisz zmiany" : "Opublikuj wydarzenie"}
-            {isPending ? null : <ArrowRight data-icon="inline-end" />}
           </Button>
         </div>
 
@@ -227,6 +235,11 @@ export function EventForm({ event }: EventFormProps) {
                 className="font-heading h-auto min-h-14 py-3 text-lg font-semibold md:text-[23px]"
                 onChange={(changeEvent) => setTitle(changeEvent.target.value)}
               />
+              <p className="text-muted-foreground text-xs">
+                {isEditing
+                  ? `Adres wydarzenia: ${eventDetailHref(event.slug)}. Nie zmienia się przy edycji.`
+                  : "Adres wydarzenia wygenerujemy automatycznie z tytułu."}
+              </p>
             </section>
 
             <section className="space-y-5">
@@ -285,26 +298,17 @@ export function EventForm({ event }: EventFormProps) {
               </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-4 pb-56">
               <SectionTitle>Tagi wydarzenia</SectionTitle>
-              {catalogTags.length === 0 ? (
-                <p className="text-muted-foreground text-sm">Brak tagów w katalogu.</p>
-              ) : (
-                <div className="flex flex-wrap gap-3">
-                  {catalogTags.map((tag) => (
-                    <div key={tag.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`event-tag-${tag.id}`}
-                        checked={selectedTags.includes(tag.name)}
-                        onCheckedChange={() => toggleTag(tag.name)}
-                      />
-                      <Label htmlFor={`event-tag-${tag.id}`} className="text-sm font-normal">
-                        #{tag.name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <TagPicker
+                options={catalogTags.map((tag) => tag.name).sort()}
+                value={selectedTags}
+                onChange={(names) => setSelectedTags(names.map((name) => name.toLowerCase()))}
+                label="Szukaj lub dodaj tag"
+                placeholder="Szukaj lub dodaj tag, np. warsztat…"
+                allowCreate
+                format={(name) => `#${name}`}
+              />
             </section>
           </div>
 
@@ -354,6 +358,20 @@ export function EventForm({ event }: EventFormProps) {
                   placeholder="Bez limitu"
                   onChange={(changeEvent) => setSeatLimit(changeEvent.target.value)}
                 />
+              </div>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="event-reminder">Przypomnienie</FieldLabel>
+                <Select
+                  id="event-reminder"
+                  value={reminderLeadTime}
+                  onChange={(changeEvent) => setReminderLeadTime(changeEvent.target.value)}
+                >
+                  {REMINDER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </div>
               <div className="space-y-2">
                 <FieldLabel htmlFor="event-registration-closes-at">Zamknięcie zapisów</FieldLabel>
