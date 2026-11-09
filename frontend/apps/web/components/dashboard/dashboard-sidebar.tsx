@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Inbox, Megaphone, Newspaper, ShieldCheck, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Inbox,
+  Megaphone,
+  MessagesSquare,
+  Newspaper,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +41,12 @@ const userItems: SidebarItem[] = [
     label: "Alumni",
     icon: Users,
     match: (pathname) => pathname.startsWith("/dashboard/alumni"),
+  },
+  {
+    href: "/dashboard/groups",
+    label: "Grupy",
+    icon: MessagesSquare,
+    match: (pathname) => pathname.startsWith("/dashboard/groups"),
   },
   {
     href: "/dashboard/verification",
@@ -78,7 +92,9 @@ export function DashboardSidebar() {
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni") return isVerified;
+        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/groups") {
+          return isVerified;
+        }
         return true;
       });
 
