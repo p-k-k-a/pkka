@@ -27,9 +27,9 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
       </div>
 
       <div className="space-y-1">
-        <h2 className="font-heading text-foreground text-[23px] leading-tight font-semibold">
+        <h3 className="font-heading text-foreground text-[23px] leading-tight font-semibold">
           {request.name}
-        </h2>
+        </h3>
         <p className="text-muted-foreground text-xs font-medium">{dateLabel}</p>
       </div>
 

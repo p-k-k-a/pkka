@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 type RequestFormProps = {
   onSubmitted: () => void | Promise<void>;
-  onConflict: () => void;
+  onConflict: () => void | Promise<void>;
 };
 
 export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
@@ -28,7 +28,7 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
       onSuccess: () => onSubmitted(),
       onError: (error) => {
         setFormError(topicGroupRequestSubmitErrorMessage(error.status, error.body));
-        if (error.status === 409) onConflict();
+        if (error.status === 409) void onConflict();
       },
     },
   });
@@ -47,9 +47,9 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
     >
       <Card className="gap-6 rounded-2xl p-6 md:p-8">
         <div className="space-y-1">
-          <h2 className="font-heading text-foreground text-[23px] leading-tight font-semibold tracking-tight">
+          <h3 className="font-heading text-foreground text-[23px] leading-tight font-semibold tracking-tight">
             Zaproponuj grupę
-          </h2>
+          </h3>
           <p className="text-muted-foreground text-sm">
             Opis jest zarazem uzasadnieniem. Na jego podstawie administracja oceni propozycję.
           </p>
