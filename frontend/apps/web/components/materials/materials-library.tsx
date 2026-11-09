@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays, X } from "lucide-react";
-import { useGetEventById, useListMaterials } from "@pkka/api";
+import { useListMaterials } from "@pkka/api";
 import { MATERIALS_PAGE_SIZE } from "@pkka/domain";
 import { MaterialCard } from "@/components/materials/material-card";
 import { MaterialSearchInput } from "@/components/materials/material-search-input";
@@ -16,10 +16,7 @@ import {
   type MaterialsState,
 } from "@/lib/material-search-params";
 
-function EventChip({ eventId, onClear }: { eventId: string; onClear: () => void }) {
-  const { data } = useGetEventById(eventId);
-  const title = data?.status === 200 ? data.data.title : null;
-
+function EventChip({ title, onClear }: { title?: string; onClear: () => void }) {
   return (
     <span className="bg-muted text-foreground inline-flex max-w-full items-center gap-2 rounded-lg py-1 pr-1 pl-3 text-sm">
       <CalendarDays className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
@@ -79,6 +76,9 @@ export function MaterialsLibrary() {
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
   const filtered = query !== "" || type !== null || eventId !== null;
+  // Every material of the filtered event carries its title, so the chip needs no request
+  // of its own. Matched by id because placeholder data can still belong to another filter.
+  const eventTitle = materials.find((material) => material.eventId === eventId)?.eventTitle;
 
   // A stale or shared ?page= past the end lands on the last page instead of an empty one.
   const pageOutOfRange = pageData !== undefined && materials.length === 0 && page > 0;
@@ -121,7 +121,7 @@ export function MaterialsLibrary() {
           <div className="flex flex-wrap items-center gap-3">
             <MaterialTypeTabs value={type} onChange={(next) => update({ type: next, page: 0 })} />
             {eventId ? (
-              <EventChip eventId={eventId} onClear={() => update({ eventId: null, page: 0 })} />
+              <EventChip title={eventTitle} onClear={() => update({ eventId: null, page: 0 })} />
             ) : null}
           </div>
         </div>
