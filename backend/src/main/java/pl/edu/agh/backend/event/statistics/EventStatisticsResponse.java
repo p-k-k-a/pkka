@@ -28,4 +28,10 @@ public record EventStatisticsResponse(
                 requiredMode = RequiredMode.REQUIRED,
                 description = "One entry per Europe/Warsaw calendar day, from publication until today or the start"
                         + " of the event, whichever is earlier; days without activity are included as zeros")
-        List<DailyRegistrationsResponse> daily) {}
+        List<DailyRegistrationsResponse> daily,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Sign-ups per source, every source listed in a fixed order, zeros included; sign-ups"
+                        + " recorded before sources were are in none of them")
+        List<SignUpSourceResponse> signUpsBySource) {}
