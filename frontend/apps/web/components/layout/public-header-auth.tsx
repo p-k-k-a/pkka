@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
@@ -8,6 +9,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function PublicHeaderAuth() {
   const { isAuthenticated, isLoading, logout } = useAuth();
+  const pathname = usePathname();
+  const loginHref =
+    pathname === "/" || pathname === "/login"
+      ? "/login"
+      : `/login?returnTo=${encodeURIComponent(pathname)}`;
 
   return (
     <div className="flex items-center gap-3">
@@ -20,7 +26,7 @@ export function PublicHeaderAuth() {
         </Button>
       ) : (
         <Button asChild size="sm">
-          <Link href="/login">Zaloguj się</Link>
+          <Link href={loginHref}>Zaloguj się</Link>
         </Button>
       )}
     </div>

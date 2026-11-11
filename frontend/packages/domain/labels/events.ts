@@ -1,4 +1,4 @@
-import { Audience, EventRegistrationStatus, EventType } from "@pkka/api";
+import { Audience, EventRegistrationStatus, EventType, RegistrationSource } from "@pkka/api";
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   ONLINE: "Online",
@@ -15,6 +15,13 @@ const AUDIENCE_LABELS: Record<Audience, string> = {
   PUBLIC: "Publiczne",
   ALL_ALUMNI: "Alumni",
   SPECIFIC_GROUP: "Wybrana grupa",
+};
+
+const REGISTRATION_SOURCE_LABELS: Record<RegistrationSource, string> = {
+  DISCORD: "Discord",
+  EMAIL: "E-mail",
+  WEB: "Strona WWW",
+  MOBILE: "Aplikacja mobilna",
 };
 
 export function eventTypeLabelUpper(type: EventType) {
@@ -58,4 +65,8 @@ export function formatSeatsRemaining(seatLimit?: number, seatsTaken?: number) {
     remaining: seatLimit - (seatsTaken ?? 0),
     limit: seatLimit,
   };
+}
+
+export function registrationSourceLabel(source: RegistrationSource) {
+  return REGISTRATION_SOURCE_LABELS[source];
 }

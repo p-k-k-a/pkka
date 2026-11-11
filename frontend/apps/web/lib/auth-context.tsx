@@ -58,11 +58,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.assign(destination);
   }, []);
 
-  const loginWithKeycloak = useCallback(() => startAuthFlow(keycloakLoginUrl()), [startAuthFlow]);
+  const loginWithKeycloak = useCallback(
+    (returnTo?: string) => startAuthFlow(keycloakLoginUrl(returnTo)),
+    [startAuthFlow],
+  );
 
-  const loginWithDiscord = useCallback(() => startAuthFlow(discordLoginUrl()), [startAuthFlow]);
+  const loginWithDiscord = useCallback(
+    (returnTo?: string) => startAuthFlow(discordLoginUrl(returnTo)),
+    [startAuthFlow],
+  );
 
-  const register = useCallback(() => startAuthFlow(registerUrl()), [startAuthFlow]);
+  const register = useCallback(
+    (returnTo?: string) => startAuthFlow(registerUrl(returnTo)),
+    [startAuthFlow],
+  );
 
   const logout = useCallback(() => {
     window.location.assign(backendLogoutUrl());

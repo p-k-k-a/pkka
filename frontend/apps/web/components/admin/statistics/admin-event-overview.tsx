@@ -214,7 +214,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                     <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
                   </dl>
                 </Card>
-                <SignupSources signUps={stats.signUps} />
+                <SignupSources sources={stats.signUpsBySource} />
               </div>
             </div>
           </>

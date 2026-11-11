@@ -2,6 +2,7 @@ export * from "./alumni/directory";
 export * from "./application/rules";
 export * from "./events/calendar";
 export * from "./events/registration";
+export * from "./events/signup-source";
 export * from "./format/datetime";
 export * from "./format/plural";
 export * from "./labels/application";

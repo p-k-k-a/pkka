@@ -36,7 +36,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
+import { currentPath } from "@/lib/current-path";
 import { buildEventIcs, downloadIcs } from "@/lib/ics";
+import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -95,17 +97,24 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   // A toast rather than an inline line: when the event has just started, the refetch
   // unmounts this component and an inline error would vanish with it.
+  const login = () => loginWithKeycloak(currentPath());
+
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
     toast.error(eventRegistrationErrorMessage(error, action), {
-      action: sessionExpired ? { label: "Zaloguj się", onClick: loginWithKeycloak } : undefined,
+      action: sessionExpired ? { label: "Zaloguj się", onClick: login } : undefined,
     });
   };
 
   const onJoin = async () => {
     setPending(true);
     try {
-      const { data: registration } = await register.mutateAsync({ eventId: event.id });
+      const source = savedSignUpSource(event.slug);
+      const { data: registration } = await register.mutateAsync({
+        eventId: event.id,
+        params: source ? { source } : undefined,
+      });
+      forgetSignUpSource(event.slug);
       if (registration.status === EventRegistrationStatus.REGISTERED) {
         toast.success("Zapisano Cię na wydarzenie.");
       } else {
@@ -139,7 +148,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   if (!isAuthenticated) {
     return (
-      <Button size="xl" onClick={loginWithKeycloak}>
+      <Button size="xl" onClick={login}>
         Zapisz się
       </Button>
     );

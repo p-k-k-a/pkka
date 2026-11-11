@@ -7,9 +7,9 @@ export type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   refreshUser: () => Promise<unknown>;
-  loginWithKeycloak: () => void;
-  loginWithDiscord: () => void;
-  register: () => void;
+  loginWithKeycloak: (returnTo?: string) => void;
+  loginWithDiscord: (returnTo?: string) => void;
+  register: (returnTo?: string) => void;
   logout: () => void;
   reloginWithDiscord: () => void;
 };
