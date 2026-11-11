@@ -33,10 +33,10 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
+import { audienceLabel, isAdmin, pluralPl, sumSignUpSources } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
-import { SignUpSources, sumSignUpSources } from "@/components/admin/statistics/signup-sources";
+import { SignUpSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;

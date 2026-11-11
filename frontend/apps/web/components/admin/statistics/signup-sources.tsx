@@ -1,17 +1,7 @@
-import { RegistrationSource, type SignUpSourceResponse } from "@pkka/api";
+import type { SignUpSourceResponse } from "@pkka/api";
 import { signUpSourceLabel } from "@pkka/domain";
 import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
-
-export function sumSignUpSources(groups: SignUpSourceResponse[][]): SignUpSourceResponse[] {
-  return Object.values(RegistrationSource).map((source) => ({
-    source,
-    signUps: groups.reduce(
-      (sum, group) => sum + (group.find((row) => row.source === source)?.signUps ?? 0),
-      0,
-    ),
-  }));
-}
 
 export function SignUpSources({
   sources,
