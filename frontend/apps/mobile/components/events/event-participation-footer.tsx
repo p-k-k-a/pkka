@@ -173,14 +173,9 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
       </BottomSheet>
 
       <BottomSheet visible={sheet === "login"} onClose={() => setSheet(null)}>
-        <View className="gap-1">
-          <Text variant="h3" className="text-2xl font-bold">
-            Zaloguj się
-          </Text>
-          <Text className="text-muted-foreground text-sm">
-            Po zalogowaniu wrócisz do tego wydarzenia.
-          </Text>
-        </View>
+        <Text variant="h3" className="text-2xl font-bold">
+          Zaloguj się
+        </Text>
         <View className="mt-6 gap-3">
           <Button className="w-full" onPress={() => onLogin(KEYCLOAK_URL)}>
             <Text>Zaloguj się przez SSO</Text>
