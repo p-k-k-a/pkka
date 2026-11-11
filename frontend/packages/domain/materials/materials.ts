@@ -38,13 +38,10 @@ function parseUrl(url: string) {
   }
 }
 
-// The link half of the backend's @Pattern on MaterialRequest.url; the other half, the
-// objectKey of an uploaded file, is never typed by hand. URL parsing would be laxer
-// (it accepts "https:example.com"), letting the form save a link the API then rejects
-// with a 400.
+// The link half of the backend's @Pattern on MaterialRequest.url. `new URL()` would be
+// laxer and let the form save a link the API rejects.
 const MATERIAL_URL_PATTERN = /^https?:\/\/.+/i;
 
-/** Same rule as the backend: an http(s) URL within the length limit. */
 export function isValidMaterialUrl(url: string) {
   const trimmed = url.trim();
   return trimmed.length <= MATERIAL_URL_MAX && MATERIAL_URL_PATTERN.test(trimmed);
@@ -100,7 +97,6 @@ export function youtubeThumbnailUrl(url: string) {
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
 
-/** "1 materiał", "3 materiały", "5 materiałów" — Polish plural forms. */
 export function formatMaterialCount(count: number) {
   return `${count} ${pluralPl(count, "materiał", "materiały", "materiałów")}`;
 }

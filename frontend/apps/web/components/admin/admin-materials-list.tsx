@@ -54,7 +54,6 @@ export function AdminMaterialsList() {
     isError,
   } = useListAdminMaterials(
     { page, size: MATERIALS_PAGE_SIZE, ...(query ? { q: query } : {}), ...(type ? { type } : {}) },
-    // Keeps the cards on screen while a new search or page loads.
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
 

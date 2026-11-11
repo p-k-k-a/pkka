@@ -8,10 +8,8 @@ import { MaterialCard } from "@/components/materials/material-card";
 import { eventMaterialsHref } from "@/lib/material-search-params";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 
-// Two cards fill the content column; the rest is one click away on the materials page.
 const PREVIEW_SIZE = 2;
 
-/** Renders nothing unless the viewer is a verified alumn and the event has materials. */
 export function EventMaterialsSection({ eventId }: { eventId: string }) {
   const { isVerified } = useVerificationStatus();
   // The endpoint answers 403 to anyone else, so don't ask.

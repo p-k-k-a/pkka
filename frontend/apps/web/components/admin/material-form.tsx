@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const ADMIN_MATERIALS_PATH = "/dashboard/admin/materials";
 
-// Enough for the club's whole calendar in one select; events are added a few a month.
+// Enough for the club's whole calendar in one select.
 const EVENT_OPTIONS_SIZE = 200;
 
 type MaterialFormProps = {
@@ -57,7 +57,6 @@ export function MaterialForm({ material }: MaterialFormProps) {
   const eventsQuery = useListAdminEvents({
     timeframe: EventTimeframe.ALL,
     size: EVENT_OPTIONS_SIZE,
-    // Materials mostly follow recent events, so those come first.
     sort: ["startsAt,desc"],
   });
   const events = eventsQuery.data?.status === 200 ? (eventsQuery.data.data.content ?? []) : [];

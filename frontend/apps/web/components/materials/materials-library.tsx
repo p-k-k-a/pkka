@@ -38,8 +38,7 @@ export function MaterialsLibrary() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // The URL is the only source of truth, so any link to this page (the sidebar, the
-  // event page) sets the filters, and they survive a reload or a shared link.
+  // The URL is the only source of truth, so filters survive a reload or a shared link.
   const { query, type, eventId, page } = parseMaterialsSearchParams(searchParams);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -68,7 +67,6 @@ export function MaterialsLibrary() {
       ...(type ? { type } : {}),
       ...(eventId ? { eventId } : {}),
     },
-    // Keeps the current results on screen while the next page or filter loads.
     { query: { placeholderData: (previous) => previous } },
   );
   const pageData = data?.status === 200 ? data.data : undefined;
@@ -76,8 +74,7 @@ export function MaterialsLibrary() {
   const totalPages = pageData?.totalPages ?? 0;
   const totalElements = pageData?.totalElements ?? 0;
   const filtered = query !== "" || type !== null || eventId !== null;
-  // Every material of the filtered event carries its title, so the chip needs no request
-  // of its own. Matched by id because placeholder data can still belong to another filter.
+  // Matched by id because placeholder data can still belong to another filter.
   const eventTitle = materials.find((material) => material.eventId === eventId)?.eventTitle;
 
   // A stale or shared ?page= past the end lands on the last page instead of an empty one.

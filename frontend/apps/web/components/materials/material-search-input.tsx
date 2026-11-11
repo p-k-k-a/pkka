@@ -10,9 +10,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 type MaterialSearchInputProps = {
   id: string;
-  /** The query currently applied to the list. */
   value: string;
-  /** Called with the trimmed text once typing pauses. */
   onCommit: (query: string) => void;
 };
 
@@ -21,16 +19,15 @@ export function MaterialSearchInput({ id, value, onCommit }: MaterialSearchInput
   const debounced = useDebouncedValue(draft, SEARCH_DEBOUNCE_MS);
   const lastCommitted = useRef(debounced);
 
-  // Commits only when the typed text settles, never because `value` changed from outside;
-  // otherwise clearing the filters elsewhere would be undone by the stale draft.
+  // Commits only when the typed text settles, not when `value` changes from outside,
+  // or a stale draft would undo filters cleared elsewhere.
   useEffect(() => {
     if (debounced === lastCommitted.current) return;
     lastCommitted.current = debounced;
     if (debounced.trim() !== value) onCommit(debounced.trim());
   }, [debounced, value, onCommit]);
 
-  // Follows outside changes (e.g. the sidebar link resetting the URL) without
-  // clobbering text the user is still typing; adjusted during render, not in an effect.
+  // Follows outside changes (e.g. the sidebar link) without clobbering text being typed.
   const [seenValue, setSeenValue] = useState(value);
   if (value !== seenValue) {
     setSeenValue(value);

@@ -4,7 +4,6 @@ import { isMaterialType } from "@pkka/domain";
 export const MATERIALS_HREF = "/dashboard/materials";
 
 export type MaterialsState = {
-  /** Trimmed; "" means no search. */
   query: string;
   type: MaterialType | null;
   eventId: string | null;
@@ -16,8 +15,7 @@ type ReadableSearchParams = { get(name: string): string | null };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// The URL can be edited by hand or shared, so anything malformed falls back to
-// the default instead of reaching the API.
+// The URL can be edited by hand, so anything malformed falls back to the default.
 export function parseMaterialsSearchParams(params: ReadableSearchParams): MaterialsState {
   const type = params.get("type");
   const eventId = params.get("event");
@@ -31,7 +29,6 @@ export function parseMaterialsSearchParams(params: ReadableSearchParams): Materi
   };
 }
 
-/** `?…` for the given state, or "" when everything is at its default. */
 export function toMaterialsSearchString({ query, type, eventId, page }: MaterialsState) {
   const params = new URLSearchParams();
   const trimmedQuery = query.trim();

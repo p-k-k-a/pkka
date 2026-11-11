@@ -24,11 +24,7 @@ public class MaterialSpecifications {
                 eventId == null ? null : cb.equal(root.get("event").get("id"), eventId);
     }
 
-    /**
-     * Free-text match against the material's title and description and its linked event's title, so
-     * searching for an event also finds its recordings. The event join is LEFT so materials without
-     * an event can still match on their own fields.
-     */
+    /** The event join is LEFT so materials without an event still match on their own fields. */
     public Specification<Material> matchesQuery(String rawQuery) {
         return (root, query, cb) -> {
             if (rawQuery == null || rawQuery.isBlank()) {
