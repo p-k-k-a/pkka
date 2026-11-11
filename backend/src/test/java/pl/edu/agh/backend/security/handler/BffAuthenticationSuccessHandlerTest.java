@@ -70,6 +70,30 @@ class BffAuthenticationSuccessHandlerTest {
     }
 
     @Test
+    void webLoginReturnsToThePathSavedWhenLoginStarted() throws Exception {
+        request.getSession(true).setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, "/events/zjazd?tab=info");
+        OAuth2AuthenticationToken auth =
+                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
+
+        handler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/events/zjazd?tab=info");
+        assertThat(request.getSession().getAttribute(LoginReturnPath.SESSION_ATTRIBUTE))
+                .isNull();
+    }
+
+    @Test
+    void webLoginIgnoresASavedPathThatLeavesTheOrigin() throws Exception {
+        request.getSession(true).setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, "//evil.example");
+        OAuth2AuthenticationToken auth =
+                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
+
+        handler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/dashboard");
+    }
+
+    @Test
     void loginApprovesAUserVouchedForByDiscord() throws Exception {
         OAuth2AuthenticationToken auth =
                 new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");

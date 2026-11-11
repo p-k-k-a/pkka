@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +54,20 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if ("keycloak-mobile".equals(registrationId)) {
             handleMobile(req, res, token);
         } else {
-            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl).onAuthenticationSuccess(req, res, auth);
+            new SimpleUrlAuthenticationSuccessHandler(webTarget(req)).onAuthenticationSuccess(req, res, auth);
         }
+    }
+
+    private String webTarget(HttpServletRequest req) {
+        HttpSession session = req.getSession(false);
+        if (session == null) {
+            return webSuccessUrl;
+        }
+        Object saved = session.getAttribute(LoginReturnPath.SESSION_ATTRIBUTE);
+        session.removeAttribute(LoginReturnPath.SESSION_ATTRIBUTE);
+        return LoginReturnPath.sanitize(saved instanceof String path ? path : null)
+                .map(path -> URI.create(webSuccessUrl).resolve(path).toString())
+                .orElse(webSuccessUrl);
     }
 
     private void approveIfDiscordVouched(String keycloakId) {
