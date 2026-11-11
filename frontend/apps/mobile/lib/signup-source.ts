@@ -3,7 +3,7 @@ import { signUpSourceFromRef } from "@pkka/domain";
 
 const sources = new Map<string, RegistrationSource>();
 
-export function rememberSignUpSource(slug: string, ref: string) {
+export function rememberSignUpSource(slug: string, ref: string | undefined) {
   const source = signUpSourceFromRef(ref);
   if (source) sources.set(slug, source);
 }

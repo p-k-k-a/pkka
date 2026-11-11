@@ -4,20 +4,14 @@ import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetEventBySlug } from "@pkka/api";
 import { rememberSignUpSource } from "@/lib/signup-source";
-import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import type { NavigationProp, ParamListBase } from "@react-navigation/native";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function EventDetailScreen() {
   const { slug, ref } = useLocalSearchParams<{ slug: string; ref?: string }>();
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
-  useEffect(() => {
-    if (ref === undefined) return;
-    rememberSignUpSource(slug, ref);
-    navigation.setParams({ ref: undefined });
-  }, [navigation, slug, ref]);
+  useEffect(() => rememberSignUpSource(slug, ref), [slug, ref]);
 
   const { data, isError, isPending } = useGetEventBySlug(slug ?? "", {
     query: { enabled: !!slug },
