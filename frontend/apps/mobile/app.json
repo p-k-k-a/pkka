@@ -26,7 +26,10 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "pkka.me", "pathPrefix": "/events/" }],
+          "data": [
+            { "scheme": "https", "host": "pkka.me", "pathPrefix": "/events/" },
+            { "scheme": "https", "host": "pkka.me", "pathPrefix": "/announcements/" }
+          ],
           "category": ["BROWSABLE", "DEFAULT"]
         }
       ]

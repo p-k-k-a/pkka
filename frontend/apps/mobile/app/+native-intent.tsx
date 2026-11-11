@@ -1,3 +1,4 @@
 export function redirectSystemPath({ path }: { path: string }) {
-  return /\/events\/archive\/?(\?|$)/.test(path) ? "/(tabs)/events" : path;
+  if (/\/events\/archive\/?(\?|$)/.test(path)) return "/(tabs)/events";
+  return path.replace(/\/announcements\//, "/blog/");
 }
