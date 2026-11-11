@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +26,6 @@ import pl.edu.agh.backend.user.UserProvisioningService;
 @RequiredArgsConstructor
 @Slf4j
 public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-
-    public static final String RETURN_TO = "returnTo";
 
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserProvisioningService userProvisioningService;
@@ -56,24 +53,7 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
         if ("keycloak-mobile".equals(registrationId)) {
             handleMobile(req, res, token);
         } else {
-            new SimpleUrlAuthenticationSuccessHandler(webTarget(req)).onAuthenticationSuccess(req, res, auth);
-        }
-    }
-
-    private String webTarget(HttpServletRequest req) {
-        Object saved = req.getSession().getAttribute(RETURN_TO);
-        req.getSession().removeAttribute(RETURN_TO);
-        if (!(saved instanceof String path)) {
-            return webSuccessUrl;
-        }
-        try {
-            URI base = URI.create(webSuccessUrl);
-            URI target = base.resolve(path);
-            boolean sameOrigin = base.getScheme().equals(target.getScheme())
-                    && base.getRawAuthority().equals(target.getRawAuthority());
-            return sameOrigin ? target.toASCIIString() : webSuccessUrl;
-        } catch (IllegalArgumentException e) {
-            return webSuccessUrl;
+            new SimpleUrlAuthenticationSuccessHandler(webSuccessUrl).onAuthenticationSuccess(req, res, auth);
         }
     }
 

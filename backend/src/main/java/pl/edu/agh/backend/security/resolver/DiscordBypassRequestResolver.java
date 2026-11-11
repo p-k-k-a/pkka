@@ -9,7 +9,6 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 @Configuration
 @RequiredArgsConstructor
@@ -37,11 +36,6 @@ public class DiscordBypassRequestResolver {
                 if (authReq == null) {
                     return null;
                 }
-
-                request.getSession()
-                        .setAttribute(
-                                BffAuthenticationSuccessHandler.RETURN_TO,
-                                request.getParameter(BffAuthenticationSuccessHandler.RETURN_TO));
 
                 String idpHint = request.getParameter("idp");
 

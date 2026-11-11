@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowUpRight, CalendarPlus, CircleCheck, Download, Hourglass } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
@@ -38,7 +39,6 @@ import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
 import { buildEventIcs, downloadIcs } from "@/lib/ics";
 import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
-import { currentPage, dashboardTwin } from "@/lib/twin-paths";
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -48,7 +48,8 @@ function seatsHint(event: EventDetailsResponse) {
 }
 
 export function EventRegistration({ event }: { event: EventDetailsResponse }) {
-  const { isAuthenticated, isLoading: isAuthLoading, loginWithKeycloak } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -95,11 +96,10 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
     }
   };
 
-  const login = () => loginWithKeycloak(dashboardTwin(currentPage()));
+  const login = () => router.push("/login");
 
   // A toast rather than an inline line: when the event has just started, the refetch
   // unmounts this component and an inline error would vanish with it.
-
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
     toast.error(eventRegistrationErrorMessage(error, action), {

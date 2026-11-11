@@ -12,8 +12,6 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -68,40 +66,6 @@ class BffAuthenticationSuccessHandlerTest {
         handler.onAuthenticationSuccess(request, response, auth);
 
         verify(userProvisioningService).syncIdentityFromClaims("kc-web-user", "Jan", "Kowalski", "jan@example.com");
-        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/dashboard");
-    }
-
-    @Test
-    void webLoginReturnsToThePathSavedWhenLoginStarted() throws Exception {
-        request.getSession(true).setAttribute(BffAuthenticationSuccessHandler.RETURN_TO, "/events/zjazd?tab=info");
-        OAuth2AuthenticationToken auth =
-                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
-
-        handler.onAuthenticationSuccess(request, response, auth);
-
-        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/events/zjazd?tab=info");
-        assertThat(request.getSession().getAttribute(BffAuthenticationSuccessHandler.RETURN_TO))
-                .isNull();
-    }
-
-    @ParameterizedTest
-    @ValueSource(
-            strings = {
-                "//evil.example",
-                "/\\evil.example",
-                "https://evil.example/events",
-                "http://localhost:3001/events",
-                "javascript:alert(1)",
-                "/events/a b",
-                "/events/%zz"
-            })
-    void webLoginIgnoresASavedPathThatLeavesTheOrigin(String path) throws Exception {
-        request.getSession(true).setAttribute(BffAuthenticationSuccessHandler.RETURN_TO, path);
-        OAuth2AuthenticationToken auth =
-                new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
-
-        handler.onAuthenticationSuccess(request, response, auth);
-
         assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/dashboard");
     }
 

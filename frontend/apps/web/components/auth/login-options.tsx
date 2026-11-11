@@ -4,7 +4,7 @@ import { DiscordIcon } from "@pkka/icons/web";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 
-export function LoginOptions({ returnTo }: { returnTo?: string }) {
+export function LoginOptions() {
   const { loginWithKeycloak, loginWithDiscord, register } = useAuth();
 
   return (
@@ -19,11 +19,7 @@ export function LoginOptions({ returnTo }: { returnTo?: string }) {
       </div>
 
       <div className="space-y-3">
-        <Button
-          size="xl"
-          className="w-full font-semibold"
-          onClick={() => loginWithKeycloak(returnTo)}
-        >
+        <Button size="xl" className="w-full font-semibold" onClick={loginWithKeycloak}>
           Zaloguj się przez SSO
         </Button>
 
@@ -31,7 +27,7 @@ export function LoginOptions({ returnTo }: { returnTo?: string }) {
           variant="outline"
           size="xl"
           className="w-full font-semibold"
-          onClick={() => loginWithDiscord(returnTo)}
+          onClick={loginWithDiscord}
         >
           <DiscordIcon className="size-5" />
           Kontynuuj przez Discord
@@ -46,12 +42,7 @@ export function LoginOptions({ returnTo }: { returnTo?: string }) {
         <div className="bg-border h-px flex-1" />
       </div>
 
-      <Button
-        variant="secondary"
-        size="xl"
-        className="w-full font-semibold"
-        onClick={() => register(returnTo)}
-      >
+      <Button variant="secondary" size="xl" className="w-full font-semibold" onClick={register}>
         Zarejestruj się
       </Button>
     </div>

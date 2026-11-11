@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { currentPage, dashboardTwin } from "@/lib/twin-paths";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -11,7 +10,9 @@ export function PublicSessionRedirect({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace(dashboardTwin(currentPage()));
+      const { pathname, search, hash } = window.location;
+      const hasTwin = /^\/(events|announcements)(\/|$)/.test(pathname);
+      router.replace(hasTwin ? `/dashboard${pathname}${search}${hash}` : "/dashboard");
     }
   }, [isAuthenticated, isLoading, router]);
 
