@@ -3,21 +3,26 @@ import { signUpSourceFromRef } from "@pkka/domain";
 
 const storageKey = (slug: string) => `signup_source:${slug}`;
 
-export function rememberSignUpSource(slug: string, ref: string): void {
+export function captureSignUpSource(slug: string) {
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("ref")) return;
+  const source = signUpSourceFromRef(url.searchParams.get("ref"));
   try {
-    sessionStorage.setItem(storageKey(slug), ref);
+    if (source) sessionStorage.setItem(storageKey(slug), source);
   } catch {}
+  url.searchParams.delete("ref");
+  window.history.replaceState(null, "", url);
 }
 
-export function savedSignUpSource(slug: string): RegistrationSource | null {
+export function savedSignUpSource(slug: string) {
   try {
-    return signUpSourceFromRef(sessionStorage.getItem(storageKey(slug)));
+    return (sessionStorage.getItem(storageKey(slug)) as RegistrationSource | null) ?? undefined;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
-export function forgetSignUpSource(slug: string): void {
+export function forgetSignUpSource(slug: string) {
   try {
     sessionStorage.removeItem(storageKey(slug));
   } catch {}

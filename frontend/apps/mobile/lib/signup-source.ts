@@ -3,15 +3,11 @@ import { signUpSourceFromRef } from "@pkka/domain";
 
 const sources = new Map<string, RegistrationSource>();
 
-export function rememberSignUpSource(slug: string, ref: string): void {
+export function rememberSignUpSource(slug: string, ref: string) {
   const source = signUpSourceFromRef(ref);
   if (source) sources.set(slug, source);
 }
 
-export function savedSignUpSource(slug: string): RegistrationSource | null {
-  return sources.get(slug) ?? null;
-}
+export const savedSignUpSource = (slug: string) => sources.get(slug);
 
-export function forgetSignUpSource(slug: string): void {
-  sources.delete(slug);
-}
+export const forgetSignUpSource = (slug: string) => sources.delete(slug);

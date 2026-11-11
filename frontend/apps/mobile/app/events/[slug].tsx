@@ -15,7 +15,7 @@ export default function EventDetailScreen() {
 
   useEffect(() => {
     if (ref === undefined) return;
-    if (slug) rememberSignUpSource(slug, ref);
+    rememberSignUpSource(slug, ref);
     navigation.setParams({ ref: undefined });
   }, [navigation, slug, ref]);
 
@@ -27,10 +27,7 @@ export default function EventDetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <DetailHeader
-        title="Szczegóły wydarzenia"
-        onBack={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/events"))}
-      />
+      <DetailHeader title="Szczegóły wydarzenia" onBack={() => router.back()} />
 
       {isError ? (
         <Text className="py-12 text-center text-sm text-muted-foreground">

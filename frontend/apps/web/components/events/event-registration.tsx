@@ -36,9 +36,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
-import { currentPath } from "@/lib/current-path";
 import { buildEventIcs, downloadIcs } from "@/lib/ics";
 import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
+import { currentPage, dashboardTwin } from "@/lib/twin-paths";
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -95,9 +95,10 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
     }
   };
 
+  const login = () => loginWithKeycloak(dashboardTwin(currentPage()));
+
   // A toast rather than an inline line: when the event has just started, the refetch
   // unmounts this component and an inline error would vanish with it.
-  const login = () => loginWithKeycloak(currentPath());
 
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
@@ -109,10 +110,9 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const onJoin = async () => {
     setPending(true);
     try {
-      const source = savedSignUpSource(event.slug);
       const { data: registration } = await register.mutateAsync({
         eventId: event.id,
-        params: source ? { source } : undefined,
+        params: { source: savedSignUpSource(event.slug) },
       });
       forgetSignUpSource(event.slug);
       if (registration.status === EventRegistrationStatus.REGISTERED) {

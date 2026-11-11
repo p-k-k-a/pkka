@@ -12,7 +12,7 @@ import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequest
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import pl.edu.agh.backend.security.handler.LoginReturnPath;
+import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 class DiscordBypassRequestResolverTest {
 
@@ -56,25 +56,24 @@ class DiscordBypassRequestResolverTest {
     }
 
     @Test
-    void remembersASafeReturnPathInTheSession() {
+    void remembersTheReturnPathInTheSession() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth2/authorization/keycloak-web");
         request.setParameter("returnTo", "/events/zjazd");
 
         resolver.resolve(request, "keycloak-web");
 
-        assertThat(request.getSession().getAttribute(LoginReturnPath.SESSION_ATTRIBUTE))
+        assertThat(request.getSession().getAttribute(BffAuthenticationSuccessHandler.RETURN_TO))
                 .isEqualTo("/events/zjazd");
     }
 
     @Test
-    void dropsAnUnsafeReturnPathAndForgetsAnOlderOne() {
+    void forgetsAReturnPathFromAnEarlierLogin() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/oauth2/authorization/keycloak-web");
-        request.getSession(true).setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, "/events/old");
-        request.setParameter("returnTo", "https://evil.example");
+        request.getSession(true).setAttribute(BffAuthenticationSuccessHandler.RETURN_TO, "/events/old");
 
         resolver.resolve(request, "keycloak-web");
 
-        assertThat(request.getSession().getAttribute(LoginReturnPath.SESSION_ATTRIBUTE))
+        assertThat(request.getSession().getAttribute(BffAuthenticationSuccessHandler.RETURN_TO))
                 .isNull();
     }
 }

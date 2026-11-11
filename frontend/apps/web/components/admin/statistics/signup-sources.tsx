@@ -4,15 +4,13 @@ import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
 
 export function sumSignUpSources(groups: SignUpSourceResponse[][]): SignUpSourceResponse[] {
-  const totals = new Map<RegistrationSource, number>(
-    Object.values(RegistrationSource).map((source) => [source, 0]),
-  );
-  for (const group of groups) {
-    for (const { source, signUps } of group) {
-      totals.set(source, (totals.get(source) ?? 0) + signUps);
-    }
-  }
-  return [...totals].map(([source, signUps]) => ({ source, signUps }));
+  return Object.values(RegistrationSource).map((source) => ({
+    source,
+    signUps: groups.reduce(
+      (sum, group) => sum + (group.find((row) => row.source === source)?.signUps ?? 0),
+      0,
+    ),
+  }));
 }
 
 export function SignupSources({

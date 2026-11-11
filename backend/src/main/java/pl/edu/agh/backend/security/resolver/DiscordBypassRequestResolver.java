@@ -9,7 +9,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2Authorization
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import pl.edu.agh.backend.security.handler.LoginReturnPath;
+import pl.edu.agh.backend.security.handler.BffAuthenticationSuccessHandler;
 
 @Configuration
 @RequiredArgsConstructor
@@ -38,7 +38,10 @@ public class DiscordBypassRequestResolver {
                     return null;
                 }
 
-                rememberReturnPath(request);
+                request.getSession()
+                        .setAttribute(
+                                BffAuthenticationSuccessHandler.RETURN_TO,
+                                request.getParameter(BffAuthenticationSuccessHandler.RETURN_TO));
 
                 String idpHint = request.getParameter("idp");
 
@@ -49,18 +52,6 @@ public class DiscordBypassRequestResolver {
                 }
 
                 return authReq;
-            }
-
-            private void rememberReturnPath(HttpServletRequest request) {
-                LoginReturnPath.sanitize(request.getParameter(LoginReturnPath.PARAMETER))
-                        .ifPresentOrElse(
-                                path -> request.getSession().setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, path),
-                                () -> {
-                                    var session = request.getSession(false);
-                                    if (session != null) {
-                                        session.removeAttribute(LoginReturnPath.SESSION_ATTRIBUTE);
-                                    }
-                                });
             }
         };
     }

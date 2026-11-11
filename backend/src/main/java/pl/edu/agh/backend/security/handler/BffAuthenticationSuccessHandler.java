@@ -28,6 +28,8 @@ import pl.edu.agh.backend.user.UserProvisioningService;
 @Slf4j
 public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
+    public static final String RETURN_TO = "returnTo";
+
     private final OAuth2AuthorizedClientService authorizedClientService;
     private final UserProvisioningService userProvisioningService;
     private final ApplicationService applicationService;
@@ -59,15 +61,20 @@ public class BffAuthenticationSuccessHandler implements AuthenticationSuccessHan
     }
 
     private String webTarget(HttpServletRequest req) {
-        HttpSession session = req.getSession(false);
-        if (session == null) {
+        Object saved = req.getSession().getAttribute(RETURN_TO);
+        req.getSession().removeAttribute(RETURN_TO);
+        if (!(saved instanceof String path)) {
             return webSuccessUrl;
         }
-        Object saved = session.getAttribute(LoginReturnPath.SESSION_ATTRIBUTE);
-        session.removeAttribute(LoginReturnPath.SESSION_ATTRIBUTE);
-        return LoginReturnPath.sanitize(saved instanceof String path ? path : null)
-                .map(path -> URI.create(webSuccessUrl).resolve(path).toString())
-                .orElse(webSuccessUrl);
+        try {
+            URI base = URI.create(webSuccessUrl);
+            URI target = base.resolve(path);
+            boolean sameOrigin = base.getScheme().equals(target.getScheme())
+                    && base.getRawAuthority().equals(target.getRawAuthority());
+            return sameOrigin ? target.toASCIIString() : webSuccessUrl;
+        } catch (IllegalArgumentException e) {
+            return webSuccessUrl;
+        }
     }
 
     private void approveIfDiscordVouched(String keycloakId) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
-import { dashboardTwinOfCurrentPage } from "@/lib/twin-paths";
+import { currentPage, dashboardTwin } from "@/lib/twin-paths";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -11,7 +11,7 @@ export function PublicSessionRedirect({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.replace(dashboardTwinOfCurrentPage());
+      router.replace(dashboardTwin(currentPage()));
     }
   }, [isAuthenticated, isLoading, router]);
 

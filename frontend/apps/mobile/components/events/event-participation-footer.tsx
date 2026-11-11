@@ -44,10 +44,9 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onJoin = async () => {
     setError(null);
     try {
-      const source = savedSignUpSource(event.slug);
       const response = await register.mutateAsync({
         eventId: event.id,
-        params: source ? { source } : undefined,
+        params: { source: savedSignUpSource(event.slug) },
       });
       forgetSignUpSource(event.slug);
       await refresh();

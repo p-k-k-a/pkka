@@ -12,6 +12,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -71,20 +73,30 @@ class BffAuthenticationSuccessHandlerTest {
 
     @Test
     void webLoginReturnsToThePathSavedWhenLoginStarted() throws Exception {
-        request.getSession(true).setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, "/events/zjazd?tab=info");
+        request.getSession(true).setAttribute(BffAuthenticationSuccessHandler.RETURN_TO, "/events/zjazd?tab=info");
         OAuth2AuthenticationToken auth =
                 new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
 
         handler.onAuthenticationSuccess(request, response, auth);
 
         assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:3000/events/zjazd?tab=info");
-        assertThat(request.getSession().getAttribute(LoginReturnPath.SESSION_ATTRIBUTE))
+        assertThat(request.getSession().getAttribute(BffAuthenticationSuccessHandler.RETURN_TO))
                 .isNull();
     }
 
-    @Test
-    void webLoginIgnoresASavedPathThatLeavesTheOrigin() throws Exception {
-        request.getSession(true).setAttribute(LoginReturnPath.SESSION_ATTRIBUTE, "//evil.example");
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "//evil.example",
+                "/\\evil.example",
+                "https://evil.example/events",
+                "http://localhost:3001/events",
+                "javascript:alert(1)",
+                "/events/a b",
+                "/events/%zz"
+            })
+    void webLoginIgnoresASavedPathThatLeavesTheOrigin(String path) throws Exception {
+        request.getSession(true).setAttribute(BffAuthenticationSuccessHandler.RETURN_TO, path);
         OAuth2AuthenticationToken auth =
                 new OAuth2AuthenticationToken(oidcUser("kc-web-user"), List.of(), "keycloak-web");
 

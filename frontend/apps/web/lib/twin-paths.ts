@@ -1,18 +1,17 @@
-const PUBLIC_WITH_TWIN = /^\/(events|announcements)(\/|$)/;
-const DASHBOARD_WITH_TWIN = /^\/dashboard\/(events|announcements)(\/|$)/;
+const PAGES_WITH_TWIN = /^\/(events|announcements)(\/|$)/;
 
-function rest() {
-  return `${window.location.search}${window.location.hash}`;
+const withoutDashboard = (path: string) => path.replace(/^\/dashboard(?=\/)/, "");
+
+export function currentPage() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
-export function dashboardTwinOfCurrentPage() {
-  const { pathname } = window.location;
-  return PUBLIC_WITH_TWIN.test(pathname) ? `/dashboard${pathname}${rest()}` : "/dashboard";
+export function dashboardTwin(path: string) {
+  const page = withoutDashboard(path);
+  return PAGES_WITH_TWIN.test(page) ? `/dashboard${page}` : "/dashboard";
 }
 
-export function publicTwinOfCurrentPage() {
-  const { pathname } = window.location;
-  return DASHBOARD_WITH_TWIN.test(pathname)
-    ? `${pathname.slice("/dashboard".length)}${rest()}`
-    : "/";
+export function publicTwin(path: string) {
+  const page = withoutDashboard(path);
+  return PAGES_WITH_TWIN.test(page) ? page : "/";
 }

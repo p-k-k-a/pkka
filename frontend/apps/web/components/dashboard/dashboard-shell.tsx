@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { publicTwinOfCurrentPage } from "@/lib/twin-paths";
+import { currentPage, publicTwin } from "@/lib/twin-paths";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,7 +14,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace(publicTwinOfCurrentPage());
+      router.replace(publicTwin(currentPage()));
     }
   }, [isAuthenticated, isLoading, router]);
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { dashboardTwin } from "@/lib/twin-paths";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
@@ -10,10 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PublicHeaderAuth() {
   const { isAuthenticated, isLoading, logout } = useAuth();
   const pathname = usePathname();
-  const loginHref =
-    pathname === "/" || pathname === "/login"
-      ? "/login"
-      : `/login?returnTo=${encodeURIComponent(pathname)}`;
+  const loginHref = `/login?returnTo=${encodeURIComponent(dashboardTwin(pathname))}`;
 
   return (
     <div className="flex items-center gap-3">
