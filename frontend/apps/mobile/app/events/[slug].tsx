@@ -3,11 +3,20 @@ import { EventParticipationFooter } from "@/components/events/event-participatio
 import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetEventBySlug } from "@pkka/api";
+import { rememberSignUpSource } from "@/lib/signup-source";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function EventDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, ref } = useLocalSearchParams<{ slug: string; ref?: string }>();
+
+  useEffect(() => {
+    if (ref === undefined) return;
+    if (slug) rememberSignUpSource(slug, ref);
+    router.setParams({ ref: undefined });
+  }, [slug, ref]);
+
   const { data, isError, isPending } = useGetEventBySlug(slug ?? "", {
     query: { enabled: !!slug },
   });
@@ -16,7 +25,10 @@ export default function EventDetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <DetailHeader title="Szczegóły wydarzenia" onBack={() => router.back()} />
+      <DetailHeader
+        title="Szczegóły wydarzenia"
+        onBack={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)/events"))}
+      />
 
       {isError ? (
         <Text className="py-12 text-center text-sm text-muted-foreground">

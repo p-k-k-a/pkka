@@ -1,7 +1,11 @@
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { DISCORD_URL, KEYCLOAK_URL } from "@/lib/auth-config";
 import { useAuth } from "@/lib/auth-context";
+import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
+import { useThemeColors } from "@/lib/theme";
+import { DiscordIcon } from "@pkka/icons/native";
 import {
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
@@ -13,14 +17,14 @@ import {
 import { eventRegistrationErrorMessage, isEventFull } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Calendar from "expo-calendar";
-import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 
-type ActiveSheet = "calendar" | "leave" | null;
+type ActiveSheet = "calendar" | "leave" | "login" | null;
 
 export function EventParticipationFooter({ event }: { event: EventDetailsResponse }) {
-  const { user } = useAuth();
+  const { user, loginBrowser } = useAuth();
+  const theme = useThemeColors();
   const queryClient = useQueryClient();
   const [sheet, setSheet] = useState<ActiveSheet>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +44,12 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onJoin = async () => {
     setError(null);
     try {
-      const response = await register.mutateAsync({ eventId: event.id });
+      const source = savedSignUpSource(event.slug);
+      const response = await register.mutateAsync({
+        eventId: event.id,
+        params: source ? { source } : undefined,
+      });
+      forgetSignUpSource(event.slug);
       await refresh();
       if (response.status === 201 && response.data.status === EventRegistrationStatus.REGISTERED) {
         setSheet("calendar");
@@ -62,6 +71,12 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
       setError(eventRegistrationErrorMessage(e, "leave"));
       await refresh();
     }
+  };
+
+  const onLogin = async (authorizationUrl: string) => {
+    setSheet(null);
+    await loginBrowser(authorizationUrl);
+    await refresh();
   };
 
   const onAddToCalendar = async () => {
@@ -95,7 +110,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           <Text className="text-muted-foreground text-center text-[10px] font-semibold uppercase tracking-widest">
             Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
           </Text>
-          <Button className="w-full" onPress={() => router.push("/login")}>
+          <Button className="w-full" onPress={() => setSheet("login")}>
             <Text>Zaloguj się, aby dołączyć</Text>
           </Button>
         </>
@@ -154,6 +169,26 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           </Button>
           <Button variant="outline" className="w-full" onPress={() => setSheet(null)}>
             <Text>Nie teraz</Text>
+          </Button>
+        </View>
+      </BottomSheet>
+
+      <BottomSheet visible={sheet === "login"} onClose={() => setSheet(null)}>
+        <View className="gap-1">
+          <Text variant="h3" className="text-2xl font-bold">
+            Zaloguj się
+          </Text>
+          <Text className="text-muted-foreground text-sm">
+            Po zalogowaniu wrócisz do tego wydarzenia.
+          </Text>
+        </View>
+        <View className="mt-6 gap-3">
+          <Button className="w-full" onPress={() => onLogin(KEYCLOAK_URL)}>
+            <Text>Zaloguj się przez SSO</Text>
+          </Button>
+          <Button variant="outline" className="w-full" onPress={() => onLogin(DISCORD_URL)}>
+            <DiscordIcon size={20} color={theme.foreground} />
+            <Text>Kontynuuj przez Discord</Text>
           </Button>
         </View>
       </BottomSheet>
