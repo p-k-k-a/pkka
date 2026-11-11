@@ -1,5 +1,5 @@
 import { RegistrationSource, type SignUpSourceResponse } from "@pkka/api";
-import { registrationSourceLabel } from "@pkka/domain";
+import { signUpSourceLabel } from "@pkka/domain";
 import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
 
@@ -13,7 +13,7 @@ export function sumSignUpSources(groups: SignUpSourceResponse[][]): SignUpSource
   }));
 }
 
-export function SignupSources({
+export function SignUpSources({
   sources,
   layout = "stack",
 }: {
@@ -47,7 +47,7 @@ export function SignupSources({
           return (
             <li key={source} className="space-y-2">
               <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="text-foreground">{registrationSourceLabel(source)}</span>
+                <span className="text-foreground">{signUpSourceLabel(source)}</span>
                 <span className="text-foreground font-semibold tabular-nums">
                   {signUps} <span className="text-muted-foreground font-normal">({percent}%)</span>
                 </span>

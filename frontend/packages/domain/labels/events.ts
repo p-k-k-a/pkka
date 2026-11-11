@@ -17,7 +17,7 @@ const AUDIENCE_LABELS: Record<Audience, string> = {
   SPECIFIC_GROUP: "Wybrana grupa",
 };
 
-const REGISTRATION_SOURCE_LABELS: Record<RegistrationSource, string> = {
+const SIGN_UP_SOURCE_LABELS: Record<RegistrationSource, string> = {
   DISCORD: "Discord",
   EMAIL: "E-mail",
   WEB: "Strona WWW",
@@ -67,6 +67,6 @@ export function formatSeatsRemaining(seatLimit?: number, seatsTaken?: number) {
   };
 }
 
-export function registrationSourceLabel(source: RegistrationSource) {
-  return REGISTRATION_SOURCE_LABELS[source];
+export function signUpSourceLabel(source: RegistrationSource) {
+  return SIGN_UP_SOURCE_LABELS[source];
 }

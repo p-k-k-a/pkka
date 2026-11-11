@@ -36,7 +36,7 @@ import { useAuth } from "@/lib/auth-context";
 import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
-import { SignupSources, sumSignUpSources } from "@/components/admin/statistics/signup-sources";
+import { SignUpSources, sumSignUpSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
@@ -76,7 +76,7 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
           info="Rezygnacje osób z miejscem. Bez zejść z listy rezerwowej."
         />
       </div>
-      <SignupSources
+      <SignUpSources
         sources={sumSignUpSources(rows.map((row) => row.signUpsBySource))}
         layout="row"
       />

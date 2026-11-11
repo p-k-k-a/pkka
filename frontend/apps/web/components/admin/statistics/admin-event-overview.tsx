@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-registrations-chart";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
-import { SignupSources } from "@/components/admin/statistics/signup-sources";
+import { SignUpSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
 
@@ -214,7 +214,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                     <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
                   </dl>
                 </Card>
-                <SignupSources sources={stats.signUpsBySource} />
+                <SignUpSources sources={stats.signUpsBySource} />
               </div>
             </div>
           </>
