@@ -3,6 +3,7 @@ package pl.edu.agh.backend.notifications;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventCancelledEvent;
 import pl.edu.agh.backend.event.EventScheduleChangedEvent;
@@ -24,6 +26,8 @@ public class NotificationService {
 
     private static final ZoneId POLAND = ZoneId.of("Europe/Warsaw");
     private static final DateTimeFormatter STARTS_AT = DateTimeFormatter.ofPattern("dd.MM 'o' HH:mm");
+    /** The app opens nothing for an empty target; a cancelled event's page no longer exists. */
+    private static final String NO_TARGET = "";
 
     private final DeviceTokenRepository deviceTokenRepository;
     private final ExpoPushClient expoPushClient;
@@ -67,14 +71,34 @@ public class NotificationService {
                 event.getSlug());
     }
 
+    /** Names what changed, e.g. "„Warsztaty”: nowy termin 02.12 o 18:00; nowe miejsce: D17, sala 2.41". */
     public void announceChange(Event event, EventScheduleChangedEvent before, Collection<UUID> userIds) {
-        String body = before.timeChanged(event)
-                ? "„%s”: nowy termin %s"
-                        .formatted(
-                                event.getTitle(),
-                                STARTS_AT.format(event.getStartsAt().atZone(POLAND)))
-                : "„%s”: zmiana miejsca".formatted(event.getTitle());
-        pushToSignedUp(userIds, NotificationType.EVENT_CHANGED, "Zmiana w wydarzeniu", body, event.getSlug());
+        pushToSignedUp(
+                userIds,
+                NotificationType.EVENT_CHANGED,
+                "Zmiana w wydarzeniu",
+                "„%s”: %s".formatted(event.getTitle(), String.join("; ", describeChange(event, before))),
+                event.getSlug());
+    }
+
+    static List<String> describeChange(Event event, EventScheduleChangedEvent before) {
+        List<String> changes = new ArrayList<>();
+        if (before.timeChanged(event)) {
+            changes.add("nowy termin " + STARTS_AT.format(event.getStartsAt().atZone(POLAND)));
+        }
+        if (before.typeChanged(event)) {
+            changes.add("forma: " + EventMailService.typeLabel(event.getType()));
+        }
+        if (before.locationChanged(event)) {
+            changes.add(
+                    StringUtils.hasText(event.getLocation())
+                            ? "nowe miejsce: " + event.getLocation().strip()
+                            : "miejsce do potwierdzenia");
+        }
+        if (before.transmissionUrlChanged(event)) {
+            changes.add("nowy link do transmisji");
+        }
+        return changes;
     }
 
     public void announceCancellation(EventCancelledEvent cancelled, Collection<UUID> userIds) {
@@ -86,7 +110,7 @@ public class NotificationService {
                         .formatted(
                                 cancelled.title(),
                                 STARTS_AT.format(cancelled.startsAt().atZone(POLAND))),
-                cancelled.slug());
+                NO_TARGET);
     }
 
     public void announceMessage(Event event, String subject, Collection<UUID> userIds) {

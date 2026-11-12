@@ -163,4 +163,18 @@ class AdminEventMessageEndpointTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void aSubjectOnMoreThanOneLine_isRejected() throws Exception {
+        Event event = newEvent();
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"subject": "Temat\\r\\nBcc: ola@example.com", "body": "Treść"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
 }

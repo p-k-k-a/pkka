@@ -7,7 +7,10 @@
         (<span th:text="${startsAt}">1 grudnia 2026 o 18:00</span>)
     </p>
     <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;" th:text="${subject}">Zmiana sali</h1>
-    <div style="margin:0 0 24px;white-space:pre-line;" th:text="${message}">Treść wiadomości</div>
+    <!--/* Lines joined with br tags: some mail clients ignore white-space: pre-line. */-->
+    <p style="margin:0 0 24px;">
+        <th:block th:each="line, it : ${messageLines}"><th:block th:text="${line}">Treść wiadomości</th:block><br th:unless="${it.last}"/></th:block>
+    </p>
     <a th:href="${webBaseUrl + '/events/' + slug}"
        style="display:inline-block;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
         Szczegóły wydarzenia

@@ -294,7 +294,8 @@ class EventMailTest {
         assertThat(pushes)
                 .extracting(ExpoPushMessage::to)
                 .containsExactlyInAnyOrder("ExponentPushToken[seated]", "ExponentPushToken[waiting]");
-        assertThat(pushes.getFirst().body()).isEqualTo("„Warsztaty”: nowy termin 02.12 o 18:00");
+        assertThat(pushes.getFirst().body())
+                .isEqualTo("„Warsztaty”: nowy termin 02.12 o 18:00; nowe miejsce: D17, sala 2.41");
         assertThat(pushes.getFirst().data()).containsEntry("type", "EVENT_CHANGED");
     }
 
@@ -303,6 +304,17 @@ class EventMailTest {
         Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
 
         adminEventService.update(event.getId(), edit(event, event.getStartsAt(), event.getLocation(), "Nowy opis"));
+
+        verify(mailService, after(QUIET_PERIOD_MS).never()).send(anyString(), anyString(), anyString(), anyMap());
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
+    void movingAnEventBySecondsOnly_tellsNobody() {
+        Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
+
+        adminEventService.update(
+                event.getId(), edit(event, event.getStartsAt().plusSeconds(30), event.getLocation(), null));
 
         verify(mailService, after(QUIET_PERIOD_MS).never()).send(anyString(), anyString(), anyString(), anyMap());
         verify(expoPushClient, never()).send(any());
@@ -332,7 +344,9 @@ class EventMailTest {
         List<ExpoPushMessage> pushes = capturePushes();
         assertThat(pushes).hasSize(2);
         assertThat(pushes.getFirst().title()).isEqualTo("Wydarzenie odwołane");
-        assertThat(pushes.getFirst().data()).containsEntry("type", "EVENT_CANCELLED");
+        assertThat(pushes.getFirst().data())
+                .containsEntry("type", "EVENT_CANCELLED")
+                .containsEntry("target", "");
     }
 
     @Test
