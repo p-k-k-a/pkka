@@ -1,7 +1,9 @@
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-context";
+import { openWithFallback } from "@/lib/contact";
 import {
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
@@ -10,10 +12,18 @@ import {
   EventRegistrationStatus,
   type EventDetailsResponse,
 } from "@pkka/api";
-import { eventRegistrationErrorMessage, isEventFull } from "@pkka/domain";
+import {
+  eventCalendarLocation,
+  eventRegistrationErrorMessage,
+  hasMeeting,
+  isEventFull,
+  isEventRegistrationClosed,
+  joinMeetingLabel,
+} from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import * as Calendar from "expo-calendar";
 import { router } from "expo-router";
+import { Video } from "lucide-react-native";
 import { useState } from "react";
 import { View } from "react-native";
 
@@ -29,6 +39,9 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const unregister = useCancelEventRegistration();
   const waitlisted = event.registrationStatus === EventRegistrationStatus.WAITLISTED;
   const full = isEventFull(event.seatLimit, event.seatsTaken);
+  const closed = isEventRegistrationClosed(event);
+  const meeting = hasMeeting(event.type);
+  const meetingUrl = meeting ? event.transmissionUrl : undefined;
   const pending = register.isPending || unregister.isPending;
 
   const refresh = () =>
@@ -76,8 +89,10 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
         title: event.title,
         startDate: new Date(event.startsAt),
         endDate: new Date(event.endsAt),
-        location: event.location ?? undefined,
-        notes: event.fullDescription ?? undefined,
+        location: eventCalendarLocation(event.location, meetingUrl),
+        notes: meetingUrl
+          ? [`Link do spotkania: ${meetingUrl}`, event.fullDescription].filter(Boolean).join("\n\n")
+          : event.fullDescription,
       });
     } catch {
       setError("Nie udało się otworzyć kalendarza.");
@@ -104,6 +119,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           <Text className="text-muted-foreground text-center text-sm">
             Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje.
           </Text>
+          {meeting ? (
+            <Text className="text-muted-foreground text-center text-xs">
+              Link do spotkania dostaniesz, gdy zwolni się dla Ciebie miejsce.
+            </Text>
+          ) : null}
           <Button
             variant="outline"
             className="w-full"
@@ -115,7 +135,22 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
         </>
       ) : event.registrationStatus ? (
         <>
-          <Button className="w-full" onPress={onAddToCalendar}>
+          {meeting && !meetingUrl ? (
+            <Text className="text-muted-foreground text-center text-xs">
+              Link do spotkania pojawi się tutaj, gdy organizator go doda.
+            </Text>
+          ) : null}
+          {meetingUrl ? (
+            <Button className="w-full" onPress={() => openWithFallback(meetingUrl, meetingUrl)}>
+              <Icon as={Video} size={18} />
+              <Text>{joinMeetingLabel(meetingUrl)}</Text>
+            </Button>
+          ) : null}
+          <Button
+            variant={meetingUrl ? "outline" : "default"}
+            className="w-full"
+            onPress={onAddToCalendar}
+          >
             <Text>Dodaj do kalendarza</Text>
           </Button>
           <Button
@@ -126,6 +161,15 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           >
             <Text>Opuść wydarzenie</Text>
           </Button>
+        </>
+      ) : closed ? (
+        <>
+          <Button className="w-full" disabled>
+            <Text>Zapisy zamknięte</Text>
+          </Button>
+          <Text className="text-muted-foreground text-center text-xs">
+            Rejestracja na to wydarzenie została zamknięta.
+          </Text>
         </>
       ) : (
         <Button className="w-full" disabled={pending} onPress={onJoin}>

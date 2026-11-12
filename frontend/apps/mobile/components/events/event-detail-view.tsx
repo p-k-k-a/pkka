@@ -1,9 +1,15 @@
 import { ProseContent } from "@/components/content/prose-content";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
-import { formatEventDateShort, formatSeatsRemaining, formatTimeRange } from "@pkka/domain";
+import {
+  formatEventDateShort,
+  formatSeatsRemaining,
+  formatTimeRange,
+  hasMeeting,
+  isEventRegistrationClosed,
+} from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { EventType, type EventDetailsResponse } from "@pkka/api";
+import { type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
@@ -45,7 +51,8 @@ export function EventDetailView({ event }: EventDetailViewProps) {
   const { title, type, startsAt, endsAt, location, seatLimit, seatsTaken, coverImageUrl, tags } =
     event;
 
-  const isOnline = type === EventType.ONLINE;
+  const showMeetingHint =
+    hasMeeting(type) && !event.registrationStatus && !isEventRegistrationClosed(event);
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
   const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
@@ -95,17 +102,19 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             sub={formatTimeRange(startsAt, endsAt)}
           />
 
-          {isOnline ? (
-            <InfoRow
-              icon={<Link2 size={18} color={theme.accent} />}
-              value="Link do spotkania"
-              sub="Link dostępny po zalogowaniu" // TODO: ask client if this should be configurable option in admin panel (maybe we want public events to be joinable only by logged users)
-            />
-          ) : location ? (
+          {location ? (
             <InfoRow
               icon={<MapPin size={18} color={theme.accent} />}
               label="Lokalizacja"
               value={location}
+            />
+          ) : null}
+
+          {showMeetingHint ? (
+            <InfoRow
+              icon={<Link2 size={18} color={theme.accent} />}
+              value="Link do spotkania"
+              sub="Link dostępny po zapisaniu się na wydarzenie"
             />
           ) : null}
 
