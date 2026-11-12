@@ -27,18 +27,23 @@ public class WelcomeMailService {
         if (!mailService.isEnabled() || userRepository.claimWelcomeMail(due.userId()) == 0) {
             return;
         }
-        boolean sent = userRepository
-                .findById(due.userId())
-                .filter(user -> StringUtils.hasText(user.getEmail()))
-                .map(user -> mailService.send(
-                        user.getEmail(),
-                        "Witamy w PKKA",
-                        "welcome",
-                        Map.of("firstName", user.getFirstName() == null ? "" : user.getFirstName())))
-                .orElse(false);
-        if (!sent) {
-            userRepository.releaseWelcomeMail(due.userId());
-            log.info("Welcome mail for user {} not sent, will retry on the next login", due.userId());
+        boolean sent = false;
+        try {
+            sent = userRepository
+                    .findById(due.userId())
+                    .filter(user -> StringUtils.hasText(user.getEmail()))
+                    .map(user -> mailService.send(
+                            user.getEmail(),
+                            "Witamy w PKKA",
+                            "welcome",
+                            Map.of("firstName", user.getFirstName() == null ? "" : user.getFirstName())))
+                    .orElse(false);
+        } finally {
+            // Also on an unexpected exception: a claim that is never released means no welcome mail ever.
+            if (!sent) {
+                userRepository.releaseWelcomeMail(due.userId());
+                log.info("Welcome mail for user {} not sent, will retry on the next login", due.userId());
+            }
         }
     }
 }
