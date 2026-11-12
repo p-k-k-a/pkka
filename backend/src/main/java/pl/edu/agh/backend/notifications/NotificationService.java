@@ -96,7 +96,8 @@ public class NotificationService {
                             : "miejsce do potwierdzenia");
         }
         if (before.transmissionUrlChanged(event)) {
-            changes.add("nowy link do transmisji");
+            changes.add(
+                    before.transmissionUrlRemoved(event) ? "link do transmisji usunięty" : "nowy link do transmisji");
         }
         return changes;
     }
