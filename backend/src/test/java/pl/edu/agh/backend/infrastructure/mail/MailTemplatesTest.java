@@ -61,13 +61,14 @@ class MailTemplatesTest {
     void eventMessage_keepsTheAdminsTextButEscapesIt() {
         Map<String, Object> variables = event(null);
         variables.put("message", "Sala 2.41.\n<script>alert(1)</script>");
+        variables.put("messageLines", List.of("Sala 2.41.", "<script>alert(1)</script>"));
 
         String html = mail.render("event-message.html", "Zmiana sali", variables);
         String text = mail.render("event-message.txt", "Zmiana sali", variables);
 
         assertThat(html)
-                .contains("Zmiana sali", "white-space:pre-line", "&lt;script&gt;")
-                .doesNotContain("<script>");
+                .contains("Zmiana sali", "Sala 2.41.<br/>&lt;script&gt;alert(1)&lt;/script&gt;")
+                .doesNotContain("<script>", "pre-line");
         assertThat(text).contains("Zmiana sali", "Sala 2.41.\n");
     }
 

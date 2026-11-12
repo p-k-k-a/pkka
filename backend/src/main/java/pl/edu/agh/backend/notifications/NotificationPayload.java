@@ -9,7 +9,8 @@ public record NotificationPayload(
 
         @Schema(
                 requiredMode = RequiredMode.REQUIRED,
-                description = "What to open; its meaning depends on `type` (event slug for event notifications)")
+                description =
+                        "What to open; its meaning depends on `type` (event slug for event notifications; empty when there is nothing to open, as for a cancelled event)")
         String target) {
 
     Map<String, String> toData() {
