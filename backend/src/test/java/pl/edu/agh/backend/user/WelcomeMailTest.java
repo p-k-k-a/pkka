@@ -104,6 +104,22 @@ class WelcomeMailTest {
     }
 
     @Test
+    void aWelcomeThatThrows_isRetriedOnTheNextLogin() {
+        when(mailService.send(anyString(), anyString(), eq("welcome"), anyMap()))
+                .thenThrow(new IllegalStateException("unexpected"))
+                .thenReturn(true);
+        String keycloakId = UUID.randomUUID().toString();
+
+        userProvisioningService.syncIdentityFromClaims(keycloakId, "Ala", "Nowak", "ala@example.com");
+        verify(mailService, timeout(SEND_TIMEOUT_MS).times(1)).send(anyString(), anyString(), anyString(), anyMap());
+        awaitWelcomedAt(keycloakId, false);
+
+        userProvisioningService.syncIdentityFromClaims(keycloakId, "Ala", "Nowak", "ala@example.com");
+        verify(mailService, timeout(SEND_TIMEOUT_MS).times(2)).send(anyString(), anyString(), anyString(), anyMap());
+        awaitWelcomedAt(keycloakId, true);
+    }
+
+    @Test
     void anAccountThatWasAlreadyWelcomed_isLeftAlone() {
         User user = new User();
         user.setKeycloakId(UUID.randomUUID().toString());
