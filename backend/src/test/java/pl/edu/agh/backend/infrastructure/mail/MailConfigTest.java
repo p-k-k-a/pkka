@@ -50,4 +50,21 @@ class MailConfigTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("MAIL_FROM");
     }
+
+    @Test
+    void failsStartupWithoutTheWebAddressTheMailsLinkTo() {
+        assertThatThrownBy(() ->
+                        config.mailService("smtp-relay.brevo.com", 587, "login", "key", true, "kontakt@pkka.me", " "))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("WEB_BASE_URL");
+    }
+
+    @Test
+    void dropsTheTrailingSlashOfTheWebAddress() {
+        MailService mail = config.mailService("localhost", 1025, "", "", false, "kontakt@pkka.me", "https://pkka.me/");
+
+        assertThat(mail.render("test-mail.txt", "Temat", Map.of("name", "Ala")))
+                .contains("https://pkka.me")
+                .doesNotContain("https://pkka.me/");
+    }
 }

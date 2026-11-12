@@ -7,8 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.thymeleaf.TemplateEngine;
@@ -26,6 +26,7 @@ import org.thymeleaf.context.Context;
 public class MailService {
 
     private static final Locale POLISH = Locale.forLanguageTag("pl-PL");
+    private static final Pattern LINE_BREAKS = Pattern.compile("[\r\n\t]+");
 
     /** {@code null} when mail is not configured. */
     private final JavaMailSender sender;
@@ -47,13 +48,15 @@ public class MailService {
 
     /**
      * Returns whether the mail was handed to the SMTP server. {@code variables} are available in both templates,
-     * next to {@code subject} and {@code webBaseUrl}.
+     * next to {@code subject} and {@code webBaseUrl}. Line breaks in {@code subject} become spaces, so text
+     * typed by an admin cannot add headers.
      */
     public boolean send(String to, String subject, String template, Map<String, ?> variables) {
         if (sender == null) {
             log.info("Mail is not configured, skipping '{}' mail", template);
             return false;
         }
+        subject = singleLine(subject);
         try {
             MimeMessage message = sender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
@@ -64,10 +67,15 @@ public class MailService {
                     render(template + ".txt", subject, variables), render(template + ".html", subject, variables));
             sender.send(message);
             return true;
-        } catch (MailException | MessagingException ex) {
-            log.warn("Could not send '{}' mail: {}", template, ex.getMessage());
+        } catch (MessagingException | RuntimeException ex) {
+            // RuntimeException also covers MailException and a template that fails to render.
+            log.warn("Could not send '{}' mail: {}", template, ex.toString());
             return false;
         }
+    }
+
+    private static String singleLine(String subject) {
+        return LINE_BREAKS.matcher(subject).replaceAll(" ").strip();
     }
 
     String render(String templateName, String subject, Map<String, ?> variables) {

@@ -20,7 +20,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
  *
  * <p>An empty {@code MAIL_HOST} disables mail (sending is skipped and logged). A username without a password,
  * or the other way round, is a deployment mistake and fails startup rather than surfacing later as a mail that
- * never arrived.
+ * never arrived. So is a host without {@code WEB_BASE_URL}, which every mail links to.
  */
 @Slf4j
 @Configuration
@@ -39,9 +39,13 @@ class MailConfig {
             @Value("${app.mail.from:}") String from,
             @Value("${app.web.base-url:}") String webBaseUrl) {
         TemplateEngine templates = templateEngine();
+        webBaseUrl = webBaseUrl.strip().replaceAll("/+$", "");
         if (host.isBlank()) {
             log.warn("Mail is not configured (MAIL_HOST is unset); mails will be skipped");
             return new MailService(null, null, templates, webBaseUrl);
+        }
+        if (webBaseUrl.isBlank()) {
+            throw new IllegalStateException("WEB_BASE_URL must be set when MAIL_HOST is set");
         }
         if (username.isBlank() != password.isBlank()) {
             throw new IllegalStateException("MAIL_USERNAME and MAIL_PASSWORD must be set together");
