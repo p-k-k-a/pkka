@@ -3,6 +3,7 @@ import { EventParticipationFooter } from "@/components/events/event-participatio
 import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetEventBySlug } from "@pkka/api";
+import { isEventPast } from "@pkka/domain";
 import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
@@ -27,7 +28,7 @@ export default function EventDetailScreen() {
       ) : event ? (
         <>
           <EventDetailView event={event} />
-          <EventParticipationFooter event={event} />
+          {isEventPast(event.endsAt) ? null : <EventParticipationFooter event={event} />}
         </>
       ) : null}
     </View>
