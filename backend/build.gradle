@@ -70,8 +70,6 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 	systemProperty 'spring.test.context.cache.maxSize', '4'
-	// No SMTP in tests, even with MAIL_HOST in the environment; mail tests build MailService themselves or mock it.
-	systemProperty 'app.mail.host', ''
 }
 
 tasks.withType(JavaCompile).configureEach {
