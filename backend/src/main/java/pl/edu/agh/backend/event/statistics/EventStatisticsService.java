@@ -4,10 +4,13 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,9 @@ import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository.ActivityCount;
 import pl.edu.agh.backend.event.registration.RegistrationActivityRepository.ActivityOccurrence;
+import pl.edu.agh.backend.event.registration.RegistrationActivityRepository.SourceCount;
+import pl.edu.agh.backend.event.registration.RegistrationActivityType;
+import pl.edu.agh.backend.event.registration.RegistrationSource;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +42,11 @@ public class EventStatisticsService {
     @Transactional(readOnly = true)
     public EventStatisticsResponse getStatistics(UUID eventId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
-        List<DailyRegistrationsResponse> daily = daily(event, registrationActivityRepository.findOccurrences(eventId));
+        List<ActivityOccurrence> occurrences = registrationActivityRepository.findOccurrences(eventId);
+        List<DailyRegistrationsResponse> daily = daily(event, occurrences);
+        Map<RegistrationSource, Long> signUpsBySource = occurrences.stream()
+                .filter(occurrence -> isSignUp(occurrence.type()) && occurrence.source() != null)
+                .collect(Collectors.groupingBy(ActivityOccurrence::source, Collectors.counting()));
 
         long registered =
                 eventRegistrationRepository.countByEventIdAndStatus(eventId, EventRegistrationStatus.REGISTERED);
@@ -51,7 +61,8 @@ public class EventStatisticsService {
                 daily.stream()
                         .mapToInt(DailyRegistrationsResponse::cancellations)
                         .sum(),
-                daily);
+                daily,
+                bySource(signUpsBySource));
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +79,12 @@ public class EventStatisticsService {
         for (ActivityCount row : registrationActivityRepository.countCancellationsByEventIdIn(ids)) {
             cancellations.put(row.eventId(), row.count());
         }
+        Map<UUID, Map<RegistrationSource, Long>> signUpsBySource = new HashMap<>();
+        for (SourceCount row : registrationActivityRepository.countSignUpsBySourceByEventIdIn(ids)) {
+            signUpsBySource
+                    .computeIfAbsent(row.eventId(), id -> new EnumMap<>(RegistrationSource.class))
+                    .put(row.source(), row.count());
+        }
 
         return events.stream()
                 .map(event -> {
@@ -79,9 +96,21 @@ public class EventStatisticsService {
                             event.getSeatLimit(),
                             (int) held,
                             waitlisted.getOrDefault(event.getId(), 0L).intValue(),
-                            cancellations.getOrDefault(event.getId(), 0L).intValue());
+                            cancellations.getOrDefault(event.getId(), 0L).intValue(),
+                            bySource(signUpsBySource.getOrDefault(event.getId(), Map.of())));
                 })
                 .toList();
+    }
+
+    private static List<SignUpSourceResponse> bySource(Map<RegistrationSource, Long> counts) {
+        return Arrays.stream(RegistrationSource.values())
+                .map(source -> new SignUpSourceResponse(
+                        source, counts.getOrDefault(source, 0L).intValue()))
+                .toList();
+    }
+
+    private static boolean isSignUp(RegistrationActivityType type) {
+        return type == RegistrationActivityType.SIGNED_UP || type == RegistrationActivityType.WAITLISTED;
     }
 
     private Map<UUID, Long> seatCounts(List<UUID> eventIds, EventRegistrationStatus status) {

@@ -35,6 +35,11 @@ public class RegistrationActivity {
     @ToString.Include
     private RegistrationActivityType type;
 
+    /** Set on sign-ups only; absent for cancellations and for sign-ups recorded before sources were. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", updatable = false, length = 16)
+    private RegistrationSource source;
+
     @Column(name = "occurred_at", nullable = false, updatable = false)
     @ToString.Include
     private Instant occurredAt;

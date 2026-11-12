@@ -102,7 +102,7 @@ class EventRegistrationConcurrencyTest {
                 attempts.add(pool.submit(() -> {
                     startLine.await();
                     return eventRegistrationService
-                            .register(event.getId(), caller)
+                            .register(event.getId(), caller, RegistrationSource.WEB)
                             .status();
                 }));
             }
@@ -146,7 +146,9 @@ class EventRegistrationConcurrencyTest {
             user.setKeycloakId(UUID.randomUUID().toString());
             contenders.add(userRepository.save(user));
             Caller caller = verifiedAlumn(user.getKeycloakId());
-            if (eventRegistrationService.register(event.getId(), caller).status()
+            if (eventRegistrationService
+                            .register(event.getId(), caller, RegistrationSource.WEB)
+                            .status()
                     == EventRegistrationStatus.REGISTERED) {
                 holders.add(caller);
             }
