@@ -75,6 +75,21 @@ class MailServiceTest {
                 .isFalse();
     }
 
+    @Test
+    void aTemplateThatFailsToRenderIsReportedInsteadOfThrown() {
+        assertThat(mail.send("ala@example.com", "Witaj", "no-such-template", Map.of()))
+                .isFalse();
+    }
+
+    @Test
+    void lineBreaksInTheSubjectCannotAddHeaders() throws Exception {
+        mail.send("ala@example.com", "Zmiana sali\r\nBcc: ola@example.com", "test-mail", Map.of("name", "Ala"));
+
+        MimeMessage message = captureSent();
+        assertThat(message.getSubject()).isEqualTo("Zmiana sali Bcc: ola@example.com");
+        assertThat(message.getHeader("Bcc")).isNull();
+    }
+
     private MimeMessage captureSent() {
         ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(sender).send(captor.capture());
