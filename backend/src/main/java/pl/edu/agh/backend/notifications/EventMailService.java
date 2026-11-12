@@ -115,7 +115,10 @@ public class EventMailService {
                     .formatted(orNotGiven(before.previousLocation()), orNotGiven(event.getLocation())));
         }
         if (before.transmissionUrlChanged(event)) {
-            changes.add("Zmienił się link do transmisji, aktualny jest na stronie wydarzenia");
+            changes.add(
+                    before.transmissionUrlRemoved(event)
+                            ? "Link do transmisji został usunięty"
+                            : "Zmienił się link do transmisji, aktualny jest na stronie wydarzenia");
         }
         return changes;
     }

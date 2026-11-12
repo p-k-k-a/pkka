@@ -10,7 +10,8 @@ import java.util.UUID;
  * signed up can be told what it was and what it is now.
  *
  * <p>Times are compared to the minute and text ignoring surrounding spaces, with blank meaning not given, so
- * an edit people would not see as a change (seconds, a trailing space) tells nobody.
+ * an edit people would not see as a change (seconds, a trailing space) tells nobody. Neither does clearing a
+ * place that an online event no longer needs, or a stream link that an in-person event no longer needs.
  */
 public record EventScheduleChangedEvent(
         UUID eventId,
@@ -39,11 +40,19 @@ public record EventScheduleChangedEvent(
     }
 
     public boolean locationChanged(Event current) {
-        return !sameText(previousLocation, current.getLocation());
+        boolean irrelevant = current.getType() == EventType.ONLINE && normalize(current.getLocation()) == null;
+        return !irrelevant && !sameText(previousLocation, current.getLocation());
     }
 
     public boolean transmissionUrlChanged(Event current) {
-        return !sameText(previousTransmissionUrl, current.getTransmissionUrl());
+        boolean irrelevant =
+                current.getType() == EventType.IN_PERSON && normalize(current.getTransmissionUrl()) == null;
+        return !irrelevant && !sameText(previousTransmissionUrl, current.getTransmissionUrl());
+    }
+
+    /** The stream link was taken away from an event that still has an online part. */
+    public boolean transmissionUrlRemoved(Event current) {
+        return transmissionUrlChanged(current) && normalize(current.getTransmissionUrl()) == null;
     }
 
     public boolean anyChange(Event current) {
