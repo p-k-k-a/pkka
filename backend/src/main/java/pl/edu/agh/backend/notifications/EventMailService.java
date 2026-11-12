@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import pl.edu.agh.backend.event.Event;
@@ -23,6 +24,7 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** Mails about an event, next to the pushes {@link NotificationService} sends for the same moments. */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventMailService {
@@ -61,6 +63,7 @@ public class EventMailService {
     public void mailMessage(Event event, String subject, String body, Collection<UUID> userIds) {
         Map<String, Object> variables = eventVariables(event);
         variables.put("message", body);
+        variables.put("messageLines", body.lines().toList());
         mailEach(userIds, subject, "event-message", variables);
     }
 
@@ -69,10 +72,18 @@ public class EventMailService {
         if (userIds.isEmpty()) {
             return;
         }
-        userRepository.findAllById(userIds).stream()
+        List<String> emails = userRepository.findAllById(userIds).stream()
                 .map(User::getEmail)
                 .filter(StringUtils::hasText)
-                .forEach(email -> mailService.send(email, subject, template, variables));
+                .toList();
+        long sent = emails.stream()
+                .filter(email -> mailService.send(email, subject, template, variables))
+                .count();
+        if (sent < emails.size()) {
+            log.warn("'{}' mail sent to {} of {} recipients", template, sent, emails.size());
+        } else {
+            log.info("'{}' mail sent to {} recipients", template, sent);
+        }
     }
 
     private static Map<String, Object> eventVariables(Event event) {
@@ -93,7 +104,7 @@ public class EventMailService {
                             timeRange(event.getStartsAt(), event.getEndsAt())));
         }
         if (before.typeChanged(event)) {
-            changes.add("Forma: %s → %s".formatted(label(before.previousType()), label(event.getType())));
+            changes.add("Forma: %s → %s".formatted(typeLabel(before.previousType()), typeLabel(event.getType())));
         }
         if (before.locationChanged(event)) {
             changes.add("Miejsce: %s → %s"
@@ -117,7 +128,7 @@ public class EventMailService {
         return "%s, %s – %s, %s".formatted(DAY.format(start), TIME.format(start), DAY.format(end), TIME.format(end));
     }
 
-    private static String label(EventType type) {
+    static String typeLabel(EventType type) {
         if (type == null) {
             return NOT_GIVEN;
         }
@@ -129,6 +140,6 @@ public class EventMailService {
     }
 
     private static String orNotGiven(String value) {
-        return StringUtils.hasText(value) ? value : NOT_GIVEN;
+        return StringUtils.hasText(value) ? value.strip() : NOT_GIVEN;
     }
 }
