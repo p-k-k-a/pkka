@@ -230,7 +230,7 @@ export function AdminMaterialsList() {
             <AlertDialogTitle>Usunąć materiał?</AlertDialogTitle>
             <AlertDialogDescription>
               „{materialToDelete?.title}” zniknie z listy alumnów. Sam plik lub nagranie pod linkiem
-              pozostanie nietknięte.
+              nie zostanie usunięte.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteMaterial.isError ? (
