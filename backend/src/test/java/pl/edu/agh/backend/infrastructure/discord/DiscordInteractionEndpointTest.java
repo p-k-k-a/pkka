@@ -53,6 +53,7 @@ class DiscordInteractionEndpointTest {
     private static final String CHANNEL_ID = "444444444444444444";
     private static final String ALUMN_ROLE = "222222222222222222";
     private static final String BOT_ROLE = "777777777777777777";
+    private static final String CATEGORY_ID = "666666666666666666";
     private static final String MESSAGE_ID = "555555555555555555";
 
     private static final DiscordInteractionSigner DISCORD = new DiscordInteractionSigner();
@@ -160,6 +161,20 @@ class DiscordInteractionEndpointTest {
     }
 
     @Test
+    void theGroupsCategoryIsSavedWithoutTouchingTheRest() throws Exception {
+        setUpOn(GUILD_ID, CHANNEL_ID, ALUMN_ROLE);
+
+        interact(command(GUILD_ID, category(CATEGORY_ID)))
+                .andExpect(jsonPath("$.data.content").value(containsString("<#" + CATEGORY_ID + ">")));
+
+        verify(discordMessages, never()).post(any(), any());
+        assertThat(settings())
+                .containsEntry("announcements_channel_id", CHANNEL_ID)
+                .containsEntry("alumn_role_id", ALUMN_ROLE)
+                .containsEntry("groups_category_id", CATEGORY_ID);
+    }
+
+    @Test
     void withoutOptionsTheCurrentSetupIsShownWithoutPingingTheRole() throws Exception {
         setUpOn(GUILD_ID, CHANNEL_ID, ALUMN_ROLE);
 
@@ -196,6 +211,10 @@ class DiscordInteractionEndpointTest {
 
     private static String role(String roleId) {
         return "{\"name\": \"role\", \"type\": 8, \"value\": \"%s\"}".formatted(roleId);
+    }
+
+    private static String category(String categoryId) {
+        return "{\"name\": \"groups_category\", \"type\": 7, \"value\": \"%s\"}".formatted(categoryId);
     }
 
     private void setUpOn(String guildId, String channelId, String roleId) {
