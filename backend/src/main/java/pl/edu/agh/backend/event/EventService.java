@@ -19,6 +19,7 @@ import pl.edu.agh.backend.event.dto.EventListItemResponse;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.event.registration.EventRegistrationStatus;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventLookup eventLookup;
     private final EventRegistrationService eventRegistrationService;
+    private final StorageService storageService;
 
     public Page<EventListItemResponse> list(
             Caller caller,
@@ -49,7 +51,10 @@ public class EventService {
         Map<UUID, EventRegistrationStatus> ownStatus = eventRegistrationService.ownStatusByEvent(caller, ids);
 
         return events.map(event -> EventListItemResponse.from(
-                event, seatsTaken.getOrDefault(event.getId(), 0L), ownStatus.get(event.getId())));
+                event,
+                seatsTaken.getOrDefault(event.getId(), 0L),
+                ownStatus.get(event.getId()),
+                storageService.resolveUrl(event.getCoverImageUrl())));
     }
 
     public EventDetailsResponse getDetails(String slug, Caller caller) {
@@ -61,7 +66,8 @@ public class EventService {
                 event,
                 eventRegistrationService.seatsTaken(id),
                 registrationStatus,
-                transmissionUrlFor(event, registrationStatus));
+                transmissionUrlFor(event, registrationStatus),
+                storageService.resolveUrl(event.getCoverImageUrl()));
     }
 
     /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */

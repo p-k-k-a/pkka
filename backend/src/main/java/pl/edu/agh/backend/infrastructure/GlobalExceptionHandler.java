@@ -22,6 +22,10 @@ import pl.edu.agh.backend.notifications.DeviceTokenConflictException;
 import pl.edu.agh.backend.notifications.DeviceTokenNotFoundException;
 import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
+import pl.edu.agh.backend.storage.FileTooLargeException;
+import pl.edu.agh.backend.storage.InvalidFileException;
+import pl.edu.agh.backend.storage.StorageNotConfiguredException;
+import pl.edu.agh.backend.storage.UnsupportedFileTypeException;
 import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
 import pl.edu.agh.backend.survey.InvalidSurveyException;
 import pl.edu.agh.backend.survey.SurveyAlreadySubmittedException;
@@ -172,6 +176,34 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMaterialNotFound(MaterialNotFoundException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Material not found");
+        return problem;
+    }
+
+    @ExceptionHandler(StorageNotConfiguredException.class)
+    public ProblemDetail handleStorageNotConfigured(StorageNotConfiguredException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problem.setTitle("File storage not configured");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidFileException.class)
+    public ProblemDetail handleInvalidFile(InvalidFileException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Invalid file");
+        return problem;
+    }
+
+    @ExceptionHandler(UnsupportedFileTypeException.class)
+    public ProblemDetail handleUnsupportedFileType(UnsupportedFileTypeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
+        problem.setTitle("Unsupported file type");
+        return problem;
+    }
+
+    @ExceptionHandler(FileTooLargeException.class)
+    public ProblemDetail handleFileTooLarge(FileTooLargeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONTENT_TOO_LARGE, ex.getMessage());
+        problem.setTitle("File too large");
         return problem;
     }
 

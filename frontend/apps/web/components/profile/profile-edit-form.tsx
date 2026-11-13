@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DeleteAccount } from "@/components/profile/delete-account";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -333,7 +334,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               </div>
             </section>
 
-            <section className="space-y-5">
+            <section className="space-y-5 pb-56">
               <SectionHeading>Umiejętności</SectionHeading>
               <p className="text-muted-foreground text-sm">Wybierz z listy albo wpisz własną.</p>
               {tagsError ? (
@@ -441,6 +442,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
                 </DetailList>
               </Card>
             ) : null}
+
+            <DeleteAccount accountEmail={profile.email} />
           </div>
         </div>
       </div>
