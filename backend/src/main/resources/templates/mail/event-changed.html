@@ -4,7 +4,7 @@
 <main>
     <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;">Zmiana w wydarzeniu</h1>
     <p style="margin:0 0 16px;">
-        Wydarzenie <strong th:text="${title}">Warsztaty</strong>, na które się zapisałeś, zostało zmienione:
+        Wydarzenie <strong th:text="${title}">Warsztaty</strong>, na które masz zapis, zostało zmienione:
     </p>
     <ul style="margin:0 0 24px;padding-left:20px;">
         <li th:each="change : ${changes}" th:text="${change}" style="margin:0 0 4px;">Termin: …</li>
