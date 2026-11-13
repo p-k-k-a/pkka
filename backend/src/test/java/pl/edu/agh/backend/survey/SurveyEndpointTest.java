@@ -301,6 +301,95 @@ class SurveyEndpointTest {
     }
 
     @Test
+    void surveyWithSubmissionsCanStillBeClosedReopenedAndRescheduled() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"Super"}]}
+                        """.formatted(questionId))).andExpect(status().isCreated());
+        Instant later = Instant.now().plus(30, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS);
+
+        mockMvc.perform(availability(surveyId, "CLOSED", later))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CLOSED"))
+                .andExpect(jsonPath("$.submissionCount").value(1))
+                .andExpect(jsonPath("$.questions[0].id").value(questionId.toString()));
+        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(OTHER_ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        mockMvc.perform(availability(surveyId, "ACTIVE", later))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.endsAt").value(later.toString()));
+        mockMvc.perform(get("/api/admin/surveys/{id}/results", surveyId).with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.submissionCount").value(1));
+    }
+
+    @Test
+    void availabilityRefusesADraftWithSubmissionsAndAnActiveSurveyThatHasEnded() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
+        Instant later = Instant.now().plus(30, ChronoUnit.DAYS);
+
+        mockMvc.perform(availability(surveyId, "ACTIVE", Instant.now().minus(1, ChronoUnit.HOURS)))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(availability(surveyId, "DRAFT", later))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DRAFT"));
+        mockMvc.perform(availability(surveyId, "ACTIVE", later)).andExpect(status().isOk());
+
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"Super"}]}
+                        """.formatted(questionId))).andExpect(status().isCreated());
+
+        mockMvc.perform(availability(surveyId, "DRAFT", later)).andExpect(status().isConflict());
+        mockMvc.perform(availability(UUID.randomUUID(), "CLOSED", later)).andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/admin/surveys/{id}/availability", surveyId)
+                        .with(JwtTestSupport.asVerifiedAlumn())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"CLOSED","endsAt":"%s"}
+                                """.formatted(later)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminSeesHowManyPeopleAnsweredEachSurvey() throws Exception {
+        String answered = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID answeredId = UUID.fromString(JsonPath.read(answered, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(answered, "$.questions[0].id"));
+        String untouched = createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+        String untouchedId = JsonPath.read(untouched, "$.id");
+        for (String subject : new String[] {ALUMN_SUBJECT, OTHER_ALUMN_SUBJECT}) {
+            mockMvc.perform(submit(answeredId, subject, """
+                            {"answers":[{"questionId":"%s","value":"Super"}]}
+                            """.formatted(questionId)))
+                    .andExpect(status().isCreated());
+        }
+
+        mockMvc.perform(get("/api/admin/surveys").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].submissionCount".formatted(answeredId))
+                        .value(2))
+                .andExpect(jsonPath("$.content[?(@.id=='%s')].submissionCount".formatted(untouchedId))
+                        .value(0));
+        mockMvc.perform(get("/api/admin/surveys/{id}", answeredId).with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.submissionCount").value(2));
+    }
+
+    @Test
     void adminUpdatesAndDeletesSurveyWithoutSubmissions() throws Exception {
         String created = createSurvey("DRAFT", """
                 {"content":"Uwagi","type":"TEXT","options":[]}
@@ -428,6 +517,16 @@ class SurveyEndpointTest {
         return """
                 {"title":"Ankieta","endsAt":"%s","status":"%s","questions":[%s]}
                 """.formatted(endsAt, status, questionsJson);
+    }
+
+    private static MockHttpServletRequestBuilder availability(UUID surveyId, String status, Instant endsAt) {
+        return put("/api/admin/surveys/{id}/availability", surveyId)
+                .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"status":"%s","endsAt":"%s"}
+                        """.formatted(status, endsAt));
     }
 
     private static MockHttpServletRequestBuilder submit(UUID surveyId, String body) {

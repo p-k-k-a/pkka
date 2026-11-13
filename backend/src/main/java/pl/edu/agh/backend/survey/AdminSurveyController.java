@@ -61,6 +61,21 @@ public class AdminSurveyController {
         return adminSurveyService.update(id, request);
     }
 
+    @PutMapping("/{id}/availability")
+    @Operation(
+            summary = "Close, reopen or reschedule a survey",
+            description = "Works on a survey that already has submissions, unlike the full update.")
+    @ApiResponse(responseCode = "200", description = "Survey updated")
+    @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
+    @ApiResponse(
+            responseCode = "409",
+            description = "A survey with submissions can't go back to a draft",
+            content = @Content)
+    public AdminSurveyResponse updateSurveyAvailability(
+            @PathVariable UUID id, @Valid @RequestBody SurveyAvailabilityRequest request) {
+        return adminSurveyService.updateAvailability(id, request);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a survey permanently")
