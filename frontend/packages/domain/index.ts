@@ -13,4 +13,5 @@ export * from "./profile/contacts";
 export * from "./profile/links";
 export * from "./profile/phone";
 export * from "./roles";
+export * from "./surveys/surveys";
 export * from "./tags";
