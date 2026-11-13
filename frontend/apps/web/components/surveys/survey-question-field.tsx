@@ -2,6 +2,7 @@
 
 import { QuestionType } from "@pkka/api";
 import {
+  SURVEY_TEXT_ANSWER_MAX,
   gridChoices,
   questionTypeHint,
   selectedOptionIds,
@@ -125,6 +126,7 @@ export function SurveyQuestionField({
         <Textarea
           value={value}
           rows={4}
+          maxLength={SURVEY_TEXT_ANSWER_MAX}
           disabled={disabled}
           placeholder="Twoja odpowiedź"
           aria-labelledby={titleId}
