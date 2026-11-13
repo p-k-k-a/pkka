@@ -1,0 +1,13 @@
+Zwolniło się miejsce
+
+Ktoś zrezygnował z udziału, więc przenieśliśmy Cię z listy rezerwowej na listę zapisanych. Twoje miejsce na wydarzeniu jest potwierdzone.
+
+Wydarzenie: [(${title})]
+Termin: [(${startsAt})]
+[# th:if="${location != null and !#strings.isEmpty(location)}"]Miejsce: [(${location})]
+[/]
+Szczegóły wydarzenia: [(${webBaseUrl})]/events/[(${slug})]
+
+Jeśli nie możesz wziąć udziału, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.
+
+[# th:insert="~{footer.txt}" /]
