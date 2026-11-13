@@ -39,13 +39,13 @@ class MailTemplatesTest {
     @Test
     void eventChanged_listsEveryChange() {
         Map<String, Object> variables = event("D17");
-        variables.put("changes", List.of("Termin: A → B", "Miejsce: C → D"));
+        variables.put("changes", List.of("Termin: A -> B", "Miejsce: C -> D"));
 
         String html = mail.render("event-changed.html", "Zmiana w wydarzeniu: Warsztaty", variables);
         String text = mail.render("event-changed.txt", "Zmiana w wydarzeniu: Warsztaty", variables);
 
-        assertThat(html).contains("<li", "Termin: A → B", "Miejsce: C → D", "https://pkka.me/events/warsztaty");
-        assertThat(text).contains("- Termin: A → B", "- Miejsce: C → D", "https://pkka.me/events/warsztaty");
+        assertThat(html).contains("<li", "Termin: A -&gt; B", "Miejsce: C -&gt; D", "https://pkka.me/events/warsztaty");
+        assertThat(text).contains("- Termin: A -> B", "- Miejsce: C -> D", "https://pkka.me/events/warsztaty");
     }
 
     @Test
