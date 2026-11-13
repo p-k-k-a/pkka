@@ -8,6 +8,6 @@ Termin: [(${startsAt})]
 [/]
 Szczegóły wydarzenia: [(${webBaseUrl})]/events/[(${slug})]
 
-Jeśli nie możesz przyjść, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.
+Jeśli nie możesz wziąć udziału, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.
 
 [# th:insert="~{footer.txt}" /]
