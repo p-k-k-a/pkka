@@ -93,7 +93,7 @@ app:
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     starttls: ${MAIL_STARTTLS:false}
-    from: ${MAIL_FROM:PKKA - WI AGH <kontakt@pkka.me>}
+    from: ${MAIL_FROM:Klub Alumnów WI AGH <kontakt@pkka.me>}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}
