@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { ApiError, type AlumniProfileResponse, useGetAlumniProfile } from "@pkka/api";
+import { ContactToggleButton } from "@/components/alumni/contact-toggle-button";
 import { HistoryBackButton } from "@/components/content/history-back-button";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -10,13 +11,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function AlumniProfileContent({ id }: { id: string }) {
   const { data, isPending, error, isFetching, refetch } = useGetAlumniProfile(id);
+  const profile = data?.status === 200 ? data.data : undefined;
   return (
     <AlumniProfileState
-      profile={data?.status === 200 ? data.data : undefined}
+      profile={profile}
       isPending={isPending}
       isFetching={isFetching}
       error={error}
       refetch={refetch}
+      actions={
+        profile?.visibility.name ? (
+          <ContactToggleButton alumnId={profile.id} isContact={profile.isContact} />
+        ) : null
+      }
     />
   );
 }
@@ -27,6 +34,7 @@ type AlumniProfileStateProps = {
   isFetching: boolean;
   error: unknown;
   refetch: () => unknown;
+  actions?: React.ReactNode;
 };
 
 export function AlumniProfileState({
@@ -35,6 +43,7 @@ export function AlumniProfileState({
   isFetching,
   error,
   refetch,
+  actions,
 }: AlumniProfileStateProps) {
   if (isPending) return <AlumniProfileSkeleton />;
 
@@ -72,7 +81,7 @@ export function AlumniProfileState({
     );
   }
 
-  return <ProfileView variant="alumn" profile={profile} />;
+  return <ProfileView variant="alumn" profile={profile} actions={actions} />;
 }
 
 function AlumniProfileSkeleton() {
