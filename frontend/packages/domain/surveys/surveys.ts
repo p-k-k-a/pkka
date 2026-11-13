@@ -13,6 +13,9 @@ export const SURVEY_MIN_OPTIONS = 2;
 export const SURVEY_MAX_QUESTIONS = 30;
 export const SURVEY_MAX_OPTIONS = 15;
 
+// The backend stores a text answer without a limit; this one keeps it readable in the results.
+export const SURVEY_TEXT_ANSWER_MAX = 2000;
+
 export const SURVEYS_PAGE_SIZE = 20;
 
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
@@ -136,4 +139,34 @@ export function toggleSelectedOption(value: string, optionId: string, selected: 
 
 export function isSurveyAnswerGiven(value: string | undefined) {
   return value !== undefined && value.trim() !== "";
+}
+
+/** How long a survey stays open, e.g. "3 dni"; null once the deadline has passed. */
+export function surveyTimeLeft(endsAt: string, now = Date.now()) {
+  const left = Date.parse(endsAt) - now;
+  if (Number.isNaN(left) || left <= 0) return null;
+  const hours = Math.floor(left / 3_600_000);
+  const days = Math.floor(hours / 24);
+  if (days >= 1) return `${days} ${pluralPl(days, "dzień", "dni", "dni")}`;
+  if (hours >= 1) return `${hours} ${pluralPl(hours, "godzina", "godziny", "godzin")}`;
+  return "mniej niż godzina";
+}
+
+export type SurveyProblem = "submitted" | "ended" | "missing" | "session" | "invalid" | "unknown";
+
+/**
+ * Why a survey could not be loaded or sent. Reads `status` and `body.reason` structurally,
+ * the way `ApiError` carries them, since this package must not import the client's mutator.
+ */
+export function surveyProblem(error: unknown): SurveyProblem {
+  const { status, body } = (error ?? {}) as { status?: unknown; body?: unknown };
+  const reason = (body as { reason?: unknown } | null | undefined)?.reason;
+
+  if (status === 401) return "session";
+  if (reason === "ALREADY_SUBMITTED") return "submitted";
+  if (reason === "NOT_ACTIVE") return "ended";
+  if (status === 404) return "missing";
+  // The answers no longer match the questions: the survey was edited after it was opened.
+  if (status === 400) return "invalid";
+  return "unknown";
 }

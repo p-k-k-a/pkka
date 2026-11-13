@@ -1,7 +1,12 @@
 "use client";
 
 import { QuestionType } from "@pkka/api";
-import { questionTypeHint, selectedOptionIds, toggleSelectedOption } from "@pkka/domain";
+import {
+  SURVEY_TEXT_ANSWER_MAX,
+  questionTypeHint,
+  selectedOptionIds,
+  toggleSelectedOption,
+} from "@pkka/domain";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,6 +109,7 @@ export function SurveyQuestionField({
         <Textarea
           value={value}
           rows={4}
+          maxLength={SURVEY_TEXT_ANSWER_MAX}
           disabled={disabled}
           placeholder="Twoja odpowiedź"
           aria-labelledby={titleId}

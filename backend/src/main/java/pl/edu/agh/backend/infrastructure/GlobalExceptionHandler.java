@@ -134,6 +134,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleSurveyNotActive(SurveyNotActiveException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Survey not active");
+        problem.setProperty("reason", "NOT_ACTIVE");
         return problem;
     }
 
@@ -141,6 +142,7 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleSurveyAlreadySubmitted(SurveyAlreadySubmittedException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Survey already submitted");
+        problem.setProperty("reason", "ALREADY_SUBMITTED");
         return problem;
     }
 

@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import { useListActiveSurveys } from "@pkka/api";
+import { SURVEYS_PATH } from "@/lib/survey-paths";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -48,6 +50,12 @@ const userItems: SidebarItem[] = [
     label: "Materiały",
     icon: Library,
     match: (pathname) => pathname.startsWith("/dashboard/materials"),
+  },
+  {
+    href: SURVEYS_PATH,
+    label: "Ankiety",
+    icon: ClipboardList,
+    match: (pathname) => pathname.startsWith("/dashboard/surveys"),
   },
   {
     href: "/dashboard/verification",
@@ -96,18 +104,25 @@ const adminItems: SidebarItem[] = [
   },
 ];
 
+const ALUMNI_ONLY_HREFS = new Set(["/dashboard/alumni", "/dashboard/materials", SURVEYS_PATH]);
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
+  // Only the total is needed, to show how many surveys are waiting.
+  const surveysQuery = useListActiveSurveys(
+    { size: 1 },
+    { query: { enabled: isVerified && !admin } },
+  );
+  const waitingSurveys =
+    surveysQuery.data?.status === 200 ? (surveysQuery.data.data.totalElements ?? 0) : 0;
 
   // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
-          return isVerified;
-        }
+        if (ALUMNI_ONLY_HREFS.has(item.href)) return isVerified;
         return true;
       });
 
@@ -138,6 +153,12 @@ export function DashboardSidebar() {
               >
                 <Icon className="size-4 shrink-0" aria-hidden="true" />
                 {label}
+                {href === SURVEYS_PATH && waitingSurveys > 0 ? (
+                  <span className="bg-primary text-primary-foreground ml-auto rounded-full px-2 py-0.5 text-xs leading-none font-semibold tabular-nums">
+                    <span className="sr-only">Do wypełnienia: </span>
+                    {waitingSurveys}
+                  </span>
+                ) : null}
               </Link>
             );
           })
