@@ -101,7 +101,7 @@ public class TopicGroupRequest {
         markReviewed(reviewer);
     }
 
-    private void ensureUnderReview() {
+    void ensureUnderReview() {
         if (this.status != TopicGroupRequestStatus.UNDER_REVIEW) {
             throw new InvalidTopicGroupRequestStateException(this.id, this.status);
         }
