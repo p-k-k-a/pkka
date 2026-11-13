@@ -102,16 +102,16 @@ public class EventMailService {
     static List<String> describeChanges(Event event, EventScheduleChangedEvent before) {
         List<String> changes = new ArrayList<>();
         if (before.timeChanged(event)) {
-            changes.add("Termin: %s → %s"
+            changes.add("Termin: %s -> %s"
                     .formatted(
                             timeRange(before.previousStartsAt(), before.previousEndsAt()),
                             timeRange(event.getStartsAt(), event.getEndsAt())));
         }
         if (before.typeChanged(event)) {
-            changes.add("Forma: %s → %s".formatted(typeLabel(before.previousType()), typeLabel(event.getType())));
+            changes.add("Forma: %s -> %s".formatted(typeLabel(before.previousType()), typeLabel(event.getType())));
         }
         if (before.locationChanged(event)) {
-            changes.add("Miejsce: %s → %s"
+            changes.add("Miejsce: %s -> %s"
                     .formatted(orNotGiven(before.previousLocation()), orNotGiven(event.getLocation())));
         }
         if (before.transmissionUrlChanged(event)) {
@@ -130,9 +130,9 @@ public class EventMailService {
         }
         ZonedDateTime end = endsAt.atZone(POLAND);
         if (start.toLocalDate().equals(end.toLocalDate())) {
-            return "%s, %s–%s".formatted(DAY.format(start), TIME.format(start), TIME.format(end));
+            return "%s, %s - %s".formatted(DAY.format(start), TIME.format(start), TIME.format(end));
         }
-        return "%s, %s – %s, %s".formatted(DAY.format(start), TIME.format(start), DAY.format(end), TIME.format(end));
+        return "%s, %s - %s, %s".formatted(DAY.format(start), TIME.format(start), DAY.format(end), TIME.format(end));
     }
 
     static String typeLabel(EventType type) {

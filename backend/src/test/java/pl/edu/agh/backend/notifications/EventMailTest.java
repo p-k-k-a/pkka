@@ -288,8 +288,8 @@ class EventMailTest {
         assertThat(mails).containsOnlyKeys("seated@example.com", "waiting@example.com");
         assertThat((List<String>) mails.get("waiting@example.com").get("changes"))
                 .containsExactly(
-                        "Termin: 1 grudnia 2030, 18:00–20:00 → 2 grudnia 2030, 18:00–20:00",
-                        "Miejsce: D17, sala 1.38 → D17, sala 2.41");
+                        "Termin: 1 grudnia 2030, 18:00 - 20:00 -> 2 grudnia 2030, 18:00 - 20:00",
+                        "Miejsce: D17, sala 1.38 -> D17, sala 2.41");
         List<ExpoPushMessage> pushes = capturePushes();
         assertThat(pushes)
                 .extracting(ExpoPushMessage::to)

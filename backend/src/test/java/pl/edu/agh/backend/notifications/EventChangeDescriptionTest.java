@@ -39,7 +39,7 @@ class EventChangeDescriptionTest {
                 .containsExactly("forma: hybrydowo", "nowy link do transmisji");
         assertThat(EventMailService.describeChanges(now, before))
                 .containsExactly(
-                        "Forma: stacjonarnie → hybrydowo",
+                        "Forma: stacjonarnie -> hybrydowo",
                         "Zmienił się link do transmisji, aktualny jest na stronie wydarzenia");
     }
 
@@ -49,7 +49,7 @@ class EventChangeDescriptionTest {
         Event now = event(EventType.IN_PERSON, STARTS_AT, null, null);
 
         assertThat(NotificationService.describeChange(now, before)).containsExactly("miejsce do potwierdzenia");
-        assertThat(EventMailService.describeChanges(now, before)).containsExactly("Miejsce: D17 → nie podano");
+        assertThat(EventMailService.describeChanges(now, before)).containsExactly("Miejsce: D17 -> nie podano");
     }
 
     @Test
@@ -61,7 +61,7 @@ class EventChangeDescriptionTest {
                 .containsExactly("forma: online", "nowy link do transmisji");
         assertThat(EventMailService.describeChanges(now, before))
                 .containsExactly(
-                        "Forma: stacjonarnie → online",
+                        "Forma: stacjonarnie -> online",
                         "Zmienił się link do transmisji, aktualny jest na stronie wydarzenia");
     }
 
