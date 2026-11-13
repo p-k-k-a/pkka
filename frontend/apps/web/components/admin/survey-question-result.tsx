@@ -44,7 +44,7 @@ export function SurveyQuestionResult({
               {shownTextAnswers.map((answer, index) => (
                 <li
                   key={index}
-                  className="bg-muted text-foreground rounded-lg px-4 py-3 text-sm break-words whitespace-pre-line"
+                  className="bg-muted dark:bg-background text-foreground rounded-lg px-4 py-3 text-sm break-words whitespace-pre-line"
                 >
                   {answer}
                 </li>

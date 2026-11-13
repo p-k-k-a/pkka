@@ -230,7 +230,7 @@ export function SurveyQuestionEditor({
           </Button>
         </div>
       ) : (
-        <p className="text-muted-foreground bg-muted rounded-lg px-4 py-3 text-sm">
+        <p className="text-muted-foreground bg-muted dark:bg-background rounded-lg px-4 py-3 text-sm">
           Alumn wpisze odpowiedź własnymi słowami.
         </p>
       )}
