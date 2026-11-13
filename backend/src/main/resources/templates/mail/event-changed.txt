@@ -8,6 +8,6 @@ Twój zapis pozostaje bez zmian.
 
 Szczegóły wydarzenia: [(${webBaseUrl})]/events/[(${slug})]
 
-Jeśli nowy termin lub miejsce Ci nie pasuje, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.
+Jeśli po tej zmianie nie możesz wziąć udziału, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.
 
 [# th:insert="~{footer.txt}" /]

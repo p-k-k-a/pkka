@@ -116,7 +116,7 @@ public class AdminEventService {
         Event saved = eventRepository.saveAndFlush(event);
         eventRegistrationService.fillFreeSeats(saved);
         eventPublisher.publishEvent(new EventUpdatedEvent(saved.getId()));
-        if (before.anyChange(saved) && isUpcoming(before.previousStartsAt(), saved.getStartsAt())) {
+        if (before.anyChange(saved) && isUpcoming(saved.getStartsAt())) {
             eventPublisher.publishEvent(before);
         }
         return respond(saved);
@@ -133,15 +133,12 @@ public class AdminEventService {
         }
     }
 
-    /** Only people signed up for something still ahead are told about a change; a past event's edit is a fix. */
-    private static boolean isUpcoming(Instant... startTimes) {
-        Instant now = Instant.now();
-        for (Instant startsAt : startTimes) {
-            if (startsAt.isAfter(now)) {
-                return true;
-            }
-        }
-        return false;
+    /**
+     * Only an event still ahead is worth telling people about. An edit that leaves it in the past is a fix of the
+     * record (or a typo in the date), and a mail about it would only confuse.
+     */
+    private static boolean isUpcoming(Instant startsAt) {
+        return startsAt.isAfter(Instant.now());
     }
 
     private AdminEventResponse respond(Event event) {
