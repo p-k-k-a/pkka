@@ -1,6 +1,6 @@
 Zmiana w wydarzeniu
 
-Wydarzenie „[(${title})]”, na które się zapisałeś, zostało zmienione:
+Wydarzenie „[(${title})]”, na które masz zapis, zostało zmienione:
 [# th:each="change : ${changes}"]
 - [(${change})][/]
 
