@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
+<body>
+<main>
+    <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;">
+        <span th:if="${!#strings.isEmpty(firstName)}" th:text="|Cześć ${firstName}!|">Cześć Ala!</span>
+        <span th:if="${#strings.isEmpty(firstName)}">Cześć!</span>
+    </h1>
+    <p style="margin:0 0 16px;">
+        Dziękujemy za założenie konta na platformie Klubu Alumnów Wydziału Informatyki AGH. Teraz możesz:
+    </p>
+    <ul style="margin:0 0 24px;padding-left:20px;">
+        <li style="margin:0 0 4px;">zapisywać się na wydarzenia Klubu,</li>
+        <li style="margin:0 0 4px;">złożyć wniosek o status alumna, który otwiera katalog alumnów i materiały,</li>
+        <li style="margin:0 0 4px;">połączyć konto z Discordem Klubu.</li>
+    </ul>
+    <a th:href="${webBaseUrl + '/dashboard'}"
+       style="display:inline-block;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
+        Przejdź do platformy
+    </a>
+    <p style="margin:24px 0 0;">Jeśli konto nie zostało założone przez Ciebie, odpowiedz na tę wiadomość, a je usuniemy.</p>
+</main>
+</body>
+</html>

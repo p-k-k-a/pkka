@@ -95,6 +95,13 @@ public class User {
     @BatchSize(size = 30)
     private Set<AlumniTag> tags = new HashSet<>();
 
+    /**
+     * Read-only here: only {@link UserRepository#claimWelcomeMail} writes it, so saving a user loaded earlier
+     * can never reset it.
+     */
+    @Column(name = "welcome_mail_sent_at", insertable = false, updatable = false)
+    private Instant welcomeMailSentAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
