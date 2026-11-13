@@ -7,6 +7,6 @@ Dziękujemy za założenie konta na platformie Klubu Alumnów Wydziału Informat
 
 Przejdź do platformy: [(${webBaseUrl})]/dashboard
 
-Jeśli to nie Ty zakładałeś konto, odpowiedz na tę wiadomość, a je usuniemy.
+Jeśli konto nie zostało założone przez Ciebie, odpowiedz na tę wiadomość, a je usuniemy.
 
 [# th:insert="~{footer.txt}" /]
