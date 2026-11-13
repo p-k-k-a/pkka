@@ -4,6 +4,8 @@ import { pluralPl } from "../format/plural";
 // Mirrors the constraints on the backend's survey requests.
 export const SURVEY_TITLE_MAX = 300;
 export const SURVEY_OPTION_MAX = 500;
+// The backend stores a question as unbounded text; this keeps it a question, not an essay.
+export const SURVEY_QUESTION_MAX = 500;
 
 // A choice between fewer than two answers is no question. The backend accepts one.
 export const SURVEY_MIN_OPTIONS = 2;
