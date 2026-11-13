@@ -30,19 +30,26 @@ public class SurveyController {
     private final SurveyService surveyService;
 
     @GetMapping
-    @Operation(summary = "List active surveys that have not yet ended")
+    @Operation(
+            summary = "List the open surveys the caller has not filled in yet",
+            description = "Active, before their deadline, soonest deadline first. A survey leaves the list once "
+                    + "the caller submits it.")
     public Page<SurveyListItemResponse> listActiveSurveys(
-            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return surveyService.listActive(pageable);
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable, Caller caller) {
+        return surveyService.listActive(caller, pageable);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get an active survey with questions")
     @ApiResponse(responseCode = "200", description = "Survey details")
     @ApiResponse(responseCode = "404", description = "Survey not found or still a draft", content = @Content)
-    @ApiResponse(responseCode = "409", description = "Survey is closed or has ended", content = @Content)
-    public SurveyResponse getActiveSurvey(@PathVariable UUID id) {
-        return surveyService.getActive(id);
+    @ApiResponse(
+            responseCode = "409",
+            description = "Survey is closed or has ended (`reason` NOT_ACTIVE), or the caller has already "
+                    + "filled it in (`reason` ALREADY_SUBMITTED)",
+            content = @Content)
+    public SurveyResponse getActiveSurvey(@PathVariable UUID id, Caller caller) {
+        return surveyService.getActive(id, caller);
     }
 
     @PostMapping("/{id}/submissions")

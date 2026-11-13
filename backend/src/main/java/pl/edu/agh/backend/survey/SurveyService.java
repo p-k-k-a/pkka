@@ -26,16 +26,37 @@ public class SurveyService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public Page<SurveyListItemResponse> listActive(Pageable pageable) {
-        return surveyRepository
-                .findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus.ACTIVE, Instant.now(clock), pageable)
-                .map(SurveyListItemResponse::from);
+    public Page<SurveyListItemResponse> listActive(Caller caller, Pageable pageable) {
+        Instant now = Instant.now(clock);
+        // A caller with no account row yet can't have submitted anything.
+        Page<Survey> surveys = callerUserService
+                .findId(caller)
+                .map(userId -> surveyRepository.findOpenNotSubmittedBy(SurveyStatus.ACTIVE, now, userId, pageable))
+                .orElseGet(() -> surveyRepository.findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(
+                        SurveyStatus.ACTIVE, now, pageable));
+        List<UUID> ids = surveys.getContent().stream().map(Survey::getId).toList();
+        Map<UUID, Long> questionCounts = ids.isEmpty()
+                ? Map.of()
+                : surveyRepository.countQuestionsBySurveyIdIn(ids).stream()
+                        .collect(Collectors.toMap(
+                                SurveyRepository.SurveyQuestionCount::surveyId,
+                                SurveyRepository.SurveyQuestionCount::questionCount));
+        return surveys.map(survey -> SurveyListItemResponse.from(
+                survey, questionCounts.getOrDefault(survey.getId(), 0L).intValue()));
     }
 
+    /** Refuses a survey the caller has already filled in, so the form is never offered twice. */
     @Transactional(readOnly = true)
-    public SurveyResponse getActive(UUID id) {
+    public SurveyResponse getActive(UUID id, Caller caller) {
         Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
         ensureActive(survey);
+        boolean submitted = callerUserService
+                .findId(caller)
+                .map(userId -> surveySubmissionRepository.existsBySurveyIdAndUserId(id, userId))
+                .orElse(false);
+        if (submitted) {
+            throw new SurveyAlreadySubmittedException();
+        }
         return SurveyResponse.from(survey);
     }
 

@@ -11,10 +11,16 @@ public record SurveyListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         String description,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
-        @Schema(requiredMode = RequiredMode.REQUIRED) SurveyStatus status) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) SurveyStatus status,
+        @Schema(requiredMode = RequiredMode.REQUIRED) int questionCount) {
 
-    static SurveyListItemResponse from(Survey survey) {
+    static SurveyListItemResponse from(Survey survey, int questionCount) {
         return new SurveyListItemResponse(
-                survey.getId(), survey.getTitle(), survey.getDescription(), survey.getEndsAt(), survey.getStatus());
+                survey.getId(),
+                survey.getTitle(),
+                survey.getDescription(),
+                survey.getEndsAt(),
+                survey.getStatus(),
+                questionCount);
     }
 }

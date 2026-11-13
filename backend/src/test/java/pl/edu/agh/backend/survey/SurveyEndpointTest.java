@@ -418,6 +418,80 @@ class SurveyEndpointTest {
     }
 
     @Test
+    void aSubmittedSurveyLeavesTheSubmittersListOnly() throws Exception {
+        String answered = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID answeredId = UUID.fromString(JsonPath.read(answered, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(answered, "$.questions[0].id"));
+        String untouchedId = JsonPath.read(createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS), "$.id");
+
+        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+        mockMvc.perform(get("/api/alumni/surveys/{id}", answeredId).with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(submit(answeredId, ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"Super"}]}
+                        """.formatted(questionId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(untouchedId))
+                .andExpect(jsonPath("$.content[0].questionCount").value(2));
+        mockMvc.perform(get("/api/alumni/surveys/{id}", answeredId).with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("ALREADY_SUBMITTED"));
+        mockMvc.perform(submit(answeredId, ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"Jeszcze raz"}]}
+                        """.formatted(questionId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("ALREADY_SUBMITTED"));
+
+        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(OTHER_ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+        mockMvc.perform(get("/api/alumni/surveys/{id}", answeredId)
+                        .with(JwtTestSupport.asVerifiedAlumn(OTHER_ALUMN_SUBJECT)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void rejectsAnOversizedAnswer() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
+
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"%s"}]}
+                        """.formatted(questionId, "a".repeat(5001))))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"%s"}]}
+                        """.formatted(questionId, "a".repeat(5000))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void aClosedSurveyIsReportedAsNotActive() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        mockMvc.perform(availability(surveyId, "CLOSED", Instant.now().plus(7, ChronoUnit.DAYS)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/alumni/surveys/{id}", surveyId).with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("NOT_ACTIVE"));
+    }
+
+    @Test
     void alumniListOmitsQuestions() throws Exception {
         createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
         entityManager.flush();
