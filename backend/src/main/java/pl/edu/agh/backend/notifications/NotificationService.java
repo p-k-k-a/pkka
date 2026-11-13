@@ -61,7 +61,7 @@ public class NotificationService {
                 deviceTokenRepository.findByUserIdIn(List.of(userId)),
                 NotificationType.REGISTRATION_PROMOTED,
                 "Zwolniło się miejsce",
-                "Zostałeś automatycznie zapisany na wydarzenie „%s”, %s".formatted(event.getTitle(), startsAt),
+                "Zwolniło się miejsce i masz zapis na wydarzenie „%s”, %s".formatted(event.getTitle(), startsAt),
                 event.getSlug());
     }
 
