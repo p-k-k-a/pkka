@@ -8,6 +8,7 @@ import {
   SURVEY_MAX_OPTIONS,
   SURVEY_MIN_OPTIONS,
   SURVEY_OPTION_MAX,
+  SURVEY_QUESTION_MAX,
   isChoiceQuestion,
   isQuestionType,
   type SurveyQuestionDraft,
@@ -144,6 +145,7 @@ export function SurveyQuestionEditor({
             id={`${fieldId}-content`}
             value={question.content}
             rows={2}
+            maxLength={SURVEY_QUESTION_MAX}
             placeholder="np. Jak oceniasz ostatnie spotkanie klubu?"
             aria-invalid={issue !== null && question.content.trim() === ""}
             aria-describedby={issue ? issueId : undefined}

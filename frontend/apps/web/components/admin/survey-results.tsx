@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { useGetResults, useGetSurvey } from "@pkka/api";
+import { useGetResults, useGetSurvey, type ApiError } from "@pkka/api";
 import { formatDateTime, isAdmin, surveyPhase, type SurveyPhase } from "@pkka/domain";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { SurveyAvailabilityActions } from "@/components/admin/survey-availability-actions";
@@ -48,7 +48,7 @@ export function SurveyResults({ id }: { id: string }) {
 
   const survey = surveyQuery.data?.status === 200 ? surveyQuery.data.data : undefined;
   if (!survey) {
-    const notFound = surveyQuery.data?.status === 404;
+    const notFound = (surveyQuery.error as unknown as ApiError | null)?.status === 404;
     return (
       <div className="px-4 py-16 text-center">
         <h1 className="font-heading text-foreground mb-2 text-[28px] font-semibold">
