@@ -331,6 +331,17 @@ class EventMailTest {
     }
 
     @Test
+    void movingAnUpcomingEventIntoThePast_tellsNobody() {
+        Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
+        Instant lastWeek = Instant.now().minus(7, ChronoUnit.DAYS).truncatedTo(ChronoUnit.HOURS);
+
+        adminEventService.update(event.getId(), edit(event, lastWeek, event.getLocation(), null));
+
+        verify(mailService, after(QUIET_PERIOD_MS).never()).send(anyString(), anyString(), anyString(), anyMap());
+        verify(expoPushClient, never()).send(any());
+    }
+
+    @Test
     void deletingAnUpcomingEvent_tellsEveryoneItIsCancelled() {
         Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
 
