@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
+<body>
+<main>
+    <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;">Zmiana w wydarzeniu</h1>
+    <p style="margin:0 0 16px;">
+        Wydarzenie <strong th:text="${title}">Warsztaty</strong>, na które masz zapis, zostało zmienione:
+    </p>
+    <ul style="margin:0 0 24px;padding-left:20px;">
+        <li th:each="change : ${changes}" th:text="${change}" style="margin:0 0 4px;">Termin: …</li>
+    </ul>
+    <p style="margin:0 0 24px;">Twój zapis pozostaje bez zmian.</p>
+    <a th:href="${webBaseUrl + '/events/' + slug}"
+       style="display:inline-block;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
+        Szczegóły wydarzenia
+    </a>
+    <p style="margin:24px 0 0;">Jeśli nowy termin lub miejsce Ci nie pasuje, wypisz się na stronie wydarzenia, żeby miejsce dostała kolejna osoba.</p>
+</main>
+</body>
+</html>

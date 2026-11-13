@@ -3,6 +3,7 @@ package pl.edu.agh.backend.infrastructure.mail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +34,42 @@ class MailTemplatesTest {
                 .contains("Wydarzenie: Warsztaty", "Termin: 1 grudnia 2030 o 18:00", "Miejsce: D17")
                 .contains("https://pkka.me/events/warsztaty")
                 .contains("Odpowiedz na tę wiadomość");
+    }
+
+    @Test
+    void eventChanged_listsEveryChange() {
+        Map<String, Object> variables = event("D17");
+        variables.put("changes", List.of("Termin: A -> B", "Miejsce: C -> D"));
+
+        String html = mail.render("event-changed.html", "Zmiana w wydarzeniu: Warsztaty", variables);
+        String text = mail.render("event-changed.txt", "Zmiana w wydarzeniu: Warsztaty", variables);
+
+        assertThat(html).contains("<li", "Termin: A -&gt; B", "Miejsce: C -&gt; D", "https://pkka.me/events/warsztaty");
+        assertThat(text).contains("- Termin: A -> B", "- Miejsce: C -> D", "https://pkka.me/events/warsztaty");
+    }
+
+    @Test
+    void eventCancelled_namesTheEventAndItsDate() {
+        String html = mail.render("event-cancelled.html", "Wydarzenie odwołane: Warsztaty", event(null));
+        String text = mail.render("event-cancelled.txt", "Wydarzenie odwołane: Warsztaty", event(null));
+
+        assertThat(html).contains("Warsztaty", "1 grudnia 2030 o 18:00", "zostało odwołane");
+        assertThat(text).contains("„Warsztaty”", "1 grudnia 2030 o 18:00", "https://pkka.me/events");
+    }
+
+    @Test
+    void eventMessage_keepsTheAdminsTextButEscapesIt() {
+        Map<String, Object> variables = event(null);
+        variables.put("message", "Sala 2.41.\n<script>alert(1)</script>");
+        variables.put("messageLines", List.of("Sala 2.41.", "<script>alert(1)</script>"));
+
+        String html = mail.render("event-message.html", "Zmiana sali", variables);
+        String text = mail.render("event-message.txt", "Zmiana sali", variables);
+
+        assertThat(html)
+                .contains("Zmiana sali", "Sala 2.41.<br/>&lt;script&gt;alert(1)&lt;/script&gt;")
+                .doesNotContain("<script>", "pre-line");
+        assertThat(text).contains("Zmiana sali", "Sala 2.41.\n");
     }
 
     @Test
