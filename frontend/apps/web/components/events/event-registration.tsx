@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   EventRegistrationStatus,
+  EventType,
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
@@ -20,10 +21,9 @@ import {
   type EventRegistrationAction,
   formatSeatsRemaining,
   googleCalendarUrl,
-  hasMeeting,
+  hasOnlineLink,
   isEventFull,
   isEventRegistrationClosed,
-  joinMeetingLabel,
 } from "@pkka/domain";
 import {
   AlertDialog,
@@ -65,9 +65,12 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const waitlisted = status === EventRegistrationStatus.WAITLISTED;
   const full = isEventFull(event.seatLimit, event.seatsTaken);
   const closed = isEventRegistrationClosed(event);
-  const meeting = hasMeeting(event.type);
+  const online = hasOnlineLink(event.type);
   // A link left on an event later switched to in person is not offered.
-  const meetingUrl = meeting ? event.transmissionUrl : undefined;
+  const meetingUrl = online ? event.transmissionUrl : undefined;
+  // Waiting for a seat in the room of a hybrid event, but free to follow it online meanwhile.
+  const onlineOnly = waitlisted && Boolean(meetingUrl);
+  const calendarLocation = onlineOnly ? undefined : event.location;
 
   const refresh = () =>
     Promise.all([
@@ -81,7 +84,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({
       ...event,
-      location: eventCalendarLocation(event.location, meetingUrl),
+      location: eventCalendarLocation(calendarLocation, meetingUrl),
       details: eventCalendarDetails(eventPageUrl(), meetingUrl),
     });
     setCalendarOpen(false);
@@ -97,7 +100,12 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
     try {
       downloadIcs(
         `${event.slug}.ics`,
-        buildEventIcs({ ...event, transmissionUrl: meetingUrl, url: eventPageUrl() }),
+        buildEventIcs({
+          ...event,
+          location: calendarLocation,
+          transmissionUrl: meetingUrl,
+          url: eventPageUrl(),
+        }),
       );
     } catch {
       toast.error("Nie udało się przygotować pliku kalendarza.");
@@ -169,9 +177,13 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
             ? "Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje."
             : "Jesteś zapisany na to wydarzenie."}
         </p>
-        {meeting && !meetingUrl ? (
+        {onlineOnly ? (
           <p className="text-muted-foreground text-xs">
-            {waitlisted
+            Do tego czasu możesz uczestniczyć w wydarzeniu online.
+          </p>
+        ) : online && !meetingUrl ? (
+          <p className="text-muted-foreground text-xs">
+            {waitlisted && event.type === EventType.ONLINE
               ? "Link do spotkania dostaniesz, gdy zwolni się dla Ciebie miejsce."
               : "Link do spotkania pojawi się tutaj, gdy organizator go doda."}
           </p>
@@ -181,11 +193,11 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
             <Button size="xl" className="gap-2" asChild>
               <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
                 <Video data-icon="inline-start" />
-                {joinMeetingLabel(meetingUrl)}
+                Dołącz do spotkania
               </a>
             </Button>
           ) : null}
-          {waitlisted ? null : (
+          {waitlisted && !onlineOnly ? null : (
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button size="xl" variant={meetingUrl ? "outline" : "default"} className="gap-2">

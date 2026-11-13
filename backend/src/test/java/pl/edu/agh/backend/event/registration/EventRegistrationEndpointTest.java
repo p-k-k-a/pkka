@@ -95,8 +95,12 @@ class EventRegistrationEndpointTest {
     }
 
     private Event newOnlineEvent(Integer seatLimit) {
+        return newEventWithMeetingLink(EventType.ONLINE, seatLimit);
+    }
+
+    private Event newEventWithMeetingLink(EventType type, Integer seatLimit) {
         Event event = newEvent(Audience.PUBLIC, seatLimit);
-        event.setType(EventType.ONLINE);
+        event.setType(type);
         event.setTransmissionUrl(MEETING_URL);
         return eventRepository.save(event);
     }
@@ -631,7 +635,7 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void eventDetails_keepTheMeetingLinkFromTheWaitlist() throws Exception {
+    void eventDetails_keepTheMeetingLinkFromAnOnlineEventsWaitlist() throws Exception {
         Event event = newOnlineEvent(1);
         registerOtherAlumn(event);
 
@@ -644,6 +648,22 @@ class EventRegistrationEndpointTest {
         mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.transmissionUrl").doesNotExist());
+    }
+
+    @Test
+    void eventDetails_handTheMeetingLinkToAHybridEventsWaitlist() throws Exception {
+        Event event = newEventWithMeetingLink(EventType.HYBRID, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").value(MEETING_URL));
     }
 
     @Test

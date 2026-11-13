@@ -70,9 +70,15 @@ public class EventService {
                 storageService.resolveUrl(event.getCoverImageUrl()));
     }
 
-    /** The meeting link is for those holding a seat; the waitlisted would otherwise join a full event anyway. */
+    /**
+     * The meeting link is for those holding a seat. A hybrid event's limit is the room's, so its
+     * waitlist gets the link too; an online event's waitlist would otherwise join a full meeting.
+     */
     private String transmissionUrlFor(Event event, EventRegistrationStatus registrationStatus) {
-        return registrationStatus == EventRegistrationStatus.REGISTERED ? event.getTransmissionUrl() : null;
+        boolean seated = registrationStatus == EventRegistrationStatus.REGISTERED;
+        boolean waitingForTheRoom =
+                registrationStatus == EventRegistrationStatus.WAITLISTED && event.getType() == EventType.HYBRID;
+        return seated || waitingForTheRoom ? event.getTransmissionUrl() : null;
     }
 
     private Specification<Event> inTimeframe(EventTimeframe timeframe) {
