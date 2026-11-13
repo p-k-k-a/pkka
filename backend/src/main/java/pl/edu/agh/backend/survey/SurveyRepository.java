@@ -38,6 +38,29 @@ public interface SurveyRepository extends JpaRepository<Survey, UUID> {
 
     Page<Survey> findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus status, Instant now, Pageable pageable);
 
+    /** The open surveys this user still has to fill in: one they have submitted is done for them. */
+    @Query(value = """
+            select s from Survey s
+            where s.status = :status
+              and s.endsAt > :now
+              and not exists (
+                  select 1 from SurveySubmission submission
+                  where submission.survey = s and submission.user.id = :userId)
+            order by s.endsAt asc
+            """, countQuery = """
+            select count(s) from Survey s
+            where s.status = :status
+              and s.endsAt > :now
+              and not exists (
+                  select 1 from SurveySubmission submission
+                  where submission.survey = s and submission.user.id = :userId)
+            """)
+    Page<Survey> findOpenNotSubmittedBy(
+            @Param("status") SurveyStatus status,
+            @Param("now") Instant now,
+            @Param("userId") UUID userId,
+            Pageable pageable);
+
     /** A survey without questions has no row here at all, so a missing entry reads as zero. */
     @Query("""
             select q.survey.id as surveyId, count(q) as questionCount
