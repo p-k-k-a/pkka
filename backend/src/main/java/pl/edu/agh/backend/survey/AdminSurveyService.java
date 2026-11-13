@@ -29,13 +29,22 @@ public class AdminSurveyService {
                         .collect(Collectors.toMap(
                                 SurveyRepository.SurveyQuestionCount::surveyId,
                                 SurveyRepository.SurveyQuestionCount::questionCount));
+        Map<UUID, Long> submissionCounts = ids.isEmpty()
+                ? Map.of()
+                : surveySubmissionRepository.countSubmissionsBySurveyIdIn(ids).stream()
+                        .collect(Collectors.toMap(
+                                SurveySubmissionRepository.SurveySubmissionCount::surveyId,
+                                SurveySubmissionRepository.SurveySubmissionCount::submissionCount));
         return surveys.map(survey -> AdminSurveyListItemResponse.from(
-                survey, questionCounts.getOrDefault(survey.getId(), 0L).intValue()));
+                survey,
+                questionCounts.getOrDefault(survey.getId(), 0L).intValue(),
+                submissionCounts.getOrDefault(survey.getId(), 0L).intValue()));
     }
 
     @Transactional(readOnly = true)
     public AdminSurveyResponse get(UUID id) {
-        return surveyRepository.findById(id).map(AdminSurveyResponse::from).orElseThrow(SurveyNotFoundException::new);
+        Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
+        return AdminSurveyResponse.from(survey, submissionCount(id));
     }
 
     @Transactional
@@ -48,7 +57,7 @@ public class AdminSurveyService {
         validateStatusAndEndDate(status, request.endsAt());
         survey.setStatus(status);
         applyQuestions(survey, request.questions());
-        return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey));
+        return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey), 0);
     }
 
     /**
@@ -66,7 +75,26 @@ public class AdminSurveyService {
         survey.setEndsAt(request.endsAt());
         survey.setStatus(request.status());
         applyQuestions(survey, request.questions());
-        return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey));
+        return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey), 0);
+    }
+
+    /**
+     * Answers refer to questions by id, so the full update is off once anyone has answered. The
+     * status and the deadline touch no question, which is why they stay editable: an admin can
+     * still close a survey early, reopen it or extend it. Going back to a draft would hide a
+     * survey people have already filled in, so that one move is refused.
+     */
+    @Transactional
+    public AdminSurveyResponse updateAvailability(UUID id, SurveyAvailabilityRequest request) {
+        Survey survey = surveyRepository.findForUpdateById(id).orElseThrow(SurveyNotFoundException::new);
+        int submissionCount = submissionCount(id);
+        if (request.status() == SurveyStatus.DRAFT && submissionCount > 0) {
+            throw new SurveyHasSubmissionsException();
+        }
+        validateStatusAndEndDate(request.status(), request.endsAt());
+        survey.setStatus(request.status());
+        survey.setEndsAt(request.endsAt());
+        return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey), submissionCount);
     }
 
     @Transactional
@@ -148,6 +176,10 @@ public class AdminSurveyService {
             }
             survey.getQuestions().add(question);
         }
+    }
+
+    private int submissionCount(UUID surveyId) {
+        return Math.toIntExact(surveySubmissionRepository.countBySurveyId(surveyId));
     }
 
     private void ensureNoSubmissions(UUID surveyId) {
