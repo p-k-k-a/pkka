@@ -1,5 +1,6 @@
 "use client";
 
+import { CoverUploadField, type CoverValue } from "@/components/admin/cover-upload-field";
 import { FieldLabel } from "@/components/admin/field-label";
 import { SectionTitle } from "@/components/content/section-title";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
@@ -9,17 +10,23 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatPublishedAt } from "@pkka/domain";
+import { POST_COVER_UPLOAD, POST_IMAGE_UPLOAD, formatPublishedAt } from "@pkka/domain";
 import {
+  AdminUploadPurpose,
   getGetAdminPostQueryKey,
+  getGetPostQueryKey,
   getListAdminPostsQueryKey,
+  getListPostsQueryKey,
+  presignAdminUpload,
   useCreateAdminPost,
+  useFileUpload,
   useUpdateAdminPost,
   PostStatus,
   type AdminPostResponse,
+  type PresignUpload,
 } from "@pkka/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CircleAlert, ImageIcon } from "lucide-react";
+import { ArrowLeft, CircleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,6 +46,11 @@ const NOTIFICATIONS = [
   { id: "email", label: "Email", checked: false, disabled: true },
 ];
 
+const presignCover: PresignUpload = (file) =>
+  presignAdminUpload({ purpose: AdminUploadPurpose.POST_COVER, ...file });
+const presignContentImage: PresignUpload = (file) =>
+  presignAdminUpload({ purpose: AdminUploadPurpose.POST_IMAGE, ...file });
+
 type PostFormProps = {
   post?: AdminPostResponse;
 };
@@ -51,6 +63,16 @@ export function PostForm({ post }: PostFormProps) {
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
+  // The API returns the stored cover as a signed URL and takes it back unchanged on save.
+  const [cover, setCover] = useState<CoverValue>({
+    reference: post?.coverImageUrl,
+    previewUrl: post?.coverImageUrl,
+  });
+  const coverUpload = useFileUpload({ rule: POST_COVER_UPLOAD, presign: presignCover });
+  const contentImageUpload = useFileUpload({
+    rule: POST_IMAGE_UPLOAD,
+    presign: presignContentImage,
+  });
   const [postId, setPostId] = useState(post?.id);
   const [pendingStatus, setPendingStatus] = useState<PostStatus | null>(null);
 
@@ -59,11 +81,18 @@ export function PostForm({ post }: PostFormProps) {
 
   const isPending = pendingStatus !== null;
   const isError = createPost.isError || updatePost.isError;
-  const canSave = title.trim().length > 0 && content.trim().length > 0 && !isPending;
+  const canSave =
+    title.trim().length > 0 &&
+    content.trim().length > 0 &&
+    !coverUpload.isUploading &&
+    !contentImageUpload.isUploading &&
+    !isPending;
 
   const handleSaveSuccess = (savedId: string, status: PostStatus) => {
     queryClient.invalidateQueries({ queryKey: getListAdminPostsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetAdminPostQueryKey(savedId) });
+    queryClient.invalidateQueries({ queryKey: getListPostsQueryKey() });
+    if (post) queryClient.invalidateQueries({ queryKey: getGetPostQueryKey(post.slug) });
     setPendingStatus(null);
     if (status === PostStatus.PUBLISHED) {
       toast.success("Wpis opublikowany");
@@ -75,7 +104,7 @@ export function PostForm({ post }: PostFormProps) {
   };
 
   const save = (status: PostStatus) => {
-    const data = { title: title.trim(), content, status } as const;
+    const data = { title: title.trim(), content, status, coverImageUrl: cover.reference } as const;
     setPendingStatus(status);
 
     if (postId !== undefined) {
@@ -143,17 +172,21 @@ export function PostForm({ post }: PostFormProps) {
 
             <section className="space-y-5">
               <SectionTitle>Treść</SectionTitle>
-              <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
+              <MarkdownEditor
+                initialContent={post?.content ?? ""}
+                onChange={setContent}
+                imageUpload={{ upload: contentImageUpload, rule: POST_IMAGE_UPLOAD }}
+              />
             </section>
 
             <section className="space-y-5">
               <SectionTitle>Okładka</SectionTitle>
-              {/* TODO: cover image upload is not supported by the API yet */}
-              <div className="bg-background border-border text-muted-foreground flex min-h-40 cursor-not-allowed items-center justify-center rounded-lg border-2 border-dashed">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-widest uppercase">
-                  <ImageIcon className="size-4" aria-hidden="true" />
-                </div>
-              </div>
+              <CoverUploadField
+                value={cover}
+                onChange={setCover}
+                upload={coverUpload}
+                rule={POST_COVER_UPLOAD}
+              />
             </section>
           </div>
 

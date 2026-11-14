@@ -23,6 +23,19 @@ export const EVENT_COVER_UPLOAD: LabelledUploadRule = {
   formats: IMAGE_FORMATS,
 };
 
+export const POST_COVER_UPLOAD: LabelledUploadRule = {
+  maxBytes: 5 * MB,
+  contentTypes: IMAGE_TYPES,
+  formats: IMAGE_FORMATS,
+};
+
+/** A picture placed inside a post's content. */
+export const POST_IMAGE_UPLOAD: LabelledUploadRule = {
+  maxBytes: 5 * MB,
+  contentTypes: IMAGE_TYPES,
+  formats: IMAGE_FORMATS,
+};
+
 export const MATERIAL_UPLOAD: LabelledUploadRule = {
   maxBytes: 100 * MB,
   contentTypes: [
