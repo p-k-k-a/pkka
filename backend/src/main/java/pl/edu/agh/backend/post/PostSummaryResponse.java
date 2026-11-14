@@ -16,14 +16,19 @@ public record PostSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+
+        @Schema(description = "External URL, or a short-lived signed URL of an uploaded cover; null without a cover")
+        String coverImageUrl,
+
         String authorId,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt) {
 
-    static PostSummaryResponse from(Post post) {
+    static PostSummaryResponse from(Post post, String coverImageUrl) {
         return new PostSummaryResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
+                coverImageUrl,
                 post.getAuthor() == null ? null : post.getAuthor().getKeycloakId(),
                 post.getPublishedAt());
     }

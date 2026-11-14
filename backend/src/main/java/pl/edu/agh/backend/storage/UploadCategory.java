@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
 enum UploadCategory {
     AVATAR("avatars", 2 * Limits.MB, Duration.ofMinutes(10)),
     EVENT_COVER("covers/events", 5 * Limits.MB, Duration.ofMinutes(10)),
+    POST_COVER("covers/posts", 5 * Limits.MB, Duration.ofMinutes(10)),
+    /** A picture placed inside a post's Markdown content. */
+    POST_IMAGE("posts/images", 5 * Limits.MB, Duration.ofMinutes(10)),
     // Room to upload 100 MB over a slow connection.
     MATERIAL("materials", 100 * Limits.MB, Duration.ofMinutes(30));
 
@@ -55,7 +58,7 @@ enum UploadCategory {
 
     private Map<String, String> types() {
         return switch (this) {
-            case AVATAR, EVENT_COVER -> Types.IMAGES;
+            case AVATAR, EVENT_COVER, POST_COVER, POST_IMAGE -> Types.IMAGES;
             case MATERIAL -> Types.MATERIALS;
         };
     }
@@ -71,12 +74,16 @@ enum UploadCategory {
             return switch (category) {
                 case AVATAR -> AVATAR;
                 case EVENT_COVER -> EVENT_COVER;
+                case POST_COVER -> POST_COVER;
+                case POST_IMAGE -> POST_IMAGE;
                 case MATERIAL -> MATERIAL;
             };
         }
 
         private static final Pattern AVATAR = build(UploadCategory.AVATAR, "/" + UUID_REGEX);
         private static final Pattern EVENT_COVER = build(UploadCategory.EVENT_COVER, "");
+        private static final Pattern POST_COVER = build(UploadCategory.POST_COVER, "");
+        private static final Pattern POST_IMAGE = build(UploadCategory.POST_IMAGE, "");
         private static final Pattern MATERIAL = build(UploadCategory.MATERIAL, "");
 
         private static Pattern build(UploadCategory category, String folderRegex) {

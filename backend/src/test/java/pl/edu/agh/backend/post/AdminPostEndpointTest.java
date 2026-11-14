@@ -123,6 +123,48 @@ class AdminPostEndpointTest {
     }
 
     @Test
+    void keepsAnExternalCoverAndClearsItWhenLeftOut() throws Exception {
+        String body = createPost("""
+                {"title": "Z okładką", "content": "x", "coverImageUrl": "https://example.com/cover.png"}
+                """);
+        String id = JsonPath.read(body, "$.id");
+        assertEquals("https://example.com/cover.png", JsonPath.read(body, "$.coverImageUrl"));
+
+        mockMvc.perform(get("/api/admin/posts").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].coverImageUrl").value("https://example.com/cover.png"));
+
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Z okładką\", \"content\": \"x\", \"status\": \"DRAFT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl").doesNotExist());
+        assertNull(postRepository.findById(UUID.fromString(id)).orElseThrow().getCoverImageUrl());
+    }
+
+    @Test
+    void rejectsACoverThatIsNeitherUrlNorUploadedCover() throws Exception {
+        for (String cover : new String[] {"okladka.png", "materials/" + UUID.randomUUID() + ".pdf"}) {
+            mockMvc.perform(post("/api/admin/posts")
+                            .with(admin())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"" + cover + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void anUploadedCoverCannotBeAttachedWhileStorageIsNotConfigured() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"covers/posts/"
+                                + UUID.randomUUID() + ".png\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
     void deduplicatesSlugsForIdenticalTitles() throws Exception {
         String first = createPost("{\"title\": \"Ten sam tytuł\", \"content\": \"a\"}");
         String second = createPost("{\"title\": \"Ten sam tytuł\", \"content\": \"b\"}");

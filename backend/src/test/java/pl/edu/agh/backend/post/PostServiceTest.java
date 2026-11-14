@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -21,6 +22,9 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private StorageService storageService;
 
     @InjectMocks
     private PostService postService;
@@ -40,6 +44,23 @@ class PostServiceTest {
         org.assertj.core.api.Assertions.assertThat(page.getContent()).hasSize(1);
         org.assertj.core.api.Assertions.assertThat(page.getContent().getFirst().title())
                 .isEqualTo("Hello");
+    }
+
+    @Test
+    void findPublishedBySlugServesContentAndCoverResolvedByStorage() {
+        Post post = new Post();
+        post.setTitle("Hello");
+        post.setContent("![a](posts/images/key.png)");
+        post.setCoverImageUrl("covers/posts/key.png");
+        post.publish();
+        when(postRepository.findBySlugAndStatus("hello", PostStatus.PUBLISHED)).thenReturn(Optional.of(post));
+        when(storageService.resolveContent("![a](posts/images/key.png)")).thenReturn("![a](https://signed/image)");
+        when(storageService.resolveUrl("covers/posts/key.png")).thenReturn("https://signed/cover");
+
+        PostResponse response = postService.findPublishedBySlug("hello");
+
+        org.assertj.core.api.Assertions.assertThat(response.content()).isEqualTo("![a](https://signed/image)");
+        org.assertj.core.api.Assertions.assertThat(response.coverImageUrl()).isEqualTo("https://signed/cover");
     }
 
     @Test
