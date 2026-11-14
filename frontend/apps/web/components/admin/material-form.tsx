@@ -3,31 +3,39 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Trash2, Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  AdminUploadPurpose,
   EventTimeframe,
   MaterialType,
   getGetAdminMaterialQueryKey,
   getListAdminMaterialsQueryKey,
   getListMaterialsQueryKey,
+  presignAdminUpload,
   useCreateAdminMaterial,
+  useFileUpload,
   useListAdminEvents,
   useUpdateAdminMaterial,
   type AdminMaterialResponse,
   type MaterialRequest,
+  type PresignUpload,
 } from "@pkka/api";
 import {
   MATERIAL_TITLE_MAX,
   MATERIAL_TYPE_OPTIONS,
+  MATERIAL_UPLOAD,
   MATERIAL_URL_MAX,
   formatEventDateShort,
   isMaterialType,
   isValidMaterialUrl,
+  uploadLimitLabel,
+  uploadedMaterialExtension,
 } from "@pkka/domain";
 import { FieldLabel } from "@/components/admin/field-label";
 import { SectionTitle } from "@/components/content/section-title";
 import { MaterialCard } from "@/components/materials/material-card";
+import { UploadControl } from "@/components/upload/upload-control";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +46,9 @@ export const ADMIN_MATERIALS_PATH = "/dashboard/admin/materials";
 
 // Enough for the club's whole calendar in one select.
 const EVENT_OPTIONS_SIZE = 200;
+
+const presignMaterial: PresignUpload = (file) =>
+  presignAdminUpload({ purpose: AdminUploadPurpose.MATERIAL, ...file });
 
 type MaterialFormProps = {
   material?: AdminMaterialResponse;
@@ -53,6 +64,10 @@ export function MaterialForm({ material }: MaterialFormProps) {
   const [type, setType] = useState<MaterialType>(material?.type ?? MaterialType.RECORDING);
   const [url, setUrl] = useState(material?.url ?? "");
   const [eventId, setEventId] = useState(material?.eventId ?? "");
+  // Known only for a file picked in this session; a stored one is named after the material.
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const fileUpload = useFileUpload({ rule: MATERIAL_UPLOAD, presign: presignMaterial });
+  const uploadedExtension = uploadedMaterialExtension(url);
 
   const eventsQuery = useListAdminEvents({
     timeframe: EventTimeframe.ALL,
@@ -86,7 +101,8 @@ export function MaterialForm({ material }: MaterialFormProps) {
 
   const isPending = createMaterial.isPending || updateMaterial.isPending;
   const isError = createMaterial.isError || updateMaterial.isError;
-  const canSave = title.trim().length > 0 && isValidMaterialUrl(url) && !isPending;
+  const canSave =
+    title.trim().length > 0 && isValidMaterialUrl(url) && !fileUpload.isUploading && !isPending;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -156,29 +172,69 @@ export function MaterialForm({ material }: MaterialFormProps) {
             </section>
 
             <section className="space-y-5">
-              <SectionTitle>Link</SectionTitle>
-              <div className="space-y-2">
-                <Input
-                  id="material-url"
-                  type="url"
-                  aria-label="Adres materiału"
-                  value={url}
-                  maxLength={MATERIAL_URL_MAX}
-                  placeholder="https://www.youtube.com/watch?v=…"
-                  aria-invalid={urlInvalid}
-                  onChange={(changeEvent) => setUrl(changeEvent.target.value)}
-                />
-                {urlInvalid ? (
-                  <p className="text-destructive text-xs font-medium">
-                    Podaj pełny adres zaczynający się od http:// lub https://.
+              <SectionTitle>Link lub plik</SectionTitle>
+              {uploadedExtension ? (
+                <div className="border-border flex flex-wrap items-center gap-3 rounded-lg border p-4">
+                  <FileText className="text-accent size-5 shrink-0" aria-hidden="true" />
+                  <p className="text-foreground min-w-0 flex-1 text-sm font-medium break-words">
+                    {uploadedFileName ?? `Wgrany plik ${uploadedExtension.toUpperCase()}`}
                   </p>
-                ) : (
-                  <p className="text-muted-foreground text-xs">
-                    YouTube, Google Drive lub inny publiczny link. Dla YouTube miniatura pojawi się
-                    automatycznie.
-                  </p>
-                )}
-              </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setUrl("");
+                      setUploadedFileName(null);
+                    }}
+                  >
+                    <Trash2 data-icon="inline-start" aria-hidden="true" />
+                    Usuń plik
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Input
+                      id="material-url"
+                      type="url"
+                      aria-label="Adres materiału"
+                      value={url}
+                      maxLength={MATERIAL_URL_MAX}
+                      placeholder="https://www.youtube.com/watch?v=…"
+                      aria-invalid={urlInvalid}
+                      disabled={fileUpload.isUploading}
+                      onChange={(changeEvent) => setUrl(changeEvent.target.value)}
+                    />
+                    {urlInvalid ? (
+                      <p className="text-destructive text-xs font-medium">
+                        Podaj pełny adres zaczynający się od http:// lub https://.
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground text-xs">
+                        YouTube, Google Drive lub inny publiczny link. Dla YouTube miniatura pojawi
+                        się automatycznie.
+                      </p>
+                    )}
+                  </div>
+                  <UploadControl
+                    upload={fileUpload}
+                    rule={MATERIAL_UPLOAD}
+                    onUploaded={(objectKey, file) => {
+                      setUrl(objectKey);
+                      setUploadedFileName(file.name);
+                    }}
+                    hint={
+                      <p className="text-muted-foreground text-xs">
+                        Zamiast linku możesz wgrać plik do {uploadLimitLabel(MATERIAL_UPLOAD)}:{" "}
+                        {MATERIAL_UPLOAD.formats}.
+                      </p>
+                    }
+                  >
+                    <Upload data-icon="inline-start" aria-hidden="true" />
+                    Wgraj plik
+                  </UploadControl>
+                </>
+              )}
             </section>
 
             <section className="space-y-5">

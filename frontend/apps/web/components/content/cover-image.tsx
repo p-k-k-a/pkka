@@ -8,6 +8,8 @@ type CoverImageProps = {
   alt: string;
   aspect?: "video" | "photo";
   showPlaceholder?: boolean;
+  /** Serve the image as it is, for hosts the image optimizer is not configured for. */
+  unoptimized?: boolean;
   className?: string;
 };
 
@@ -16,6 +18,7 @@ export function CoverImage({
   alt,
   aspect = "video",
   showPlaceholder = false,
+  unoptimized = false,
   className,
 }: CoverImageProps) {
   const imageSrc = src ?? (showPlaceholder ? null : DEFAULT_COVER_IMAGE);
@@ -35,6 +38,7 @@ export function CoverImage({
           alt={alt}
           fill
           priority
+          unoptimized={unoptimized}
           sizes="(max-width: 768px) 100vw, 768px"
           className="object-cover"
         />
