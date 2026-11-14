@@ -94,10 +94,6 @@ class EventRegistrationEndpointTest {
         return newEvent(audience, seatLimit, Instant.now().plus(7, ChronoUnit.DAYS), null);
     }
 
-    private Event newOnlineEvent(Integer seatLimit) {
-        return newEventWithMeetingLink(EventType.ONLINE, seatLimit);
-    }
-
     private Event newEventWithMeetingLink(EventType type, Integer seatLimit) {
         Event event = newEvent(Audience.PUBLIC, seatLimit);
         event.setType(type);
@@ -622,7 +618,7 @@ class EventRegistrationEndpointTest {
 
     @Test
     void eventDetails_handTheMeetingLinkToAHeldSeat() throws Exception {
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
@@ -636,7 +632,7 @@ class EventRegistrationEndpointTest {
 
     @Test
     void eventDetails_keepTheMeetingLinkFromAnOnlineEventsWaitlist() throws Exception {
-        Event event = newOnlineEvent(1);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 1);
         registerOtherAlumn(event);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
@@ -668,7 +664,7 @@ class EventRegistrationEndpointTest {
 
     @Test
     void eventDetails_keepTheMeetingLinkFromCallersNotSignedUp() throws Exception {
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
         registerOtherAlumn(event);
 
         mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
@@ -684,7 +680,7 @@ class EventRegistrationEndpointTest {
         Tag tag = tagRepository.save(Tag.builder()
                 .name("link-" + UUID.randomUUID().toString().substring(0, 8))
                 .build());
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
         event.getTags().add(tag);
         eventRepository.save(event);
 
