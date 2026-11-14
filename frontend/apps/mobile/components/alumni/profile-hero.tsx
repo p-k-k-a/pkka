@@ -1,4 +1,4 @@
-import { InitialsAvatar } from "@/components/ui/initials-avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
@@ -20,7 +20,12 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
       <View className="gap-1">
         {profile.visibility.name && name ? (
           <View className="flex-row items-center gap-4">
-            <InitialsAvatar name={name} size="lg" />
+            {/* Only the viewer's own profile carries a picture; the public one has none. */}
+            <UserAvatar
+              imageUrl={"avatarUrl" in profile ? profile.avatarUrl : undefined}
+              name={name}
+              size="lg"
+            />
             <Text
               role="heading"
               aria-level="1"

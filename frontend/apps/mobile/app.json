@@ -54,6 +54,14 @@
       ],
       "expo-secure-store",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacja potrzebuje dostępu do zdjęć, żeby ustawić Twoje zdjęcie profilowe.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-calendar",
         {
           "calendarPermission": "Aplikacja potrzebuje dostępu do Twojego kalendarza."
