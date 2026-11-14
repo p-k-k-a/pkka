@@ -94,9 +94,9 @@ class EventRegistrationEndpointTest {
         return newEvent(audience, seatLimit, Instant.now().plus(7, ChronoUnit.DAYS), null);
     }
 
-    private Event newOnlineEvent(Integer seatLimit) {
+    private Event newEventWithMeetingLink(EventType type, Integer seatLimit) {
         Event event = newEvent(Audience.PUBLIC, seatLimit);
-        event.setType(EventType.ONLINE);
+        event.setType(type);
         event.setTransmissionUrl(MEETING_URL);
         return eventRepository.save(event);
     }
@@ -291,8 +291,19 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void registerForAnEventThatHasAlreadyStarted_isRejectedAsClosed() throws Exception {
+    void registerForAnEventUnderWay_takesASeat() throws Exception {
         Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(1, ChronoUnit.HOURS), null);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REGISTERED"));
+    }
+
+    @Test
+    void registerForAnEventThatHasEnded_isRejectedAsClosed() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(3, ChronoUnit.HOURS), null);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
@@ -496,15 +507,34 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void unregisterAfterTheEventHasStarted_isRejected() throws Exception {
-        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(1, ChronoUnit.HOURS), null);
+    void unregisterWhileTheEventIsUnderWay_promotesTheFirstPersonQueuing() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 1, Instant.now().minus(1, ChronoUnit.HOURS), null);
+        registerCaller(event);
+        String queuedKeycloakId = UUID.randomUUID().toString();
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn(queuedKeycloakId))
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+
+        mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        assertThat(statusOf(event, queuedKeycloakId)).isEqualTo(EventRegistrationStatus.REGISTERED);
+    }
+
+    @Test
+    void unregisterAfterTheEventHasEnded_isRejected() throws Exception {
+        Event event = newEvent(Audience.PUBLIC, 10, Instant.now().minus(3, ChronoUnit.HOURS), null);
         registerCaller(event);
 
         mockMvc.perform(delete("/api/events/{id}/registration", event.getId())
                         .with(alumn())
                         .with(csrf()))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.reason").value("EVENT_ALREADY_STARTED"));
+                .andExpect(jsonPath("$.reason").value("EVENT_ENDED"));
     }
 
     @Test
@@ -588,7 +618,7 @@ class EventRegistrationEndpointTest {
 
     @Test
     void eventDetails_handTheMeetingLinkToAHeldSeat() throws Exception {
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
                         .with(alumn())
@@ -601,8 +631,8 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
-    void eventDetails_keepTheMeetingLinkFromTheWaitlist() throws Exception {
-        Event event = newOnlineEvent(1);
+    void eventDetails_keepTheMeetingLinkFromAnOnlineEventsWaitlist() throws Exception {
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 1);
         registerOtherAlumn(event);
 
         mockMvc.perform(post("/api/events/{id}/registration", event.getId())
@@ -617,8 +647,24 @@ class EventRegistrationEndpointTest {
     }
 
     @Test
+    void eventDetails_handTheMeetingLinkToAHybridEventsWaitlist() throws Exception {
+        Event event = newEventWithMeetingLink(EventType.HYBRID, 1);
+        registerOtherAlumn(event);
+
+        mockMvc.perform(post("/api/events/{id}/registration", event.getId())
+                        .with(alumn())
+                        .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("WAITLISTED"));
+
+        mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.transmissionUrl").value(MEETING_URL));
+    }
+
+    @Test
     void eventDetails_keepTheMeetingLinkFromCallersNotSignedUp() throws Exception {
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
         registerOtherAlumn(event);
 
         mockMvc.perform(get("/api/public/events/{slug}", event.getSlug()).with(alumn()))
@@ -634,7 +680,7 @@ class EventRegistrationEndpointTest {
         Tag tag = tagRepository.save(Tag.builder()
                 .name("link-" + UUID.randomUUID().toString().substring(0, 8))
                 .build());
-        Event event = newOnlineEvent(10);
+        Event event = newEventWithMeetingLink(EventType.ONLINE, 10);
         event.getTags().add(tag);
         eventRepository.save(event);
 
