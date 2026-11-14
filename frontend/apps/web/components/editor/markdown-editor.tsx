@@ -5,6 +5,9 @@ import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import type { FileUpload } from "@pkka/api";
+import { uploadErrorMessage, uploadProgressLabel, type LabelledUploadRule } from "@pkka/domain";
+import { Image } from "@tiptap/extension-image";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
@@ -17,6 +20,7 @@ import {
   Heading4,
   Heading5,
   Heading6,
+  ImagePlus,
   Italic,
   List,
   ListOrdered,
@@ -24,6 +28,7 @@ import {
   TextQuote,
   Undo2,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 function ToolbarTip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
@@ -39,6 +44,11 @@ type MarkdownEditorProps = {
   onChange: (markdown: string) => void;
   className?: string;
   ariaLabel?: string;
+  /**
+   * Turns on the "insert picture" button. The upload is owned by the form, so it can hold off
+   * saving while a picture is in flight.
+   */
+  imageUpload?: { upload: FileUpload; rule: LabelledUploadRule };
 };
 
 export function MarkdownEditor({
@@ -46,17 +56,39 @@ export function MarkdownEditor({
   onChange,
   className,
   ariaLabel = "Treść wpisu",
+  imageUpload,
 }: MarkdownEditorProps) {
+  const imageInput = useRef<HTMLInputElement>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  // A picture uploaded in this session is shown from a local preview URL, because only the API
+  // can sign a URL for the stored file. What leaves the editor names it by its object key.
+  const uploadedImages = useRef(new Map<string, string>());
+
+  useEffect(() => {
+    const previews = uploadedImages.current;
+    return () => previews.forEach((_objectKey, previewUrl) => URL.revokeObjectURL(previewUrl));
+  }, []);
+
+  const toStoredMarkdown = (markdown: string) => {
+    let stored = markdown;
+    uploadedImages.current.forEach((objectKey, previewUrl) => {
+      stored = stored.replaceAll(previewUrl, objectKey);
+    });
+    return stored;
+  };
+
   const editor = useEditor({
     extensions: [
       // those 2 are not supported by portable markdown, let's not use them
       StarterKit.configure({ underline: false, strike: false }),
+      // Always on, so pictures already in the content survive an edit even without the button.
+      Image,
       Markdown,
     ],
     content: initialContent,
     contentType: "markdown",
     immediatelyRender: false,
-    onUpdate: ({ editor }) => onChange(editor.getMarkdown()),
+    onUpdate: ({ editor }) => onChange(toStoredMarkdown(editor.getMarkdown())),
     editorProps: {
       attributes: {
         class: "focus:outline-none min-h-64 px-4 py-3",
@@ -87,6 +119,23 @@ export function MarkdownEditor({
 
   if (!editor) {
     return <div className={cn("bg-muted/40 min-h-80 animate-pulse rounded-lg", className)} />;
+  }
+
+  async function insertImage(changeEvent: React.ChangeEvent<HTMLInputElement>) {
+    const file = changeEvent.target.files?.[0];
+    // Cleared so that picking the same file again still fires.
+    changeEvent.target.value = "";
+    if (!file || !imageUpload || !editor) return;
+
+    setImageError(null);
+    try {
+      const objectKey = await imageUpload.upload.upload({ blob: file });
+      const previewUrl = URL.createObjectURL(file);
+      uploadedImages.current.set(previewUrl, objectKey);
+      editor.chain().focus().setImage({ src: previewUrl, alt: "" }).run();
+    } catch (error) {
+      setImageError(uploadErrorMessage(error, imageUpload.rule));
+    }
   }
 
   const marks = [
@@ -185,6 +234,37 @@ export function MarkdownEditor({
             </Toggle>
           </ToolbarTip>
         ))}
+        {imageUpload ? (
+          <>
+            <Separator orientation="vertical" className="mx-1" />
+            <input
+              ref={imageInput}
+              type="file"
+              accept={imageUpload.rule.contentTypes.join(",")}
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden="true"
+              onChange={insertImage}
+            />
+            <ToolbarTip label="Wstaw zdjęcie">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Wstaw zdjęcie"
+                disabled={imageUpload.upload.isUploading}
+                onClick={() => imageInput.current?.click()}
+              >
+                <ImagePlus />
+              </Button>
+            </ToolbarTip>
+            {imageUpload.upload.isUploading ? (
+              <span className="text-muted-foreground text-xs tabular-nums" role="status">
+                Przesyłanie zdjęcia… {uploadProgressLabel(imageUpload.upload.progress)}
+              </span>
+            ) : null}
+          </>
+        ) : null}
         <Separator orientation="vertical" className="mx-1" />
         <ToolbarTip label="Cofnij">
           <Button
@@ -211,6 +291,14 @@ export function MarkdownEditor({
           </Button>
         </ToolbarTip>
       </div>
+      {imageError ? (
+        <p
+          role="alert"
+          className="text-destructive border-border border-b px-4 py-2 text-xs font-medium"
+        >
+          {imageError}
+        </p>
+      ) : null}
       <EditorContent editor={editor} className="rich-text space-y-5 leading-8" />
     </div>
   );
