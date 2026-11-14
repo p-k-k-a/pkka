@@ -221,13 +221,10 @@ class AdminEventEndpointTest {
                 "https://teams.microsoft.com/l/meetup-join/19%3ameeting_abc%40thread.v2/0",
                 "https://teams.live.com/meet/9876543210",
                 "https://us02web.zoom.us/j/12345678901?pwd=abc",
-                "https://univienna.zoom.us/j/12345678901",
-                "https://zoom.us/my/jan.kowalski",
-                "https://zoom.us/w/12345678901",
-                "https://zoom.com/j/12345678901",
-                "https://meet.google.com/abc-defg-hij"
+                "https://meet.google.com/abc-defg-hij",
+                "https://agh.webex.com/meet/jan.kowalski"
             })
-    void acceptsTeamsZoomAndMeetLinks(String transmissionUrl) throws Exception {
+    void acceptsHttpsMeetingLinks(String transmissionUrl) throws Exception {
         String created = createEvent(onlineEventJson(Instant.now().plus(3, ChronoUnit.DAYS), transmissionUrl));
 
         assertThat(JsonPath.<String>read(created, "$.transmissionUrl")).isEqualTo(transmissionUrl);
@@ -236,14 +233,12 @@ class AdminEventEndpointTest {
     @ParameterizedTest
     @ValueSource(
             strings = {
-                "https://meet.example.com/event",
                 "http://meet.google.com/abc-defg-hij",
-                "https://meet.google.com.example.com/abc-defg-hij",
-                "https://zoom.us.example.com/j/12345678901",
-                "https://zoom.com.example.com/j/12345678901",
+                "meet.google.com/abc-defg-hij",
+                "https://meet.google.com/abc defg",
                 "javascript:alert(1)"
             })
-    void rejectsLinksOutsideTeamsZoomAndMeet(String transmissionUrl) throws Exception {
+    void rejectsMeetingLinksThatAreNotHttps(String transmissionUrl) throws Exception {
         mockMvc.perform(post("/api/admin/events")
                         .with(JwtTestSupport.asAdmin())
                         .with(csrf())
@@ -349,6 +344,22 @@ class AdminEventEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("Minione"));
+    }
+
+    @Test
+    void listsAnEventUnderWayAsUpcomingUntilItEnds() throws Exception {
+        Instant start = Instant.now().minus(30, ChronoUnit.MINUTES);
+        Instant end = Instant.now().plus(30, ChronoUnit.MINUTES);
+        createEvent(eventJson("Trwające", start.toString(), end.toString(), "PUBLIC", "[]"));
+
+        mockMvc.perform(get("/api/admin/events").param("timeframe", "UPCOMING").with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Trwające"));
+
+        mockMvc.perform(get("/api/admin/events").param("timeframe", "PAST").with(JwtTestSupport.asAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

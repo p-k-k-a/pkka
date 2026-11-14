@@ -9,7 +9,7 @@ public class EventRegistrationConflictException extends RuntimeException {
     public enum Reason {
         ALREADY_REGISTERED,
         REGISTRATION_CLOSED,
-        EVENT_ALREADY_STARTED
+        EVENT_ENDED
     }
 
     private final Reason reason;
@@ -29,8 +29,8 @@ public class EventRegistrationConflictException extends RuntimeException {
                 Reason.REGISTRATION_CLOSED, "Registration for event %s is closed".formatted(eventId));
     }
 
-    public static EventRegistrationConflictException eventAlreadyStarted(UUID eventId) {
+    public static EventRegistrationConflictException eventEnded(UUID eventId) {
         return new EventRegistrationConflictException(
-                Reason.EVENT_ALREADY_STARTED, "Event %s has already started".formatted(eventId));
+                Reason.EVENT_ENDED, "Event %s has already ended".formatted(eventId));
     }
 }
