@@ -217,7 +217,9 @@ export function SurveyAvailabilityActions({ survey }: { survey: AdminSurveyRespo
               disabled={isPending}
               onClick={(clickEvent) => {
                 clickEvent.preventDefault();
-                submit(SurveyStatus.CLOSED, survey.endsAt, "Ankieta zakończona");
+                // The deadline moves to now, so the survey doesn't keep showing a date it
+                // no longer runs until.
+                submit(SurveyStatus.CLOSED, new Date().toISOString(), "Ankieta zakończona");
               }}
             >
               {isPending ? "Kończenie…" : "Zakończ ankietę"}

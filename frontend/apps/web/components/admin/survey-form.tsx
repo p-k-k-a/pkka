@@ -39,6 +39,7 @@ import { FieldLabel } from "@/components/admin/field-label";
 import { SurveyPreview } from "@/components/admin/survey-preview";
 import {
   SurveyQuestionEditor,
+  newDraftKey,
   newSurveyOption,
   newSurveyQuestion,
 } from "@/components/admin/survey-question-editor";
@@ -207,7 +208,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
       const source = prev[index];
       const copy = {
         ...source,
-        key: crypto.randomUUID(),
+        key: newDraftKey(),
         options: source.options.map((option) => newSurveyOption(option.label)),
       };
       return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];

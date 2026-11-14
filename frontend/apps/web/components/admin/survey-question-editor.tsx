@@ -20,13 +20,21 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+// Keys only tell rows apart on this screen, and `crypto.randomUUID` exists on https alone.
+let draftKeys = 0;
+
+export function newDraftKey() {
+  draftKeys += 1;
+  return `new-${draftKeys}`;
+}
+
 export function newSurveyOption(label = "") {
-  return { key: crypto.randomUUID(), label };
+  return { key: newDraftKey(), label };
 }
 
 export function newSurveyQuestion(): SurveyQuestionDraft {
   return {
-    key: crypto.randomUUID(),
+    key: newDraftKey(),
     content: "",
     type: QuestionType.SINGLE_CHOICE,
     options: [newSurveyOption(), newSurveyOption()],
