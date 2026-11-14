@@ -14,6 +14,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
@@ -63,6 +66,9 @@ public class StorageService implements AutoCloseable {
     private static final int MAX_CACHED_URLS = 5_000;
 
     private static final int MAX_DOWNLOAD_NAME_LENGTH = 150;
+
+    /** The target of a Markdown link or image: what follows {@code ](} up to whitespace or a parenthesis. */
+    private static final Pattern MARKDOWN_TARGET = Pattern.compile("(?<=\\]\\()[^\\s()]+");
 
     /** Set by the HTTP client itself (and forbidden to set from browser code), so not handed to callers. */
     private static final Set<String> CLIENT_MANAGED_HEADERS = Set.of("host", "content-length");
@@ -163,6 +169,40 @@ public class StorageService implements AutoCloseable {
         }
         requireConfigured();
         return value;
+    }
+
+    /**
+     * Turns Markdown an admin sent for a post into what gets stored. Pictures placed in the content point at
+     * signed download URLs while it is being edited (that is what {@link #resolveContent} hands out); each is
+     * reduced to its object key here, so an expiring link never lands in the database. Everything else, other
+     * links included, is kept as it is.
+     */
+    public String toStoredContent(String markdown) {
+        return replaceMarkdownTargets(markdown, target -> {
+            String key = isHttpUrl(target) ? keyFromOwnUrl(target) : null;
+            return key != null && UploadCategory.POST_IMAGE.isValidKey(key) ? key : target;
+        });
+    }
+
+    /**
+     * What clients get to see for stored post content: every picture uploaded for a post (stored as its object
+     * key) becomes a presigned GET URL. Keys of other kinds of files are not signed, so a post cannot be used
+     * to hand out, say, a material.
+     */
+    public String resolveContent(String markdown) {
+        return replaceMarkdownTargets(
+                markdown,
+                target -> UploadCategory.POST_IMAGE.isValidKey(target) ? presignDownload(target, null) : target);
+    }
+
+    private String replaceMarkdownTargets(String markdown, UnaryOperator<String> replacement) {
+        // Without storage there is nothing to sign and no bucket to recognise, so the content stays as it is.
+        if (markdown == null || !isConfigured()) {
+            return markdown;
+        }
+        return MARKDOWN_TARGET
+                .matcher(markdown)
+                .replaceAll(match -> Matcher.quoteReplacement(replacement.apply(match.group())));
     }
 
     public void delete(String key) {

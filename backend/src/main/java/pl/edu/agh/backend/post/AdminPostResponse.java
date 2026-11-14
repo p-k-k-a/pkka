@@ -9,19 +9,32 @@ public record AdminPostResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String content,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Markdown; uploaded pictures point at short-lived signed URLs, which may be "
+                        + "sent back unchanged on update")
+        String content,
+
+        @Schema(
+                description = "External URL, or a short-lived signed URL of an uploaded cover; sending it "
+                        + "back unchanged on update is fine")
+        String coverImageUrl,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
         String authorDisplayName,
         Instant publishedAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminPostResponse from(Post post) {
+    /** {@code content} and {@code coverImageUrl} are passed in already resolved to what a client can load. */
+    static AdminPostResponse from(Post post, String content, String coverImageUrl) {
         return new AdminPostResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
-                post.getContent(),
+                content,
+                coverImageUrl,
                 post.getStatus(),
                 post.getAuthor() == null ? null : post.getAuthor().getDisplayName(),
                 post.getPublishedAt(),

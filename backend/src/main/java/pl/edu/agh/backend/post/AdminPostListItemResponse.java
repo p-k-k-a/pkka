@@ -9,17 +9,22 @@ public record AdminPostListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+
+        @Schema(description = "External URL, or a short-lived signed URL of an uploaded cover; null without a cover")
+        String coverImageUrl,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,
         String authorDisplayName,
         Instant publishedAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminPostListItemResponse from(Post post) {
+    static AdminPostListItemResponse from(Post post, String coverImageUrl) {
         return new AdminPostListItemResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
+                coverImageUrl,
                 post.getStatus(),
                 post.getAuthor() == null ? null : post.getAuthor().getDisplayName(),
                 post.getPublishedAt(),

@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +28,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import pl.edu.agh.backend.material.MaterialRepository;
+import pl.edu.agh.backend.post.PostRepository;
 import pl.edu.agh.backend.support.JwtTestSupport;
 import pl.edu.agh.backend.support.TestSecurityConfig;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
+import tools.jackson.databind.json.JsonMapper;
 
 /** Presign endpoints end to end; the presigner signs locally, so no R2 is contacted. */
 @SpringBootTest(
@@ -60,6 +63,9 @@ class StorageEndpointTest {
 
     @Autowired
     private MaterialRepository materialRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Test
     void adminGetsAPresignedUrlForAMaterial() throws Exception {
@@ -224,6 +230,83 @@ class StorageEndpointTest {
     }
 
     @Test
+    void postCoverAndPicturesAreStoredAsKeysAndServedAsSignedUrls() throws Exception {
+        String coverKey = presignAdminUpload("POST_COVER", "image/webp");
+        String imageKey = presignAdminUpload("POST_IMAGE", "image/png");
+        String signedCoverPrefix = "https://acct.eu.r2.cloudflarestorage.com/pkka-files/" + coverKey + "?";
+        String signedImagePrefix = "](https://acct.eu.r2.cloudflarestorage.com/pkka-files/" + imageKey + "?";
+
+        String created = mockMvc.perform(post("/api/admin/posts")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Relacja\",\"status\":\"PUBLISHED\",\"coverImageUrl\":\"" + coverKey
+                                + "\",\"content\":\"Zdjęcie: ![sala](" + imageKey + ")\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.coverImageUrl", startsWith(signedCoverPrefix)))
+                .andExpect(jsonPath("$.content", containsString(signedImagePrefix)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID id = UUID.fromString(JsonPath.read(created, "$.id"));
+        String slug = JsonPath.read(created, "$.slug");
+        String signedCover = JsonPath.read(created, "$.coverImageUrl");
+        String signedContent = JsonPath.read(created, "$.content");
+        assertThat(postRepository.findById(id).orElseThrow().getCoverImageUrl()).isEqualTo(coverKey);
+        assertThat(postRepository.findById(id).orElseThrow().getContent())
+                .isEqualTo("Zdjęcie: ![sala](" + imageKey + ")");
+
+        // the editor echoes signed URLs back; none of them may end up in the database
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper()
+                                .writeValueAsString(Map.of(
+                                        "title",
+                                        "Relacja",
+                                        "status",
+                                        "PUBLISHED",
+                                        "coverImageUrl",
+                                        signedCover,
+                                        "content",
+                                        signedContent))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl", startsWith(signedCoverPrefix)));
+        assertThat(postRepository.findById(id).orElseThrow().getCoverImageUrl()).isEqualTo(coverKey);
+        assertThat(postRepository.findById(id).orElseThrow().getContent())
+                .isEqualTo("Zdjęcie: ![sala](" + imageKey + ")");
+
+        mockMvc.perform(get("/api/public/posts/{slug}", slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl", startsWith(signedCoverPrefix)))
+                .andExpect(jsonPath("$.content", containsString(signedImagePrefix)));
+        mockMvc.perform(get("/api/public/posts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.content[?(@.slug=='" + slug + "')].coverImageUrl", hasItem(startsWith(signedCoverPrefix))));
+        mockMvc.perform(get("/api/admin/posts").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath(
+                        "$.content[?(@.id=='" + id + "')].coverImageUrl", hasItem(startsWith(signedCoverPrefix))));
+    }
+
+    @Test
+    void postCoverRejectsAnotherPurposesKey() throws Exception {
+        String eventCoverKey = presignAdminUpload("EVENT_COVER", "image/png");
+        String imageKey = presignAdminUpload("POST_IMAGE", "image/png");
+
+        for (String cover : new String[] {eventCoverKey, imageKey, "covers/posts/../x.png"}) {
+            mockMvc.perform(post("/api/admin/posts")
+                            .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                            .with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"title\":\"X\",\"content\":\"y\",\"coverImageUrl\":\"" + cover + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
     void adminCannotStoreAnotherPurposesKeyOrArbitraryText() throws Exception {
         for (String url : new String[] {"covers/events/" + UUID.randomUUID() + ".png", "materials/../etc/passwd"}) {
             mockMvc.perform(post("/api/admin/materials")
@@ -262,6 +345,20 @@ class StorageEndpointTest {
                                 {"contentType":"application/pdf","sizeBytes":4096}
                                 """))
                 .andExpect(status().isUnsupportedMediaType());
+    }
+
+    private String presignAdminUpload(String purpose, String contentType) throws Exception {
+        String presigned = mockMvc.perform(post("/api/admin/files/presign")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"purpose\":\"" + purpose + "\",\"contentType\":\"" + contentType
+                                + "\",\"sizeBytes\":2048}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(presigned, "$.objectKey");
     }
 
     private User savedUser() {

@@ -24,9 +24,9 @@ public class AdminFileController {
             summary = "Get a presigned URL to upload a file straight to object storage",
             description =
                     "The backend does not receive the file. PUT it to `uploadUrl` with the returned headers, then "
-                            + "send `objectKey` where the file is attached (a material's `url` or an event's "
-                            + "`coverImageUrl`). The bucket is private: read endpoints return a short-lived signed "
-                            + "URL for the stored key.")
+                            + "send `objectKey` where the file is attached (a material's `url`, an event's or "
+                            + "a post's `coverImageUrl`, or an image target in a post's Markdown `content`). The "
+                            + "bucket is private: read endpoints return a short-lived signed URL for the stored key.")
     @ApiResponse(responseCode = "200", description = "Upload URL issued")
     @ApiResponse(responseCode = "413", description = "File larger than the limit for this purpose", content = @Content)
     @ApiResponse(responseCode = "415", description = "Content type not allowed for this purpose", content = @Content)
