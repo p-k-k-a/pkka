@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "img.youtube.com",
       },
+      {
+        // Files uploaded to object storage (Cloudflare R2), served through signed URLs.
+        // Keep in step with isOptimizableImageUrl in lib/content-images.ts.
+        protocol: "https",
+        hostname: "**.r2.cloudflarestorage.com",
+      },
     ],
   },
 };

@@ -38,13 +38,27 @@ function parseUrl(url: string) {
   }
 }
 
-// The link half of the backend's @Pattern on MaterialRequest.url. `new URL()` would be
-// laxer and let the form save a link the API rejects.
-const MATERIAL_URL_PATTERN = /^https?:\/\/.+/i;
+// The backend's @Pattern on MaterialRequest.url: a link, or the object key of an uploaded
+// file. `new URL()` would be laxer and let the form save a link the API rejects.
+const MATERIAL_URL_PATTERN = /^(https?:\/\/|materials\/).+/i;
 
 export function isValidMaterialUrl(url: string) {
   const trimmed = url.trim();
   return trimmed.length <= MATERIAL_URL_MAX && MATERIAL_URL_PATTERN.test(trimmed);
+}
+
+// The shape of the keys the backend issues for materials: materials/<uuid>.<ext>.
+const UPLOADED_MATERIAL_PATH = /(?:^|\/)materials\/[0-9a-f-]{36}\.([a-z0-9]+)$/;
+
+/**
+ * The file extension when the material is a file uploaded to our storage, null for a link.
+ * An upload shows up either as its object key (just uploaded, not saved yet) or as the
+ * signed download URL the API returns for it.
+ */
+export function uploadedMaterialExtension(url: string) {
+  const trimmed = url.trim();
+  const path = /^https?:\/\//i.test(trimmed) ? parseUrl(trimmed)?.pathname : trimmed;
+  return path?.match(UPLOADED_MATERIAL_PATH)?.[1] ?? null;
 }
 
 const KNOWN_HOSTS: { suffix: string; label: string }[] = [

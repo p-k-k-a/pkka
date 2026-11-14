@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, BellRing } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  AdminUploadPurpose,
   Audience,
   EventType,
   getGetAdminEventBySlugQueryKey,
@@ -16,12 +17,16 @@ import {
   getListTagsQueryKey,
   getGetEventStatisticsQueryKey,
   getListEventRegistrationsQueryKey,
+  presignAdminUpload,
   useCreateAdminEvent,
+  useFileUpload,
   useListTags,
   useUpdateAdminEvent,
   type AdminEventResponse,
   type EventRequest,
+  type PresignUpload,
 } from "@pkka/api";
+import { CoverUploadField, type CoverValue } from "@/components/admin/cover-upload-field";
 import { FieldLabel } from "@/components/admin/field-label";
 import { SectionTitle } from "@/components/content/section-title";
 import { TagPicker } from "@/components/profile/tag-picker";
@@ -33,6 +38,7 @@ import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { eventDetailHref } from "@/lib/event-paths";
 import {
   AUDIENCE_OPTIONS,
+  EVENT_COVER_UPLOAD,
   EVENT_TYPE_OPTIONS,
   audienceLabel,
   fromDatetimeLocalValue,
@@ -40,6 +46,9 @@ import {
 } from "@pkka/domain";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
+
+const presignCover: PresignUpload = (file) =>
+  presignAdminUpload({ purpose: AdminUploadPurpose.EVENT_COVER, ...file });
 
 type EventFormProps = {
   event?: AdminEventResponse;
@@ -91,6 +100,13 @@ export function EventForm({ event }: EventFormProps) {
     event?.reminderLeadTimeMinutes != null ? String(event.reminderLeadTimeMinutes) : "",
   );
 
+  // The API returns the stored cover as a signed URL and takes it back unchanged on save.
+  const [cover, setCover] = useState<CoverValue>({
+    reference: event?.coverImageUrl,
+    previewUrl: event?.coverImageUrl,
+  });
+  const coverUpload = useFileUpload({ rule: EVENT_COVER_UPLOAD, presign: presignCover });
+
   const { data: tagsResponse } = useListTags();
   const catalogTags = tagsResponse?.data ?? [];
 
@@ -131,6 +147,7 @@ export function EventForm({ event }: EventFormProps) {
     periodValid &&
     registrationWindowValid &&
     !seatLimitInvalid &&
+    !coverUpload.isUploading &&
     !isPending;
 
   const payload = useMemo<EventRequest>(
@@ -145,13 +162,13 @@ export function EventForm({ event }: EventFormProps) {
       seatLimit: parseSeatLimit(seatLimit),
       registrationClosesAt: registrationClosesAtIso,
       audience,
-      coverImageUrl: event?.coverImageUrl,
+      coverImageUrl: cover.reference,
       reminderLeadTimeMinutes: reminderLeadTime === "" ? undefined : Number(reminderLeadTime),
       tags: selectedTags,
     }),
     [
       audience,
-      event,
+      cover.reference,
       endsAtIso,
       fullDescription,
       location,
@@ -256,6 +273,16 @@ export function EventForm({ event }: EventFormProps) {
                 initialContent={event?.fullDescription ?? ""}
                 onChange={setFullDescription}
                 ariaLabel="Opis wydarzenia"
+              />
+            </section>
+
+            <section className="space-y-5">
+              <SectionTitle>Okładka</SectionTitle>
+              <CoverUploadField
+                value={cover}
+                onChange={setCover}
+                upload={coverUpload}
+                rule={EVENT_COVER_UPLOAD}
               />
             </section>
 
