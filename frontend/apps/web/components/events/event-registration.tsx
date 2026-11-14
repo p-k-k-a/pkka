@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ArrowUpRight, CalendarPlus, CircleCheck, Download, Hourglass, Video } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
@@ -41,6 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { eventDetailHref } from "@/lib/event-paths";
 import { buildEventIcs, downloadIcs } from "@/lib/ics";
+import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
 
 function seatsHint(event: EventDetailsResponse) {
   const seats = formatSeatsRemaining(event.seatLimit, event.seatsTaken);
@@ -50,7 +52,8 @@ function seatsHint(event: EventDetailsResponse) {
 }
 
 export function EventRegistration({ event }: { event: EventDetailsResponse }) {
-  const { isAuthenticated, isLoading: isAuthLoading, loginWithKeycloak } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -112,19 +115,25 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
     }
   };
 
+  const login = () => router.push("/login");
+
   // A toast rather than an inline line: when the event has just ended, the refetch
   // unmounts this component and an inline error would vanish with it.
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
     toast.error(eventRegistrationErrorMessage(error, action), {
-      action: sessionExpired ? { label: "Zaloguj się", onClick: loginWithKeycloak } : undefined,
+      action: sessionExpired ? { label: "Zaloguj się", onClick: login } : undefined,
     });
   };
 
   const onJoin = async () => {
     setPending(true);
     try {
-      const { data: registration } = await register.mutateAsync({ eventId: event.id });
+      const { data: registration } = await register.mutateAsync({
+        eventId: event.id,
+        params: { source: savedSignUpSource(event.slug) },
+      });
+      forgetSignUpSource(event.slug);
       if (registration.status === EventRegistrationStatus.REGISTERED) {
         toast.success("Zapisano Cię na wydarzenie.");
       } else {
@@ -158,7 +167,7 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
 
   if (!isAuthenticated) {
     return (
-      <Button size="xl" onClick={loginWithKeycloak}>
+      <Button size="xl" onClick={login}>
         Zapisz się
       </Button>
     );

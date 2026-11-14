@@ -3,11 +3,16 @@ import { EventParticipationFooter } from "@/components/events/event-participatio
 import { DetailHeader } from "@/components/ui/detail-header";
 import { Text } from "@/components/ui/text";
 import { useGetEventBySlug } from "@pkka/api";
+import { rememberSignUpSource } from "@/lib/signup-source";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 export default function EventDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, ref } = useLocalSearchParams<{ slug: string; ref?: string }>();
+
+  useEffect(() => rememberSignUpSource(slug, ref), [slug, ref]);
+
   const { data, isError, isPending } = useGetEventBySlug(slug ?? "", {
     query: { enabled: !!slug },
   });

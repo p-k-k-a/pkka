@@ -21,7 +21,18 @@
       "predictiveBackGestureEnabled": false,
       "userInterfaceStyle": "automatic",
       "package": "com.pkka.app",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "pkka.me", "pathPrefix": "/events/" },
+            { "scheme": "https", "host": "pkka.me", "pathPrefix": "/announcements/" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",

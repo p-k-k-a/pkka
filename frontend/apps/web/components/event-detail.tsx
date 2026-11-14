@@ -12,6 +12,8 @@ import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 import { eventTypeBadgeClass } from "@/lib/event-type-badge";
 import { cn } from "@/lib/utils";
+import { captureSignUpSource } from "@/lib/signup-source";
+import { useEffect } from "react";
 
 type EventDetailProps = {
   slug: string;
@@ -19,6 +21,7 @@ type EventDetailProps = {
 };
 
 export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
+  useEffect(() => captureSignUpSource(slug), [slug]);
   const { data: response, isLoading, isError, isFetching } = useGetEventBySlug(slug);
   const event = response?.data;
   const archived = isEventPast(event?.endsAt);

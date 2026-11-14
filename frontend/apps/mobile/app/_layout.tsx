@@ -16,6 +16,8 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import "react-native-reanimated";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
+export const unstable_settings = { anchor: "(tabs)" };
+
 const queryClient = createQueryClient();
 refreshRolesOnApproval(queryClient);
 configureNotificationHandler();

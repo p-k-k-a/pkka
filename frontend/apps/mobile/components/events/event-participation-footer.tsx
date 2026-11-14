@@ -2,6 +2,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
+import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
 import {
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
@@ -40,7 +41,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onJoin = async () => {
     setError(null);
     try {
-      const response = await register.mutateAsync({ eventId: event.id });
+      const response = await register.mutateAsync({
+        eventId: event.id,
+        params: { source: savedSignUpSource(event.slug) },
+      });
+      forgetSignUpSource(event.slug);
       await refresh();
       if (response.status === 201 && response.data.status === EventRegistrationStatus.REGISTERED) {
         setSheet("calendar");
