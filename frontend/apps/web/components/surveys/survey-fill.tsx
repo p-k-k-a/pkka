@@ -229,8 +229,7 @@ function SurveyFillForm({ survey, onSubmitted, onProblem }: SurveyFillFormProps)
               ) : null}
               <p className="bg-muted text-muted-foreground rounded-lg px-4 py-3 text-sm leading-relaxed">
                 {formatQuestionCount(questions.length)}, wszystkie obowiązkowe. Ankietę możesz
-                wysłać raz, do {formatDateTime(survey.endsAt)}. Administratorzy widzą odpowiedzi
-                zbiorczo, bez nazwisk.
+                wysłać raz, do {formatDateTime(survey.endsAt)}.
               </p>
             </header>
 
