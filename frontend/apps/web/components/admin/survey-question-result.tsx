@@ -67,38 +67,28 @@ export function SurveyQuestionResult({
           </div>
         )
       ) : (
-        <div className="space-y-4">
-          <ul className="space-y-4">
-            {(result.optionCounts ?? []).map((option) => {
-              const percent = submissionShare(option.count, submissionCount);
-              return (
-                <li key={option.optionId} className="space-y-2">
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="text-foreground min-w-0 break-words">{option.label}</span>
-                    <span className="text-foreground shrink-0 font-semibold tabular-nums">
-                      {option.count}{" "}
-                      <span className="text-muted-foreground font-normal">({percent}%)</span>
-                    </span>
-                  </div>
+        <ul className="space-y-4">
+          {(result.optionCounts ?? []).map((option) => {
+            const percent = submissionShare(option.count, submissionCount);
+            return (
+              <li key={option.optionId} className="space-y-2">
+                <div className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="text-foreground min-w-0 break-words">{option.label}</span>
+                  <span className="text-foreground shrink-0 font-semibold tabular-nums">
+                    {option.count}{" "}
+                    <span className="text-muted-foreground font-normal">({percent}%)</span>
+                  </span>
+                </div>
+                <div className="bg-chart-1/15 h-2 w-full overflow-hidden rounded-full" aria-hidden>
                   <div
-                    className="bg-chart-1/15 h-2 w-full overflow-hidden rounded-full"
-                    aria-hidden
-                  >
-                    <div
-                      className="bg-chart-1 h-full rounded-full"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-          {result.type === QuestionType.MULTI_CHOICE ? (
-            <p className="text-muted-foreground text-xs">
-              Można było zaznaczyć kilka odpowiedzi, więc procenty nie sumują się do 100.
-            </p>
-          ) : null}
-        </div>
+                    className="bg-chart-1 h-full rounded-full"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </Card>
   );
