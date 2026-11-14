@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useGetSurvey } from "@pkka/api";
+import { useGetAdminSurvey } from "@pkka/api";
 import { isAdmin } from "@pkka/domain";
 import { SurveyForm } from "@/components/admin/survey-form";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export function SurveyEditor({ id }: SurveyEditorProps) {
     data: response,
     isError,
     isFetchedAfterMount,
-  } = useGetSurvey(id ?? "", {
+  } = useGetAdminSurvey(id ?? "", {
     query: { enabled: admin && id !== undefined, refetchOnMount: "always", staleTime: Infinity },
   });
 

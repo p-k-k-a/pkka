@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  getListSurveysQueryKey,
-  useDeleteSurvey,
-  useListSurveys,
+  getListAdminSurveysQueryKey,
+  useDeleteAdminSurvey,
+  useListAdminSurveys,
   type AdminSurveyListItemResponse,
 } from "@pkka/api";
 import {
@@ -66,19 +66,19 @@ export function AdminSurveysList() {
     data: response,
     isLoading: isListLoading,
     isError,
-  } = useListSurveys(
+  } = useListAdminSurveys(
     { page, size: SURVEYS_PAGE_SIZE },
     { query: { enabled: admin, placeholderData: (previous) => previous } },
   );
 
-  const deleteSurvey = useDeleteSurvey({
+  const deleteSurvey = useDeleteAdminSurvey({
     mutation: {
       onSuccess: () => {
         // Removing the last card on a page would leave an empty page with no pager.
         if (response?.status === 200 && response.data.content?.length === 1) {
           setPage((prev) => Math.max(0, prev - 1));
         }
-        queryClient.invalidateQueries({ queryKey: getListSurveysQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getListAdminSurveysQueryKey() });
         setSurveyToDelete(null);
       },
     },

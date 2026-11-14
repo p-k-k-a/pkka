@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   SurveyStatus,
-  getGetResultsQueryKey,
-  getGetSurveyQueryKey,
-  getListSurveysQueryKey,
+  getGetAdminSurveyResultsQueryKey,
+  getGetAdminSurveyQueryKey,
+  getListAdminSurveysQueryKey,
   useUpdateSurveyAvailability,
   type AdminSurveyResponse,
 } from "@pkka/api";
@@ -84,9 +84,9 @@ export function SurveyAvailabilityActions({ survey }: { survey: AdminSurveyRespo
       { id: survey.id, data: { status, endsAt: nextEndsAt } },
       {
         onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListSurveysQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getGetSurveyQueryKey(survey.id) });
-          queryClient.invalidateQueries({ queryKey: getGetResultsQueryKey(survey.id) });
+          queryClient.invalidateQueries({ queryKey: getListAdminSurveysQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAdminSurveyQueryKey(survey.id) });
+          queryClient.invalidateQueries({ queryKey: getGetAdminSurveyResultsQueryKey(survey.id) });
           setDialog(null);
           toast.success(done);
         },

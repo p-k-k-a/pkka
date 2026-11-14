@@ -32,7 +32,7 @@ public class AdminSurveyController {
 
     @GetMapping
     @Operation(summary = "List all surveys")
-    public Page<AdminSurveyListItemResponse> listSurveys(
+    public Page<AdminSurveyListItemResponse> listAdminSurveys(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return adminSurveyService.list(pageable);
     }
@@ -41,7 +41,7 @@ public class AdminSurveyController {
     @Operation(summary = "Get a single survey with questions")
     @ApiResponse(responseCode = "200", description = "Survey details")
     @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    public AdminSurveyResponse getSurvey(@PathVariable UUID id) {
+    public AdminSurveyResponse getAdminSurvey(@PathVariable UUID id) {
         return adminSurveyService.get(id);
     }
 
@@ -49,7 +49,7 @@ public class AdminSurveyController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a survey with questions")
     @ApiResponse(responseCode = "201", description = "Survey created")
-    public AdminSurveyResponse createSurvey(@Valid @RequestBody CreateSurveyRequest request) {
+    public AdminSurveyResponse createAdminSurvey(@Valid @RequestBody CreateSurveyRequest request) {
         return adminSurveyService.create(request);
     }
 
@@ -57,7 +57,8 @@ public class AdminSurveyController {
     @Operation(summary = "Update a survey and replace its questions")
     @ApiResponse(responseCode = "200", description = "Survey updated")
     @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    public AdminSurveyResponse updateSurvey(@PathVariable UUID id, @Valid @RequestBody UpdateSurveyRequest request) {
+    public AdminSurveyResponse updateAdminSurvey(
+            @PathVariable UUID id, @Valid @RequestBody UpdateSurveyRequest request) {
         return adminSurveyService.update(id, request);
     }
 
@@ -81,7 +82,7 @@ public class AdminSurveyController {
     @Operation(summary = "Delete a survey permanently")
     @ApiResponse(responseCode = "204", description = "Survey deleted")
     @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    public void deleteSurvey(@PathVariable UUID id) {
+    public void deleteAdminSurvey(@PathVariable UUID id) {
         adminSurveyService.delete(id);
     }
 
@@ -89,7 +90,7 @@ public class AdminSurveyController {
     @Operation(summary = "Get aggregated survey results")
     @ApiResponse(responseCode = "200", description = "Survey results")
     @ApiResponse(responseCode = "404", description = "Survey not found", content = @Content)
-    public SurveyResultsResponse getResults(@PathVariable UUID id) {
+    public SurveyResultsResponse getAdminSurveyResults(@PathVariable UUID id) {
         return adminSurveyService.getResults(id);
     }
 }

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { useGetResults, useGetSurvey, type ApiError } from "@pkka/api";
+import { useGetAdminSurveyResults, useGetAdminSurvey, type ApiError } from "@pkka/api";
 import { formatDateTime, isAdmin, surveyPhase, type SurveyPhase } from "@pkka/domain";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { SurveyAvailabilityActions } from "@/components/admin/survey-availability-actions";
@@ -32,8 +32,8 @@ export function SurveyResults({ id }: { id: string }) {
     }
   }, [admin, isLoading, router]);
 
-  const surveyQuery = useGetSurvey(id, { query: { enabled: admin } });
-  const resultsQuery = useGetResults(id, { query: { enabled: admin } });
+  const surveyQuery = useGetAdminSurvey(id, { query: { enabled: admin } });
+  const resultsQuery = useGetAdminSurveyResults(id, { query: { enabled: admin } });
 
   if (isLoading || !admin || surveyQuery.isLoading) {
     return (

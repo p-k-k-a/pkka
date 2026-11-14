@@ -9,10 +9,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   SurveyStatus,
-  getGetSurveyQueryKey,
-  getListSurveysQueryKey,
-  useCreateSurvey,
-  useUpdateSurvey,
+  getGetAdminSurveyQueryKey,
+  getListAdminSurveysQueryKey,
+  useCreateAdminSurvey,
+  useUpdateAdminSurvey,
   type AdminSurveyResponse,
 } from "@pkka/api";
 import {
@@ -105,8 +105,8 @@ export function SurveyForm({ survey }: SurveyFormProps) {
   const [confirmingPublish, setConfirmingPublish] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<SurveyStatus | null>(null);
 
-  const createSurvey = useCreateSurvey();
-  const updateSurvey = useUpdateSurvey();
+  const createSurvey = useCreateAdminSurvey();
+  const updateSurvey = useUpdateAdminSurvey();
 
   const isEditing = surveyId !== undefined;
   const isPublished = savedStatus === SurveyStatus.ACTIVE;
@@ -156,8 +156,8 @@ export function SurveyForm({ survey }: SurveyFormProps) {
     setPendingStatus(status);
 
     const onSuccess = (savedId: string) => {
-      queryClient.invalidateQueries({ queryKey: getListSurveysQueryKey() });
-      queryClient.invalidateQueries({ queryKey: getGetSurveyQueryKey(savedId) });
+      queryClient.invalidateQueries({ queryKey: getListAdminSurveysQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetAdminSurveyQueryKey(savedId) });
       setPendingStatus(null);
       setConfirmingPublish(false);
       if (status === SurveyStatus.ACTIVE) {
