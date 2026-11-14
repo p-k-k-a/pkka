@@ -9,6 +9,12 @@ const SIZES = {
   xl: { box: "size-36", text: "text-4xl" },
 };
 
+export const AVATAR_BOX_SIZES = {
+  md: SIZES.md.box,
+  lg: SIZES.lg.box,
+  xl: SIZES.xl.box,
+};
+
 type InitialsAvatarProps = {
   name: string;
   size?: keyof typeof SIZES;
