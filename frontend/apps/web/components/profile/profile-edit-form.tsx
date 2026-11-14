@@ -10,6 +10,8 @@ import {
   ApiError,
   getGetMyProfileQueryKey,
   getListAlumniTagsQueryKey,
+  presignAvatar,
+  useFileUpload,
   useGetMyProfile,
   useListAlumniTags,
   useUpdateMyProfile,
@@ -18,7 +20,7 @@ import {
   type UpdateProfileRequest,
   type AlumniTagResponse,
 } from "@pkka/api";
-import { AvatarPicker } from "@/components/profile/avatar-picker";
+import { AvatarPicker, type AvatarChange } from "@/components/profile/avatar-picker";
 import { DetailList, DetailRow } from "@/components/profile/detail-list";
 import { SectionHeading } from "@/components/profile/section-heading";
 import { TagPicker } from "@/components/profile/tag-picker";
@@ -35,6 +37,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth-context";
 import {
+  AVATAR_UPLOAD,
   canonicalizeProfileUrl,
   githubUrlError,
   linkedinUrlError,
@@ -102,6 +105,8 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
   const [showEmail, setShowEmail] = useState(profile.visibility.email);
   const [showDiscord, setShowDiscord] = useState(profile.visibility.discord);
   const [showPhone, setShowPhone] = useState(profile.visibility.phone);
+  const [avatarChange, setAvatarChange] = useState<AvatarChange>({ kind: "unchanged" });
+  const avatarUpload = useFileUpload({ rule: AVATAR_UPLOAD, presign: presignAvatar });
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<ValidatedField, string>>>({});
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -110,6 +115,12 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
 
   const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
   const isSaving = updateProfile.isPending || updateTags.isPending;
+  const avatarUrl =
+    avatarChange.kind === "unchanged"
+      ? profile.avatarUrl
+      : avatarChange.kind === "replaced"
+        ? avatarChange.previewUrl
+        : undefined;
   const alumnSinceYear = profile.alumnSince ? profile.alumnSince.slice(0, 4) : null;
   const hasEducation = Boolean(profile.fieldOfStudy || profile.graduationYear || alumnSinceYear);
 
@@ -124,6 +135,7 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
     tagNames.some((name) => !assignedTagKeys.includes(name.toLowerCase()));
   const isDirty =
     tagsChanged ||
+    avatarChange.kind !== "unchanged" ||
     currentPosition.trim() !== (profile.currentPosition ?? "") ||
     company.trim() !== (profile.company ?? "") ||
     bio.trim() !== (profile.bio ?? "") ||
@@ -165,6 +177,9 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
       phoneNumber: phoneNumber.trim(),
       willingToMentor,
       visibility: { name: showName, email: showEmail, discord: showDiscord, phone: showPhone },
+      // Left out when untouched, which keeps the current picture; a blank key removes it.
+      ...(avatarChange.kind === "replaced" ? { avatarKey: avatarChange.objectKey } : {}),
+      ...(avatarChange.kind === "removed" ? { avatarKey: "" } : {}),
     };
 
     try {
@@ -215,7 +230,11 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               Edytuj profil
             </h1>
           </div>
-          <Button type="submit" size="xl" disabled={isSaving || !isDirty}>
+          <Button
+            type="submit"
+            size="xl"
+            disabled={isSaving || avatarUpload.isUploading || !isDirty}
+          >
             {isSaving ? "Zapisywanie…" : "Zapisz zmiany"}
           </Button>
         </div>
@@ -232,7 +251,13 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
           <div className="space-y-12">
             <section className="space-y-5">
               <SectionHeading>Zdjęcie profilowe</SectionHeading>
-              <AvatarPicker fallback={fullName} />
+              <AvatarPicker
+                fallback={fullName}
+                src={avatarUrl}
+                upload={avatarUpload}
+                onChange={setAvatarChange}
+                disabled={isSaving}
+              />
             </section>
 
             <section className="space-y-5">

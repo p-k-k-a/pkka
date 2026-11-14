@@ -19,7 +19,8 @@ export function Avatar({
   className,
   ...props
 }: AvatarProps) {
-  const [hasError, setHasError] = React.useState(false);
+  // Remembered per URL, so a new picture gets its own chance after an old one failed to load.
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
 
   const sizeClasses = {
     sm: "size-8 text-xs font-semibold",
@@ -28,7 +29,7 @@ export function Avatar({
     xl: "size-16 text-lg font-semibold",
   };
 
-  const showFallback = !src || hasError;
+  const showFallback = !src || failedSrc === src;
 
   return (
     <div
@@ -46,7 +47,7 @@ export function Avatar({
         <img
           src={src}
           alt={alt}
-          onError={() => setHasError(true)}
+          onError={() => setFailedSrc(src)}
           className="aspect-square h-full w-full object-cover"
         />
       ) : (
