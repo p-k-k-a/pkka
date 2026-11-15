@@ -29,9 +29,6 @@ class TopicGroupDiscordLinker {
     }
 
     private void link(TopicGroup group) {
-        if (group.getDiscordRoleId() != null && group.getDiscordChannelId() != null) {
-            return;
-        }
         if (!discordGroupChannels.isConfigured()) {
             log.warn("Discord is not set up for topic groups, {} stays without a role and channel", group.getSlug());
             return;
@@ -43,16 +40,18 @@ class TopicGroupDiscordLinker {
             if (roleId.isEmpty()) {
                 return;
             }
+            topicGroupRepository.setDiscordRoleId(group.getId(), roleId.get());
             group.setDiscordRoleId(roleId.get());
-            group = topicGroupRepository.save(group);
         }
-        Optional<String> channelId = discordGroupChannels.createChannel(group.getSlug(), group.getDiscordRoleId());
-        if (channelId.isEmpty()) {
-            return;
+        if (group.getDiscordChannelId() == null) {
+            Optional<String> channelId = discordGroupChannels.createChannel(group.getSlug(), group.getDiscordRoleId());
+            if (channelId.isEmpty()) {
+                return;
+            }
+            topicGroupRepository.setDiscordChannelId(group.getId(), channelId.get());
+            group.setDiscordChannelId(channelId.get());
         }
-        group.setDiscordChannelId(channelId.get());
-        topicGroupRepository.save(group);
-        coordinatorDiscordId.ifPresent(
-                discordId -> discordGroupChannels.allowManageMessages(channelId.get(), discordId));
+        String channelId = group.getDiscordChannelId();
+        coordinatorDiscordId.ifPresent(discordId -> discordGroupChannels.allowManageMessages(channelId, discordId));
     }
 }

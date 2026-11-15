@@ -144,7 +144,7 @@ class TopicGroupDiscordEndpointTest {
     }
 
     @Test
-    void retryingALinkedGroupSendsNothingToDiscord() throws Exception {
+    void retryingALinkedGroupOnlyRepeatsTheCoordinatorsPermission() throws Exception {
         TopicGroup group = topicGroupRepository.save(TopicGroup.builder()
                 .name("Grupa AI")
                 .slug("grupa-ai")
@@ -159,7 +159,25 @@ class TopicGroupDiscordEndpointTest {
 
         verify(discordGroupChannels, never()).createRole(any());
         verify(discordGroupChannels, never()).createChannel(any(), any());
-        verify(discordGroupChannels, never()).allowManageMessages(any(), any());
+        verify(discordGroupChannels).allowManageMessages(CHANNEL_ID, COORDINATOR_DISCORD_ID);
+    }
+
+    @Test
+    void aRetryGrantsThePermissionThatFailedAtApproval() throws Exception {
+        when(discordGroupChannels.allowManageMessages(any(), any()))
+                .thenReturn(false)
+                .thenReturn(true);
+
+        approve(submittedId(user("Anna", "Nowak", COORDINATOR_DISCORD_ID), "Grupa AI"));
+
+        verify(discordGroupChannels, timeout(TIMEOUT_MS)).allowManageMessages(CHANNEL_ID, COORDINATOR_DISCORD_ID);
+        String groupId = JsonPath.read(listGroups().andReturn().getResponse().getContentAsString(), "$.content[0].id");
+
+        retry(groupId).andExpect(status().isOk());
+
+        verify(discordGroupChannels, times(2)).allowManageMessages(CHANNEL_ID, COORDINATOR_DISCORD_ID);
+        verify(discordGroupChannels, times(1)).createRole(any());
+        verify(discordGroupChannels, times(1)).createChannel(any(), any());
     }
 
     @Test

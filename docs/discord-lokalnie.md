@@ -17,14 +17,14 @@ wpisany w produkcyjną zepsułby komendę na prodzie.
 2. *General Information*: skopiuj **Application ID** i **Public Key**.
 3. *Bot* → *Reset Token*: skopiuj token.
 4. Bot prywatny: *Installation* → *Install Link* = **None**, potem *Bot* → **Public Bot** wyłączone.
-5. Załóż własny serwer testowy z kanałem `#ogloszenia`, rolą `@Absolwent` i kategorią `Koła`.
+5. Załóż własny serwer testowy z kanałem `#ogloszenia`, rolą `@Absolwent` i kategorią `Grupy`.
 6. Zaproś bota (uprawnienia: wyświetlanie kanału, wysyłanie wiadomości, osadzanie linków, zarządzanie kanałami,
    rolami i wiadomościami):
    `https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=268463120`
 
-   Bot zaproszony wcześniej z `permissions=19456` nie ma uprawnień do kół. Otwórz nowy link jeszcze raz,
+   Bot zaproszony wcześniej z `permissions=19456` nie ma uprawnień do grup tematycznych. Otwórz nowy link jeszcze raz,
    a Discord dopisze brakujące uprawnienia do roli bota. Bot potrzebuje zarządzania wiadomościami, bo może nadać
-   właścicielowi koła tylko to uprawnienie, które sam ma.
+   koordynatorowi grupy tylko to uprawnienie, które sam ma.
 
 ## 2. Zmienne w `backend/.env`
 
@@ -70,7 +70,7 @@ Adres tunelu zmienia się przy każdym starcie — po restarcie wpisz go w porta
 
 ## 5. `/setup`
 
-- `/setup channel:#ogloszenia role:@Absolwent groups_category:Koła` → na kanale wiadomość potwierdzająca, u ciebie
+- `/setup channel:#ogloszenia role:@Absolwent groups_category:Grupy` → na kanale wiadomość potwierdzająca, u ciebie
   odpowiedź widoczna tylko dla ciebie. Komendy nie widać? Odśwież klienta Discorda (Ctrl+R).
 - `/setup` bez opcji pokazuje bieżące ustawienia.
 - Odmowy: `role:@everyone`, kanał, na którym bot nie ma uprawnień.
@@ -103,16 +103,19 @@ Utwórz w panelu admina wydarzenie dla odbiorców **publiczne** albo **wszyscy a
   (Keycloak → *Users* → *Role mapping*; do nowego tokena trzeba się przelogować).
 - Bez roli wniosek zostaje w kolejce do ręcznej oceny. Powód widać w logu (DEBUG na profilu dev).
 
-## 8. Koła zainteresowań
+## 8. Grupy tematyczne
 
-Zatwierdź wniosek o koło (`POST /api/admin/topic-group-requests/{id}/approve`, np. w Swaggerze):
+Zatwierdź wniosek o grupę (`POST /api/admin/topic-group-requests/{id}/approve`, np. w Swaggerze):
 
-- w kategorii z `groups_category` powstaje kanał nazwany slugiem koła i rola nazwana jak koło,
+- w kategorii z `groups_category` powstaje kanał nazwany slugiem grupy i rola nazwana jak grupa,
 - kanał widzą tylko osoby z tą rolą i admini serwera,
-- właściciel koła z podpiętym Discordem ma na kanale zarządzanie wiadomościami (*Edytuj kanał* → *Uprawnienia*),
+- koordynator grupy z podpiętym Discordem ma na kanale zarządzanie wiadomościami (*Edytuj kanał* → *Uprawnienia*),
 - rola ląduje pod rolą bota, więc bot może ją potem nadawać.
 
-Bez kategorii, bez tokenu bota albo przy błędzie Discorda koło powstaje bez roli i kanału, a powód widać w logu.
+Zarządzanie rolami działa na każdą rolę leżącą pod rolą bota, nie tylko na role grup. Rola bota powinna więc leżeć
+pod rolami adminów i `@Absolwent`.
+
+Bez kategorii, bez tokenu bota albo przy błędzie Discorda grupa powstaje bez roli i kanału, a powód widać w logu.
 `GET /api/admin/topic-groups` pokazuje stan powiązania w polu `discord`: `LINKED`, `MISSING` albo `NOT_CONFIGURED`.
 `POST /api/admin/topic-groups/{id}/discord` tworzy brakującą rolę lub kanał i niczego nie dubluje.
 

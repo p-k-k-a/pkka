@@ -6,6 +6,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface TopicGroupRepository extends JpaRepository<TopicGroup, UUID> {
 
@@ -19,4 +23,14 @@ public interface TopicGroupRepository extends JpaRepository<TopicGroup, UUID> {
 
     @EntityGraph(attributePaths = "coordinator")
     Page<TopicGroup> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query("update TopicGroup g set g.discordRoleId = :roleId where g.id = :id")
+    void setDiscordRoleId(@Param("id") UUID id, @Param("roleId") String roleId);
+
+    @Transactional
+    @Modifying
+    @Query("update TopicGroup g set g.discordChannelId = :channelId where g.id = :id")
+    void setDiscordChannelId(@Param("id") UUID id, @Param("channelId") String channelId);
 }
