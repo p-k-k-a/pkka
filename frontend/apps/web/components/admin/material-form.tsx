@@ -29,6 +29,7 @@ import {
   formatEventDateShort,
   isMaterialType,
   isValidMaterialUrl,
+  materialUrlToSave,
   uploadLimitLabel,
   uploadedMaterialExtension,
 } from "@pkka/domain";
@@ -111,7 +112,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
       title: title.trim(),
       description: trimmedDescription || undefined,
       type,
-      url: url.trim(),
+      url: materialUrlToSave(url),
       eventId: eventId || undefined,
     };
     if (isEditing) {

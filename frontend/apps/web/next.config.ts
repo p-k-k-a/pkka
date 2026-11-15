@@ -25,12 +25,9 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "img.youtube.com",
       },
-      {
-        // Files uploaded to object storage (Cloudflare R2), served through signed URLs.
-        // Keep in step with isOptimizableImageUrl in lib/content-images.ts.
-        protocol: "https",
-        hostname: "**.eu.r2.cloudflarestorage.com",
-      },
+      // Deliberately no object storage (Cloudflare R2) host here. The bucket is private and its
+      // files are reached through signed URLs that die after an hour; the image optimizer would
+      // re-serve a copy as public and cacheable for hours. Such images use `unoptimized`.
     ],
   },
 };

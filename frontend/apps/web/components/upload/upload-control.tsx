@@ -3,7 +3,12 @@
 import { useRef, useState, type ReactNode } from "react";
 import type { VariantProps } from "class-variance-authority";
 import type { FileUpload } from "@pkka/api";
-import { uploadErrorMessage, uploadProgressLabel, type LabelledUploadRule } from "@pkka/domain";
+import {
+  fileContentType,
+  uploadErrorMessage,
+  uploadProgressLabel,
+  type LabelledUploadRule,
+} from "@pkka/domain";
 import { Button, type buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +49,8 @@ export function UploadControl({
 
     setMessage(null);
     try {
-      onUploaded(await upload.upload({ blob: file }), file);
+      const contentType = fileContentType(file);
+      onUploaded(await upload.upload({ blob: file, contentType }), file);
     } catch (error) {
       setMessage(uploadErrorMessage(error, rule));
     }
