@@ -10,7 +10,7 @@ export function remoteCoverImageSrc(imageUrl?: string) {
 
 // Files uploaded to the club's storage (Cloudflare R2) are served from here. The same host is
 // listed in next.config.ts, which is what lets the image optimizer fetch them.
-const STORAGE_HOST_SUFFIX = ".r2.cloudflarestorage.com";
+const STORAGE_HOST_SUFFIX = ".eu.r2.cloudflarestorage.com";
 
 /**
  * Whether next/image may optimize this URL. A cover can also be a link to any other site,
