@@ -18,7 +18,8 @@ public record AdminPostResponse(
 
         @Schema(
                 description = "External URL, or a short-lived signed URL of an uploaded cover; sending it "
-                        + "back unchanged on update is fine")
+                        + "back unchanged on update is fine. While object storage is not configured an "
+                        + "uploaded cover comes back as its bare `objectKey`, which cannot be saved until it is")
         String coverImageUrl,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) PostStatus status,

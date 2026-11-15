@@ -28,7 +28,8 @@ public record AdminEventResponse(
 
         @Schema(
                 description = "Signed, short-lived URL when the image is an uploaded file, otherwise the external URL; "
-                        + "sending it back unchanged on update is fine")
+                        + "sending it back unchanged on update is fine. While object storage is not configured "
+                        + "an uploaded file comes back as its bare `objectKey`, which cannot be saved until it is")
         String coverImageUrl,
 
         @Schema(description = "Minutes before the start to remind registered users; null sends no reminder")
