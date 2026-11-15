@@ -18,15 +18,20 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.edu.agh.backend.security.Caller;
 
 @RestController
-@RequestMapping("/api/alumni/materials")
+@RequestMapping("/api/materials")
 @RequiredArgsConstructor
-@Tag(name = "Materials", description = "Learning materials available to verified alumni")
+@Tag(
+        name = "Materials",
+        description = "Learning materials for signed-in users; each caller gets the ones their audience may see")
 public class MaterialController {
 
     private final MaterialService materialService;
 
     @GetMapping
-    @Operation(summary = "List materials with pagination and optional filters")
+    @Operation(
+            summary = "List the materials the caller may see, with pagination and optional filters",
+            description = "A material linked to an event is visible to whoever may see that event; one without an "
+                    + "event is visible to its own audience. Verified alumni therefore see more than other users.")
     public Page<MaterialResponse> listMaterials(
             @Parameter(description = "Matches the title, the description or the linked event's title")
                     @RequestParam(required = false)

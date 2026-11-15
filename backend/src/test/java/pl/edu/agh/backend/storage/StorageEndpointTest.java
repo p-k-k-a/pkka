@@ -224,7 +224,7 @@ class StorageEndpointTest {
                 .andExpect(jsonPath("$.url", startsWith(signedPrefix)));
         assertThat(materialRepository.findById(id).orElseThrow().getUrl()).isEqualTo(key);
 
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[?(@.id=='" + id + "')].url", hasItem(startsWith(signedPrefix))));
     }

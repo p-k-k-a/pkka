@@ -40,20 +40,22 @@ public class MaterialSpecifications {
     }
 
     /**
-     * Materials without a linked event are always visible. Materials linked to an event are only
-     * visible if that event's audience is visible to the caller (mirrors {@link
-     * EventVisibility#isVisibleTo}), so alumni-only or group-restricted events don't leak their
-     * materials to callers who couldn't see the event itself.
+     * A material linked to an event is exactly as visible as that event (mirrors {@link
+     * EventVisibility#isVisibleTo}), so alumni-only or group-restricted events don't leak their materials to
+     * callers who couldn't see the event itself. A material without an event falls back to its own audience.
      *
-     * <p>The join to {@code event} must be explicit and LEFT: a plain {@code root.get("event")}
-     * path expression lets Hibernate pick an INNER join, which would silently drop every
-     * material that has no linked event at all before the OR-condition below is even evaluated.
+     * <p>The join to {@code event} must be explicit and LEFT: a plain {@code root.get("event")} path
+     * expression lets Hibernate pick an INNER join, which would silently drop every material that has no
+     * linked event at all before the OR-condition below is even evaluated. A soft-deleted event does not
+     * join either, so its materials fall back to their own audience as well.
      */
     public Specification<Material> visibleTo(Caller caller) {
         Set<Audience> visibleAudiences = EventVisibility.audiencesOf(caller);
         return (root, query, cb) -> {
             Join<Material, Event> event = root.join("event", JoinType.LEFT);
-            return cb.or(cb.isNull(event.get("id")), event.get("audience").in(visibleAudiences));
+            return cb.or(
+                    cb.and(cb.isNull(event.get("id")), root.get("audience").in(visibleAudiences)),
+                    cb.and(cb.isNotNull(event.get("id")), event.get("audience").in(visibleAudiences)));
         };
     }
 }
