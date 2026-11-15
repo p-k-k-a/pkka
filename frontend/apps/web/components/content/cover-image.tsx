@@ -8,7 +8,11 @@ type CoverImageProps = {
   alt: string;
   aspect?: "video" | "photo";
   showPlaceholder?: boolean;
-  /** Serve the image as it is, for hosts the image optimizer is not configured for. */
+  /**
+   * Load the image straight from its URL instead of through the image optimizer. Needed for
+   * a cover an admin set: it is either a signed URL of a private file, which must not be
+   * re-served from our cache, or a link to a host the optimizer is not configured for.
+   */
   unoptimized?: boolean;
   className?: string;
 };

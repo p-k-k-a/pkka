@@ -9,7 +9,7 @@ import { EventMaterialsSection } from "@/components/materials/event-materials-se
 import { CoverImage } from "@/components/content/cover-image";
 import { ProseContent } from "@/components/content/prose-content";
 import { SectionTitle } from "@/components/content/section-title";
-import { isOptimizableImageUrl, remoteCoverImageSrc } from "@/lib/content-images";
+import { remoteCoverImageSrc } from "@/lib/content-images";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 import { eventTypeBadgeClass } from "@/lib/event-type-badge";
@@ -97,7 +97,7 @@ export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
               <CoverImage
                 src={coverSrc}
                 alt=""
-                unoptimized={!isOptimizableImageUrl(coverSrc)}
+                unoptimized
                 className="mt-10 mb-0 max-w-2xl md:mb-0"
               />
             ) : null}
