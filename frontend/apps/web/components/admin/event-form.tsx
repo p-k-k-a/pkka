@@ -36,6 +36,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { eventDetailHref } from "@/lib/event-paths";
+import { isStorageUnavailable } from "@/lib/save-errors";
 import {
   AUDIENCE_OPTIONS,
   EVENT_COVER_UPLOAD,
@@ -140,6 +141,7 @@ export function EventForm({ event }: EventFormProps) {
 
   const isPending = createEvent.isPending || updateEvent.isPending;
   const isError = createEvent.isError || updateEvent.isError;
+  const storageUnavailable = isStorageUnavailable(createEvent.error ?? updateEvent.error);
   const canSave =
     title.trim().length > 0 &&
     Boolean(startsAtIso) &&
@@ -226,7 +228,9 @@ export function EventForm({ event }: EventFormProps) {
 
         {isError ? (
           <p className="text-destructive mb-6 font-medium">
-            Nie udało się zapisać wydarzenia. Spróbuj ponownie.
+            {storageUnavailable
+              ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać wydarzenia z wgraną okładką. Spróbuj później albo usuń okładkę i zapisz bez niej."
+              : "Nie udało się zapisać wydarzenia. Spróbuj ponownie."}
           </p>
         ) : null}
 
