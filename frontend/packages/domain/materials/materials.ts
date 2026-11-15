@@ -1,4 +1,4 @@
-import { MaterialType } from "@pkka/api";
+import { Audience, MaterialType } from "@pkka/api";
 import { pluralPl } from "../format/plural";
 
 // Mirrors the constraints on the backend's MaterialRequest.
@@ -25,6 +25,17 @@ export const MATERIAL_TYPE_OPTIONS = Object.values(MaterialType).map((value) => 
   value,
   label: MATERIAL_TYPE_LABELS[value],
 }));
+
+// Who sees a material that has no event. Worded for materials: nothing here is open to
+// people who are not signed in, so the event label "Publiczne" would promise too much.
+export const MATERIAL_AUDIENCE_OPTIONS: { value: Audience; label: string }[] = [
+  { value: Audience.ALL_ALUMNI, label: "Tylko zweryfikowani alumni" },
+  { value: Audience.PUBLIC, label: "Wszyscy zalogowani" },
+];
+
+export function isMaterialAudience(value: unknown): value is Audience {
+  return MATERIAL_AUDIENCE_OPTIONS.some((option) => option.value === value);
+}
 
 export function isMaterialType(value: unknown): value is MaterialType {
   return Object.values(MaterialType).includes(value as MaterialType);
