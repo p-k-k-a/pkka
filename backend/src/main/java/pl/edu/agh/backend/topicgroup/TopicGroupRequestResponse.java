@@ -20,6 +20,11 @@ public record TopicGroupRequestResponse(
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         String rejectionReason,
 
+        @Schema(
+                description = "The group an approved request created; absent once that group is deleted",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        CreatedGroup createdGroup,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt) {
 
     static TopicGroupRequestResponse from(TopicGroupRequest r) {
@@ -31,7 +36,20 @@ public record TopicGroupRequestResponse(
                 Requester.from(r.getRequester()),
                 r.getReviewedAt(),
                 r.getRejectionReason(),
+                r.getCreatedGroup() == null ? null : CreatedGroup.from(r.getCreatedGroup()),
                 r.getCreatedAt());
+    }
+
+    public record CreatedGroup(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            UUID id,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String slug) {
+
+        private static CreatedGroup from(TopicGroup group) {
+            return new CreatedGroup(group.getId(), group.getSlug());
+        }
     }
 
     public record Requester(

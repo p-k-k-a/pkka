@@ -2,6 +2,7 @@ package pl.edu.agh.backend.topicgroup;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
@@ -27,12 +28,16 @@ public class TopicGroupRequestService {
         if (topicGroupRepository.existsByNameIgnoreCase(name)) {
             throw new TopicGroupNameTakenException(name);
         }
-        TopicGroupRequest saved = topicGroupRequestRepository.save(TopicGroupRequest.builder()
-                .requester(requester)
-                .proposedName(name)
-                .description(request.description())
-                .build());
-        return TopicGroupRequestResponse.from(saved);
+        try {
+            TopicGroupRequest saved = topicGroupRequestRepository.saveAndFlush(TopicGroupRequest.builder()
+                    .requester(requester)
+                    .proposedName(name)
+                    .description(request.description())
+                    .build());
+            return TopicGroupRequestResponse.from(saved);
+        } catch (DataIntegrityViolationException ex) {
+            throw new TopicGroupRequestAlreadyOpenException();
+        }
     }
 
     @Transactional(readOnly = true)

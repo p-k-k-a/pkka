@@ -11,7 +11,7 @@ public interface TopicGroupRequestRepository extends JpaRepository<TopicGroupReq
 
     List<TopicGroupRequest> findByRequesterIdOrderByCreatedAtDesc(UUID requesterId);
 
-    @EntityGraph(attributePaths = "requester")
+    @EntityGraph(attributePaths = {"requester", "createdGroup"})
     Page<TopicGroupRequest> findByStatusOrderByCreatedAtDesc(TopicGroupRequestStatus status, Pageable pageable);
 
     boolean existsByRequesterIdAndStatus(UUID requesterId, TopicGroupRequestStatus status);
