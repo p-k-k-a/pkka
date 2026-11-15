@@ -51,7 +51,8 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
             Zaproponuj grupę
           </h3>
           <p className="text-muted-foreground text-sm">
-            Opis jest zarazem uzasadnieniem. Na jego podstawie administracja oceni propozycję.
+            Napisz, czym grupa będzie się zajmować i dla kogo jest. Na tej podstawie administracja
+            zdecyduje o jej utworzeniu.
           </p>
         </div>
 
