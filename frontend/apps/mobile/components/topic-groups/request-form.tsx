@@ -72,7 +72,7 @@ export function TopicGroupRequestForm() {
 
       <FormSection
         title="Zaproponuj grupę"
-        description="Opis jest zarazem uzasadnieniem. Na jego podstawie administracja oceni propozycję."
+        description="Napisz, czym grupa będzie się zajmować i dla kogo jest. Na tej podstawie administracja zdecyduje o jej utworzeniu."
       >
         <form.Field
           name="name"
