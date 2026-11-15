@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
+import pl.edu.agh.backend.event.Audience;
 
 public record AdminMaterialResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
@@ -19,6 +20,12 @@ public record AdminMaterialResponse(
 
         UUID eventId,
         String eventTitle,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Who may see the material while it has no linked event; a linked event decides instead")
+        Audience audience,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
@@ -31,6 +38,7 @@ public record AdminMaterialResponse(
                 url,
                 material.getEvent() != null ? material.getEvent().getId() : null,
                 material.getEvent() != null ? material.getEvent().getTitle() : null,
+                material.getAudience(),
                 material.getCreatedAt(),
                 material.getUpdatedAt());
     }

@@ -40,14 +40,14 @@ public class AdminMaterialService {
     @Transactional
     public AdminMaterialResponse create(MaterialRequest request) {
         Material material = new Material();
-        apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
+        apply(material, request);
         return respond(materialRepository.saveAndFlush(material));
     }
 
     @Transactional
     public AdminMaterialResponse update(UUID id, MaterialRequest request) {
         Material material = materialRepository.findById(id).orElseThrow(MaterialNotFoundException::new);
-        apply(material, request.title(), request.description(), request.type(), request.url(), request.eventId());
+        apply(material, request);
         return respond(materialRepository.saveAndFlush(material));
     }
 
@@ -57,13 +57,13 @@ public class AdminMaterialService {
         materialRepository.delete(material);
     }
 
-    private void apply(
-            Material material, String title, String description, MaterialType type, String url, UUID eventId) {
-        material.setTitle(title);
-        material.setDescription(description);
-        material.setType(type);
-        material.setUrl(storageService.toStoredReference(AdminUploadPurpose.MATERIAL, url));
-        material.setEvent(resolveEvent(eventId));
+    private void apply(Material material, MaterialRequest request) {
+        material.setTitle(request.title());
+        material.setDescription(request.description());
+        material.setType(request.type());
+        material.setUrl(storageService.toStoredReference(AdminUploadPurpose.MATERIAL, request.url()));
+        material.setEvent(resolveEvent(request.eventId()));
+        material.setAudience(request.audience());
     }
 
     private AdminMaterialResponse respond(Material material) {

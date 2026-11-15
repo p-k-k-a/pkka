@@ -16,6 +16,7 @@ import org.hibernate.annotations.NotFoundAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 
 @Entity
@@ -61,6 +62,15 @@ public class Material {
     @JoinColumn(name = "event_id")
     @NotFound(action = NotFoundAction.IGNORE)
     private Event event;
+
+    /**
+     * Who may see the material while it has no linked event. A linked event decides instead: the material is
+     * then exactly as visible as the event, and this value is ignored until the link is gone.
+     */
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private Audience audience = Audience.ALL_ALUMNI;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

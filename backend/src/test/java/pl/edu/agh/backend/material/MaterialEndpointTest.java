@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.material;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -71,16 +72,11 @@ class MaterialEndpointTest {
                                 """))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asUser()))
-                .andExpect(status().isForbidden());
-
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].type").value("RECORDING"));
 
-        mockMvc.perform(get("/api/alumni/materials")
-                        .param("type", "PRESENTATION")
-                        .with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").param("type", "PRESENTATION").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
     }
@@ -119,17 +115,16 @@ class MaterialEndpointTest {
                                 """.formatted(eventId)))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].eventId").value(eventId.toString()));
     }
 
     @Test
     void hidesMaterialLinkedToSpecificGroupEventFromAlumniWithoutAMatchingGroup() throws Exception {
-        // /api/alumni/** already requires ROLE_VERIFIED_ALUMN, but that role alone doesn't
-        // belong to any group yet (see EventVisibility: "SPECIFIC_GROUP is nobody's until
-        // groups exist"), so a linked SPECIFIC_GROUP event's material must stay hidden even
-        // from an otherwise-verified alumn, mirroring how the event itself would be hidden.
+        // A verified alumn doesn't belong to any group yet (see EventVisibility: "SPECIFIC_GROUP
+        // is nobody's until groups exist"), so a linked SPECIFIC_GROUP event's material must
+        // stay hidden even from them, mirroring how the event itself would be hidden.
         String eventBody = mockMvc.perform(post("/api/admin/events")
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
@@ -150,16 +145,94 @@ class MaterialEndpointTest {
                                 """.formatted(eventId)))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
     }
 
     @Test
-    void anonymousAndBasicUsersCannotAccessAlumniMaterials() throws Exception {
-        mockMvc.perform(get("/api/alumni/materials")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asUser()))
-                .andExpect(status().isForbidden());
+    void anonymousCallersCannotListMaterials() throws Exception {
+        mockMvc.perform(get("/api/materials")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aSignedInUserSeesOnlyWhatIsPublic() throws Exception {
+        UUID publicEvent = createEvent("PUBLIC");
+        UUID alumniEvent = createEvent("ALL_ALUMNI");
+        createMaterial(materialBody("Z publicznego wydarzenia", publicEvent, null));
+        createMaterial(materialBody("Z wydarzenia dla alumnów", alumniEvent, null));
+        createMaterial(materialBody("Luźny publiczny", null, "PUBLIC"));
+        createMaterial(materialBody("Luźny dla alumnów", null, "ALL_ALUMNI"));
+        createMaterial(materialBody("Luźny bez wskazania odbiorców", null, null));
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title")
+                        .value(containsInAnyOrder("Z publicznego wydarzenia", "Luźny publiczny")));
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(5));
+    }
+
+    @Test
+    void aLinkedEventDecidesAndTheMaterialsOwnAudienceIsOnlyAFallback() throws Exception {
+        UUID alumniEvent = createEvent("ALL_ALUMNI");
+        UUID publicEvent = createEvent("PUBLIC");
+        // marked public, but it belongs to an alumni-only event
+        createMaterial(materialBody("Publiczny przy wydarzeniu alumnów", alumniEvent, "PUBLIC"));
+        // marked alumni-only, but it belongs to a public event
+        createMaterial(materialBody("Dla alumnów przy publicznym wydarzeniu", publicEvent, "ALL_ALUMNI"));
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[*].title")
+                        .value(containsInAnyOrder("Dla alumnów przy publicznym wydarzeniu")));
+    }
+
+    @Test
+    void aMaterialFallsBackToItsOwnAudienceOnceItsEventIsDeleted() throws Exception {
+        UUID publicEvent = createEvent("PUBLIC");
+        createMaterial(materialBody("Po usuniętym wydarzeniu", publicEvent, "ALL_ALUMNI"));
+        // see materialSurvivesLinkedEventBeingSoftDeleted for why the session is cleared first
+        entityManager.clear();
+        mockMvc.perform(delete("/api/admin/events/{id}", publicEvent)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Po usuniętym wydarzeniu"));
+    }
+
+    @Test
+    void adminSetsTheAudienceAndAGroupAudienceIsRejected() throws Exception {
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(materialBody("Bez wskazania", null, null)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.audience").value("ALL_ALUMNI"));
+
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(materialBody("Publiczny", null, "PUBLIC")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.audience").value("PUBLIC"));
+
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(materialBody("Grupowy", null, "SPECIFIC_GROUP")))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -200,7 +273,7 @@ class MaterialEndpointTest {
         // Before @NotFound(action = IGNORE) on Material.event, this call threw
         // EntityNotFoundException while resolving the now-invisible (soft-deleted) event and
         // surfaced as an unhandled 500.
-        mockMvc.perform(get("/api/alumni/materials").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].eventId").doesNotExist());
     }
@@ -231,18 +304,18 @@ class MaterialEndpointTest {
                 {"title":"Inne","type":"OTHER","url":"https://example.com/d"}
                 """);
 
-        mockMvc.perform(get("/api/alumni/materials").param("q", "  KUBERNETES ").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").param("q", "  KUBERNETES ").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2));
 
         // "Wydarzenie" is the linked event's title, not the material's.
-        mockMvc.perform(get("/api/alumni/materials").param("q", "wydarz").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").param("q", "wydarz").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("Nagranie"));
 
         // Combines with the other filters.
-        mockMvc.perform(get("/api/alumni/materials")
+        mockMvc.perform(get("/api/materials")
                         .param("q", "kubernetes")
                         .param("type", "PRESENTATION")
                         .with(JwtTestSupport.asVerifiedAlumn()))
@@ -263,10 +336,10 @@ class MaterialEndpointTest {
                 {"title":"Nagranie","type":"RECORDING","url":"https://example.com/a"}
                 """);
 
-        mockMvc.perform(get("/api/alumni/materials").param("q", "%").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").param("q", "%").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
-        mockMvc.perform(get("/api/alumni/materials").param("q", "N_granie").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/materials").param("q", "N_granie").with(JwtTestSupport.asVerifiedAlumn()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
     }
@@ -278,6 +351,28 @@ class MaterialEndpointTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated());
+    }
+
+    private UUID createEvent(String audience) throws Exception {
+        String body = mockMvc.perform(post("/api/admin/events")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(eventRequestBody(audience)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return UUID.fromString(JsonPath.read(body, "$.id"));
+    }
+
+    private static String materialBody(String title, UUID eventId, String audience) {
+        return """
+                {"title":"%s","type":"RECORDING","url":"https://example.com/a"%s%s}
+                """.formatted(
+                        title,
+                        eventId == null ? "" : ",\"eventId\":\"" + eventId + "\"",
+                        audience == null ? "" : ",\"audience\":\"" + audience + "\"");
     }
 
     private static String eventRequestBody(String audience) {
