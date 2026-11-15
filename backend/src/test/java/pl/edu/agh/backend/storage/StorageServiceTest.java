@@ -233,11 +233,49 @@ class StorageServiceTest {
     }
 
     @Test
-    void signedUrlsOfOtherFilesAndOtherHostsAreLeftAloneWhenStoringContent() {
+    void linksToOtherSitesAreLeftAloneWhenStoringContent() {
         String foreign = "https://elsewhere.example.com/pkka-files/" + POST_IMAGE_KEY + "?X-Amz-Signature=abc";
-        String content = "![m](" + storage.resolveUrl(MATERIAL_KEY) + ") ![f](" + foreign + ")";
+        String content = "[strona](https://example.com/a_(b)) ![f](" + foreign + ")";
 
         assertThat(storage.toStoredContent(content)).isEqualTo(content);
+    }
+
+    @Test
+    void aSignedUrlOfAnotherStoredFileIsRejectedInContent() {
+        // it would be saved verbatim and stop working within the hour
+        assertStatus(
+                () -> storage.toStoredContent("[slajdy](" + storage.resolveUrl(MATERIAL_KEY) + ")"),
+                InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredContent("![okładka](" + storage.resolveUrl(COVER_KEY) + ")"),
+                InvalidFileException.class);
+    }
+
+    @Test
+    void aSignedPostPictureIsReducedToItsKeyEvenInsideAPlainLink() {
+        String signed = storage.resolveUrl(POST_IMAGE_KEY);
+
+        assertThat(storage.toStoredContent("[zobacz zdjęcie](" + signed + ")"))
+                .isEqualTo("[zobacz zdjęcie](" + POST_IMAGE_KEY + ")");
+    }
+
+    @Test
+    void aBrowserLocalPreviewIsRejectedInContent() {
+        String content = "![](blob:https://klub.example.com/0f3a1c8e-1111-4000-8000-000000000009)";
+
+        assertStatus(() -> storage.toStoredContent(content), InvalidFileException.class);
+        assertStatus(() -> unconfigured().toStoredContent(content), InvalidFileException.class);
+        assertStatus(() -> storage.toStoredContent(content.replace("blob:", "BLOB:")), InvalidFileException.class);
+    }
+
+    @Test
+    void anEditFormGetsTheKeyBackWhenItCannotBeSigned() {
+        assertThat(storage.resolveForEditing(COVER_KEY)).startsWith(ENDPOINT + "/pkka-files/" + COVER_KEY + "?");
+        assertThat(unconfigured().resolveForEditing(COVER_KEY)).isEqualTo(COVER_KEY);
+        assertThat(unconfigured().resolveForEditing("https://example.com/c.png"))
+                .isEqualTo("https://example.com/c.png");
+        assertThat(unconfigured().resolveForEditing(null)).isNull();
+        assertThat(unconfigured().resolveForEditing(" ")).isNull();
     }
 
     @Test

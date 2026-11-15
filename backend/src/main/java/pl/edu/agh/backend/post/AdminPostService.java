@@ -76,7 +76,7 @@ public class AdminPostService {
         return AdminPostResponse.from(
                 post,
                 storageService.resolveContent(post.getContent()),
-                storageService.resolveUrl(post.getCoverImageUrl()));
+                storageService.resolveForEditing(post.getCoverImageUrl()));
     }
 
     /** External URL as is, or the key of an uploaded cover; a signed URL echoed back from a read is reduced to its key. */

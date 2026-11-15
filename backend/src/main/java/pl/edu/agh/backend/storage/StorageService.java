@@ -174,14 +174,34 @@ public class StorageService implements AutoCloseable {
     /**
      * Turns Markdown an admin sent for a post into what gets stored. Pictures placed in the content point at
      * signed download URLs while it is being edited (that is what {@link #resolveContent} hands out); each is
-     * reduced to its object key here, so an expiring link never lands in the database. Everything else, other
-     * links included, is kept as it is.
+     * reduced to its object key here, so an expiring link never lands in the database. Links to other sites
+     * are kept as they are.
+     *
+     * @throws InvalidFileException for a target that would be dead on arrival: a signed URL of any other file
+     *     in our bucket (it expires within the hour), or a browser-local {@code blob:} preview of a picture
+     *     that was never attached
      */
     public String toStoredContent(String markdown) {
-        return replaceMarkdownTargets(markdown, target -> {
-            String key = isHttpUrl(target) ? keyFromOwnUrl(target) : null;
-            return key != null && UploadCategory.POST_IMAGE.isValidKey(key) ? key : target;
-        });
+        if (markdown == null) {
+            return null;
+        }
+        return replaceMarkdownTargets(markdown, this::toStoredContentTarget);
+    }
+
+    private String toStoredContentTarget(String target) {
+        if (target.regionMatches(true, 0, "blob:", 0, 5)) {
+            throw new InvalidFileException("content points at a picture that was not uploaded (a blob: URL)");
+        }
+        // Without storage our own bucket cannot be recognised, so the target stays as it is.
+        String key = isHttpUrl(target) ? keyFromOwnUrl(target) : null;
+        if (key == null) {
+            return target;
+        }
+        if (!UploadCategory.POST_IMAGE.isValidKey(key)) {
+            throw new InvalidFileException("content links to a stored file through a signed URL, which stops "
+                    + "working within the hour; only pictures uploaded for a post can be placed in it");
+        }
+        return key;
     }
 
     /**
@@ -190,16 +210,16 @@ public class StorageService implements AutoCloseable {
      * to hand out, say, a material.
      */
     public String resolveContent(String markdown) {
+        // Without storage there is nothing to sign, so the content stays as it is.
+        if (markdown == null || !isConfigured()) {
+            return markdown;
+        }
         return replaceMarkdownTargets(
                 markdown,
                 target -> UploadCategory.POST_IMAGE.isValidKey(target) ? presignDownload(target, null) : target);
     }
 
-    private String replaceMarkdownTargets(String markdown, UnaryOperator<String> replacement) {
-        // Without storage there is nothing to sign and no bucket to recognise, so the content stays as it is.
-        if (markdown == null || !isConfigured()) {
-            return markdown;
-        }
+    private static String replaceMarkdownTargets(String markdown, UnaryOperator<String> replacement) {
         return MARKDOWN_TARGET
                 .matcher(markdown)
                 .replaceAll(match -> Matcher.quoteReplacement(replacement.apply(match.group())));
@@ -232,6 +252,19 @@ public class StorageService implements AutoCloseable {
      */
     public String resolveUrl(String stored) {
         return resolveUrl(stored, null);
+    }
+
+    /**
+     * {@link #resolveUrl(String)} for the response an edit form is filled from. The form sends the value back
+     * on save, so a key that cannot be signed right now (storage not configured) is handed out as it is rather
+     * than as {@code null}: saving then fails loudly instead of silently detaching the file.
+     */
+    public String resolveForEditing(String stored) {
+        String resolved = resolveUrl(stored);
+        if (resolved != null || stored == null || stored.isBlank()) {
+            return resolved;
+        }
+        return stored;
     }
 
     /**

@@ -144,6 +144,39 @@ class AdminPostEndpointTest {
     }
 
     @Test
+    void aBlankCoverMeansNoCoverAndSurroundingSpacesAreTrimmed() throws Exception {
+        String blank = createPost("{\"title\": \"Bez okładki\", \"content\": \"x\", \"coverImageUrl\": \"  \"}");
+        Object noCover = JsonPath.read(blank, "$.coverImageUrl");
+        assertNull(noCover);
+
+        String padded = createPost("""
+                {"title": "Ze spacjami", "content": "x", "coverImageUrl": " https://example.com/cover.png "}
+                """);
+        assertEquals("https://example.com/cover.png", JsonPath.read(padded, "$.coverImageUrl"));
+    }
+
+    @Test
+    void rejectsAnExternalCoverTooLongToStore() throws Exception {
+        String cover = "https://example.com/" + "a".repeat(500) + ".png";
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"" + cover + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsContentPointingAtAPictureThatWasNeverUploaded() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"![](blob:http://localhost:3000/" + UUID.randomUUID()
+                                + ")\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void rejectsACoverThatIsNeitherUrlNorUploadedCover() throws Exception {
         for (String cover : new String[] {"okladka.png", "materials/" + UUID.randomUUID() + ".pdf"}) {
             mockMvc.perform(post("/api/admin/posts")
