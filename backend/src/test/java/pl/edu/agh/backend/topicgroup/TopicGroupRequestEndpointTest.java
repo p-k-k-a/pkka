@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.topicgroup;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -185,6 +186,35 @@ class TopicGroupRequestEndpointTest {
     }
 
     @Test
+    void alumnWithdrawsARequestAndCanAskAgain() throws Exception {
+        withdraw(anna, submittedId(anna, "Grupa AI")).andExpect(status().isNoContent());
+
+        mockMvc.perform(get(MY_REQUESTS).with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
+                .andExpect(jsonPath("$.length()").value(0));
+        submit(anna, "Grupa AI i ML", "Szerszy temat").andExpect(status().isCreated());
+    }
+
+    @Test
+    void alumnCannotWithdrawSomeoneElsesRequest() throws Exception {
+        String id = submittedId(anna, "Grupa AI");
+
+        withdraw(user("Piotr", "Zieliński"), id).andExpect(status().isNotFound());
+
+        mockMvc.perform(get(MY_REQUESTS).with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
+                .andExpect(jsonPath("$.length()").value(1));
+    }
+
+    @Test
+    void aReviewedRequestCannotBeWithdrawn() throws Exception {
+        String id = submittedId(anna, "Grupa AI");
+        approve(id).andExpect(status().isOk());
+
+        withdraw(anna, id)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("Invalid topic group request state"));
+    }
+
+    @Test
     void onlyAdminsReviewAndOnlyVerifiedAlumniAsk() throws Exception {
         mockMvc.perform(get(ADMIN_REQUESTS).with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
                 .andExpect(status().isForbidden());
@@ -202,6 +232,12 @@ class TopicGroupRequestEndpointTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
+    }
+
+    private ResultActions withdraw(User requester, String requestId) throws Exception {
+        return mockMvc.perform(delete(MY_REQUESTS + "/{id}", requestId)
+                .with(JwtTestSupport.asVerifiedAlumn(requester.getKeycloakId()))
+                .with(csrf()));
     }
 
     private ResultActions approve(String requestId) throws Exception {
