@@ -8,11 +8,7 @@ import { CardLinkFooter } from "@/components/content/card-link-footer";
 import { FeaturedCard } from "@/components/content/featured-card";
 import { PublishedMeta } from "@/components/content/published-meta";
 import { SectionShell } from "@/components/content/section-shell";
-import {
-  DEFAULT_COVER_IMAGE,
-  isOptimizableImageUrl,
-  remoteCoverImageSrc,
-} from "@/lib/content-images";
+import { DEFAULT_COVER_IMAGE, remoteCoverImageSrc } from "@/lib/content-images";
 
 type AnnouncementsSectionProps = {
   /** "dashboard" makes the news the page itself, with its own heading band. */
@@ -58,7 +54,7 @@ function AnnouncementsGrid({ basePath }: { basePath: string }) {
               href={href}
               imageSrc={coverSrc ?? DEFAULT_COVER_IMAGE}
               imageAlt=""
-              unoptimized={coverSrc !== null && !isOptimizableImageUrl(coverSrc)}
+              unoptimized={coverSrc !== null}
               label="Najnowsze"
               title={post.title ?? ""}
               meta={<PublishedMeta publishedAt={post.publishedAt} />}

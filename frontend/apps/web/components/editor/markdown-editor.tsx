@@ -259,9 +259,14 @@ export function MarkdownEditor({
               </Button>
             </ToolbarTip>
             {imageUpload.upload.isUploading ? (
-              <span className="text-muted-foreground text-xs tabular-nums" role="status">
-                Przesyłanie zdjęcia… {uploadProgressLabel(imageUpload.upload.progress)}
-              </span>
+              <>
+                <span className="text-muted-foreground text-xs tabular-nums" role="status">
+                  Przesyłanie zdjęcia… {uploadProgressLabel(imageUpload.upload.progress)}
+                </span>
+                <Button type="button" variant="ghost" size="xs" onClick={imageUpload.upload.cancel}>
+                  Anuluj
+                </Button>
+              </>
             ) : null}
           </>
         ) : null}
