@@ -6,21 +6,16 @@ import { useListMaterials } from "@pkka/api";
 import { SectionTitle } from "@/components/content/section-title";
 import { MaterialCard } from "@/components/materials/material-card";
 import { eventMaterialsHref } from "@/lib/material-search-params";
-import { useVerificationStatus } from "@/lib/use-verification-status";
 
 const PREVIEW_SIZE = 2;
 
 export function EventMaterialsSection({ eventId }: { eventId: string }) {
-  const { isVerified } = useVerificationStatus();
-  // The endpoint answers 403 to anyone else, so don't ask.
-  const { data } = useListMaterials(
-    { eventId, size: PREVIEW_SIZE },
-    { query: { enabled: isVerified } },
-  );
+  // The API returns only what this user may see, so there is nothing to gate here.
+  const { data } = useListMaterials({ eventId, size: PREVIEW_SIZE });
   const pageData = data?.status === 200 ? data.data : undefined;
   const materials = pageData?.content ?? [];
 
-  if (!isVerified || materials.length === 0) {
+  if (materials.length === 0) {
     return null;
   }
 

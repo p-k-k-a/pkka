@@ -7,6 +7,7 @@ import { ArrowLeft, FileText, Trash2, Upload } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AdminUploadPurpose,
+  Audience,
   EventTimeframe,
   MaterialType,
   getGetAdminMaterialQueryKey,
@@ -22,11 +23,13 @@ import {
   type PresignUpload,
 } from "@pkka/api";
 import {
+  MATERIAL_AUDIENCE_OPTIONS,
   MATERIAL_TITLE_MAX,
   MATERIAL_TYPE_OPTIONS,
   MATERIAL_UPLOAD,
   MATERIAL_URL_MAX,
   formatEventDateShort,
+  isMaterialAudience,
   isMaterialType,
   isValidMaterialUrl,
   materialUrlToSave,
@@ -65,6 +68,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
   const [type, setType] = useState<MaterialType>(material?.type ?? MaterialType.RECORDING);
   const [url, setUrl] = useState(material?.url ?? "");
   const [eventId, setEventId] = useState(material?.eventId ?? "");
+  const [audience, setAudience] = useState<Audience>(material?.audience ?? Audience.ALL_ALUMNI);
   // Known only for a file picked in this session; a stored one is named after the material.
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const fileUpload = useFileUpload({ rule: MATERIAL_UPLOAD, presign: presignMaterial });
@@ -114,6 +118,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
       type,
       url: materialUrlToSave(url),
       eventId: eventId || undefined,
+      audience,
     };
     if (isEditing) {
       updateMaterial.mutate({ id: material.id, data: payload });
@@ -138,7 +143,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
               {isEditing ? "Edycja" : "Nowy materiał"}
             </p>
             <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-              {isEditing ? "Edytuj materiał" : "Dodaj materiał dla alumnów"}
+              {isEditing ? "Edytuj materiał" : "Dodaj materiał"}
             </h1>
           </div>
           <Button
@@ -296,6 +301,30 @@ export function MaterialForm({ material }: MaterialFormProps) {
                     Materiał zobaczą tylko osoby, które widzą to wydarzenie.
                   </p>
                 )}
+              </div>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="material-audience">Odbiorcy</FieldLabel>
+                <Select
+                  id="material-audience"
+                  value={audience}
+                  disabled={eventId !== ""}
+                  onChange={(changeEvent) => {
+                    if (isMaterialAudience(changeEvent.target.value)) {
+                      setAudience(changeEvent.target.value);
+                    }
+                  }}
+                >
+                  {MATERIAL_AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-muted-foreground text-xs">
+                  {eventId
+                    ? "O widoczności decyduje wybrane wydarzenie. To ustawienie zadziała, gdy materiał nie będzie miał wydarzenia."
+                    : "Kto zobaczy materiał, który nie jest przypisany do wydarzenia."}
+                </p>
               </div>
             </Card>
 
