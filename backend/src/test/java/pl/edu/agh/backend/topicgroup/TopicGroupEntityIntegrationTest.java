@@ -51,12 +51,12 @@ class TopicGroupEntityIntegrationTest {
         return userRepository.saveAndFlush(user);
     }
 
-    private TopicGroup newGroup(String name, String slug, User owner) {
+    private TopicGroup newGroup(String name, String slug, User coordinator) {
         return TopicGroup.builder()
                 .name(name)
                 .slug(slug)
                 .description("Dla wszystkich, kto pracuje z modelami językowymi.")
-                .owner(owner)
+                .coordinator(coordinator)
                 .build();
     }
 
@@ -74,36 +74,46 @@ class TopicGroupEntityIntegrationTest {
     }
 
     @Test
-    void persistsAGroupWithItsOwner() {
-        User owner = newUser();
+    void persistsAGroupWithItsCoordinator() {
+        User coordinator = newUser();
 
-        TopicGroup saved = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", owner));
+        TopicGroup saved = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", coordinator));
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getVersion()).isNotNull();
         assertThat(topicGroupRepository.findById(saved.getId()))
                 .hasValueSatisfying(
-                        group -> assertThat(group.getOwner().getId()).isEqualTo(owner.getId()));
+                        group -> assertThat(group.getCoordinator().getId()).isEqualTo(coordinator.getId()));
         assertThat(topicGroupRepository.existsBySlug("grupa-ai")).isTrue();
         assertThat(topicGroupRepository.existsBySlug("grupa-chmurowa")).isFalse();
     }
 
     @Test
     void refusesASecondGroupWithTheSameSlug() {
-        User owner = newUser();
-        topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", owner));
+        User coordinator = newUser();
+        topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", coordinator));
 
-        assertThatThrownBy(() -> topicGroupRepository.saveAndFlush(newGroup("Grupa AI inaczej", "grupa-ai", owner)))
+        assertThatThrownBy(
+                        () -> topicGroupRepository.saveAndFlush(newGroup("Grupa AI inaczej", "grupa-ai", coordinator)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void refusesASecondGroupWithTheSameName() {
-        User owner = newUser();
-        topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", owner));
+        User coordinator = newUser();
+        topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", coordinator));
 
-        assertThatThrownBy(() -> topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai-2", owner)))
+        assertThatThrownBy(() -> topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai-2", coordinator)))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void refusesASecondGroupWithTheSameNameInADifferentCase() {
+        User coordinator = newUser();
+        topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", coordinator));
+
+        assertThatThrownBy(() -> topicGroupRepository.saveAndFlush(newGroup("GRUPA AI", "grupa-ai-2", coordinator)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -169,14 +179,14 @@ class TopicGroupEntityIntegrationTest {
     }
 
     @Test
-    void deletingTheOwnersAccountLeavesTheGroupWithoutAnOwner() {
-        User owner = newUser();
-        TopicGroup group = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", owner));
+    void deletingTheCoordinatorsAccountLeavesTheGroupWithoutACoordinator() {
+        User coordinator = newUser();
+        TopicGroup group = topicGroupRepository.saveAndFlush(newGroup("Grupa AI", "grupa-ai", coordinator));
 
-        deleteAccount(owner);
+        deleteAccount(coordinator);
 
         assertThat(topicGroupRepository.findById(group.getId()))
-                .hasValueSatisfying(saved -> assertThat(saved.getOwner()).isNull());
+                .hasValueSatisfying(saved -> assertThat(saved.getCoordinator()).isNull());
     }
 
     @Test

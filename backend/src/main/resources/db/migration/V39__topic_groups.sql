@@ -1,21 +1,22 @@
 CREATE TABLE topic_groups
 (
-    id          UUID         NOT NULL,
-    slug        VARCHAR(255) NOT NULL,
-    name        VARCHAR(200) NOT NULL,
-    description TEXT,
-    owner_id    UUID,
-    created_at  TIMESTAMPTZ  NOT NULL,
-    updated_at  TIMESTAMPTZ  NOT NULL,
-    version     BIGINT       NOT NULL DEFAULT 0,
+    id             UUID         NOT NULL,
+    slug           VARCHAR(255) NOT NULL,
+    name           VARCHAR(200) NOT NULL,
+    description    TEXT,
+    coordinator_id UUID,
+    created_at     TIMESTAMPTZ  NOT NULL,
+    updated_at     TIMESTAMPTZ  NOT NULL,
+    version        BIGINT       NOT NULL DEFAULT 0,
 
-    CONSTRAINT pk_topic_groups       PRIMARY KEY (id),
-    CONSTRAINT uq_topic_groups_slug  UNIQUE (slug),
-    CONSTRAINT uq_topic_groups_name  UNIQUE (name),
-    CONSTRAINT fk_topic_groups_owner FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE SET NULL
+    CONSTRAINT pk_topic_groups             PRIMARY KEY (id),
+    CONSTRAINT uq_topic_groups_slug        UNIQUE (slug),
+    CONSTRAINT fk_topic_groups_coordinator FOREIGN KEY (coordinator_id) REFERENCES users (id) ON DELETE SET NULL
 );
 
-CREATE INDEX idx_topic_groups_owner ON topic_groups (owner_id);
+CREATE UNIQUE INDEX uq_topic_groups_name ON topic_groups (lower(name));
+
+CREATE INDEX idx_topic_groups_coordinator ON topic_groups (coordinator_id);
 
 CREATE TABLE topic_group_requests
 (

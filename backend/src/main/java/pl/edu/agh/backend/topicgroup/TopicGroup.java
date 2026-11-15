@@ -13,7 +13,7 @@ import pl.edu.agh.backend.user.User;
 
 /**
  * A thematic group ("grupa tematyczna") alumni gather in. Groups come from an admin approving a
- * {@link TopicGroupRequest}, and the {@link #owner} runs the group from then on.
+ * {@link TopicGroupRequest}, and the {@link #coordinator} runs the group from then on.
  */
 @Entity
 @Table(name = "topic_groups")
@@ -50,8 +50,8 @@ public class TopicGroup {
 
     /** The group's own admin — the alumn who asked for it, not a club admin. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
-    private User owner;
+    @JoinColumn(name = "coordinator_id")
+    private User coordinator;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
