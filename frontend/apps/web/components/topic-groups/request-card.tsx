@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   ApiError,
@@ -81,9 +82,10 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
               type="button"
               variant="outline"
               size="sm"
-              className="shrink-0 self-start"
+              className="text-destructive hover:text-destructive shrink-0 self-start"
               onClick={() => setConfirmingWithdraw(true)}
             >
+              <Trash2 data-icon="inline-start" />
               Wycofaj wniosek
             </Button>
           </div>
