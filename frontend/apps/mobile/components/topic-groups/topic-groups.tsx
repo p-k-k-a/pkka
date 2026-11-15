@@ -1,13 +1,34 @@
-import { CtaCard } from "@/components/home/cta-card";
 import { RequestCard } from "@/components/topic-groups/request-card";
 import { Text } from "@/components/ui/text";
-import { useListMyTopicGroupRequests } from "@pkka/api";
+import { useThemeColors } from "@/lib/theme";
+import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
 import { router } from "expo-router";
+import { ChevronRight, Plus } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
 
 function openRequestForm() {
   router.push("/topic-groups/request");
+}
+
+function ProposeGroupRow() {
+  const theme = useThemeColors();
+  return (
+    <Pressable
+      role="button"
+      onPress={openRequestForm}
+      className="bg-muted flex-row items-center gap-3 rounded-xl px-4 py-4 active:opacity-70"
+    >
+      <View className="bg-primary h-10 w-10 items-center justify-center rounded-full">
+        <Plus size={20} color={theme.primaryForeground} />
+      </View>
+      <View className="flex-1 gap-0.5">
+        <Text className="text-foreground text-base font-semibold">Brakuje grupy dla Ciebie?</Text>
+        <Text className="text-muted-foreground text-sm">Zaproponuj własną</Text>
+      </View>
+      <ChevronRight size={20} color={theme.foreground} />
+    </Pressable>
+  );
 }
 
 export function TopicGroups() {
@@ -37,8 +58,7 @@ export function TopicGroups() {
           Grupy tematyczne
         </Text>
         <Text className="text-muted-foreground text-sm leading-relaxed">
-          Miejsce dla alumnów o podobnych zainteresowaniach. Jeśli brakuje grupy dla Ciebie,
-          zaproponuj własną.
+          Dołącz do alumnów o podobnych zainteresowaniach.
         </Text>
       </View>
 
@@ -50,15 +70,11 @@ export function TopicGroups() {
         <Text className="text-muted-foreground py-16 text-center text-sm">
           Nie udało się załadować Twojego wniosku.
         </Text>
-      ) : latest ? (
-        <RequestCard request={latest} onPropose={openRequestForm} />
       ) : (
-        <CtaCard
-          title="Brakuje grupy dla Ciebie?"
-          subtitle="Zaproponuj nową. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz właścicielem grupy."
-          primaryLabel="Zaproponuj grupę"
-          onPrimary={openRequestForm}
-        />
+        <View className="gap-4">
+          {latest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : <ProposeGroupRow />}
+          {latest ? <RequestCard request={latest} /> : null}
+        </View>
       )}
     </ScrollView>
   );

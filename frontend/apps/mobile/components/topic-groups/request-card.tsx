@@ -1,5 +1,4 @@
 import { RequestStatusBadge } from "@/components/topic-groups/request-status-badge";
-import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import {
   ApiError,
@@ -14,10 +13,9 @@ import { Alert, Pressable, View } from "react-native";
 
 type RequestCardProps = {
   request: TopicGroupRequestResponse;
-  onPropose: () => void;
 };
 
-export function RequestCard({ request, onPropose }: RequestCardProps) {
+export function RequestCard({ request }: RequestCardProps) {
   const { status } = request;
   const queryClient = useQueryClient();
   const { mutateAsync: withdrawRequest, isPending: isWithdrawing } = useWithdrawTopicGroupRequest();
@@ -87,39 +85,21 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
         </View>
       ) : null}
 
-      {status === TopicGroupRequestStatus.REJECTED ? (
-        <>
-          {request.rejectionReason ? (
-            <View className="bg-muted dark:bg-background gap-1.5 rounded-md p-3">
-              <Text className="text-foreground text-xs font-bold uppercase tracking-wider">
-                Powód odrzucenia
-              </Text>
-              <Text className="text-muted-foreground text-sm leading-relaxed">
-                {request.rejectionReason}
-              </Text>
-            </View>
-          ) : null}
-          <Button size="lg" className="mt-1 w-full" onPress={onPropose}>
-            <Text className="text-center text-base font-semibold">Zaproponuj ponownie</Text>
-          </Button>
-        </>
+      {status === TopicGroupRequestStatus.REJECTED && request.rejectionReason ? (
+        <View className="bg-muted dark:bg-background gap-1.5 rounded-md p-3">
+          <Text className="text-foreground text-xs font-bold uppercase tracking-wider">
+            Powód odrzucenia
+          </Text>
+          <Text className="text-muted-foreground text-sm leading-relaxed">
+            {request.rejectionReason}
+          </Text>
+        </View>
       ) : null}
 
       {status === TopicGroupRequestStatus.APPROVED ? (
-        <>
-          <Text className="text-muted-foreground text-sm leading-relaxed">
-            Grupa została utworzona, a Ty jesteś jej właścicielem.
-          </Text>
-          <Pressable
-            role="button"
-            onPress={onPropose}
-            className="min-h-11 justify-center self-start active:opacity-70"
-          >
-            <Text className="text-accent text-sm font-semibold underline">
-              Zaproponuj kolejną grupę
-            </Text>
-          </Pressable>
-        </>
+        <Text className="text-muted-foreground text-sm leading-relaxed">
+          Grupa została utworzona, a Ty jesteś jej właścicielem.
+        </Text>
       ) : null}
     </View>
   );
