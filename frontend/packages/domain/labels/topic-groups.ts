@@ -21,3 +21,10 @@ export function topicGroupRequestSubmitErrorMessage(status: number | undefined, 
     ? "Grupa o tej nazwie już istnieje. Wybierz inną nazwę."
     : "Masz już wniosek w trakcie rozpatrywania. Kolejny złożysz po decyzji administracji.";
 }
+
+export function topicGroupRequestWithdrawErrorMessage(status: number | undefined) {
+  if (status === 409)
+    return "Administracja rozpatrzyła już ten wniosek, więc nie można go wycofać.";
+  if (status === 404) return "Ten wniosek został już wycofany.";
+  return "Nie udało się wycofać wniosku. Spróbuj ponownie.";
+}

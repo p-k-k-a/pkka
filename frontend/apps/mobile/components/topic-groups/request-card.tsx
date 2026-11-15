@@ -1,9 +1,16 @@
 import { RequestStatusBadge } from "@/components/topic-groups/request-status-badge";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { TopicGroupRequestStatus, type TopicGroupRequestResponse } from "@pkka/api";
-import { formatEventDateLong } from "@pkka/domain";
-import { Pressable, View } from "react-native";
+import {
+  ApiError,
+  getListMyTopicGroupRequestsQueryKey,
+  TopicGroupRequestStatus,
+  useWithdrawTopicGroupRequest,
+  type TopicGroupRequestResponse,
+} from "@pkka/api";
+import { formatEventDateLong, topicGroupRequestWithdrawErrorMessage } from "@pkka/domain";
+import { useQueryClient } from "@tanstack/react-query";
+import { Alert, Pressable, View } from "react-native";
 
 type RequestCardProps = {
   request: TopicGroupRequestResponse;
@@ -12,6 +19,27 @@ type RequestCardProps = {
 
 export function RequestCard({ request, onPropose }: RequestCardProps) {
   const { status } = request;
+  const queryClient = useQueryClient();
+  const { mutateAsync: withdrawRequest, isPending: isWithdrawing } = useWithdrawTopicGroupRequest();
+
+  const withdraw = async () => {
+    try {
+      await withdrawRequest({ id: request.id });
+    } catch (error) {
+      Alert.alert(
+        "Nie wycofano wniosku",
+        topicGroupRequestWithdrawErrorMessage(error instanceof ApiError ? error.status : undefined),
+      );
+    }
+    await queryClient.invalidateQueries({ queryKey: getListMyTopicGroupRequestsQueryKey() });
+  };
+
+  const confirmWithdraw = () => {
+    Alert.alert("Wycofać wniosek?", `Wniosek o grupę „${request.name}” zostanie usunięty.`, [
+      { text: "Anuluj", style: "cancel" },
+      { text: "Wycofaj", style: "destructive", onPress: () => void withdraw() },
+    ]);
+  };
   const dateLabel =
     status === TopicGroupRequestStatus.UNDER_REVIEW || !request.reviewedAt
       ? `Złożony ${formatEventDateLong(request.createdAt)}`
@@ -41,10 +69,22 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
       <Text className="text-muted-foreground text-xs font-medium">{dateLabel}</Text>
 
       {status === TopicGroupRequestStatus.UNDER_REVIEW ? (
-        <Text className="border-border text-muted-foreground border-t pt-3 text-[13px] leading-relaxed">
-          Decyzja administracji pojawi się w tym miejscu. Kolejny wniosek złożysz po rozpatrzeniu
-          tego.
-        </Text>
+        <View className="border-border gap-1 border-t pt-3">
+          <Text className="text-muted-foreground text-[13px] leading-relaxed">
+            Decyzja administracji pojawi się w tym miejscu. Kolejny wniosek złożysz po rozpatrzeniu
+            lub wycofaniu tego.
+          </Text>
+          <Pressable
+            role="button"
+            onPress={confirmWithdraw}
+            disabled={isWithdrawing}
+            className="min-h-11 justify-center self-start active:opacity-70"
+          >
+            <Text className="text-destructive text-sm font-semibold underline">
+              {isWithdrawing ? "Wycofywanie…" : "Wycofaj wniosek"}
+            </Text>
+          </Pressable>
+        </View>
       ) : null}
 
       {status === TopicGroupRequestStatus.REJECTED ? (
