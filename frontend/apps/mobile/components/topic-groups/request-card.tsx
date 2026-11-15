@@ -81,7 +81,7 @@ export function RequestCard({ request }: RequestCardProps) {
             size="sm"
             onPress={confirmWithdraw}
             disabled={isWithdrawing}
-            className="mt-2 self-start"
+            className="mt-2 w-full"
           >
             <Trash2 size={16} color={theme.destructive} />
             <Text className="text-destructive font-semibold">
