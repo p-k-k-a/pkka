@@ -31,4 +31,10 @@ public record UpdatePostRequest(
         String coverImageUrl,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
-        PostStatus status) {}
+        PostStatus status) {
+
+    public UpdatePostRequest {
+        // Before validation, so that a blank cover is "no cover" instead of failing the pattern.
+        coverImageUrl = coverImageUrl == null || coverImageUrl.isBlank() ? null : coverImageUrl.trim();
+    }
+}

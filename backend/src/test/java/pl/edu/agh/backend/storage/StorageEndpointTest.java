@@ -292,6 +292,58 @@ class StorageEndpointTest {
     }
 
     @Test
+    void anUploadedPostCoverIsDetachedWhenTheUpdateLeavesItOut() throws Exception {
+        String coverKey = presignAdminUpload("POST_COVER", "image/png");
+        String created = mockMvc.perform(post("/api/admin/posts")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Z okładką\",\"content\":\"x\",\"coverImageUrl\":\"" + coverKey + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID id = UUID.fromString(JsonPath.read(created, "$.id"));
+
+        mockMvc.perform(
+                        put("/api/admin/posts/{id}", id)
+                                .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                                .with(csrf())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"title\":\"Z okładką\",\"content\":\"x\",\"status\":\"DRAFT\",\"coverImageUrl\":\"\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl").doesNotExist());
+        assertThat(postRepository.findById(id).orElseThrow().getCoverImageUrl()).isNull();
+    }
+
+    @Test
+    void postContentRejectsLinksThatWouldExpire() throws Exception {
+        String materialKey = presignAdminUpload("MATERIAL", "application/pdf");
+        String created = mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Slajdy\",\"type\":\"PRESENTATION\",\"url\":\"" + materialKey + "\"}"))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String signedMaterial = JsonPath.read(created, "$.url");
+        long postsBefore = postRepository.count();
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper()
+                                .writeValueAsString(
+                                        Map.of("title", "X", "content", "[slajdy](" + signedMaterial + ")"))))
+                .andExpect(status().isBadRequest());
+        assertThat(postRepository.count()).isEqualTo(postsBefore);
+    }
+
+    @Test
     void postCoverRejectsAnotherPurposesKey() throws Exception {
         String eventCoverKey = presignAdminUpload("EVENT_COVER", "image/png");
         String imageKey = presignAdminUpload("POST_IMAGE", "image/png");

@@ -29,4 +29,10 @@ public record CreatePostRequest(
                 message = "coverImageUrl must be an http(s) URL or the objectKey of an uploaded cover")
         String coverImageUrl,
 
-        PostStatus status) {}
+        PostStatus status) {
+
+    public CreatePostRequest {
+        // Before validation, so that a blank cover is "no cover" instead of failing the pattern.
+        coverImageUrl = coverImageUrl == null || coverImageUrl.isBlank() ? null : coverImageUrl.trim();
+    }
+}
