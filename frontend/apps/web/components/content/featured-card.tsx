@@ -7,7 +7,7 @@ type FeaturedCardProps = {
   href: string;
   imageSrc: string;
   imageAlt: string;
-  /** Serve the image as it is, for hosts the image optimizer is not configured for. */
+  /** Load the image straight from its URL instead of through the image optimizer; see CoverImage. */
   unoptimized?: boolean;
   label: string;
   title: string;

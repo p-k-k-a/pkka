@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { POST_COVER_UPLOAD, POST_IMAGE_UPLOAD, formatPublishedAt } from "@pkka/domain";
 import {
   AdminUploadPurpose,
+  ApiError,
   getGetAdminPostQueryKey,
   getGetPostQueryKey,
   getListAdminPostsQueryKey,
@@ -81,9 +82,15 @@ export function PostForm({ post }: PostFormProps) {
 
   const isPending = pendingStatus !== null;
   const isError = createPost.isError || updatePost.isError;
+  const saveError = createPost.error ?? updatePost.error;
+  const rejected = saveError instanceof ApiError && saveError.status === 400;
+  // A picture pasted in from another editor is only a preview in this browser: the file never
+  // reached the storage, so the post would be saved with a dead image.
+  const hasUnsentPicture = content.includes("](blob:");
   const canSave =
     title.trim().length > 0 &&
     content.trim().length > 0 &&
+    !hasUnsentPicture &&
     !coverUpload.isUploading &&
     !contentImageUpload.isUploading &&
     !isPending;
@@ -147,7 +154,16 @@ export function PostForm({ post }: PostFormProps) {
 
         {isError ? (
           <p className="text-destructive mb-6 font-medium">
-            Nie udało się zapisać wpisu. Spróbuj ponownie.
+            {rejected
+              ? "Tego wpisu nie da się zapisać. Jeśli w treści jest wklejony link do pliku z materiałów albo do okładki, usuń go: takie linki przestają działać po godzinie."
+              : "Nie udało się zapisać wpisu. Spróbuj ponownie."}
+          </p>
+        ) : null}
+
+        {hasUnsentPicture ? (
+          <p className="text-destructive mb-6 font-medium">
+            Jedno ze zdjęć w treści nie zostało przesłane. Usuń je i wstaw ponownie przyciskiem
+            „Wstaw zdjęcie”.
           </p>
         ) : null}
 

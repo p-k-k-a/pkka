@@ -7,7 +7,7 @@ import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProseContent } from "@/components/content/prose-content";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isOptimizableImageUrl, remoteCoverImageSrc } from "@/lib/content-images";
+import { remoteCoverImageSrc } from "@/lib/content-images";
 
 type AnnouncementDetailProps = {
   slug: string;
@@ -71,12 +71,7 @@ export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailP
               {post.title}
             </h1>
 
-            <CoverImage
-              src={coverSrc}
-              alt=""
-              unoptimized={coverSrc !== null && !isOptimizableImageUrl(coverSrc)}
-              className="mt-10"
-            />
+            <CoverImage src={coverSrc} alt="" unoptimized={coverSrc !== null} className="mt-10" />
 
             {post.content ? (
               <ProseContent content={post.content} className="text-muted-foreground max-w-2xl" />
