@@ -293,38 +293,43 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
             </View>
           ) : null}
         </View>
-        <View className="flex-row flex-wrap justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={avatarBusy}
-            onPress={changeAvatar}
-            className="active:bg-muted"
-          >
-            <Camera size={16} color={theme.foreground} />
-            <Text className="group-active:text-foreground">
-              {avatarUpload.isUploading
-                ? `Przesyłanie… ${uploadProgressLabel(avatarUpload.progress)}`
-                : avatarUrl
-                  ? "Zmień zdjęcie"
-                  : "Dodaj zdjęcie"}
-            </Text>
-          </Button>
-          {avatarUrl && !avatarBusy ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => {
-                setAvatarError(null);
-                setAvatarChange({ kind: "removed" });
-              }}
-              className="active:bg-muted"
-            >
-              <Trash2 size={16} color={theme.foreground} />
-              <Text className="group-active:text-foreground">Usuń zdjęcie</Text>
-            </Button>
-          ) : null}
-        </View>
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <View className="flex-row flex-wrap justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={avatarBusy || isSubmitting}
+                onPress={changeAvatar}
+                className="active:bg-muted"
+              >
+                <Camera size={16} color={theme.foreground} />
+                <Text className="group-active:text-foreground">
+                  {avatarUpload.isUploading
+                    ? `Przesyłanie… ${uploadProgressLabel(avatarUpload.progress)}`
+                    : avatarUrl
+                      ? "Zmień zdjęcie"
+                      : "Dodaj zdjęcie"}
+                </Text>
+              </Button>
+              {avatarUrl && !avatarBusy ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => {
+                    setAvatarError(null);
+                    setAvatarChange({ kind: "removed" });
+                  }}
+                  disabled={isSubmitting}
+                  className="active:bg-muted"
+                >
+                  <Trash2 size={16} color={theme.foreground} />
+                  <Text className="group-active:text-foreground">Usuń zdjęcie</Text>
+                </Button>
+              ) : null}
+            </View>
+          )}
+        </form.Subscribe>
         {avatarError ? (
           <Text className="text-destructive text-center text-[13px] font-semibold">
             {avatarError}
