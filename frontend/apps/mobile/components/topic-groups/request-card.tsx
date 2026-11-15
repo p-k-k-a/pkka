@@ -1,5 +1,7 @@
 import { RequestStatusBadge } from "@/components/topic-groups/request-status-badge";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import { useThemeColors } from "@/lib/theme";
 import {
   ApiError,
   getListMyTopicGroupRequestsQueryKey,
@@ -9,7 +11,8 @@ import {
 } from "@pkka/api";
 import { formatEventDateLong, topicGroupRequestWithdrawErrorMessage } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
-import { Alert, Pressable, View } from "react-native";
+import { Trash2 } from "lucide-react-native";
+import { Alert, View } from "react-native";
 
 type RequestCardProps = {
   request: TopicGroupRequestResponse;
@@ -17,6 +20,7 @@ type RequestCardProps = {
 
 export function RequestCard({ request }: RequestCardProps) {
   const { status } = request;
+  const theme = useThemeColors();
   const queryClient = useQueryClient();
   const { mutateAsync: withdrawRequest, isPending: isWithdrawing } = useWithdrawTopicGroupRequest();
 
@@ -72,16 +76,18 @@ export function RequestCard({ request }: RequestCardProps) {
             Decyzja administracji pojawi się w tym miejscu. Kolejny wniosek złożysz po rozpatrzeniu
             lub wycofaniu tego.
           </Text>
-          <Pressable
-            role="button"
+          <Button
+            variant="outline"
+            size="sm"
             onPress={confirmWithdraw}
             disabled={isWithdrawing}
-            className="min-h-11 justify-center self-start active:opacity-70"
+            className="mt-2 self-start"
           >
-            <Text className="text-destructive text-sm font-semibold underline">
+            <Trash2 size={16} color={theme.destructive} />
+            <Text className="text-destructive font-semibold">
               {isWithdrawing ? "Wycofywanie…" : "Wycofaj wniosek"}
             </Text>
-          </Pressable>
+          </Button>
         </View>
       ) : null}
 
