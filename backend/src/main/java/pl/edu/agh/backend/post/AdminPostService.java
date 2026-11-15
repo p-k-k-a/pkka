@@ -57,9 +57,12 @@ public class AdminPostService {
         if (post.getStatus() == PostStatus.PUBLISHED && request.status() != PostStatus.PUBLISHED) {
             throw new PostAlreadyPublishedException();
         }
+        // Resolved before the post is touched: either can reject the request.
+        String content = storageService.toStoredContent(request.content());
+        String coverImageUrl = coverImageReference(request.coverImageUrl());
         post.setTitle(request.title());
-        post.setContent(storageService.toStoredContent(request.content()));
-        post.setCoverImageUrl(coverImageReference(request.coverImageUrl()));
+        post.setContent(content);
+        post.setCoverImageUrl(coverImageUrl);
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
         }

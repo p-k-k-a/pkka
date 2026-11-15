@@ -198,6 +198,32 @@ class AdminPostEndpointTest {
     }
 
     @Test
+    void anUploadedCoverSurvivesAnEditWhileStorageIsNotConfigured() throws Exception {
+        String coverKey = "covers/posts/" + UUID.randomUUID() + ".png";
+        Post stored = new Post();
+        stored.setTitle("Wpis z wgraną okładką");
+        stored.setContent("x");
+        stored.setCoverImageUrl(coverKey);
+        UUID id = postRepository.saveAndFlush(stored).getId();
+
+        // the key cannot be signed, so the edit form gets it as it is instead of "no cover"
+        mockMvc.perform(get("/api/admin/posts/{id}", id).with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl").value(coverKey));
+
+        // the form sends it back: the save fails loudly and the cover stays attached
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Poprawiony tytuł\", \"content\": \"x\", \"status\": \"DRAFT\", "
+                                + "\"coverImageUrl\": \"" + coverKey + "\"}"))
+                .andExpect(status().isServiceUnavailable());
+        Post unchanged = postRepository.findById(id).orElseThrow();
+        assertEquals(coverKey, unchanged.getCoverImageUrl());
+        assertEquals("Wpis z wgraną okładką", unchanged.getTitle());
+    }
+
+    @Test
     void deduplicatesSlugsForIdenticalTitles() throws Exception {
         String first = createPost("{\"title\": \"Ten sam tytuł\", \"content\": \"a\"}");
         String second = createPost("{\"title\": \"Ten sam tytuł\", \"content\": \"b\"}");

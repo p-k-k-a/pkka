@@ -422,6 +422,17 @@ class StorageServiceTest {
     }
 
     @Test
+    void aUrlOfOurBucketIsRecognisedWithoutItsSignature() {
+        // the web app sends an uploaded material back without the query, which can get very long
+        String unsigned = ENDPOINT + "/pkka-files/" + MATERIAL_KEY;
+
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, unsigned))
+                .isEqualTo(MATERIAL_KEY);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, unsigned), InvalidFileException.class);
+    }
+
+    @Test
     void aKeyForAnotherPurposeIsRejected() {
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, MATERIAL_KEY),
