@@ -29,7 +29,9 @@ export function UserAvatar({ imageUrl, name, size = "md", className }: UserAvata
       )}
     >
       <Image
-        source={{ uri: imageUrl }}
+        // Cached by the file, not by the signed URL: the signature changes about every hour, and
+        // each new one would otherwise download and store the same picture again.
+        source={{ uri: imageUrl, cacheKey: imageUrl.split("?")[0] }}
         contentFit="cover"
         transition={150}
         accessibilityLabel="Zdjęcie profilowe"
