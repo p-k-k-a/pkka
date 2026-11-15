@@ -6,9 +6,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +39,16 @@ public class TopicGroupRequestController {
     public TopicGroupRequestResponse submitTopicGroupRequest(
             @Valid @RequestBody SubmitTopicGroupRequest request, Caller caller) {
         return topicGroupRequestService.submit(caller, request);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Withdraw one's own request while it is still under review")
+    @ApiResponse(responseCode = "204", description = "Request withdrawn")
+    @ApiResponse(responseCode = "404", description = "No such request of the current user", content = @Content)
+    @ApiResponse(responseCode = "409", description = "The request was already reviewed", content = @Content)
+    public void withdrawTopicGroupRequest(@PathVariable UUID id, Caller caller) {
+        topicGroupRequestService.withdraw(caller, id);
     }
 
     @GetMapping
