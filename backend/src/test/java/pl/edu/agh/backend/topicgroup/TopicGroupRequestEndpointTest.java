@@ -61,7 +61,8 @@ class TopicGroupRequestEndpointTest {
         submit(anna, "Grupa AI", "Wymiana doświadczeń z wdrożeń AI.")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Grupa AI"))
-                .andExpect(jsonPath("$.status").value("UNDER_REVIEW"));
+                .andExpect(jsonPath("$.status").value("UNDER_REVIEW"))
+                .andExpect(jsonPath("$.createdGroup").doesNotExist());
 
         mockMvc.perform(get(MY_REQUESTS).with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
                 .andExpect(status().isOk())
@@ -109,10 +110,13 @@ class TopicGroupRequestEndpointTest {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"))
-                .andExpect(jsonPath("$.reviewedAt").exists());
+                .andExpect(jsonPath("$.reviewedAt").exists())
+                .andExpect(jsonPath("$.createdGroup.id").exists())
+                .andExpect(jsonPath("$.createdGroup.slug").value("grupa-ai"));
 
         mockMvc.perform(get(MY_REQUESTS).with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
-                .andExpect(jsonPath("$[0].status").value("APPROVED"));
+                .andExpect(jsonPath("$[0].status").value("APPROVED"))
+                .andExpect(jsonPath("$[0].createdGroup.slug").value("grupa-ai"));
         mockMvc.perform(get(ADMIN_REQUESTS).with(JwtTestSupport.asAdmin(admin.getKeycloakId())))
                 .andExpect(jsonPath("$.content.length()").value(0));
     }

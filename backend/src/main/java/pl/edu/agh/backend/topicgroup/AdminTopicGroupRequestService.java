@@ -2,6 +2,7 @@ package pl.edu.agh.backend.topicgroup;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -36,12 +37,17 @@ public class AdminTopicGroupRequestService {
         if (topicGroupRepository.existsByNameIgnoreCase(request.getProposedName())) {
             throw new TopicGroupNameTakenException(request.getProposedName());
         }
-        TopicGroup group = topicGroupRepository.save(TopicGroup.builder()
-                .name(request.getProposedName())
-                .slug(SlugUtils.uniqueSlug(request.getProposedName(), topicGroupRepository::existsBySlug))
-                .description(request.getDescription())
-                .coordinator(request.getRequester())
-                .build());
+        TopicGroup group;
+        try {
+            group = topicGroupRepository.saveAndFlush(TopicGroup.builder()
+                    .name(request.getProposedName())
+                    .slug(SlugUtils.uniqueSlug(request.getProposedName(), topicGroupRepository::existsBySlug))
+                    .description(request.getDescription())
+                    .coordinator(request.getRequester())
+                    .build());
+        } catch (DataIntegrityViolationException ex) {
+            throw new TopicGroupNameTakenException(request.getProposedName());
+        }
         request.approve(reviewer, group);
         return TopicGroupRequestResponse.from(topicGroupRequestRepository.saveAndFlush(request));
     }
