@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays, X } from "lucide-react";
 import { useListMaterials } from "@pkka/api";
@@ -15,6 +16,7 @@ import {
   toMaterialsSearchString,
   type MaterialsState,
 } from "@/lib/material-search-params";
+import { useVerificationStatus } from "@/lib/use-verification-status";
 
 function EventChip({ title, onClear }: { title?: string; onClear: () => void }) {
   return (
@@ -41,6 +43,10 @@ export function MaterialsLibrary() {
   // The URL is the only source of truth, so filters survive a reload or a shared link.
   const { query, type, eventId, page } = parseMaterialsSearchParams(searchParams);
   const resultsRef = useRef<HTMLDivElement>(null);
+  // The API already returns only what this user may see; this is just to tell the others
+  // that verifying as an alumn unlocks more.
+  const { admin, isLoading: isVerificationLoading, isVerified } = useVerificationStatus();
+  const showVerificationHint = !admin && !isVerificationLoading && !isVerified;
 
   const update = useCallback(
     (next: Partial<MaterialsState>) => {
@@ -189,6 +195,15 @@ export function MaterialsLibrary() {
               ) : null}
             </>
           )}
+          {showVerificationHint ? (
+            <p className="text-muted-foreground border-border border-t pt-6 text-sm">
+              Część materiałów jest dostępna tylko dla zweryfikowanych alumnów.{" "}
+              <Link href="/dashboard/verification" className="text-accent font-semibold underline">
+                Zweryfikuj się
+              </Link>
+              , żeby zobaczyć wszystkie.
+            </p>
+          ) : null}
         </div>
       </section>
     </div>
