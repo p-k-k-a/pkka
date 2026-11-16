@@ -296,11 +296,11 @@ export function MaterialForm({ material }: MaterialFormProps) {
                   <p className="text-destructive text-xs font-medium">
                     Nie udało się załadować wydarzeń.
                   </p>
-                ) : (
+                ) : eventId ? (
                   <p className="text-muted-foreground text-xs">
                     Materiał zobaczą tylko osoby, które widzą to wydarzenie.
                   </p>
-                )}
+                ) : null}
               </div>
               <div className="space-y-2">
                 <FieldLabel htmlFor="material-audience">Odbiorcy</FieldLabel>
