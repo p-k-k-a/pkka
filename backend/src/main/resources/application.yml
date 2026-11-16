@@ -100,11 +100,14 @@ app:
     bucket: ${R2_BUCKET:}
     access-key-id: ${R2_ACCESS_KEY_ID:}
     secret-access-key: ${R2_SECRET_ACCESS_KEY:}
-    # Nightly removal of files nothing in the database points at. Off by default: turn it on only where
-    # this database is the sole owner of the bucket, or it deletes another environment's files.
+    # Nightly removal of files nothing in the database points at: off, dry-run (only logs what it would
+    # delete) or delete. Turn it on only where this database is the sole owner of the bucket.
     cleanup:
-      enabled: ${R2_CLEANUP_ENABLED:false}
+      mode: ${R2_CLEANUP_MODE:off}
+      # How long a file must stay unreferenced before it is deleted.
       retention-days: ${R2_CLEANUP_RETENTION_DAYS:7}
+      # A run that would delete more than this deletes nothing and reports an error.
+      max-deletions-per-run: ${R2_CLEANUP_MAX_DELETIONS:500}
       cron: ${R2_CLEANUP_CRON:0 30 3 * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
@@ -237,11 +240,14 @@ app:
     bucket: ${R2_BUCKET:}
     access-key-id: ${R2_ACCESS_KEY_ID:}
     secret-access-key: ${R2_SECRET_ACCESS_KEY:}
-    # Nightly removal of files nothing in the database points at. Off by default: turn it on only where
-    # this database is the sole owner of the bucket, or it deletes another environment's files.
+    # Nightly removal of files nothing in the database points at: off, dry-run (only logs what it would
+    # delete) or delete. Turn it on only where this database is the sole owner of the bucket.
     cleanup:
-      enabled: ${R2_CLEANUP_ENABLED:false}
+      mode: ${R2_CLEANUP_MODE:off}
+      # How long a file must stay unreferenced before it is deleted.
       retention-days: ${R2_CLEANUP_RETENTION_DAYS:7}
+      # A run that would delete more than this deletes nothing and reports an error.
+      max-deletions-per-run: ${R2_CLEANUP_MAX_DELETIONS:500}
       cron: ${R2_CLEANUP_CRON:0 30 3 * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}

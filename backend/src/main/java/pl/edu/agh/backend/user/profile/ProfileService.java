@@ -61,12 +61,7 @@ public class ProfileService {
             user.setPhoneNumber(blankToNull(request.phoneNumber()));
         }
         if (request.avatarKey() != null) {
-            String previous = user.getAvatarKey();
             user.setAvatarKey(storageService.toStoredAvatarKey(user.getId(), request.avatarKey()));
-            // A user's own picture is not left waiting for the nightly cleanup once they replace or remove it.
-            if (previous != null && !previous.equals(user.getAvatarKey())) {
-                storageService.deleteAfterCommit(previous);
-            }
         }
         if (request.willingToMentor() != null) {
             user.setWillingToMentor(request.willingToMentor());

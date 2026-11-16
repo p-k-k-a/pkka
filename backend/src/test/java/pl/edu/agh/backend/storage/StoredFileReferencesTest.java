@@ -10,7 +10,10 @@ import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +22,7 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -46,6 +50,14 @@ class StoredFileReferencesTest {
 
     private static final String ADMIN_SUBJECT = "44444444-4444-4444-4444-444444444444";
 
+    /** Columns whose names suggest a file but which never hold an object key. */
+    private static final Set<String> NOT_FILES = Set.of(
+            "events.transmission_url",
+            "survey_questions.content",
+            "users.github_url",
+            "users.keycloak_id",
+            "users.linkedin_url");
+
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
@@ -64,6 +76,9 @@ class StoredFileReferencesTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private JdbcTemplate jdbc;
 
     @Test
     void findsTheFilesOfEveryKindOfRecord() throws Exception {
@@ -111,15 +126,65 @@ class StoredFileReferencesTest {
     }
 
     @Test
-    void aPictureSignedForEditingIsStillFoundByItsKey() throws Exception {
-        String picture = presign("POST_IMAGE", "image/png");
-        // what the editor sends back when a post is saved again: the signed URL, not the key
-        String echoed = "![x](" + storage.resolveUrl(picture) + ")";
+    void aPictureIsFoundWhereverItsKeyStandsInTheContent() throws Exception {
+        String inRawHtml = presign("POST_IMAGE", "image/png");
+        String inALink = presign("POST_IMAGE", "image/jpeg");
+        String gluedToText = presign("POST_IMAGE", "image/webp");
+        // None of these is a markdown image target, so the content is stored as written: a signed URL stays a
+        // signed URL, and the key has to be picked out of the middle of it.
+        String content = "<img src=\"" + storage.resolveUrl(inRawHtml) + "\"> [zobacz](" + inALink + ") " + gluedToText
+                + "abc123";
 
-        create("/api/admin/posts", Map.of("title", "Edytowany", "content", echoed));
+        create("/api/admin/posts", Map.of("title", "Nietypowy", "content", content));
         entityManager.flush();
 
-        assertThat(references.referencedKeys()).contains(picture);
+        assertThat(references.referencedKeys()).contains(inRawHtml, inALink, gluedToText);
+    }
+
+    @Test
+    void aSingleFileIsLookedUpInEveryPlace() throws Exception {
+        String avatarKey = savedUserWithAvatar();
+        String materialKey = presign("MATERIAL", "application/pdf");
+        String eventCoverKey = presign("EVENT_COVER", "image/png");
+        String postCoverKey = presign("POST_COVER", "image/webp");
+        String picture = presign("POST_IMAGE", "image/png");
+        String unattached = presign("POST_IMAGE", "image/png");
+        create("/api/admin/materials", Map.of("title", "Slajdy", "type", "PRESENTATION", "url", materialKey));
+        create("/api/admin/events", eventWithCover(eventCoverKey));
+        create(
+                "/api/admin/posts",
+                Map.of("title", "Relacja", "coverImageUrl", postCoverKey, "content", "![a](" + picture + ")"));
+        entityManager.flush();
+
+        for (String key : new String[] {avatarKey, materialKey, eventCoverKey, postCoverKey, picture}) {
+            assertThat(references.isReferenced(key)).as(key).isTrue();
+        }
+        assertThat(references.isReferenced(unattached)).isFalse();
+    }
+
+    /**
+     * A new column that could hold a file has to be decided on: listed in {@link StoredFileReferences} if it
+     * stores object keys, or below if it does not. Until then the cleanup would delete its files.
+     */
+    @Test
+    void everyColumnThatCouldHoldAFileIsAccountedFor() {
+        Set<String> accountedFor = new TreeSet<>(StoredFileReferences.KEY_COLUMNS);
+        accountedFor.add(StoredFileReferences.CONTENT_COLUMN);
+        accountedFor.addAll(NOT_FILES);
+
+        List<String> candidates = jdbc.queryForList("""
+                SELECT table_name || '.' || column_name FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND data_type IN ('text', 'character varying')
+                  AND table_name NOT IN ('flyway_schema_history', 'storage_orphans')
+                  AND column_name ~ '(url|key|image|avatar|cover|file|photo|picture|attachment|content|body)'
+                """, String.class);
+
+        assertThat(candidates).isNotEmpty();
+        assertThat(new TreeSet<>(candidates)).isSubsetOf(accountedFor);
+        assertThat(candidates)
+                .containsAll(StoredFileReferences.KEY_COLUMNS)
+                .contains(StoredFileReferences.CONTENT_COLUMN);
     }
 
     private String savedUserWithAvatar() {
@@ -177,6 +242,6 @@ class StoredFileReferencesTest {
                 "coverImageUrl",
                 coverKey,
                 "tags",
-                java.util.List.of());
+                List.of());
     }
 }

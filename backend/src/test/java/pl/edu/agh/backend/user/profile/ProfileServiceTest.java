@@ -170,40 +170,6 @@ class ProfileServiceTest {
         return user;
     }
 
-    @Test
-    void aReplacedOrRemovedAvatarIsDeletedFromStorage() {
-        User user = userWithId("kc-1");
-        String oldKey = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
-        String newKey = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
-        user.setAvatarKey(oldKey);
-        when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.toStoredAvatarKey(user.getId(), newKey)).thenReturn(newKey);
-        when(storageService.toStoredAvatarKey(user.getId(), "")).thenReturn(null);
-
-        profileService.updateProfile("kc-1", avatarRequest(newKey));
-        org.mockito.Mockito.verify(storageService).deleteAfterCommit(oldKey);
-
-        profileService.updateProfile("kc-1", avatarRequest(""));
-        org.mockito.Mockito.verify(storageService).deleteAfterCommit(newKey);
-        assertThat(user.getAvatarKey()).isNull();
-    }
-
-    @Test
-    void anAvatarThatStaysIsNotDeleted() {
-        User user = userWithId("kc-1");
-        String key = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
-        user.setAvatarKey(key);
-        when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.toStoredAvatarKey(user.getId(), key)).thenReturn(key);
-
-        // sent again unchanged, and an update that does not mention the avatar at all
-        profileService.updateProfile("kc-1", avatarRequest(key));
-        profileService.updateProfile("kc-1", avatarRequest(null));
-
-        org.mockito.Mockito.verify(storageService, org.mockito.Mockito.never())
-                .deleteAfterCommit(org.mockito.ArgumentMatchers.anyString());
-    }
-
     private static UpdateProfileRequest avatarRequest(String avatarKey) {
         return new UpdateProfileRequest(null, null, null, null, null, null, null, null, avatarKey);
     }

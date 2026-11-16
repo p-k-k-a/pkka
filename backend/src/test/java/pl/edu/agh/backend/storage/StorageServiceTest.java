@@ -19,7 +19,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -542,30 +541,15 @@ class StorageServiceTest {
     }
 
     @Test
-    void aDeletionInsideATransactionWaitsForTheCommit() {
-        TransactionSynchronizationManager.initSynchronization();
-        try {
-            storage.deleteAfterCommit(MATERIAL_KEY);
-
-            // nothing is signed, let alone sent, while the transaction can still roll back
-            verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
-            assertThat(TransactionSynchronizationManager.getSynchronizations()).hasSize(1);
-        } finally {
-            TransactionSynchronizationManager.clearSynchronization();
-        }
-    }
-
-    @Test
-    void deletingNothingAfterCommitIsANoOp() {
-        storage.deleteAfterCommit(null);
-        storage.deleteAfterCommit("https://example.com/a.png");
-
-        verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
-    }
-
-    @Test
-    void listingNeedsAClient() {
+    void whatTheCleanupNeedsFromTheBucketNeedsAClient() {
         assertStatus(() -> storage.listObjects(), StorageNotConfiguredException.class);
+        assertStatus(() -> storage.readCleanupOwner(), StorageNotConfiguredException.class);
+        assertStatus(() -> storage.writeCleanupOwner("id"), StorageNotConfiguredException.class);
+    }
+
+    @Test
+    void theCleanupOwnerMarkerIsNeverTakenForAnUpload() {
+        assertThat(StorageService.isIssuedKey(StorageService.CLEANUP_OWNER_KEY)).isFalse();
     }
 
     @Test

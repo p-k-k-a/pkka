@@ -51,6 +51,11 @@ enum UploadCategory {
         return Optional.ofNullable(types().get(contentType));
     }
 
+    /** The exact shape of this category's keys, for finding them inside a longer text. */
+    Pattern keyPattern() {
+        return KeyPatterns.of(this);
+    }
+
     /** Whether {@code key} has exactly the shape this category issues; anything else is not ours. */
     boolean isValidKey(String key) {
         return KeyPatterns.of(this).matcher(key).matches();

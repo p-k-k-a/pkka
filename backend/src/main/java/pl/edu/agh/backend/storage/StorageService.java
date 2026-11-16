@@ -14,21 +14,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
@@ -52,7 +52,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
  * <p>Built by {@link StorageConfig}. When R2 is not configured the presigner is {@code null}: uploads fail with
  * 503 and keys cannot be resolved, but external {@code http(s)} URLs keep passing through untouched.
  */
-@Slf4j
 public class StorageService implements AutoCloseable {
 
     /**
@@ -75,6 +74,9 @@ public class StorageService implements AutoCloseable {
 
     private static final int MAX_DOWNLOAD_NAME_LENGTH = 150;
 
+    /** Holds the id of the one database allowed to clean this bucket; see {@link StorageCleanup}. */
+    static final String CLEANUP_OWNER_KEY = ".cleanup-owner";
+
     /** The target of a Markdown link or image: what follows {@code ](} up to whitespace or a parenthesis. */
     private static final Pattern MARKDOWN_TARGET = Pattern.compile("(?<=\\]\\()[^\\s()]+");
 
@@ -88,14 +90,15 @@ public class StorageService implements AutoCloseable {
     private final Cache<String, String> downloadUrls;
     private final RestClient restClient;
 
-    /** Without a client: everything works except {@link #listObjects()}. */
+    /** Without a client: everything works except what the cleanup needs from the bucket. */
     StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
         this(presigner, null, bucket, endpoint, clock);
     }
 
     /**
      * @param presigner {@code null} when storage is not configured
-     * @param client only needed to list the bucket; {@code null} when storage is not configured
+     * @param client only needed by the cleanup (listing, the owner marker); {@code null} when storage is not
+     *     configured
      * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.eu.r2.cloudflarestorage.com}
      */
     StorageService(S3Presigner presigner, S3Client client, String bucket, URI endpoint, Clock clock) {
@@ -252,46 +255,47 @@ public class StorageService implements AutoCloseable {
         restClient.delete().uri(URI.create(presignDelete(key))).retrieve().toBodilessEntity();
     }
 
-    /**
-     * Deletes an object that the transaction in progress has just stopped pointing at: once the transaction
-     * has committed, so a rollback leaves the file where the record still expects it. Without a transaction
-     * it is deleted right away. Never throws: a file left behind is picked up by the orphan cleanup.
-     */
-    public void deleteAfterCommit(String key) {
-        if (key == null) {
-            return;
-        }
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            deleteQuietly(key);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                deleteQuietly(key);
-            }
-        });
-    }
-
-    private void deleteQuietly(String key) {
-        try {
-            delete(key);
-        } catch (RuntimeException ex) {
-            log.warn("Could not delete {} from storage, leaving it to the orphan cleanup: {}", key, ex.getMessage());
-        }
-    }
-
     /** Everything in the bucket. Meant for the nightly cleanup, not for request handling. */
     List<StoredObject> listObjects() {
-        if (client == null) {
-            throw new StorageNotConfiguredException();
-        }
+        requireClient();
         List<StoredObject> objects = new ArrayList<>();
         client.listObjectsV2Paginator(
                         ListObjectsV2Request.builder().bucket(bucket).build())
                 .contents()
                 .forEach(object -> objects.add(new StoredObject(object.key(), object.lastModified())));
         return objects;
+    }
+
+    /** The id of the database that cleans this bucket, empty while no cleanup has ever run on it. */
+    Optional<String> readCleanupOwner() {
+        requireClient();
+        try {
+            return Optional.of(client.getObjectAsBytes(GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(CLEANUP_OWNER_KEY)
+                            .build())
+                    .asUtf8String()
+                    .trim());
+        } catch (NoSuchKeyException ex) {
+            return Optional.empty();
+        }
+    }
+
+    void writeCleanupOwner(String databaseId) {
+        requireClient();
+        client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(CLEANUP_OWNER_KEY)
+                        .contentType("text/plain")
+                        .build(),
+                RequestBody.fromString(databaseId));
+    }
+
+    private void requireClient() {
+        if (client == null) {
+            throw new StorageNotConfiguredException();
+        }
     }
 
     /** Whether {@code key} has the shape of a key this service issues for any kind of upload. */
