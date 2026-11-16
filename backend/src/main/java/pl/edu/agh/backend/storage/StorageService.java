@@ -9,7 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -17,11 +19,16 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
@@ -45,6 +52,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
  * <p>Built by {@link StorageConfig}. When R2 is not configured the presigner is {@code null}: uploads fail with
  * 503 and keys cannot be resolved, but external {@code http(s)} URLs keep passing through untouched.
  */
+@Slf4j
 public class StorageService implements AutoCloseable {
 
     /**
@@ -74,17 +82,25 @@ public class StorageService implements AutoCloseable {
     private static final Set<String> CLIENT_MANAGED_HEADERS = Set.of("host", "content-length");
 
     private final S3Presigner presigner;
+    private final S3Client client;
     private final String bucket;
     private final URI endpoint;
     private final Cache<String, String> downloadUrls;
     private final RestClient restClient;
 
+    /** Without a client: everything works except {@link #listObjects()}. */
+    StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
+        this(presigner, null, bucket, endpoint, clock);
+    }
+
     /**
      * @param presigner {@code null} when storage is not configured
+     * @param client only needed to list the bucket; {@code null} when storage is not configured
      * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.eu.r2.cloudflarestorage.com}
      */
-    StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
+    StorageService(S3Presigner presigner, S3Client client, String bucket, URI endpoint, Clock clock) {
         this.presigner = presigner;
+        this.client = client;
         this.bucket = bucket;
         this.endpoint = endpoint;
         // An entry is dropped MIN_REMAINING_VALIDITY before its URL dies, so a cached URL is always safe to hand out.
@@ -234,6 +250,53 @@ public class StorageService implements AutoCloseable {
             return;
         }
         restClient.delete().uri(URI.create(presignDelete(key))).retrieve().toBodilessEntity();
+    }
+
+    /**
+     * Deletes an object that the transaction in progress has just stopped pointing at: once the transaction
+     * has committed, so a rollback leaves the file where the record still expects it. Without a transaction
+     * it is deleted right away. Never throws: a file left behind is picked up by the orphan cleanup.
+     */
+    public void deleteAfterCommit(String key) {
+        if (key == null) {
+            return;
+        }
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteQuietly(key);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deleteQuietly(key);
+            }
+        });
+    }
+
+    private void deleteQuietly(String key) {
+        try {
+            delete(key);
+        } catch (RuntimeException ex) {
+            log.warn("Could not delete {} from storage, leaving it to the orphan cleanup: {}", key, ex.getMessage());
+        }
+    }
+
+    /** Everything in the bucket. Meant for the nightly cleanup, not for request handling. */
+    List<StoredObject> listObjects() {
+        if (client == null) {
+            throw new StorageNotConfiguredException();
+        }
+        List<StoredObject> objects = new ArrayList<>();
+        client.listObjectsV2Paginator(
+                        ListObjectsV2Request.builder().bucket(bucket).build())
+                .contents()
+                .forEach(object -> objects.add(new StoredObject(object.key(), object.lastModified())));
+        return objects;
+    }
+
+    /** Whether {@code key} has the shape of a key this service issues for any kind of upload. */
+    static boolean isIssuedKey(String key) {
+        return isKnownKey(key);
     }
 
     String presignDelete(String key) {
@@ -423,6 +486,9 @@ public class StorageService implements AutoCloseable {
     public void close() {
         if (presigner != null) {
             presigner.close();
+        }
+        if (client != null) {
+            client.close();
         }
     }
 }

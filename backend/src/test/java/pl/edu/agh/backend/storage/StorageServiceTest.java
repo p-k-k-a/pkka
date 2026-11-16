@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -538,6 +539,43 @@ class StorageServiceTest {
         storage.delete("https://example.com/a.png");
 
         verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
+    }
+
+    @Test
+    void aDeletionInsideATransactionWaitsForTheCommit() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            storage.deleteAfterCommit(MATERIAL_KEY);
+
+            // nothing is signed, let alone sent, while the transaction can still roll back
+            verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
+            assertThat(TransactionSynchronizationManager.getSynchronizations()).hasSize(1);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void deletingNothingAfterCommitIsANoOp() {
+        storage.deleteAfterCommit(null);
+        storage.deleteAfterCommit("https://example.com/a.png");
+
+        verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
+    }
+
+    @Test
+    void listingNeedsAClient() {
+        assertStatus(() -> storage.listObjects(), StorageNotConfiguredException.class);
+    }
+
+    @Test
+    void onlyKeysOfOurOwnShapeCountAsIssued() {
+        assertThat(StorageService.isIssuedKey(MATERIAL_KEY)).isTrue();
+        assertThat(StorageService.isIssuedKey(POST_IMAGE_KEY)).isTrue();
+        assertThat(StorageService.isIssuedKey("avatars/" + USER_ID + "/0f3a1c8e-1111-4000-8000-000000000005.png"))
+                .isTrue();
+        assertThat(StorageService.isIssuedKey("materials/notes.pdf")).isFalse();
+        assertThat(StorageService.isIssuedKey("backups/" + MATERIAL_KEY)).isFalse();
     }
 
     // --- helpers -----------------------------------------------------------------------------------

@@ -26,12 +26,15 @@ dependencyManagement {
 }
 
 dependencies {
-	// Cloudflare R2 speaks the S3 API. Only S3Presigner is used (signing is local, a presigned URL is
-	// called with Spring's own client), so the HTTP client implementations the s3 module drags in are excluded.
+	// Cloudflare R2 speaks the S3 API. Uploads, downloads and deletes go through S3Presigner (signing is
+	// local, a presigned URL is called with Spring's own client), so the heavy HTTP client implementations
+	// the s3 module drags in are excluded.
 	implementation('software.amazon.awssdk:s3') {
 		exclude group: 'software.amazon.awssdk', module: 'apache5-client'
 		exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
 	}
+	// Listing the bucket (orphan cleanup) cannot be presigned, so the SDK needs an HTTP client: the JDK one.
+	implementation 'software.amazon.awssdk:url-connection-client'
 
 	implementation 'com.github.ben-manes.caffeine:caffeine'
 	implementation 'org.springframework.boot:spring-boot-starter-security'

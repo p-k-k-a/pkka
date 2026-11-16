@@ -1,0 +1,182 @@
+package pl.edu.agh.backend.storage;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.jayway.jsonpath.JsonPath;
+import jakarta.persistence.EntityManager;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.support.JwtTestSupport;
+import pl.edu.agh.backend.support.TestSecurityConfig;
+import pl.edu.agh.backend.user.User;
+import pl.edu.agh.backend.user.UserRepository;
+import tools.jackson.databind.json.JsonMapper;
+
+/** Every kind of record that can hold a file must show up here, or the cleanup deletes files still in use. */
+@SpringBootTest(
+        properties = {
+            "app.storage.endpoint=https://acct.eu.r2.cloudflarestorage.com",
+            "app.storage.bucket=pkka-files",
+            "app.storage.access-key-id=test-key-id",
+            "app.storage.secret-access-key=test-secret"
+        })
+@AutoConfigureMockMvc
+@Testcontainers
+@Transactional
+@Import(TestSecurityConfig.class)
+class StoredFileReferencesTest {
+
+    private static final String ADMIN_SUBJECT = "44444444-4444-4444-4444-444444444444";
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private StoredFileReferences references;
+
+    @Autowired
+    private StorageService storage;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Test
+    void findsTheFilesOfEveryKindOfRecord() throws Exception {
+        String avatarKey = savedUserWithAvatar();
+        String materialKey = presign("MATERIAL", "application/pdf");
+        String eventCoverKey = presign("EVENT_COVER", "image/png");
+        String postCoverKey = presign("POST_COVER", "image/webp");
+        String firstPicture = presign("POST_IMAGE", "image/png");
+        String secondPicture = presign("POST_IMAGE", "image/jpeg");
+        String unattached = presign("POST_IMAGE", "image/png");
+
+        create("/api/admin/materials", Map.of("title", "Slajdy", "type", "PRESENTATION", "url", materialKey));
+        create("/api/admin/events", eventWithCover(eventCoverKey));
+        create(
+                "/api/admin/posts",
+                Map.of(
+                        "title",
+                        "Relacja",
+                        "coverImageUrl",
+                        postCoverKey,
+                        "content",
+                        "![a](" + firstPicture + ") tekst ![b](" + secondPicture + " \"podpis\")"));
+        entityManager.flush();
+
+        assertThat(references.referencedKeys())
+                .contains(avatarKey, materialKey, eventCoverKey, postCoverKey, firstPicture, secondPicture)
+                .doesNotContain(unattached);
+    }
+
+    @Test
+    void aSoftDeletedEventStillHoldsItsCover() throws Exception {
+        String coverKey = presign("EVENT_COVER", "image/png");
+        String created = create("/api/admin/events", eventWithCover(coverKey));
+        String id = JsonPath.read(created, "$.id");
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(delete("/api/admin/events/{id}", id)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+        entityManager.flush();
+
+        assertThat(references.referencedKeys()).contains(coverKey);
+    }
+
+    @Test
+    void aPictureSignedForEditingIsStillFoundByItsKey() throws Exception {
+        String picture = presign("POST_IMAGE", "image/png");
+        // what the editor sends back when a post is saved again: the signed URL, not the key
+        String echoed = "![x](" + storage.resolveUrl(picture) + ")";
+
+        create("/api/admin/posts", Map.of("title", "Edytowany", "content", echoed));
+        entityManager.flush();
+
+        assertThat(references.referencedKeys()).contains(picture);
+    }
+
+    private String savedUserWithAvatar() {
+        User user = new User();
+        user.setKeycloakId(UUID.randomUUID().toString());
+        user = userRepository.saveAndFlush(user);
+        String key = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
+        user.setAvatarKey(key);
+        userRepository.saveAndFlush(user);
+        return key;
+    }
+
+    private String presign(String purpose, String contentType) throws Exception {
+        String presigned = mockMvc.perform(post("/api/admin/files/presign")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper()
+                                .writeValueAsString(
+                                        Map.of("purpose", purpose, "contentType", contentType, "sizeBytes", 2048))))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return JsonPath.read(presigned, "$.objectKey");
+    }
+
+    private String create(String path, Map<String, Object> body) throws Exception {
+        return mockMvc.perform(post(path)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper().writeValueAsString(body)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+    }
+
+    private static Map<String, Object> eventWithCover(String coverKey) {
+        Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
+        return Map.of(
+                "title",
+                "Wydarzenie z okładką",
+                "type",
+                "ONLINE",
+                "startsAt",
+                start.toString(),
+                "endsAt",
+                start.plus(1, ChronoUnit.HOURS).toString(),
+                "transmissionUrl",
+                "https://meet.google.com/abc-defg-hij",
+                "audience",
+                "PUBLIC",
+                "coverImageUrl",
+                coverKey,
+                "tags",
+                java.util.List.of());
+    }
+}
