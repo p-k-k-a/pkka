@@ -64,8 +64,15 @@ public class Material {
     private Event event;
 
     /**
+     * The raw foreign key, read-only. Unlike {@link #event} it is still set after the event was soft-deleted,
+     * which is how a deleted event is told apart from no event at all.
+     */
+    @Column(name = "event_id", insertable = false, updatable = false)
+    private UUID eventId;
+
+    /**
      * Who may see the material while it has no linked event. A linked event decides instead: the material is
-     * then exactly as visible as the event, and this value is ignored until the link is gone.
+     * then exactly as visible as the event, and this value is ignored until an admin removes the link.
      */
     @NotNull
     @Enumerated(EnumType.STRING)
