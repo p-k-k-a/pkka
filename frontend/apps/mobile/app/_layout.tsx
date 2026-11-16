@@ -49,6 +49,7 @@ export default function RootLayout() {
                     <Stack.Screen name="application" options={{ headerShown: false }} />
                     <Stack.Screen name="alumni/profile-edit" options={{ headerShown: false }} />
                     <Stack.Screen name="alumni/[id]" options={{ headerShown: false }} />
+                    <Stack.Screen name="materials" options={{ headerShown: false }} />
                   </Stack>
                 </SafeAreaView>
                 <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
