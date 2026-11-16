@@ -35,6 +35,9 @@ export default defineConfig({
           listEvents: {
             query: { useInfinite: true, useInfiniteQueryParam: "page" },
           },
+          listMaterials: {
+            query: { useInfinite: true, useInfiniteQueryParam: "page" },
+          },
         },
       },
       formatter: "prettier",

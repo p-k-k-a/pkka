@@ -1,5 +1,6 @@
 import { ProseContent } from "@/components/content/prose-content";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
+import { EventMaterialsSection } from "@/components/materials/event-materials-section";
 import { Text } from "@/components/ui/text";
 import {
   formatEventDateShort,
@@ -145,6 +146,8 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             <ProseContent content={event.fullDescription} />
           </>
         ) : null}
+
+        <EventMaterialsSection eventId={event.id} eventTitle={title} />
       </View>
     </ScrollView>
   );
