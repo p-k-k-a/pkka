@@ -36,12 +36,14 @@ public interface SurveyRepository extends JpaRepository<Survey, UUID> {
     // when a list needs the number of questions).
     Page<Survey> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    Page<Survey> findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(SurveyStatus status, Instant now, Pageable pageable);
+    Page<Survey> findAllByStatusAndAudienceInAndEndsAtAfterOrderByEndsAtAsc(
+            SurveyStatus status, Collection<SurveyAudience> audiences, Instant now, Pageable pageable);
 
     /** The open surveys this user still has to fill in: one they have submitted is done for them. */
     @Query(value = """
             select s from Survey s
             where s.status = :status
+              and s.audience in :audiences
               and s.endsAt > :now
               and not exists (
                   select 1 from SurveySubmission submission
@@ -50,6 +52,7 @@ public interface SurveyRepository extends JpaRepository<Survey, UUID> {
             """, countQuery = """
             select count(s) from Survey s
             where s.status = :status
+              and s.audience in :audiences
               and s.endsAt > :now
               and not exists (
                   select 1 from SurveySubmission submission
@@ -57,6 +60,7 @@ public interface SurveyRepository extends JpaRepository<Survey, UUID> {
             """)
     Page<Survey> findOpenNotSubmittedBy(
             @Param("status") SurveyStatus status,
+            @Param("audiences") Collection<SurveyAudience> audiences,
             @Param("now") Instant now,
             @Param("userId") UUID userId,
             Pageable pageable);

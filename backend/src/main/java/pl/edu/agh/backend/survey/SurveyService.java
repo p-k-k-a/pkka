@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.security.Roles;
 import pl.edu.agh.backend.user.CallerUserService;
 import pl.edu.agh.backend.user.User;
 
@@ -28,12 +29,14 @@ public class SurveyService {
     @Transactional(readOnly = true)
     public Page<SurveyListItemResponse> listActive(Caller caller, Pageable pageable) {
         Instant now = Instant.now(clock);
+        Set<SurveyAudience> audiences = audiencesOf(caller);
         // A caller with no account row yet can't have submitted anything.
         Page<Survey> surveys = callerUserService
                 .findId(caller)
-                .map(userId -> surveyRepository.findOpenNotSubmittedBy(SurveyStatus.ACTIVE, now, userId, pageable))
-                .orElseGet(() -> surveyRepository.findAllByStatusAndEndsAtAfterOrderByEndsAtAsc(
-                        SurveyStatus.ACTIVE, now, pageable));
+                .map(userId ->
+                        surveyRepository.findOpenNotSubmittedBy(SurveyStatus.ACTIVE, audiences, now, userId, pageable))
+                .orElseGet(() -> surveyRepository.findAllByStatusAndAudienceInAndEndsAtAfterOrderByEndsAtAsc(
+                        SurveyStatus.ACTIVE, audiences, now, pageable));
         List<UUID> ids = surveys.getContent().stream().map(Survey::getId).toList();
         Map<UUID, Long> questionCounts = ids.isEmpty()
                 ? Map.of()
@@ -49,6 +52,7 @@ public class SurveyService {
     @Transactional(readOnly = true)
     public SurveyResponse getActive(UUID id, Caller caller) {
         Survey survey = surveyRepository.findById(id).orElseThrow(SurveyNotFoundException::new);
+        ensureVisibleTo(survey, caller);
         ensureActive(survey);
         boolean submitted = callerUserService
                 .findId(caller)
@@ -69,6 +73,7 @@ public class SurveyService {
     @Transactional
     public SubmitSurveyResponse submit(UUID surveyId, Caller caller, SubmitSurveyRequest request) {
         Survey survey = surveyRepository.findForUpdateById(surveyId).orElseThrow(SurveyNotFoundException::new);
+        ensureVisibleTo(survey, caller);
         ensureActive(survey);
         User user = callerUserService.getOrCreate(caller);
         if (surveySubmissionRepository.existsBySurveyIdAndUserId(surveyId, user.getId())) {
@@ -112,6 +117,20 @@ public class SurveyService {
                 throw new SurveyAlreadySubmittedException();
             }
             throw ex;
+        }
+    }
+
+    /** The audiences the caller belongs to: everyone signed in, and verified alumni on top. */
+    private static Set<SurveyAudience> audiencesOf(Caller caller) {
+        return caller.hasRole(Roles.VERIFIED_ALUMN)
+                ? EnumSet.allOf(SurveyAudience.class)
+                : EnumSet.of(SurveyAudience.ALL_USERS);
+    }
+
+    /** A survey meant for others is reported as missing, like an event the caller cannot see. */
+    private static void ensureVisibleTo(Survey survey, Caller caller) {
+        if (!audiencesOf(caller).contains(survey.getAudience())) {
+            throw new SurveyNotFoundException();
         }
     }
 
