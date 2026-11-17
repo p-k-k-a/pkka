@@ -53,16 +53,6 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
-
-  const register = useRegisterForEvent();
-  const unregister = useCancelEventRegistration();
-  const waitlisted = event.registrationStatus === EventRegistrationStatus.WAITLISTED;
-  const full = isEventFull(event.seatLimit, event.seatsTaken);
-  const closed = isEventRegistrationClosed(event);
-  const online = hasOnlineLink(event.type);
-  const meetingUrl = online ? event.transmissionUrl : undefined;
-  const onlineOnly = waitlisted && Boolean(meetingUrl);
 
   const refresh = () =>
     Promise.all([
@@ -70,29 +60,31 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
       queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() }),
     ]);
 
+  const register = useRegisterForEvent({ mutation: { onSettled: refresh } });
+  const unregister = useCancelEventRegistration({ mutation: { onSettled: refresh } });
+  const pending = register.isPending || unregister.isPending;
+  const waitlisted = event.registrationStatus === EventRegistrationStatus.WAITLISTED;
+  const full = isEventFull(event.seatLimit, event.seatsTaken);
+  const closed = isEventRegistrationClosed(event);
+  const online = hasOnlineLink(event.type);
+  const meetingUrl = online ? event.transmissionUrl : undefined;
+  const onlineOnly = waitlisted && Boolean(meetingUrl);
+
   const onJoin = async () => {
     setError(null);
-    setPending(true);
     try {
       await register.mutateAsync({ eventId: event.id });
     } catch (e) {
       setError(eventRegistrationErrorMessage(e, "join"));
-    } finally {
-      await refresh();
-      setPending(false);
     }
   };
 
   const onLeave = async () => {
     setError(null);
-    setPending(true);
     try {
       await unregister.mutateAsync({ eventId: event.id });
     } catch (e) {
       setError(eventRegistrationErrorMessage(e, "leave"));
-    } finally {
-      await refresh();
-      setPending(false);
     }
   };
 
