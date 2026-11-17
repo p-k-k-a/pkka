@@ -1,11 +1,17 @@
 import { ProseContent } from "@/components/content/prose-content";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
-import { formatEventDateShort, formatSeatsRemaining, formatTimeRange } from "@pkka/domain";
+import {
+  formatEventDateShort,
+  formatSeatsRemaining,
+  formatTimeRange,
+  isEventRegistrationClosed,
+} from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { EventType, type EventDetailsResponse } from "@pkka/api";
+import { cn } from "@/lib/utils";
+import { type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
-import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
+import { Calendar, ImageIcon, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
@@ -18,22 +24,35 @@ function InfoRow({
   label,
   value,
   sub,
+  destructive,
 }: {
   icon: React.ReactNode;
   label?: string;
   value: string;
   sub?: string;
+  destructive?: boolean;
 }) {
   return (
     <View className="flex-row items-start gap-3">
-      <View className="size-10 items-center justify-center rounded-md bg-muted">{icon}</View>
+      <View
+        className={cn(
+          "size-10 items-center justify-center rounded-md",
+          destructive ? "bg-destructive/10" : "bg-muted",
+        )}
+      >
+        {icon}
+      </View>
       <View className="flex-1 gap-0.5">
         {label ? (
           <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             {label}
           </Text>
         ) : null}
-        <Text className="text-sm font-bold text-foreground">{value}</Text>
+        <Text
+          className={cn("text-sm font-bold", destructive ? "text-destructive" : "text-foreground")}
+        >
+          {value}
+        </Text>
         {sub ? <Text className="text-xs text-muted-foreground">{sub}</Text> : null}
       </View>
     </View>
@@ -45,7 +64,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
   const { title, type, startsAt, endsAt, location, seatLimit, seatsTaken, coverImageUrl, tags } =
     event;
 
-  const isOnline = type === EventType.ONLINE;
+  const closed = isEventRegistrationClosed(event);
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
   const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
@@ -95,13 +114,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             sub={formatTimeRange(startsAt, endsAt)}
           />
 
-          {isOnline ? (
-            <InfoRow
-              icon={<Link2 size={18} color={theme.accent} />}
-              value="Link do spotkania"
-              sub="Link dostępny po zalogowaniu" // TODO: ask client if this should be configurable option in admin panel (maybe we want public events to be joinable only by logged users)
-            />
-          ) : location ? (
+          {location ? (
             <InfoRow
               icon={<MapPin size={18} color={theme.accent} />}
               label="Lokalizacja"
@@ -109,7 +122,14 @@ export function EventDetailView({ event }: EventDetailViewProps) {
             />
           ) : null}
 
-          {seats ? (
+          {seats && seats.remaining <= 0 ? (
+            <InfoRow
+              destructive
+              icon={<Users size={18} color={theme.destructive} />}
+              value="Brak wolnych miejsc"
+              sub={`Limit: ${seats.limit} osób${closed ? "" : ", działa lista rezerwowa"}`}
+            />
+          ) : seats ? (
             <InfoRow
               icon={<Users size={18} color={theme.accent} />}
               value={`Pozostało ${seats.remaining} miejsc`}

@@ -20,6 +20,7 @@ class DiscordSetupCommand {
     private static final int ROLE_OPTION = 8;
     private static final int TEXT_CHANNEL = 0;
     private static final int ANNOUNCEMENT_CHANNEL = 5;
+    private static final int CATEGORY = 4;
     private static final int IN_SERVERS_ONLY = 0;
     private static final int CHANNEL_MESSAGE_WITH_SOURCE = 4;
     private static final int EPHEMERAL = 64;
@@ -28,7 +29,7 @@ class DiscordSetupCommand {
             "name",
             NAME,
             "description",
-            "Set the event announcement channel and the alumni role",
+            "Set the event announcement channel, the alumni role and the topic group category",
             "default_member_permissions",
             "8",
             "contexts",
@@ -47,7 +48,16 @@ class DiscordSetupCommand {
                     Map.of(
                             "type", ROLE_OPTION,
                             "name", "role",
-                            "description", "Role held by alumni")));
+                            "description", "Role held by alumni"),
+                    Map.of(
+                            "type",
+                            CHANNEL_OPTION,
+                            "name",
+                            "groups_category",
+                            "description",
+                            "Category the bot creates topic group channels in",
+                            "channel_types",
+                            List.of(CATEGORY))));
 
     private static final DiscordEmbed CHANNEL_CONFIRMATION =
             new DiscordEmbed(null, "Tu będą pojawiać się ogłoszenia wydarzeń z platformy.", List.of());
@@ -64,12 +74,13 @@ class DiscordSetupCommand {
         JsonNode data = interaction.path("data");
         Optional<String> channelId = option(data, "channel");
         Optional<String> roleId = option(data, "role");
+        Optional<String> categoryId = option(data, "groups_category");
 
         Optional<DiscordGuildSettings> current = guildSettings.findFirstBy();
         if (current.isPresent() && !current.get().getGuildId().equals(guildId)) {
             return reply(OTHER_SERVER);
         }
-        if (channelId.isEmpty() && roleId.isEmpty()) {
+        if (channelId.isEmpty() && roleId.isEmpty() && categoryId.isEmpty()) {
             return reply(describe(current));
         }
         if (roleId.isPresent() && !isPlainRole(data, guildId, roleId.get())) {
@@ -81,18 +92,19 @@ class DiscordSetupCommand {
         }
 
         DiscordGuildSettings settings = current.orElseGet(() -> new DiscordGuildSettings(guildId, null, null));
-        settings.configure(channelId, roleId);
+        settings.configure(channelId, roleId, categoryId);
         try {
             settings = guildSettings.saveAndFlush(settings);
         } catch (DataIntegrityViolationException ex) {
             return reply(OTHER_SERVER);
         }
         log.info(
-                "Discord setup changed on guild {} by {}: channel {}, alumn role {}",
+                "Discord setup changed on guild {} by {}: channel {}, alumn role {}, groups category {}",
                 guildId,
                 interaction.path("member").path("user").path("id").asString(),
                 channelId.orElse("unchanged"),
-                roleId.orElse("unchanged"));
+                roleId.orElse("unchanged"),
+                categoryId.orElse("unchanged"));
         return reply(describe(Optional.of(settings)));
     }
 
@@ -118,7 +130,10 @@ class DiscordSetupCommand {
         String role = settings.flatMap(DiscordGuildSettings::getAlumnRoleId)
                 .map(id -> "<@&" + id + ">")
                 .orElse("not set");
-        return "Announcement channel: %s\nAlumni role: %s".formatted(channel, role);
+        String category = settings.flatMap(DiscordGuildSettings::getGroupsCategoryId)
+                .map(id -> "<#" + id + ">")
+                .orElse("not set");
+        return "Announcement channel: %s\nAlumni role: %s\nTopic group category: %s".formatted(channel, role, category);
     }
 
     private static Map<String, Object> reply(String content) {

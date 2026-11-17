@@ -1,14 +1,15 @@
 import { AlumniOnlyBadge, EventTypeBadge } from "@/components/events/event-type-badge";
 import { Text } from "@/components/ui/text";
-import {
-  formatEventDateLong,
-  formatSeatsCompact,
-  registrationStatusLabelUpper,
-} from "@pkka/domain";
+import { formatEventDateLong, formatSeatsCompact } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
-import { Audience, EventType, type EventListItemResponse } from "@pkka/api";
+import {
+  Audience,
+  EventRegistrationStatus,
+  EventType,
+  type EventListItemResponse,
+} from "@pkka/api";
 import { Link } from "expo-router";
-import { ArrowRight, Calendar, Link2, MapPin, Users } from "lucide-react-native";
+import { ArrowRight, Calendar, Check, Clock, Link2, MapPin, Users } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 type EventCardProps = {
@@ -38,9 +39,14 @@ function EventCard({ event }: EventCardProps) {
         <EventTypeBadge type={type} />
         {audience === Audience.ALL_ALUMNI ? <AlumniOnlyBadge /> : null}
         {registrationStatus ? (
-          <View className="border-muted-foreground/25 dark:border-input rounded-lg border px-3 py-1">
+          <View className="border-primary bg-primary/15 flex-row items-center gap-1.5 rounded-lg border px-3 py-1">
+            {registrationStatus === EventRegistrationStatus.WAITLISTED ? (
+              <Clock size={12} color={theme.foreground} />
+            ) : (
+              <Check size={12} color={theme.foreground} />
+            )}
             <Text className="text-foreground text-[11px] font-semibold uppercase tracking-widest">
-              {registrationStatusLabelUpper(registrationStatus)}
+              {registrationStatus === EventRegistrationStatus.WAITLISTED ? "W kolejce" : "Zapisany"}
             </Text>
           </View>
         ) : null}
