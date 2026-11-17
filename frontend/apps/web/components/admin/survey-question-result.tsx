@@ -5,6 +5,7 @@ import { QuestionType, type QuestionResult } from "@pkka/api";
 import { formatAnswerCount, questionTypeLabel, submissionShare } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const TEXT_ANSWERS_SHOWN = 5;
 
@@ -25,7 +26,8 @@ export function SurveyQuestionResult({
   const shownTextAnswers = showAllText ? textAnswers : textAnswers.slice(0, TEXT_ANSWERS_SHOWN);
 
   return (
-    <Card className="gap-5 px-6 py-6">
+    // A grid is a table, so it takes the full width of the results.
+    <Card className={cn("gap-5 px-6 py-6", result.type === QuestionType.GRID && "lg:col-span-2")}>
       <div className="space-y-2">
         <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           Pytanie {number} · {questionTypeLabel(result.type)}
@@ -35,7 +37,9 @@ export function SurveyQuestionResult({
         </h3>
       </div>
 
-      {result.type === QuestionType.TEXT ? (
+      {result.type === QuestionType.GRID ? (
+        <GridResult result={result} submissionCount={submissionCount} />
+      ) : result.type === QuestionType.TEXT ? (
         textAnswers.length === 0 ? (
           <p className="text-muted-foreground text-sm">Brak odpowiedzi.</p>
         ) : (
@@ -91,5 +95,68 @@ export function SurveyQuestionResult({
         </ul>
       )}
     </Card>
+  );
+}
+
+/** Rows by columns; each cell is the share of people who picked that column in that row. */
+function GridResult({
+  result,
+  submissionCount,
+}: {
+  result: QuestionResult;
+  submissionCount: number;
+}) {
+  const rows = result.rowResults ?? [];
+  const columns = rows[0]?.optionCounts ?? [];
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-fit border-collapse text-sm">
+        <thead>
+          <tr>
+            <th scope="col" className="sr-only">
+              Wiersz
+            </th>
+            {columns.map((column) => (
+              <th
+                key={column.optionId}
+                scope="col"
+                className="text-muted-foreground px-2 pb-3 text-center text-xs font-medium"
+              >
+                {column.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.rowId} className="border-border border-t">
+              <th
+                scope="row"
+                className="text-foreground py-3 pr-4 text-left font-normal break-words"
+              >
+                {row.label}
+              </th>
+              {row.optionCounts.map((cell) => {
+                const percent = submissionShare(cell.count, submissionCount);
+                return (
+                  <td
+                    key={cell.optionId}
+                    className="px-2 py-3 text-center tabular-nums"
+                    // The darker the cell, the more people picked it.
+                    style={{
+                      backgroundColor: `color-mix(in srgb, var(--color-chart-1) ${percent * 0.4}%, transparent)`,
+                    }}
+                  >
+                    <span className="text-foreground font-semibold">{cell.count}</span>{" "}
+                    <span className="text-muted-foreground text-xs">({percent}%)</span>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

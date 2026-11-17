@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
+  SurveyAudience,
   SurveyStatus,
   getGetAdminSurveyQueryKey,
   getListAdminSurveysQueryKey,
@@ -16,10 +17,13 @@ import {
   type AdminSurveyResponse,
 } from "@pkka/api";
 import {
+  SURVEY_AUDIENCE_OPTIONS,
   SURVEY_MAX_QUESTIONS,
   SURVEY_TITLE_MAX,
   formatQuestionCount,
   fromDatetimeLocalValue,
+  isSurveyAudience,
+  surveyAudienceLabel,
   surveyQuestionIssue,
   toDatetimeLocalValue,
   toSurveyQuestionRequest,
@@ -47,6 +51,7 @@ import { SectionTitle } from "@/components/content/section-title";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ADMIN_SURVEYS_PATH } from "@/lib/survey-paths";
@@ -66,9 +71,13 @@ function toDrafts(survey: AdminSurveyResponse): SurveyQuestionDraft[] {
     key: question.id,
     content: question.content,
     type: question.type,
-    // A text question comes back without options; two blanks wait in case its type changes.
+    // A text question comes back without options and anything but a grid without rows;
+    // two blanks wait in case the type changes.
     options: question.options?.length
       ? question.options.map((option) => ({ key: option.id, label: option.label }))
+      : [newSurveyOption(), newSurveyOption()],
+    rows: question.rows?.length
+      ? question.rows.map((row) => ({ key: row.id, label: row.label }))
       : [newSurveyOption(), newSurveyOption()],
   }));
 }
@@ -89,6 +98,9 @@ export function SurveyForm({ survey }: SurveyFormProps) {
 
   const [title, setTitle] = useState(survey?.title ?? "");
   const [description, setDescription] = useState(survey?.description ?? "");
+  const [audience, setAudience] = useState<SurveyAudience>(
+    survey?.audience ?? SurveyAudience.VERIFIED_ALUMNI,
+  );
   const [endsAt, setEndsAt] = useState(() =>
     survey ? toDatetimeLocalValue(survey.endsAt) : defaultDeadline(),
   );
@@ -152,6 +164,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
       description: description.trim() || undefined,
       endsAt: endsAtIso,
       status,
+      audience,
       questions: questions.map(toSurveyQuestionRequest),
     };
     setPendingStatus(status);
@@ -210,6 +223,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
         ...source,
         key: newDraftKey(),
         options: source.options.map((option) => newSurveyOption(option.label)),
+        rows: source.rows.map((row) => newSurveyOption(row.label)),
       };
       return [...prev.slice(0, index + 1), copy, ...prev.slice(index + 1)];
     });
@@ -250,7 +264,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
               {isEditing ? "Edycja" : "Nowa ankieta"}
             </p>
             <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
-              {isEditing ? "Edytuj ankietę" : "Utwórz ankietę dla alumnów"}
+              {isEditing ? "Edytuj ankietę" : "Utwórz ankietę"}
             </h1>
           </div>
           <Tabs value={view} onValueChange={(value) => setView(value as "edit" | "preview")}>
@@ -339,6 +353,30 @@ export function SurveyForm({ survey }: SurveyFormProps) {
             <Card className="gap-5 rounded-lg p-5 shadow-none">
               <SectionTitle>Publikacja</SectionTitle>
               <div className="space-y-2">
+                <FieldLabel htmlFor="survey-audience">Kto może wypełnić</FieldLabel>
+                <Select
+                  id="survey-audience"
+                  value={audience}
+                  aria-describedby="survey-audience-hint"
+                  onChange={(changeEvent) => {
+                    if (isSurveyAudience(changeEvent.target.value)) {
+                      setAudience(changeEvent.target.value);
+                    }
+                  }}
+                >
+                  {SURVEY_AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+                <p id="survey-audience-hint" className="text-muted-foreground text-xs">
+                  {audience === SurveyAudience.ALL_USERS
+                    ? "Także osoby, których wniosek nie został jeszcze zatwierdzony."
+                    : "Tylko osoby z zatwierdzonym wnioskiem."}
+                </p>
+              </div>
+              <div className="space-y-2">
                 <FieldLabel htmlFor="survey-ends-at">Termin zakończenia</FieldLabel>
                 <Input
                   id="survey-ends-at"
@@ -357,14 +395,12 @@ export function SurveyForm({ survey }: SurveyFormProps) {
                   </p>
                 ) : (
                   <p id="survey-ends-at-hint" className="text-muted-foreground text-xs">
-                    Po tym terminie ankieta zniknie z listy alumnów.
+                    Po tym terminie ankieta zniknie z listy ankiet.
                   </p>
                 )}
               </div>
               <p className="text-muted-foreground text-sm">
-                {isPublished
-                  ? "Ankieta jest opublikowana. Widzą ją zweryfikowani alumni."
-                  : "Szkic widzą tylko administratorzy."}{" "}
+                {isPublished ? "Ankieta jest opublikowana." : "Szkic widzą tylko administratorzy."}{" "}
                 W ankiecie: {formatQuestionCount(questions.length)}.
               </p>
               <div className="flex flex-col gap-2">
@@ -423,8 +459,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Opublikować ankietę?</AlertDialogTitle>
             <AlertDialogDescription>
-              „{title.trim()}” od razu pojawi się u zweryfikowanych alumnów. Gdy ktoś ją wypełni,
-              pytań nie da się już zmienić.
+              {`„${title.trim()}” od razu zobaczą: ${surveyAudienceLabel(audience).toLowerCase()}. Gdy ktoś ją wypełni, pytań nie da się już zmienić.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { useGetAdminSurveyResults, useGetAdminSurvey, type ApiError } from "@pkka/api";
-import { formatDateTime, isAdmin, surveyPhase, type SurveyPhase } from "@pkka/domain";
+import {
+  formatDateTime,
+  isAdmin,
+  surveyAudienceLabel,
+  surveyPhase,
+  type SurveyPhase,
+} from "@pkka/domain";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { SurveyAvailabilityActions } from "@/components/admin/survey-availability-actions";
 import { SurveyPhaseBadge } from "@/components/admin/survey-phase-badge";
@@ -87,7 +93,12 @@ export function SurveyResults({ id }: { id: string }) {
 
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="min-w-0 flex-1 space-y-4">
-              <SurveyPhaseBadge phase={phase} />
+              <div className="flex flex-wrap items-center gap-3">
+                <SurveyPhaseBadge phase={phase} />
+                <span className="text-muted-foreground text-sm">
+                  Dla: {surveyAudienceLabel(survey.audience)}
+                </span>
+              </div>
               <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight break-words md:text-[33px]">
                 {survey.title}
               </h1>

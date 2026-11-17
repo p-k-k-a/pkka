@@ -1,4 +1,4 @@
-import { QuestionType, SurveyStatus, type SurveyQuestionRequest } from "@pkka/api";
+import { QuestionType, SurveyAudience, SurveyStatus, type SurveyQuestionRequest } from "@pkka/api";
 import { pluralPl } from "../format/plural";
 
 // Mirrors the constraints on the backend's survey requests.
@@ -12,6 +12,9 @@ export const SURVEY_MIN_OPTIONS = 2;
 // Keeps a survey short enough to finish; the backend sets no limit of its own.
 export const SURVEY_MAX_QUESTIONS = 30;
 export const SURVEY_MAX_OPTIONS = 15;
+// A grid with one row is a single choice; more than this stops fitting on a phone.
+export const SURVEY_MIN_ROWS = 2;
+export const SURVEY_MAX_ROWS = 15;
 
 export const SURVEYS_PAGE_SIZE = 20;
 
@@ -19,6 +22,7 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   SINGLE_CHOICE: "Jedna odpowiedź",
   MULTI_CHOICE: "Wiele odpowiedzi",
   TEXT: "Odpowiedź tekstowa",
+  GRID: "Siatka (jedna odpowiedź w wierszu)",
 };
 
 export function questionTypeLabel(type: QuestionType) {
@@ -42,7 +46,26 @@ export function isChoiceQuestion(type: QuestionType) {
 export function questionTypeHint(type: QuestionType) {
   if (type === QuestionType.SINGLE_CHOICE) return "Wybierz jedną odpowiedź.";
   if (type === QuestionType.MULTI_CHOICE) return "Możesz zaznaczyć kilka odpowiedzi.";
+  if (type === QuestionType.GRID) return "Wybierz jedną odpowiedź w każdym wierszu.";
   return "Odpowiedz własnymi słowami.";
+}
+
+const SURVEY_AUDIENCE_LABELS: Record<SurveyAudience, string> = {
+  ALL_USERS: "Wszyscy zalogowani",
+  VERIFIED_ALUMNI: "Zweryfikowani alumni",
+};
+
+export function surveyAudienceLabel(audience: SurveyAudience) {
+  return SURVEY_AUDIENCE_LABELS[audience];
+}
+
+export const SURVEY_AUDIENCE_OPTIONS = Object.values(SurveyAudience).map((value) => ({
+  value,
+  label: SURVEY_AUDIENCE_LABELS[value],
+}));
+
+export function isSurveyAudience(value: unknown): value is SurveyAudience {
+  return Object.values(SurveyAudience).includes(value as SurveyAudience);
 }
 
 // The status alone doesn't say whether people can still answer: an ACTIVE survey past
@@ -93,22 +116,49 @@ export type SurveyQuestionDraft = {
   key: string;
   content: string;
   type: QuestionType;
+  /** The answers to choose from; the columns of a grid. */
   options: SurveyOptionDraft[];
+  /** Used by a grid only, kept for the other types so switching back restores them. */
+  rows: SurveyOptionDraft[];
 };
+
+function listIssue(
+  items: SurveyOptionDraft[],
+  min: number,
+  noun: { empty: string; few: string; same: string },
+) {
+  const labels = items.map((item) => item.label.trim());
+  if (labels.some((label) => label === "")) return noun.empty;
+  if (labels.length < min) return noun.few;
+  const unique = new Set(labels.map((label) => label.toLocaleLowerCase("pl")));
+  if (unique.size !== labels.length) return noun.same;
+  return null;
+}
 
 /** The first thing wrong with a question in the survey builder, or null when it can be saved. */
 export function surveyQuestionIssue(question: SurveyQuestionDraft) {
   if (question.content.trim() === "") return "Wpisz treść pytania.";
   if (!isChoiceQuestion(question.type)) return null;
 
-  const labels = question.options.map((option) => option.label.trim());
-  if (labels.some((label) => label === "")) return "Uzupełnij lub usuń puste odpowiedzi.";
-  if (labels.length < SURVEY_MIN_OPTIONS) {
-    return `Dodaj co najmniej ${SURVEY_MIN_OPTIONS} odpowiedzi do wyboru.`;
+  if (question.type === QuestionType.GRID) {
+    return (
+      listIssue(question.rows, SURVEY_MIN_ROWS, {
+        empty: "Uzupełnij lub usuń puste wiersze.",
+        few: `Dodaj co najmniej ${SURVEY_MIN_ROWS} wiersze.`,
+        same: "Wiersze nie mogą się powtarzać.",
+      }) ??
+      listIssue(question.options, SURVEY_MIN_OPTIONS, {
+        empty: "Uzupełnij lub usuń puste kolumny.",
+        few: `Dodaj co najmniej ${SURVEY_MIN_OPTIONS} kolumny.`,
+        same: "Kolumny nie mogą się powtarzać.",
+      })
+    );
   }
-  const unique = new Set(labels.map((label) => label.toLocaleLowerCase("pl")));
-  if (unique.size !== labels.length) return "Odpowiedzi nie mogą się powtarzać.";
-  return null;
+  return listIssue(question.options, SURVEY_MIN_OPTIONS, {
+    empty: "Uzupełnij lub usuń puste odpowiedzi.",
+    few: `Dodaj co najmniej ${SURVEY_MIN_OPTIONS} odpowiedzi do wyboru.`,
+    same: "Odpowiedzi nie mogą się powtarzać.",
+  });
 }
 
 export function toSurveyQuestionRequest(question: SurveyQuestionDraft): SurveyQuestionRequest {
@@ -120,11 +170,13 @@ export function toSurveyQuestionRequest(question: SurveyQuestionDraft): SurveyQu
     options: isChoiceQuestion(question.type)
       ? question.options.map((option) => option.label.trim())
       : [],
+    rows: question.type === QuestionType.GRID ? question.rows.map((row) => row.label.trim()) : [],
   };
 }
 
 // An answer travels the way the API stores it: the option id for a single choice, option
-// ids joined with commas for a multiple choice, the text itself for a text question.
+// ids joined with commas for a multiple choice, `rowId:optionId` pairs joined with commas
+// for a grid, the text itself for a text question.
 export function selectedOptionIds(value: string) {
   return value === "" ? [] : value.split(",");
 }
@@ -136,4 +188,32 @@ export function toggleSelectedOption(value: string, optionId: string, selected: 
 
 export function isSurveyAnswerGiven(value: string | undefined) {
   return value !== undefined && value.trim() !== "";
+}
+
+/** The option picked in each row of a grid answer, by row id. */
+export function gridChoices(value: string): Record<string, string> {
+  const choices: Record<string, string> = {};
+  for (const pair of value === "" ? [] : value.split(",")) {
+    const [rowId, optionId] = pair.split(":");
+    if (rowId && optionId) choices[rowId] = optionId;
+  }
+  return choices;
+}
+
+export function setGridChoice(value: string, rowId: string, optionId: string) {
+  const choices = { ...gridChoices(value), [rowId]: optionId };
+  return Object.entries(choices)
+    .map(([row, option]) => `${row}:${option}`)
+    .join(",");
+}
+
+/** A grid counts as answered only once every row has an option picked. */
+export function isSurveyQuestionAnswered(
+  question: { type: QuestionType; rows?: { id: string }[] },
+  value: string | undefined,
+) {
+  if (!isSurveyAnswerGiven(value)) return false;
+  if (question.type !== QuestionType.GRID) return true;
+  const choices = gridChoices(value ?? "");
+  return (question.rows ?? []).every((row) => choices[row.id] !== undefined);
 }

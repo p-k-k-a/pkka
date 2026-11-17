@@ -44,6 +44,9 @@ export function SurveyPreview({ title, description, questions }: SurveyPreviewPr
                     .filter((option) => option.label.trim() !== "")
                     .map((option) => ({ id: option.key, label: option.label.trim() }))
                 : [],
+              rows: question.rows
+                .filter((row) => row.label.trim() !== "")
+                .map((row) => ({ id: row.key, label: row.label.trim() })),
             }}
             value={answers[question.key] ?? ""}
             onChange={(value) => setAnswers((prev) => ({ ...prev, [question.key]: value }))}

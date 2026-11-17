@@ -40,7 +40,7 @@ const SCHEDULE_COPY: Record<
 > = {
   draft: {
     title: "Opublikować ankietę?",
-    description: "Ankieta od razu pojawi się u zweryfikowanych alumnów.",
+    description: "Ankieta od razu pojawi się u wybranych odbiorców.",
     action: "Opublikuj ankietę",
     done: "Ankieta opublikowana",
   },
@@ -53,7 +53,7 @@ const SCHEDULE_COPY: Record<
   ended: {
     title: "Wznowić ankietę?",
     description:
-      "Ankieta wróci na listę alumnów do podanego terminu. Zebrane odpowiedzi zostają, a osoby, które już ją wypełniły, nie wypełnią jej ponownie.",
+      "Ankieta wróci na listę ankiet do podanego terminu. Zebrane odpowiedzi zostają, a osoby, które już ją wypełniły, nie wypełnią jej ponownie.",
     action: "Wznów ankietę",
     done: "Ankieta wznowiona",
   },
@@ -202,7 +202,7 @@ export function SurveyAvailabilityActions({ survey }: { survey: AdminSurveyRespo
           <AlertDialogHeader>
             <AlertDialogTitle>Zakończyć ankietę teraz?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ankieta zniknie z listy alumnów i nikt więcej jej nie wypełni. Zebrane odpowiedzi
+              Ankieta zniknie z listy ankiet i nikt więcej jej nie wypełni. Zebrane odpowiedzi
               zostają, a ankietę możesz później wznowić.
             </AlertDialogDescription>
           </AlertDialogHeader>

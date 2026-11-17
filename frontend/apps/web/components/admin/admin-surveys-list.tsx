@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  UserCheck,
   Users,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -28,6 +29,7 @@ import {
   formatSubmissionCount,
   formatSurveyCount,
   isAdmin,
+  surveyAudienceLabel,
   surveyPhase,
 } from "@pkka/domain";
 import {
@@ -163,6 +165,11 @@ export function AdminSurveysList() {
                             icon: CalendarClock,
                             label: phase === "ended" ? "Zakończona" : "Termin",
                             value: formatDateTime(survey.endsAt),
+                          },
+                          {
+                            icon: UserCheck,
+                            label: "Dla",
+                            value: surveyAudienceLabel(survey.audience),
                           },
                           {
                             icon: ListChecks,
