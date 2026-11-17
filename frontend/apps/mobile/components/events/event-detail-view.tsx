@@ -5,14 +5,13 @@ import {
   formatEventDateShort,
   formatSeatsRemaining,
   formatTimeRange,
-  hasOnlineLink,
   isEventRegistrationClosed,
 } from "@pkka/domain";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { type EventDetailsResponse } from "@pkka/api";
 import { Image } from "expo-image";
-import { Calendar, ImageIcon, Link2, MapPin, Users } from "lucide-react-native";
+import { Calendar, ImageIcon, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
@@ -66,7 +65,6 @@ export function EventDetailView({ event }: EventDetailViewProps) {
     event;
 
   const closed = isEventRegistrationClosed(event);
-  const showMeetingHint = hasOnlineLink(type) && !event.registrationStatus && !closed;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
   const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
@@ -121,14 +119,6 @@ export function EventDetailView({ event }: EventDetailViewProps) {
               icon={<MapPin size={18} color={theme.accent} />}
               label="Lokalizacja"
               value={location}
-            />
-          ) : null}
-
-          {showMeetingHint ? (
-            <InfoRow
-              icon={<Link2 size={18} color={theme.accent} />}
-              value="Link do spotkania"
-              sub="Link dostępny po zapisaniu się na wydarzenie"
             />
           ) : null}
 
