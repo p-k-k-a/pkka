@@ -25,9 +25,16 @@ type ParticipationMenuProps = {
   icon: LucideIcon;
   items: ParticipationMenuItem[];
   header?: { title: string; description: string };
+  disabled?: boolean;
 };
 
-export function ParticipationMenu({ label, icon, items, header }: ParticipationMenuProps) {
+export function ParticipationMenu({
+  label,
+  icon,
+  items,
+  header,
+  disabled,
+}: ParticipationMenuProps) {
   const { width: screenWidth } = useWindowDimensions();
   const rotation = useSharedValue(0);
   const chevronStyle = useAnimatedStyle(() => ({
@@ -41,8 +48,13 @@ export function ParticipationMenu({ label, icon, items, header }: ParticipationM
         rotation.value = withTiming(open ? 180 : 0, { duration: 150 });
       }}
     >
-      <DropdownMenuTrigger asChild>
-        <Pressable className="border-primary bg-primary/15 active:bg-primary/25 min-h-10 flex-row items-center justify-between gap-2 rounded-md border px-4 py-2">
+      <DropdownMenuTrigger asChild disabled={disabled}>
+        <Pressable
+          className={cn(
+            "border-primary bg-primary/15 active:bg-primary/25 min-h-10 flex-row items-center justify-between gap-2 rounded-md border px-4 py-2",
+            disabled && "opacity-50",
+          )}
+        >
           <View className="flex-row items-center gap-2">
             <Icon as={icon} size={16} className="text-foreground" />
             <Text numberOfLines={1} className="text-foreground text-sm font-semibold">

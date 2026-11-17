@@ -65,8 +65,8 @@ export function EventDetailView({ event }: EventDetailViewProps) {
   const { title, type, startsAt, endsAt, location, seatLimit, seatsTaken, coverImageUrl, tags } =
     event;
 
-  const showMeetingHint =
-    hasOnlineLink(type) && !event.registrationStatus && !isEventRegistrationClosed(event);
+  const closed = isEventRegistrationClosed(event);
+  const showMeetingHint = hasOnlineLink(type) && !event.registrationStatus && !closed;
   const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
   const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
@@ -137,7 +137,7 @@ export function EventDetailView({ event }: EventDetailViewProps) {
               destructive
               icon={<Users size={18} color={theme.destructive} />}
               value="Brak wolnych miejsc"
-              sub={`Limit: ${seats.limit} osób, działa lista rezerwowa`}
+              sub={`Limit: ${seats.limit} osób${closed ? "" : ", działa lista rezerwowa"}`}
             />
           ) : seats ? (
             <InfoRow

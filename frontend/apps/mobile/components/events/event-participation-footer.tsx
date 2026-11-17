@@ -18,6 +18,7 @@ import {
   eventRegistrationErrorMessage,
   hasOnlineLink,
   isEventFull,
+  isEventPast,
   isEventRegistrationClosed,
 } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
@@ -52,6 +53,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   const register = useRegisterForEvent();
   const unregister = useCancelEventRegistration();
@@ -61,7 +63,6 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const online = hasOnlineLink(event.type);
   const meetingUrl = online ? event.transmissionUrl : undefined;
   const onlineOnly = waitlisted && Boolean(meetingUrl);
-  const pending = register.isPending || unregister.isPending;
 
   const refresh = () =>
     Promise.all([
@@ -71,23 +72,27 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
 
   const onJoin = async () => {
     setError(null);
+    setPending(true);
     try {
       await register.mutateAsync({ eventId: event.id });
-      await refresh();
     } catch (e) {
       setError(eventRegistrationErrorMessage(e, "join"));
+    } finally {
       await refresh();
+      setPending(false);
     }
   };
 
   const onLeave = async () => {
     setError(null);
+    setPending(true);
     try {
       await unregister.mutateAsync({ eventId: event.id });
-      await refresh();
     } catch (e) {
       setError(eventRegistrationErrorMessage(e, "leave"));
+    } finally {
       await refresh();
+      setPending(false);
     }
   };
 
@@ -112,13 +117,16 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
     }
   };
 
+  const ended = isEventPast(event.endsAt);
+  if (ended && !error) return null;
+
   return (
     <View className="border-border bg-card gap-3 border-t px-5 py-4">
       {error ? (
         <Text className="text-destructive dark:text-foreground text-xs font-semibold">{error}</Text>
       ) : null}
 
-      {!user ? (
+      {ended ? null : !user ? (
         <>
           <Text className="text-muted-foreground text-center text-[10px] font-semibold uppercase tracking-widest">
             Niezalogowani użytkownicy nie mogą dołączyć do wydarzenia
@@ -132,6 +140,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
           <ParticipationMenu
             label="W kolejce"
             icon={Clock}
+            disabled={pending}
             header={{
               title: "Jesteś na liście rezerwowej",
               description: waitlistDescription(event),
@@ -163,6 +172,7 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
             <ParticipationMenu
               label="Zapisany"
               icon={Check}
+              disabled={pending}
               items={[
                 { label: "Dodaj do kalendarza", icon: CalendarPlus, onPress: onAddToCalendar },
                 {
