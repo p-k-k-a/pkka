@@ -112,7 +112,7 @@ export function AdminSurveysList() {
                 Ankiety
               </h1>
               <p className="text-muted-foreground max-w-2xl text-base leading-relaxed">
-                Pytaj alumnów o zdanie i sprawdzaj zebrane odpowiedzi.
+                Pytaj o zdanie i sprawdzaj zebrane odpowiedzi.
               </p>
             </div>
             <Button asChild className="shrink-0">

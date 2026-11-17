@@ -22,8 +22,8 @@ import { useAuth } from "@/lib/auth-context";
 import { ADMIN_SURVEYS_PATH, adminSurveyEditHref } from "@/lib/survey-paths";
 
 const DEADLINE_HINTS: Record<SurveyPhase, string> = {
-  draft: "Szkic, alumni jeszcze go nie widzą.",
-  active: "Do tego czasu alumni mogą odpowiadać.",
+  draft: "Szkic, nikt poza administratorami go nie widzi.",
+  active: "Do tego czasu można odpowiadać.",
   ended: "Ankieta nie przyjmuje już odpowiedzi.",
 };
 
