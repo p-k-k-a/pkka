@@ -12,14 +12,53 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-/** What the cleanup remembers between runs: since when each file has been orphaned. */
+/** What the cleanup remembers between runs: since when each file has been orphaned, and its own runs. */
 @Repository
 @RequiredArgsConstructor
 class StorageOrphanTracker {
 
     private static final int BATCH_SIZE = 500;
 
+    /**
+     * @param databaseId identifies this database for good; a copy or a restore keeps it
+     * @param generation how many deleting runs this database has made
+     * @param lastRunAt when the orphans were last noted, {@code null} before the first run
+     */
+    record CleanupState(String databaseId, long generation, Instant lastRunAt) {}
+
     private final JdbcTemplate jdbc;
+
+    @Transactional(readOnly = true)
+    public CleanupState state() {
+        return jdbc.queryForObject(
+                "SELECT id::text, generation, last_run_at FROM storage_cleanup_owner",
+                (row, index) -> new CleanupState(
+                        row.getString(1),
+                        row.getLong(2),
+                        row.getTimestamp(3) == null ? null : row.getTimestamp(3).toInstant()));
+    }
+
+    /** Counts one more deleting run and returns its number. */
+    @Transactional
+    public long nextGeneration() {
+        Long generation = jdbc.queryForObject(
+                "UPDATE storage_cleanup_owner SET generation = generation + 1 RETURNING generation", Long.class);
+        if (generation == null) {
+            throw new IllegalStateException("storage_cleanup_owner holds no row");
+        }
+        return generation;
+    }
+
+    @Transactional
+    public void markRun(Instant now) {
+        jdbc.update("UPDATE storage_cleanup_owner SET last_run_at = ?", Timestamp.from(now));
+    }
+
+    /** Makes every noted file count as orphaned only since {@code now}. */
+    @Transactional
+    public void restartCountdowns(Instant now) {
+        jdbc.update("UPDATE storage_orphans SET first_seen_at = ?", Timestamp.from(now));
+    }
 
     /**
      * Brings the notes in line with the files that are orphaned now: a newly orphaned file is noted as
@@ -52,8 +91,10 @@ class StorageOrphanTracker {
 
         jdbc.batchUpdate("DELETE FROM storage_orphans WHERE object_key = ?", noLongerOrphaned);
         for (int from = 0; from < newlyOrphaned.size(); from += BATCH_SIZE) {
+            // Another backend instance running the same cleanup may have noted the file a moment ago.
             jdbc.batchUpdate(
-                    "INSERT INTO storage_orphans (object_key, first_seen_at) VALUES (?, ?)",
+                    "INSERT INTO storage_orphans (object_key, first_seen_at) VALUES (?, ?)"
+                            + " ON CONFLICT (object_key) DO NOTHING",
                     newlyOrphaned.subList(from, Math.min(from + BATCH_SIZE, newlyOrphaned.size())));
         }
         return noted;
@@ -63,11 +104,5 @@ class StorageOrphanTracker {
     @Transactional
     public void forget(String key) {
         jdbc.update("DELETE FROM storage_orphans WHERE object_key = ?", key);
-    }
-
-    /** Identifies this database for good; a restore from a backup keeps it. */
-    @Transactional(readOnly = true)
-    public String databaseId() {
-        return jdbc.queryForObject("SELECT id::text FROM storage_cleanup_owner", String.class);
     }
 }

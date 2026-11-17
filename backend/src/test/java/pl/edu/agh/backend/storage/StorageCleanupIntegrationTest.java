@@ -3,11 +3,13 @@ package pl.edu.agh.backend.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,6 +17,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +30,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import pl.edu.agh.backend.storage.StorageCleanup.Mode;
+import pl.edu.agh.backend.storage.StorageOrphanTracker.CleanupState;
 import pl.edu.agh.backend.support.TestSecurityConfig;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
@@ -61,9 +65,26 @@ class StorageCleanupIntegrationTest {
 
     private final String inUse = "materials/" + UUID.randomUUID() + ".pdf";
 
+    /** The marker object of the stand-in bucket. */
+    private final AtomicReference<String> marker = new AtomicReference<>();
+
     @BeforeEach
     void aBucketOwnedByThisDatabaseWithOneFileInUse() {
-        when(bucket.readCleanupOwner()).thenReturn(Optional.of(tracker.databaseId()));
+        CleanupState state = tracker.state();
+        marker.set(state.databaseId() + ":" + state.generation());
+        when(bucket.readCleanupOwner()).thenAnswer(call -> Optional.ofNullable(marker.get()));
+        doAnswer(call -> {
+                    marker.set(call.getArgument(0));
+                    return null;
+                })
+                .when(bucket)
+                .writeCleanupOwner(anyString());
+        doAnswer(call -> {
+                    marker.set(call.getArgument(0));
+                    return null;
+                })
+                .when(bucket)
+                .claimCleanupOwner(anyString());
         insertMaterial(inUse);
     }
 
@@ -73,28 +94,77 @@ class StorageCleanupIntegrationTest {
         UUID material = insertMaterial(key);
         bucketHolds(key);
 
-        assertThat(cleanupAt(NOW).removeOrphans()).isZero();
+        assertThat(nightlyRuns(0, 0)).isZero();
         assertThat(orphanedSince(key)).isNull();
 
         // the admin deletes a year-old material; that night its file is only noted
         jdbc.update("DELETE FROM materials WHERE id = ?", material);
-        assertThat(cleanupAt(NOW.plus(Duration.ofDays(1))).removeOrphans()).isZero();
+        assertThat(nightlyRuns(1, 3)).isZero();
         assertThat(orphanedSince(key)).isEqualTo(NOW.plus(Duration.ofDays(1)));
 
         // put back three days later: the note is gone, and so is the countdown
         UUID restored = insertMaterial(key);
-        assertThat(cleanupAt(NOW.plus(Duration.ofDays(4))).removeOrphans()).isZero();
+        assertThat(nightlyRuns(4, 4)).isZero();
         assertThat(orphanedSince(key)).isNull();
 
         // deleted for good: seven more days, counted from the night it was found orphaned again
         jdbc.update("DELETE FROM materials WHERE id = ?", restored);
-        assertThat(cleanupAt(NOW.plus(Duration.ofDays(5))).removeOrphans()).isZero();
-        assertThat(cleanupAt(NOW.plus(Duration.ofDays(11))).removeOrphans()).isZero();
+        assertThat(nightlyRuns(5, 11)).isZero();
+        assertThat(orphanedSince(key)).isEqualTo(NOW.plus(Duration.ofDays(5)));
         verify(bucket, never()).delete(anyString());
 
-        assertThat(cleanupAt(NOW.plus(Duration.ofDays(12))).removeOrphans()).isEqualTo(1);
+        assertThat(nightlyRuns(12, 12)).isEqualTo(1);
         verify(bucket).delete(key);
         assertThat(orphanedSince(key)).isNull();
+    }
+
+    @Test
+    void aNoteLeftFromBeforeABreakInTheRunsDoesNotCountAgainstTheFile() {
+        String key = "materials/" + UUID.randomUUID() + ".pdf";
+        bucketHolds(key);
+        assertThat(nightlyRuns(0, 1)).isZero();
+
+        // the cleanup is switched off for a month; the first run back must not delete on a month-old note
+        assertThat(nightlyRuns(31, 31)).isZero();
+        assertThat(orphanedSince(key)).isEqualTo(NOW.plus(Duration.ofDays(31)));
+        assertThat(nightlyRuns(32, 37)).isZero();
+        verify(bucket, never()).delete(anyString());
+
+        assertThat(nightlyRuns(38, 38)).isEqualTo(1);
+    }
+
+    @Test
+    void everyRunIsCountedAndACopyOfTheDatabaseFallsBehind() {
+        bucketHolds("materials/" + UUID.randomUUID() + ".pdf");
+        long before = tracker.state().generation();
+
+        nightlyRuns(0, 2);
+        assertThat(tracker.state().generation()).isEqualTo(before + 3);
+        assertThat(tracker.state().lastRunAt()).isEqualTo(NOW.plus(Duration.ofDays(2)));
+        assertThat(marker.get()).isEqualTo(tracker.state().databaseId() + ":" + (before + 3));
+
+        // what a copy taken now sees after the original has run three more nights
+        marker.set(tracker.state().databaseId() + ":" + (before + 6));
+        assertThatThrownBy(() -> cleanupAt(NOW.plus(Duration.ofDays(3))).removeOrphans())
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("a copy or was restored");
+        assertThat(tracker.state().generation()).isEqualTo(before + 3);
+    }
+
+    @Test
+    void claimingAnUnclaimedBucketStartsTheNotesAfresh() {
+        String key = "materials/" + UUID.randomUUID() + ".pdf";
+        bucketHolds(key);
+        jdbc.update(
+                "INSERT INTO storage_orphans (object_key, first_seen_at) VALUES (?, ?)", key, Timestamp.from(LONG_AGO));
+        marker.set(null);
+
+        assertThat(cleanupAt(NOW).removeOrphans()).isZero();
+
+        assertThat(marker.get())
+                .isEqualTo(tracker.state().databaseId() + ":" + tracker.state().generation());
+        assertThat(orphanedSince(key)).isEqualTo(NOW);
+        verify(bucket, never()).delete(anyString());
     }
 
     @Test
@@ -120,9 +190,11 @@ class StorageCleanupIntegrationTest {
 
     @Test
     void theIdOfTheDatabaseIsStableAndABucketOfAnotherOneIsRefused() {
-        assertThat(tracker.databaseId()).isEqualTo(tracker.databaseId()).hasSize(36);
+        assertThat(tracker.state().databaseId())
+                .isEqualTo(tracker.state().databaseId())
+                .hasSize(36);
 
-        when(bucket.readCleanupOwner()).thenReturn(Optional.of(UUID.randomUUID().toString()));
+        marker.set(UUID.randomUUID() + ":0");
         assertThatThrownBy(() -> cleanupAt(NOW).removeOrphans()).isInstanceOf(IllegalStateException.class);
         verify(bucket, never()).listObjects();
     }
@@ -150,8 +222,24 @@ class StorageCleanupIntegrationTest {
         return found.isEmpty() ? null : found.get(0);
     }
 
+    /** One run a night from day {@code from} to day {@code to}; returns how many files they deleted. */
+    private int nightlyRuns(int from, int to) {
+        int deleted = 0;
+        for (int day = from; day <= to; day++) {
+            deleted += cleanupAt(NOW.plus(Duration.ofDays(day))).removeOrphans();
+        }
+        return deleted;
+    }
+
     private StorageCleanup cleanupAt(Instant now) {
         return new StorageCleanup(
-                bucket, references, tracker, Clock.fixed(now, ZoneOffset.UTC), Mode.DELETE, Duration.ofDays(7), 500);
+                bucket,
+                references,
+                tracker,
+                Clock.fixed(now, ZoneOffset.UTC),
+                Mode.DELETE,
+                Duration.ofDays(7),
+                500,
+                50);
     }
 }

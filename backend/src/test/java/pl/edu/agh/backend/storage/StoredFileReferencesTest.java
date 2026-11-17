@@ -50,10 +50,20 @@ class StoredFileReferencesTest {
 
     private static final String ADMIN_SUBJECT = "44444444-4444-4444-4444-444444444444";
 
-    /** Columns whose names suggest a file but which never hold an object key. */
+    /**
+     * Columns whose names suggest a file but which never hold an object key. The text ones are here only as
+     * long as nothing can upload into them: the day an editor with pictures is put on, say, an event's
+     * description, that column has to move to {@link StoredFileReferences}.
+     */
     private static final Set<String> NOT_FILES = Set.of(
+            "events.full_description",
             "events.transmission_url",
+            "materials.description",
             "survey_questions.content",
+            "surveys.description",
+            "tickets.admin_response",
+            "tickets.description",
+            "users.bio",
             "users.github_url",
             "users.keycloak_id",
             "users.linkedin_url");
@@ -162,6 +172,11 @@ class StoredFileReferencesTest {
         assertThat(references.isReferenced(unattached)).isFalse();
     }
 
+    @Test
+    void everyKindOfUploadHasItsPlaceInTheDatabase() {
+        assertThat(StoredFileReferences.COLUMNS).containsOnlyKeys(UploadCategory.values());
+    }
+
     /**
      * A new column that could hold a file has to be decided on: listed in {@link StoredFileReferences} if it
      * stores object keys, or below if it does not. Until then the cleanup would delete its files.
@@ -175,9 +190,9 @@ class StoredFileReferencesTest {
         List<String> candidates = jdbc.queryForList("""
                 SELECT table_name || '.' || column_name FROM information_schema.columns
                 WHERE table_schema = current_schema()
-                  AND data_type IN ('text', 'character varying')
+                  AND data_type IN ('text', 'character varying', 'json', 'jsonb', 'ARRAY')
                   AND table_name NOT IN ('flyway_schema_history', 'storage_orphans')
-                  AND column_name ~ '(url|key|image|avatar|cover|file|photo|picture|attachment|content|body)'
+                  AND column_name ~ '(url|key|image|avatar|cover|file|photo|picture|attachment|content|body|logo|banner|thumbnail|icon|document|media|path|link|description|bio|text|markdown|response)'
                 """, String.class);
 
         assertThat(candidates).isNotEmpty();

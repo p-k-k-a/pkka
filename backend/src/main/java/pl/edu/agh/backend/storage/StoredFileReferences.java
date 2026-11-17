@@ -2,6 +2,7 @@ package pl.edu.agh.backend.storage;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +20,25 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 class StoredFileReferences {
 
-    /** table.column of every column holding one object key (or an external URL) per row. */
-    static final List<String> KEY_COLUMNS =
-            List.of("users.avatar_key", "events.cover_image_url", "posts.cover_image_url", "materials.url");
+    /**
+     * The table.column each kind of upload ends up in. A new {@link UploadCategory} has to be given its place
+     * here before its files can be told from orphans; {@code StoredFileReferencesTest} insists on it.
+     */
+    static final Map<UploadCategory, String> COLUMNS = Map.of(
+            UploadCategory.AVATAR, "users.avatar_key",
+            UploadCategory.EVENT_COVER, "events.cover_image_url",
+            UploadCategory.POST_COVER, "posts.cover_image_url",
+            UploadCategory.MATERIAL, "materials.url",
+            UploadCategory.POST_IMAGE, "posts.content");
 
     /** Markdown in which pictures uploaded for a post are mentioned by their keys. */
-    static final String CONTENT_COLUMN = "posts.content";
+    static final String CONTENT_COLUMN = COLUMNS.get(UploadCategory.POST_IMAGE);
+
+    /** Every column holding one object key (or an external URL) per row. */
+    static final List<String> KEY_COLUMNS = COLUMNS.values().stream()
+            .filter(column -> !column.equals(CONTENT_COLUMN))
+            .sorted()
+            .toList();
 
     private final JdbcTemplate jdbc;
 

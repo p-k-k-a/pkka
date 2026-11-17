@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
@@ -30,6 +31,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -74,7 +76,7 @@ public class StorageService implements AutoCloseable {
 
     private static final int MAX_DOWNLOAD_NAME_LENGTH = 150;
 
-    /** Holds the id of the one database allowed to clean this bucket; see {@link StorageCleanup}. */
+    /** Names the one database allowed to clean this bucket and its latest run; see {@link StorageCleanup}. */
     static final String CLEANUP_OWNER_KEY = ".cleanup-owner";
 
     /** The target of a Markdown link or image: what follows {@code ](} up to whitespace or a parenthesis. */
@@ -266,7 +268,7 @@ public class StorageService implements AutoCloseable {
         return objects;
     }
 
-    /** The id of the database that cleans this bucket, empty while no cleanup has ever run on it. */
+    /** The marker of the database that cleans this bucket, empty while no cleanup has claimed it. */
     Optional<String> readCleanupOwner() {
         requireClient();
         try {
@@ -281,15 +283,31 @@ public class StorageService implements AutoCloseable {
         }
     }
 
-    void writeCleanupOwner(String databaseId) {
+    /** Overwrites the marker; for the database that already owns the bucket. */
+    void writeCleanupOwner(String marker) {
         requireClient();
-        client.putObject(
-                PutObjectRequest.builder()
-                        .bucket(bucket)
-                        .key(CLEANUP_OWNER_KEY)
-                        .contentType("text/plain")
-                        .build(),
-                RequestBody.fromString(databaseId));
+        client.putObject(cleanupOwnerRequest().build(), RequestBody.fromString(marker));
+    }
+
+    /**
+     * Writes the marker only if the bucket has none yet, so two databases cannot both claim it.
+     *
+     * @throws IllegalStateException when a marker appeared in the meantime
+     */
+    void claimCleanupOwner(String marker) {
+        requireClient();
+        try {
+            client.putObject(cleanupOwnerRequest().ifNoneMatch("*").build(), RequestBody.fromString(marker));
+        } catch (S3Exception ex) {
+            if (ex.statusCode() == HttpStatus.PRECONDITION_FAILED.value()) {
+                throw new IllegalStateException("another database claimed the bucket at the same moment", ex);
+            }
+            throw ex;
+        }
+    }
+
+    private PutObjectRequest.Builder cleanupOwnerRequest() {
+        return PutObjectRequest.builder().bucket(bucket).key(CLEANUP_OWNER_KEY).contentType("text/plain");
     }
 
     private void requireClient() {
