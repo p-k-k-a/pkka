@@ -18,7 +18,8 @@ export function SurveyPreview({ title, description, questions }: SurveyPreviewPr
   return (
     <div className="space-y-10">
       <p className="bg-muted text-muted-foreground rounded-lg px-4 py-3 text-sm">
-        Tak ankietę zobaczy alumn. Możesz ją przeklikać, odpowiedzi z podglądu nie są zapisywane.
+        Tak ankietę zobaczy wypełniający. Możesz ją przeklikać, odpowiedzi z podglądu nie są
+        zapisywane.
       </p>
       <div className="space-y-4">
         <h2 className="font-heading text-foreground text-[23px] font-semibold tracking-tight break-words md:text-[28px]">

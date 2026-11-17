@@ -314,7 +314,7 @@ export function SurveyForm({ survey }: SurveyFormProps) {
               <section className="space-y-5">
                 <SectionTitle>Pytania</SectionTitle>
                 <p className="text-muted-foreground text-sm">
-                  Alumn odpowiada na wszystkie pytania, więc pytaj tylko o to, co naprawdę
+                  Wypełniający odpowiada na wszystkie pytania, więc pytaj tylko o to, co naprawdę
                   potrzebne.
                 </p>
                 <div className="space-y-5">

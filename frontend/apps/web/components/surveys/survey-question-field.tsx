@@ -201,10 +201,7 @@ function SurveyGrid({
               disabled={disabled}
               aria-labelledby={rowLabelId}
               aria-invalid={missing ? true : undefined}
-              className={cn(
-                "border-muted-foreground/15 dark:border-input col-span-full grid grid-cols-subgrid gap-0 border-t",
-                missing && "bg-destructive/5",
-              )}
+              className="border-muted-foreground/15 dark:border-input col-span-full grid grid-cols-subgrid gap-0 border-t"
             >
               <span
                 id={rowLabelId}

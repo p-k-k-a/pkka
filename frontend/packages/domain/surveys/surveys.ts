@@ -22,7 +22,7 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   SINGLE_CHOICE: "Jedna odpowiedź",
   MULTI_CHOICE: "Wiele odpowiedzi",
   TEXT: "Odpowiedź tekstowa",
-  GRID: "Siatka (jedna odpowiedź w wierszu)",
+  GRID: "Siatka",
 };
 
 export function questionTypeLabel(type: QuestionType) {
