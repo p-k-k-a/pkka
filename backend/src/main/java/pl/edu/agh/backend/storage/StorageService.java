@@ -300,7 +300,7 @@ public class StorageService implements AutoCloseable {
             client.putObject(cleanupOwnerRequest().ifNoneMatch("*").build(), RequestBody.fromString(marker));
         } catch (S3Exception ex) {
             if (ex.statusCode() == HttpStatus.PRECONDITION_FAILED.value()) {
-                throw new IllegalStateException("another database claimed the bucket at the same moment", ex);
+                throw new IllegalStateException("the bucket was claimed by someone else at the same moment", ex);
             }
             throw ex;
         }

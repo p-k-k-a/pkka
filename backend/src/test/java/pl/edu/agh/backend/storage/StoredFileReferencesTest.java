@@ -63,6 +63,8 @@ class StoredFileReferencesTest {
             "surveys.description",
             "tickets.admin_response",
             "tickets.description",
+            "topic_group_requests.description",
+            "topic_groups.description",
             "users.bio",
             "users.github_url",
             "users.keycloak_id",

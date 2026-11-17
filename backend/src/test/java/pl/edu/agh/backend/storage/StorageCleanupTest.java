@@ -3,6 +3,7 @@ package pl.edu.agh.backend.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -19,6 +20,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +59,7 @@ class StorageCleanupTest {
     @BeforeEach
     void aBucketThisDatabaseHasBeenCleaning() {
         lenient().when(tracker.state()).thenReturn(new CleanupState(DATABASE_ID, 5, LAST_NIGHT));
-        lenient().when(tracker.nextGeneration()).thenReturn(6L);
+        lenient().when(tracker.notedKeys()).thenAnswer(call -> new HashSet<>(noted.keySet()));
         lenient().when(storage.readCleanupOwner()).thenReturn(Optional.of(DATABASE_ID + ":5"));
         lenient().when(references.referencedKeys()).thenReturn(Set.of(IN_USE));
         lenient().when(references.isReferenced(anyString())).thenReturn(false);
@@ -162,6 +164,7 @@ class StorageCleanupTest {
 
         cleanup(Mode.DELETE, NOW).removeOrphans();
 
+        verify(tracker).advanceGeneration(6);
         verify(storage).writeCleanupOwner(DATABASE_ID + ":6");
         verify(storage, never()).claimCleanupOwner(anyString());
         verify(tracker).markRun(NOW);
@@ -176,7 +179,7 @@ class StorageCleanupTest {
         assertThat(cleanup(Mode.DRY_RUN, NOW).removeOrphans()).isZero();
 
         verify(tracker).sync(Set.of(key), NOW);
-        verify(tracker, never()).nextGeneration();
+        verify(tracker, never()).advanceGeneration(anyLong());
         verify(tracker, never()).forget(anyString());
         verify(storage, never()).delete(anyString());
         verify(storage, never()).writeCleanupOwner(anyString());
@@ -217,7 +220,7 @@ class StorageCleanupTest {
 
         assertThatThrownBy(() -> cleanup(Mode.DELETE, NOW).removeOrphans())
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("another database claimed");
+                .hasMessageContaining("claimed by someone else");
 
         verify(tracker, never()).sync(any(), any());
         verify(storage, never()).delete(anyString());
@@ -233,7 +236,7 @@ class StorageCleanupTest {
                 .hasMessageContaining("references none");
 
         verify(storage, never()).claimCleanupOwner(anyString());
-        verify(tracker, never()).nextGeneration();
+        verify(tracker, never()).advanceGeneration(anyLong());
     }
 
     @Test
@@ -265,17 +268,25 @@ class StorageCleanupTest {
         assertThatThrownBy(() -> cleanup(Mode.DELETE, NOW).removeOrphans()).isInstanceOf(IllegalStateException.class);
 
         verify(storage, never()).listObjects();
-        verify(tracker, never()).nextGeneration();
+        verify(tracker, never()).advanceGeneration(anyLong());
     }
 
     @Test
-    void aRunThatDiedBeforeWritingItsMarkerDoesNotLockTheBucket() {
+    void aMarkerThatCouldNotBeWrittenIsWrittenAgainWithoutCountingFurther() {
+        // last night's run counted itself as 5 and then failed to say so in the bucket
         when(storage.readCleanupOwner()).thenReturn(Optional.of(DATABASE_ID + ":4"));
         bucketHolds();
+        doThrow(new IllegalStateException("R2 is read-only")).when(storage).writeCleanupOwner(anyString());
 
-        assertThat(cleanup(Mode.DELETE, NOW).removeOrphans()).isZero();
+        // however many nights that goes on, the database never gets more than one run ahead
+        for (int night = 0; night < 3; night++) {
+            assertThatThrownBy(() -> cleanup(Mode.DELETE, NOW).removeOrphans())
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("read-only");
+        }
 
-        verify(storage).writeCleanupOwner(DATABASE_ID + ":6");
+        verify(tracker, times(3)).advanceGeneration(5);
+        verify(storage, times(3)).writeCleanupOwner(DATABASE_ID + ":5");
     }
 
     @Test
@@ -307,7 +318,7 @@ class StorageCleanupTest {
     }
 
     @Test
-    void tooLargeAShareOfOrphansIsNotBelievedEither() {
+    void tooManyFilesOrphanedInOneRunAreNotBelievedEither() {
         String[] orphans = new String[30];
         for (int i = 0; i < orphans.length; i++) {
             orphans[i] = material();
@@ -318,10 +329,31 @@ class StorageCleanupTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("more than 50%");
         verify(tracker, never()).sync(any(), any());
+        verify(tracker, never()).advanceGeneration(anyLong());
 
         // a small bucket is judged by the other guards only
         bucketHolds(material(), material());
         assertThat(cleanup(Mode.DELETE, NOW).removeOrphans()).isZero();
+    }
+
+    @Test
+    void leftoversThatPiledUpDoNotBlockTheCleanupForGood() {
+        String[] orphans = new String[30];
+        for (int i = 0; i < orphans.length; i++) {
+            orphans[i] = material();
+        }
+        bucketHolds(orphans);
+
+        // a dry run looks into it: it warns, and notes the files
+        assertThat(cleanup(Mode.DRY_RUN, NOW).removeOrphans()).isZero();
+        assertThat(noted).hasSize(30);
+
+        // none of them is news to the deleting run that follows, so it carries on
+        assertThat(cleanup(Mode.DELETE, NOW.plus(Duration.ofDays(1))).removeOrphans())
+                .isZero();
+        ranAt(NOW.plus(Duration.ofDays(7)));
+        assertThat(cleanup(Mode.DELETE, NOW.plus(Duration.ofDays(8))).removeOrphans())
+                .isEqualTo(30);
     }
 
     @Test

@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,15 +39,16 @@ class StorageOrphanTracker {
                         row.getTimestamp(3) == null ? null : row.getTimestamp(3).toInstant()));
     }
 
-    /** Counts one more deleting run and returns its number. */
+    /** Records that deleting run number {@code generation} is under way; never counts backwards. */
     @Transactional
-    public long nextGeneration() {
-        Long generation = jdbc.queryForObject(
-                "UPDATE storage_cleanup_owner SET generation = generation + 1 RETURNING generation", Long.class);
-        if (generation == null) {
-            throw new IllegalStateException("storage_cleanup_owner holds no row");
-        }
-        return generation;
+    public void advanceGeneration(long generation) {
+        jdbc.update("UPDATE storage_cleanup_owner SET generation = GREATEST(generation, ?)", generation);
+    }
+
+    /** The files noted as orphaned by earlier runs. */
+    @Transactional(readOnly = true)
+    public Set<String> notedKeys() {
+        return new HashSet<>(jdbc.queryForList("SELECT object_key FROM storage_orphans", String.class));
     }
 
     @Transactional

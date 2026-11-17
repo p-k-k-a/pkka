@@ -38,7 +38,9 @@ import pl.edu.agh.backend.storage.StorageOrphanTracker.CleanupState;
  *   <li>the bucket carries a marker with the id of the database that cleans it and the number of its last
  *       run. Another database is refused, and so is a copy of the right one (a dump restored elsewhere, or
  *       the original restored from a backup), because its run number has fallen behind. Deleting the marker
- *       object by hand lets the next run claim the bucket and start its notes from nothing;
+ *       object by hand lets the next run claim the bucket and start its notes from nothing. The run number
+ *       cannot tell a copy that gets to run before the original does: a copy of the database must be
+ *       started with the cleanup off;
  *   <li>a database that references none of the files in the bucket, or would call too large a share of
  *       them orphaned, is not believed;
  *   <li>a run that would delete more than {@code max-deletions-per-run} files deletes none.
@@ -53,8 +55,11 @@ class StorageCleanup {
     /** Deletions that fail one after another before the run gives up, e.g. because storage is down. */
     private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
-    /** Twice the nightly rhythm. A cron that runs less often than this never gets to delete anything. */
-    static final Duration MAX_GAP_BETWEEN_RUNS = Duration.ofDays(2);
+    /**
+     * One missed night is forgiven, with room for the next run starting a little late; two are not. A cron
+     * that runs less often than this never gets to delete anything.
+     */
+    static final Duration MAX_GAP_BETWEEN_RUNS = Duration.ofHours(60);
 
     /** Below this many files a share of them says nothing. */
     private static final int MIN_FILES_FOR_ORPHAN_SHARE = 20;
@@ -194,12 +199,20 @@ class StorageCleanup {
         Set<String> orphans = issued.keySet().stream()
                 .filter(key -> !referenced.contains(key))
                 .collect(Collectors.toSet());
-        requirePlausible(issued.size(), orphans.size());
+        Set<String> alreadyNoted = tracker.notedKeys();
+        long newOrphans =
+                orphans.stream().filter(key -> !alreadyNoted.contains(key)).count();
+        requirePlausible(issued.size(), orphans.size(), newOrphans);
 
         // Only now, with every check passed, is anything written: to the bucket in delete mode alone.
         boolean claiming = marker.isEmpty() && mode == Mode.DELETE;
         if (mode == Mode.DELETE) {
-            Marker next = new Marker(state.databaseId(), tracker.nextGeneration());
+            // One past what the bucket knows, not one past what this database counted: every instance of
+            // the backend then arrives at the same number, and a run whose marker could not be written is
+            // simply repeated instead of running further ahead each night.
+            long generation = marker.map(Marker::generation).orElse(state.generation()) + 1;
+            tracker.advanceGeneration(generation);
+            Marker next = new Marker(state.databaseId(), generation);
             if (claiming) {
                 claim(next);
             } else {
@@ -213,9 +226,9 @@ class StorageCleanup {
                 && Duration.between(state.lastRunAt(), now).compareTo(MAX_GAP_BETWEEN_RUNS) > 0) {
             // Nobody watched in between: a noted file may have been attached and dropped again yesterday.
             log.warn(
-                    "Storage cleanup last ran {}, more than {} days ago; every file's retention starts again",
+                    "Storage cleanup last ran {}, more than {} hours ago; every file's retention starts again",
                     state.lastRunAt(),
-                    MAX_GAP_BETWEEN_RUNS.toDays());
+                    MAX_GAP_BETWEEN_RUNS.toHours());
             tracker.restartCountdowns(now);
         }
         Map<String, Instant> orphanedSince = tracker.sync(orphans, now);
@@ -299,26 +312,39 @@ class StorageCleanup {
         }
     }
 
-    /** A database that knows the bucket references at least some of it and calls only part of it orphaned. */
-    private void requirePlausible(int files, int orphans) {
+    /**
+     * A database that knows the bucket references at least some of it, and does not find a large part of it
+     * orphaned overnight. Only files not noted before count towards that share: to a foreign database the
+     * whole bucket is newly orphaned at once, while ordinary work adds a few files a night, and leftovers
+     * that have piled up never block the cleanup for good.
+     */
+    private void requirePlausible(int files, int orphans, long newOrphans) {
         if (files > 0 && orphans == files) {
             throw new IllegalStateException("the database references none of the " + files
                     + " file(s) in the bucket; refusing to treat them all as orphans");
         }
-        if (files >= MIN_FILES_FOR_ORPHAN_SHARE && (long) orphans * 100 > (long) maxOrphanPercent * files) {
-            throw new IllegalStateException(orphans + " of the " + files + " files in the bucket look orphaned, "
-                    + "more than " + maxOrphanPercent + "%; check that this database owns the bucket, then raise "
-                    + "app.storage.cleanup.max-orphan-percent for one run if the number is right");
+        if (files < MIN_FILES_FOR_ORPHAN_SHARE || newOrphans * 100 <= (long) maxOrphanPercent * files) {
+            return;
         }
+        String finding = newOrphans + " of the " + files + " files in the bucket were found orphaned in one run, "
+                + "more than " + maxOrphanPercent + "%";
+        if (mode == Mode.DRY_RUN) {
+            // A dry run writes to its own database only, and is how this number gets looked into.
+            log.warn("Storage cleanup: {}; a deleting run would refuse to go on", finding);
+            return;
+        }
+        throw new IllegalStateException(finding + "; check that this database owns the bucket. If it does (the "
+                + "bucket has never been cleaned, or many uploads were abandoned), let one run in dry-run mode "
+                + "note them, or raise app.storage.cleanup.max-orphan-percent for one run");
     }
 
-    /** Writes the first marker, unless another database gets there first. */
+    /** Writes the first marker, unless another database or another instance gets there first. */
     private void claim(Marker marker) {
         storage.claimCleanupOwner(marker.text());
         Optional<String> written = storage.readCleanupOwner();
         if (written.isEmpty() || !written.get().equals(marker.text())) {
-            throw new IllegalStateException(
-                    "another database claimed the bucket at the same moment (marker: " + written.orElse("none") + ")");
+            throw new IllegalStateException("the bucket was claimed by someone else at the same moment (marker: "
+                    + written.orElse("none") + "); the next run sorts out whose it is");
         }
         log.info("Storage cleanup claimed the bucket for database {}", marker.databaseId());
     }
