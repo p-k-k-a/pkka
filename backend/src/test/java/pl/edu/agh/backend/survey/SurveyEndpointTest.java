@@ -172,6 +172,116 @@ class SurveyEndpointTest {
         assertInvalidSurvey(past, "ACTIVE", """
                 {"content":"Uwagi","type":"TEXT","options":[]}
                 """, "Active surveys must end in the future");
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Oceń","type":"GRID","options":["Słabo","Dobrze"],"rows":[]}
+                """, "Grid questions require at least one row");
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Oceń","type":"GRID","options":[],"rows":["Sala"]}
+                """, "Choice questions require at least one option");
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Język?","type":"SINGLE_CHOICE","options":["Java"],"rows":["Sala"]}
+                """, "Only grid questions have rows");
+        assertInvalidSurvey(future, "DRAFT", """
+                {"content":"Uwagi","type":"TEXT","options":[],"rows":["Sala"]}
+                """, "Only grid questions have rows");
+    }
+
+    private static final String GRID_QUESTION = """
+            {"content":"Oceń spotkanie","type":"GRID","options":["Słabo","Dobrze"],"rows":["Prelegenci","Catering"]}
+            """;
+
+    @Test
+    void gridQuestionIsAnsweredRowByRowAndCountedPerRow() throws Exception {
+        String created = createSurvey("ACTIVE", GRID_QUESTION);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        String questionId = JsonPath.read(created, "$.questions[0].id");
+        String speakers = JsonPath.read(created, "$.questions[0].rows[0].id");
+        String catering = JsonPath.read(created, "$.questions[0].rows[1].id");
+        String poor = JsonPath.read(created, "$.questions[0].options[0].id");
+        String good = JsonPath.read(created, "$.questions[0].options[1].id");
+        assertThat(JsonPath.<String>read(created, "$.questions[0].rows[1].label"))
+                .isEqualTo("Catering");
+
+        mockMvc.perform(submit(surveyId, ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"%s:%s,%s:%s"}]}
+                        """.formatted(questionId, speakers, good, catering, poor)))
+                .andExpect(status().isCreated());
+        // The rows may come in any order.
+        mockMvc.perform(submit(
+                        surveyId, OTHER_ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"%s:%s,%s:%s"}]}
+                        """.formatted(questionId, catering, good, speakers, good)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/admin/surveys/{id}/results", surveyId).with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questions[0].type").value("GRID"))
+                .andExpect(jsonPath("$.questions[0].rowResults[0].label").value("Prelegenci"))
+                .andExpect(jsonPath("$.questions[0].rowResults[0].optionCounts[0].count")
+                        .value(0))
+                .andExpect(jsonPath("$.questions[0].rowResults[0].optionCounts[1].count")
+                        .value(2))
+                .andExpect(jsonPath("$.questions[0].rowResults[1].optionCounts[0].count")
+                        .value(1))
+                .andExpect(jsonPath("$.questions[0].rowResults[1].optionCounts[1].count")
+                        .value(1));
+    }
+
+    @Test
+    void rejectsIncompleteOrForeignGridAnswers() throws Exception {
+        String created = createSurvey("ACTIVE", GRID_QUESTION);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        String questionId = JsonPath.read(created, "$.questions[0].id");
+        String speakers = JsonPath.read(created, "$.questions[0].rows[0].id");
+        String catering = JsonPath.read(created, "$.questions[0].rows[1].id");
+        String good = JsonPath.read(created, "$.questions[0].options[1].id");
+        String stranger = UUID.randomUUID().toString();
+
+        for (String value : new String[] {
+            "%s:%s".formatted(speakers, good),
+            "%s:%s,%s:%s".formatted(speakers, good, stranger, good),
+            "%s:%s,%s:%s".formatted(speakers, good, catering, stranger),
+            "%s:%s,%s:%s,%s:%s".formatted(speakers, good, catering, good, speakers, good),
+            "%s,%s".formatted(speakers, catering)
+        }) {
+            mockMvc.perform(submit(surveyId, """
+                            {"answers":[{"questionId":"%s","value":"%s"}]}
+                            """.formatted(questionId, value)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Invalid survey answer"));
+        }
+    }
+
+    @Test
+    void audienceDefaultsToVerifiedAlumniAndCanBeChanged() throws Exception {
+        String created = mockMvc.perform(post("/api/admin/surveys")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Ankieta","endsAt":"%s","status":"DRAFT",
+                                 "questions":[{"content":"Uwagi","type":"TEXT","options":[]}]}
+                                """.formatted(Instant.now().plus(7, ChronoUnit.DAYS))))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        assertThat(JsonPath.<String>read(created, "$.audience")).isEqualTo("VERIFIED_ALUMNI");
+
+        mockMvc.perform(put("/api/admin/surveys/{id}", surveyId)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Ankieta","endsAt":"%s","status":"DRAFT","audience":"ALL_USERS",
+                                 "questions":[{"content":"Uwagi","type":"TEXT","options":[]}]}
+                                """.formatted(Instant.now().plus(7, ChronoUnit.DAYS))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.audience").value("ALL_USERS"));
+        mockMvc.perform(get("/api/admin/surveys").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].audience").value("ALL_USERS"));
     }
 
     private void assertInvalidSurvey(Instant endsAt, String status, String question, String detail) throws Exception {
@@ -515,7 +625,7 @@ class SurveyEndpointTest {
     private static String surveyBody(String status, String questionsJson) {
         Instant endsAt = Instant.now().plus(7, ChronoUnit.DAYS);
         return """
-                {"title":"Ankieta","endsAt":"%s","status":"%s","questions":[%s]}
+                {"title":"Ankieta","endsAt":"%s","status":"%s","audience":"VERIFIED_ALUMNI","questions":[%s]}
                 """.formatted(endsAt, status, questionsJson);
     }
 

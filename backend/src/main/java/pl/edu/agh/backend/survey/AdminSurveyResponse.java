@@ -12,6 +12,7 @@ public record AdminSurveyResponse(
         String description,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) SurveyStatus status,
+        @Schema(requiredMode = RequiredMode.REQUIRED) SurveyAudience audience,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<SurveyQuestionResponse> questions,
 
         @Schema(
@@ -29,6 +30,7 @@ public record AdminSurveyResponse(
                 survey.getDescription(),
                 survey.getEndsAt(),
                 survey.getStatus(),
+                survey.getAudience(),
                 survey.getQuestions().stream().map(SurveyQuestionResponse::from).toList(),
                 submissionCount,
                 survey.getCreatedAt(),

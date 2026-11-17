@@ -10,6 +10,7 @@ public record AdminSurveyListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) SurveyStatus status,
+        @Schema(requiredMode = RequiredMode.REQUIRED) SurveyAudience audience,
         @Schema(requiredMode = RequiredMode.REQUIRED) int questionCount,
         @Schema(requiredMode = RequiredMode.REQUIRED) int submissionCount,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt) {
@@ -20,6 +21,7 @@ public record AdminSurveyListItemResponse(
                 survey.getTitle(),
                 survey.getEndsAt(),
                 survey.getStatus(),
+                survey.getAudience(),
                 questionCount,
                 submissionCount,
                 survey.getCreatedAt());

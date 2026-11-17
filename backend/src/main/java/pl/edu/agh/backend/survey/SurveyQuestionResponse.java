@@ -10,7 +10,8 @@ public record SurveyQuestionResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String content,
         @Schema(requiredMode = RequiredMode.REQUIRED) QuestionType type,
         @Schema(requiredMode = RequiredMode.REQUIRED) int displayOrder,
-        List<SurveyQuestionOptionResponse> options) {
+        List<SurveyQuestionOptionResponse> options,
+        List<SurveyQuestionRowResponse> rows) {
 
     static SurveyQuestionResponse from(SurveyQuestion question) {
         List<SurveyQuestionOptionResponse> options = question.getType() == QuestionType.TEXT
@@ -18,7 +19,12 @@ public record SurveyQuestionResponse(
                 : question.getOptions().stream()
                         .map(SurveyQuestionOptionResponse::from)
                         .toList();
+        List<SurveyQuestionRowResponse> rows = question.getType() == QuestionType.GRID
+                ? question.getRows().stream()
+                        .map(SurveyQuestionRowResponse::from)
+                        .toList()
+                : List.of();
         return new SurveyQuestionResponse(
-                question.getId(), question.getContent(), question.getType(), question.getDisplayOrder(), options);
+                question.getId(), question.getContent(), question.getType(), question.getDisplayOrder(), options, rows);
     }
 }

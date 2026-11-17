@@ -130,7 +130,42 @@ public class SurveyService {
                 optionIds.forEach(optionId -> ensureOptionBelongsToQuestion(question, optionId));
                 yield optionIds.stream().map(UUID::toString).collect(Collectors.joining(","));
             }
+            case GRID -> normalizeGridAnswer(question, rawValue);
         };
+    }
+
+    /** {@code rowId:optionId} for every row exactly once; stored in the rows' order. */
+    private String normalizeGridAnswer(SurveyQuestion question, String rawValue) {
+        Map<UUID, UUID> choices = new HashMap<>();
+        for (String pair : SurveyAnswerValues.commaSeparated(rawValue)) {
+            int colon = pair.indexOf(':');
+            if (colon < 0) {
+                throw new InvalidSurveyAnswerException("Grid answer must pair a row with an option: " + pair);
+            }
+            UUID rowId = parseRowId(pair.substring(0, colon));
+            UUID optionId = parseOptionId(pair.substring(colon + 1));
+            if (question.getRows().stream().noneMatch(row -> row.getId().equals(rowId))) {
+                throw new InvalidSurveyAnswerException("Row does not belong to question: " + question.getId());
+            }
+            ensureOptionBelongsToQuestion(question, optionId);
+            if (choices.put(rowId, optionId) != null) {
+                throw new InvalidSurveyAnswerException("Duplicate answer for grid row: " + rowId);
+            }
+        }
+        if (choices.size() != question.getRows().size()) {
+            throw new InvalidSurveyAnswerException("Every row of a grid question must be answered");
+        }
+        return question.getRows().stream()
+                .map(row -> row.getId() + ":" + choices.get(row.getId()))
+                .collect(Collectors.joining(","));
+    }
+
+    private UUID parseRowId(String value) {
+        try {
+            return UUID.fromString(value.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidSurveyAnswerException("Invalid row id: " + value);
+        }
     }
 
     private UUID parseOptionId(String value) {

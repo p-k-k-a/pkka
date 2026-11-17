@@ -21,5 +21,7 @@ public record CreateSurveyRequest(
 
         SurveyStatus status,
 
+        @Schema(description = "Defaults to VERIFIED_ALUMNI") SurveyAudience audience,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotEmpty @Valid
         List<SurveyQuestionRequest> questions) {}

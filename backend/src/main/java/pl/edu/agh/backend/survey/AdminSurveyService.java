@@ -56,6 +56,7 @@ public class AdminSurveyService {
         SurveyStatus status = request.status() != null ? request.status() : SurveyStatus.DRAFT;
         validateStatusAndEndDate(status, request.endsAt());
         survey.setStatus(status);
+        survey.setAudience(request.audience() != null ? request.audience() : SurveyAudience.VERIFIED_ALUMNI);
         applyQuestions(survey, request.questions());
         return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey), 0);
     }
@@ -74,6 +75,7 @@ public class AdminSurveyService {
         survey.setDescription(request.description());
         survey.setEndsAt(request.endsAt());
         survey.setStatus(request.status());
+        survey.setAudience(request.audience());
         applyQuestions(survey, request.questions());
         return AdminSurveyResponse.from(surveyRepository.saveAndFlush(survey), 0);
     }
@@ -130,7 +132,16 @@ public class AdminSurveyService {
             List<String> textAnswers =
                     answers.stream().map(SurveyAnswer::getValue).toList();
             return new SurveyResultsResponse.QuestionResult(
-                    question.getId(), question.getContent(), question.getType(), List.of(), textAnswers);
+                    question.getId(), question.getContent(), question.getType(), List.of(), textAnswers, List.of());
+        }
+        if (question.getType() == QuestionType.GRID) {
+            return new SurveyResultsResponse.QuestionResult(
+                    question.getId(),
+                    question.getContent(),
+                    question.getType(),
+                    List.of(),
+                    List.of(),
+                    aggregateGrid(question, answers));
         }
 
         Map<UUID, Long> counts = new LinkedHashMap<>();
@@ -151,7 +162,29 @@ public class AdminSurveyService {
                 .toList();
 
         return new SurveyResultsResponse.QuestionResult(
-                question.getId(), question.getContent(), question.getType(), optionCounts, List.of());
+                question.getId(), question.getContent(), question.getType(), optionCounts, List.of(), List.of());
+    }
+
+    /** Counts per row and option; every submission names one option for every row. */
+    private List<SurveyResultsResponse.RowResult> aggregateGrid(SurveyQuestion question, List<SurveyAnswer> answers) {
+        Map<UUID, Map<UUID, Long>> counts = new HashMap<>();
+        answers.forEach(answer -> SurveyAnswerValues.gridChoices(answer.getValue())
+                .forEach((rowId, optionId) ->
+                        counts.computeIfAbsent(rowId, key -> new HashMap<>()).merge(optionId, 1L, Long::sum)));
+        return question.getRows().stream()
+                .map(row -> {
+                    Map<UUID, Long> rowCounts = counts.getOrDefault(row.getId(), Map.of());
+                    return new SurveyResultsResponse.RowResult(
+                            row.getId(),
+                            row.getLabel(),
+                            question.getOptions().stream()
+                                    .map(option -> new SurveyResultsResponse.OptionCount(
+                                            option.getId(),
+                                            option.getLabel(),
+                                            rowCounts.getOrDefault(option.getId(), 0L)))
+                                    .toList());
+                })
+                .toList();
     }
 
     private void applyQuestions(Survey survey, List<SurveyQuestionRequest> questions) {
@@ -172,6 +205,16 @@ public class AdminSurveyService {
                     option.setLabel(options.get(j));
                     option.setDisplayOrder(j);
                     question.getOptions().add(option);
+                }
+            }
+            if (questionRequest.type() == QuestionType.GRID) {
+                List<String> rows = questionRequest.rows();
+                for (int j = 0; j < rows.size(); j++) {
+                    SurveyQuestionRow row = new SurveyQuestionRow();
+                    row.setQuestion(question);
+                    row.setLabel(rows.get(j));
+                    row.setDisplayOrder(j);
+                    question.getRows().add(row);
                 }
             }
             survey.getQuestions().add(question);
@@ -199,6 +242,12 @@ public class AdminSurveyService {
     private void validateQuestionRequest(SurveyQuestionRequest questionRequest) {
         boolean hasOptions =
                 questionRequest.options() != null && !questionRequest.options().isEmpty();
+        boolean hasRows =
+                questionRequest.rows() != null && !questionRequest.rows().isEmpty();
+        boolean grid = questionRequest.type() == QuestionType.GRID;
+        if (hasRows && !grid) {
+            throw new InvalidSurveyException("Only grid questions have rows");
+        }
         if (questionRequest.type() == QuestionType.TEXT) {
             if (hasOptions) {
                 throw new InvalidSurveyException("Text questions cannot have options");
@@ -207,6 +256,9 @@ public class AdminSurveyService {
         }
         if (!hasOptions) {
             throw new InvalidSurveyException("Choice questions require at least one option");
+        }
+        if (grid && !hasRows) {
+            throw new InvalidSurveyException("Grid questions require at least one row");
         }
     }
 }
