@@ -6,6 +6,7 @@ import { ArrowLeft, CircleCheck, ClipboardX } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  QuestionType,
   getListActiveSurveysQueryKey,
   useGetActiveSurvey,
   useSubmitSurvey,
@@ -14,7 +15,7 @@ import {
 import {
   formatDateTime,
   formatQuestionCount,
-  isSurveyAnswerGiven,
+  isSurveyQuestionAnswered,
   surveyProblem,
   type SurveyProblem,
 } from "@pkka/domain";
@@ -151,7 +152,9 @@ function SurveyFillForm({ survey, onSubmitted, onProblem }: SurveyFillFormProps)
   const submitSurvey = useSubmitSurvey();
 
   const questions = survey.questions;
-  const missing = questions.filter((question) => !isSurveyAnswerGiven(answers[question.id]));
+  const missing = questions.filter(
+    (question) => !isSurveyQuestionAnswered(question, answers[question.id]),
+  );
   const answeredCount = questions.length - missing.length;
   const hasAnswers = answeredCount > 0;
   const progress = Math.round((answeredCount / questions.length) * 100);
@@ -242,8 +245,10 @@ function SurveyFillForm({ survey, onSubmitted, onProblem }: SurveyFillFormProps)
                   value={answers[question.id] ?? ""}
                   disabled={submitSurvey.isPending}
                   error={
-                    showMissing && !isSurveyAnswerGiven(answers[question.id])
-                      ? "Odpowiedz na to pytanie."
+                    showMissing && !isSurveyQuestionAnswered(question, answers[question.id])
+                      ? question.type === QuestionType.GRID
+                        ? "Wybierz odpowiedź w każdym wierszu."
+                        : "Odpowiedz na to pytanie."
                       : undefined
                   }
                   onChange={(value) => setAnswers((prev) => ({ ...prev, [question.id]: value }))}

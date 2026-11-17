@@ -1,13 +1,6 @@
-import { RequireAlumni } from "@/components/alumni/require-alumni";
 import { SurveysList } from "@/components/surveys/surveys-list";
 
+// Open to every signed-in user; the API lists only the surveys meant for them.
 export default function DashboardSurveysPage() {
-  return (
-    <RequireAlumni
-      title="Ankiety dostępne dla zweryfikowanych alumnów"
-      description="Po zatwierdzeniu wniosku wypełnisz ankiety klubu i pomożesz planować jego działania."
-    >
-      <SurveysList />
-    </RequireAlumni>
-  );
+  return <SurveysList />;
 }

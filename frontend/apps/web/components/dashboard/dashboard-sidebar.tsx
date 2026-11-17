@@ -104,15 +104,16 @@ const adminItems: SidebarItem[] = [
   },
 ];
 
-const ALUMNI_ONLY_HREFS = new Set(["/dashboard/alumni", "/dashboard/materials", SURVEYS_PATH]);
+// Surveys are not here: a survey can be meant for every signed-in user.
+const ALUMNI_ONLY_HREFS = new Set(["/dashboard/alumni", "/dashboard/materials"]);
 
 export function DashboardSidebar() {
   const pathname = usePathname();
-  const { admin, isAuthLoading, isVerified } = useVerificationStatus();
+  const { admin, isAuthLoading, isAuthenticated, isVerified } = useVerificationStatus();
   // Only the total is needed, to show how many surveys are waiting.
   const surveysQuery = useListActiveSurveys(
     { size: 1 },
-    { query: { enabled: isVerified && !admin } },
+    { query: { enabled: isAuthenticated && !admin } },
   );
   const waitingSurveys =
     surveysQuery.data?.status === 200 ? (surveysQuery.data.data.totalElements ?? 0) : 0;
