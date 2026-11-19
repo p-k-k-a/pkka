@@ -94,7 +94,7 @@ public class EventNotificationListener {
         eventRepository
                 .findById(message.eventId())
                 .ifPresent(event ->
-                        notificationService.announceMessage(event, message.subject(), signedUp(event.getId())));
+                        notificationService.announceMessage(event, message.notification(), signedUp(event.getId())));
     }
 
     @Async
