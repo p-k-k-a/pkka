@@ -8,8 +8,14 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "A message from an admin to everyone signed up for an event, waitlist included")
 public record EventMessageRequest(
         @Schema(
-                description = "One line: the mail subject and the push text (the push title is the event title)",
-                example = "Zmiana sali")
+                description = "One line: the push text; the push title is the event title",
+                example = "Spotkanie przeniesione do sali 2.41")
+        @NotBlank
+        @Size(max = 150)
+        @Pattern(regexp = "[^\\r\\n]*", message = "must be a single line")
+        String notification,
+
+        @Schema(description = "One line: the mail subject", example = "Zmiana sali")
         @NotBlank
         @Size(max = 150)
         @Pattern(regexp = "[^\\r\\n]*", message = "must be a single line")

@@ -111,7 +111,7 @@ public class EventNotificationListener {
     public void pushMessage(EventMessageSentEvent message) {
         eventRepository
                 .findById(message.eventId())
-                .ifPresent(event -> notificationService.pushMessage(event, message.subject(), signedUp(event.getId())));
+                .ifPresent(event -> notificationService.pushMessage(event, message.notification(), signedUp(event.getId())));
     }
 
     @Async

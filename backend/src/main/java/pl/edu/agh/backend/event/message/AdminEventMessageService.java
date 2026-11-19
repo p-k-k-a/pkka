@@ -30,7 +30,10 @@ public class AdminEventMessageService {
         long recipients = eventRegistrationRepository.countRecipients(eventId);
         if (recipients > 0) {
             eventPublisher.publishEvent(new EventMessageSentEvent(
-                    eventId, request.subject().strip(), request.body().strip()));
+                    eventId,
+                    request.notification().strip(),
+                    request.subject().strip(),
+                    request.body().strip()));
         }
         return new EventMessageRecipientsResponse(recipients);
     }
