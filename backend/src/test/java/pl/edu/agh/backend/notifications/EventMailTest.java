@@ -83,6 +83,9 @@ class EventMailTest {
     @Autowired
     private TransactionTemplate transactionTemplate;
 
+    @Autowired
+    private DeviceTokenRepository deviceTokenRepository;
+
     @BeforeEach
     void setUp() {
         eventRegistrationRepository.deleteAll();
@@ -96,6 +99,16 @@ class EventMailTest {
         user.setKeycloakId(UUID.randomUUID().toString());
         user.setEmail(email);
         return userRepository.save(user);
+    }
+
+    private User userWithDevice(String email, String token) {
+        User user = saveUser(email);
+        deviceTokenRepository.save(DeviceToken.builder()
+                .user(user)
+                .token(token)
+                .platform(DevicePlatform.ANDROID)
+                .build());
+        return user;
     }
 
     private Event fullEventHeldBy(User seatHolder) {
@@ -153,10 +166,14 @@ class EventMailTest {
         when(expoPushClient.send(any())).thenThrow(new IllegalStateException("Expo is down"));
         User seatHolder = saveUser("holder@example.com");
         Event event = fullEventHeldBy(seatHolder);
-        register(event, saveUser("waiting@example.com"), EventRegistrationStatus.WAITLISTED);
+        register(
+                event,
+                userWithDevice("waiting@example.com", "ExponentPushToken[waiting]"),
+                EventRegistrationStatus.WAITLISTED);
 
         giveUpSeat(event, seatHolder);
 
+        verify(expoPushClient, timeout(SEND_TIMEOUT_MS)).send(any());
         verify(mailService, timeout(SEND_TIMEOUT_MS))
                 .send(eq("waiting@example.com"), anyString(), eq("registration-promoted"), anyMap());
     }

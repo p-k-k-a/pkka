@@ -26,10 +26,6 @@ public class EventMailService {
     private final MailService mailService;
     private final UserRepository userRepository;
 
-    /**
-     * Sent whatever the user's devices or push settings: a promotion can come just before the event, and a
-     * push never reaches someone who only uses the web.
-     */
     public void mailPromotion(Event event, UUID userId) {
         userRepository
                 .findById(userId)
