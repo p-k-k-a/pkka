@@ -7,5 +7,6 @@ export default plugin(({ addBase }) => {
   addBase({
     ":root": cssVars("light", "hex"),
     ".dark": cssVars("dark", "hex"),
+    ".light": { ...cssVars("light", "hex"), colorScheme: "light" },
   });
 });

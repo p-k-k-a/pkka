@@ -10,7 +10,7 @@ type PushPreviewProps = {
 export function PushPreview({ eventTitle, text, onTextChange }: PushPreviewProps) {
   return (
     <div className="space-y-2">
-      <div className="from-band to-accent rounded-[28px] bg-gradient-to-b p-3 pt-10 pb-16 shadow-inner">
+      <div className="from-band to-accent rounded-[28px] bg-gradient-to-b p-3 pt-8 pb-10 shadow-inner">
         <div className="bg-background/95 flex gap-3 rounded-2xl p-3 shadow-lg backdrop-blur">
           <span
             aria-hidden
