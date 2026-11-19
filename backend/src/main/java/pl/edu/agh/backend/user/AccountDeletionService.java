@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.discord.DiscordRoleSync;
 import pl.edu.agh.backend.event.registration.EventRegistrationService;
 import pl.edu.agh.backend.infrastructure.keycloak.KeycloakUserService;
 import pl.edu.agh.backend.storage.StorageService;
@@ -21,6 +23,7 @@ public class AccountDeletionService {
     private final EventRegistrationService eventRegistrationService;
     private final KeycloakUserService keycloakUserService;
     private final StorageService storageService;
+    private final DiscordRoleSync discordRoleSync;
 
     @Transactional
     public void deleteAccount(String keycloakId, String email) {
@@ -35,12 +38,22 @@ public class AccountDeletionService {
         userRepository.deleteNow(user.getId());
         keycloakUserService.deleteUser(keycloakId);
         String avatarKey = user.getAvatarKey();
+        String discordId = user.getDiscordId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 deleteAvatar(avatarKey);
+                removeDiscordRoles(discordId);
             }
         });
+    }
+
+    private void removeDiscordRoles(String discordId) {
+        try {
+            discordRoleSync.removeManagedRoles(discordId);
+        } catch (RestClientException ex) {
+            log.warn("Account deleted but Discord user {} kept their roles: {}", discordId, ex.getMessage());
+        }
     }
 
     private void deleteAvatar(String key) {

@@ -37,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.discord.DiscordRoleSync;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventRepository;
@@ -62,6 +63,7 @@ class AccountDeletionIntegrationTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
     private static final String EMAIL = "anna@example.com";
+    private static final String DISCORD_ID = "999999999999999999";
     private static final String AVATAR_KEY =
             "avatars/0f3a1c8e-1111-4000-8000-000000000001/0f3a1c8e-1111-4000-8000-000000000002.png";
 
@@ -88,6 +90,9 @@ class AccountDeletionIntegrationTest {
 
     @MockitoBean
     private StorageService storageService;
+
+    @MockitoBean
+    private DiscordRoleSync discordRoleSync;
 
     private User user;
     private User other;
@@ -128,6 +133,8 @@ class AccountDeletionIntegrationTest {
                 group);
         jdbc.update(
                 "insert into topic_group_memberships values (?, ?, ?, now())", UUID.randomUUID(), group, user.getId());
+        user.setDiscordId(DISCORD_ID);
+        userRepository.saveAndFlush(user);
 
         deleteAccount(EMAIL).andExpect(status().isNoContent());
 
@@ -152,6 +159,7 @@ class AccountDeletionIntegrationTest {
         TestTransaction.flagForCommit();
         TestTransaction.end();
         verify(storageService).delete(AVATAR_KEY);
+        verify(discordRoleSync).removeManagedRoles(DISCORD_ID);
     }
 
     @Test

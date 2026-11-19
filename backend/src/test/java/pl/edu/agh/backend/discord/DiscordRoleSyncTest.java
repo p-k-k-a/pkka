@@ -142,6 +142,25 @@ class DiscordRoleSyncTest {
     }
 
     @Test
+    void removesEveryManagedRoleAndLeavesTheRest() {
+        given(guildMembership.isConfigured()).willReturn(true);
+        given(guildMembership.roles(DISCORD_ID)).willReturn(Optional.of(List.of(ALUMN_ROLE, AI_ROLE, UNMANAGED_ROLE)));
+
+        roleSync.removeManagedRoles(DISCORD_ID);
+
+        verify(guildMembership).removeRole(DISCORD_ID, ALUMN_ROLE);
+        verify(guildMembership).removeRole(DISCORD_ID, AI_ROLE);
+        verify(guildMembership, never()).removeRole(DISCORD_ID, UNMANAGED_ROLE);
+    }
+
+    @Test
+    void removesNothingBeforeDiscordIsSetUp() {
+        roleSync.removeManagedRoles(DISCORD_ID);
+
+        verify(guildMembership, never()).roles(any());
+    }
+
+    @Test
     void discordFailuresReachTheCaller() {
         given(guildMembership.roles(DISCORD_ID)).willThrow(new RestClientException("Discord is down"));
 

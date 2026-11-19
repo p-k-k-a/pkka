@@ -52,6 +52,23 @@ public class DiscordRoleSync {
         return DiscordStatus.ON_SERVER;
     }
 
+    public void removeManagedRoles(String discordId) {
+        if (discordId == null || !guildMembership.isConfigured()) {
+            return;
+        }
+        Optional<List<String>> held = guildMembership.roles(discordId);
+        if (held.isEmpty()) {
+            return;
+        }
+        Set<String> managed = new HashSet<>(topicGroupRepository.findDiscordRoleIds());
+        guildMembership.alumnRoleId().ifPresent(managed::add);
+        for (String role : held.get()) {
+            if (managed.contains(role)) {
+                guildMembership.removeRole(discordId, role);
+            }
+        }
+    }
+
     private Set<String> wantedRoles(User user) {
         Set<String> wanted = new HashSet<>(membershipRepository.findDiscordRoleIdsByUserId(user.getId()));
         if (applicationRepository.existsByApplicantKeycloakIdAndStatus(
