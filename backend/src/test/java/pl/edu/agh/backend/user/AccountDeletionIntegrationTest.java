@@ -122,11 +122,19 @@ class AccountDeletionIntegrationTest {
         jdbc.update("insert into survey_submissions values (?, ?, ?, now())", UUID.randomUUID(), survey, user.getId());
         jdbc.update("insert into device_tokens values ('token', ?, 'ANDROID', now(), now())", user.getId());
         jdbc.update("insert into push_tickets values ('ticket', 'token', now())");
+        UUID group = UUID.randomUUID();
+        jdbc.update(
+                "insert into topic_groups (id, slug, name, created_at, updated_at) values (?, 'g', 'G', now(), now())",
+                group);
+        jdbc.update(
+                "insert into topic_group_memberships values (?, ?, ?, now())", UUID.randomUUID(), group, user.getId());
 
         deleteAccount(EMAIL).andExpect(status().isNoContent());
 
         assertThat(userRepository.findById(user.getId())).isEmpty();
-        for (String table : new String[] {"user_tags", "survey_submissions", "device_tokens", "event_registrations"}) {
+        for (String table : new String[] {
+            "user_tags", "survey_submissions", "device_tokens", "event_registrations", "topic_group_memberships"
+        }) {
             assertThat(count("select count(*) from " + table + " where user_id = ?", user.getId()))
                     .as(table)
                     .isZero();
