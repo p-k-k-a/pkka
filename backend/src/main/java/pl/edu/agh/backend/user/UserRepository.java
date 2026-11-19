@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.user;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -12,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
 
     Optional<User> findByKeycloakId(String keycloakId);
+
+    List<User> findByDiscordIdIsNotNull();
 
     @EntityGraph(attributePaths = "tags")
     Optional<User> findWithTagsByKeycloakId(String keycloakId);

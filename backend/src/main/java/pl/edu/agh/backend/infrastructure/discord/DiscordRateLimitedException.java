@@ -7,7 +7,7 @@ public class DiscordRateLimitedException extends RestClientException {
 
     private final Duration retryAfter;
 
-    DiscordRateLimitedException(Duration retryAfter) {
+    public DiscordRateLimitedException(Duration retryAfter) {
         super("Discord asked us to wait " + retryAfter);
         this.retryAfter = retryAfter;
     }
