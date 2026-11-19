@@ -218,10 +218,10 @@ export function AdminEventsList() {
                 <TabsTrigger value={EventTimeframe.PAST}>Archiwum</TabsTrigger>
               </TabsList>
             </Tabs>
-            <label className="text-muted-foreground flex items-center gap-2 text-sm whitespace-nowrap">
+            <label className="text-muted-foreground flex max-w-full flex-wrap items-center gap-2 text-sm">
               Sortuj według
               <Select
-                className="h-9 w-auto"
+                className="h-9 w-auto max-w-full"
                 value={sortKey}
                 onChange={(changeEvent) => {
                   setChosenSort(changeEvent.target.value as SortKey);
