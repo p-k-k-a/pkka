@@ -125,7 +125,7 @@ function CancellationNotice({ event }: { event: AdminEventSummaryResponse }) {
         "zapisane osoby dostaną",
         "zapisanych osób dostanie",
       )}{" "}
-      powiadomienie i maila o odwołaniu.
+      maila o odwołaniu, a osoby z aplikacją także powiadomienie.
     </p>
   );
 }

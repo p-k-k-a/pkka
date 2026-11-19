@@ -220,7 +220,7 @@ export function EventForm({ event }: EventFormProps) {
           </Button>
         </div>
 
-        {isEditing && new Date(event.startsAt) > new Date() ? (
+        {isEditing && startsAtIso && new Date(startsAtIso) > new Date() ? (
           <p className="bg-accent/10 text-foreground mb-6 flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
             <BellRing className="text-accent mt-0.5 size-4 shrink-0" aria-hidden />
             Zmiana terminu, formy, miejsca albo linku do transmisji wyśle zapisanym powiadomienie i
