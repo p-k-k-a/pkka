@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BellRing } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Audience,
@@ -198,6 +198,14 @@ export function EventForm({ event }: EventFormProps) {
             {isPending ? "Zapisywanie…" : isEditing ? "Zapisz zmiany" : "Opublikuj wydarzenie"}
           </Button>
         </div>
+
+        {isEditing && new Date(event.startsAt) > new Date() ? (
+          <p className="bg-accent/10 text-foreground mb-6 flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
+            <BellRing className="text-accent mt-0.5 size-4 shrink-0" aria-hidden />
+            Zmiana terminu, formy, miejsca albo linku do transmisji wyśle zapisanym powiadomienie i
+            maila z opisem zmian.
+          </p>
+        ) : null}
 
         {isError ? (
           <p className="text-destructive mb-6 font-medium">

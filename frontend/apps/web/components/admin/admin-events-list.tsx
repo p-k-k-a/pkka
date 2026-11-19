@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import {
   getListAdminEventsQueryKey,
   getListEventOccupancyQueryKey,
   getListEventsQueryKey,
+  useCountEventMessageRecipients,
   useDeleteAdminEvent,
   useListAdminEvents,
   useListEventOccupancy,
@@ -37,6 +38,7 @@ import { audienceLabel, isAdmin, pluralPl, sumSignUpSources } from "@pkka/domain
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
 import { SignUpSources } from "@/components/admin/statistics/signup-sources";
+import { EventMessageDialog } from "@/components/admin/event-message/event-message-dialog";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
@@ -107,6 +109,27 @@ function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
         <span className="text-foreground font-medium tabular-nums">{row.waitlisted}</span>
       </p>
     </div>
+  );
+}
+
+function CancellationNotice({ event }: { event: AdminEventSummaryResponse }) {
+  const isUpcoming = parseISO(event.startsAt) > new Date();
+  const recipients = useCountEventMessageRecipients(event.id, {
+    query: { enabled: isUpcoming, staleTime: 0 },
+  });
+  const count = recipients.data?.status === 200 ? recipients.data.data.recipients : undefined;
+  if (!isUpcoming || !count) return null;
+  return (
+    <p className="bg-accent/10 text-foreground rounded-lg px-3 py-2.5 text-sm">
+      {count}{" "}
+      {pluralPl(
+        count,
+        "zapisana osoba dostanie",
+        "zapisane osoby dostaną",
+        "zapisanych osób dostanie",
+      )}{" "}
+      powiadomienie i maila o odwołaniu.
+    </p>
   );
 }
 
@@ -287,6 +310,12 @@ export function AdminEventsList() {
                                 Edytuj
                               </Link>
                             </Button>
+                            <EventMessageDialog event={item}>
+                              <Button type="button" variant="outline" size="sm">
+                                <Send data-icon="inline-start" />
+                                Wiadomość
+                              </Button>
+                            </EventMessageDialog>
                             <Button
                               type="button"
                               variant="ghost"
@@ -345,6 +374,7 @@ export function AdminEventsList() {
               „{eventToDelete?.title}” zostanie trwale usunięte. Tej operacji nie można cofnąć.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {eventToDelete ? <CancellationNotice event={eventToDelete} /> : null}
           {deleteEvent.isError ? (
             <p className="text-destructive text-sm font-medium">Nie udało się usunąć wydarzenia.</p>
           ) : null}
