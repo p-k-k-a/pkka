@@ -101,6 +101,7 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
           isLoading={recipientsQuery.isLoading}
           isError={recipientsQuery.isError}
           recipients={recipients}
+          onRetry={() => recipientsQuery.refetch()}
         />
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
@@ -146,7 +147,10 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
             type="button"
             variant="outline"
             disabled={sendMessage.isPending}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              sendMessage.reset();
+            }}
           >
             Anuluj
           </Button>
@@ -180,17 +184,22 @@ function RecipientsNote({
   isLoading,
   isError,
   recipients,
+  onRetry,
 }: {
   isLoading: boolean;
   isError: boolean;
   recipients: number | undefined;
+  onRetry: () => void;
 }) {
   if (isLoading) return <Skeleton className="h-11 w-full rounded-lg" />;
   if (isError || recipients === undefined) {
     return (
-      <p role="alert" className="text-destructive text-sm font-medium">
+      <div role="alert" className="text-destructive flex items-center gap-3 text-sm font-medium">
         Nie udało się sprawdzić, do ilu osób trafi wiadomość.
-      </p>
+        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+          Spróbuj ponownie
+        </Button>
+      </div>
     );
   }
   return (
@@ -198,8 +207,8 @@ function RecipientsNote({
       <Users className="text-accent size-4 shrink-0" aria-hidden />
       {recipients > 0 ? (
         <span>
-          Wiadomość trafi do <strong className="tabular-nums">{people(recipients)}</strong>, razem z
-          listą rezerwową.
+          Wiadomość trafi do <strong className="tabular-nums">{people(recipients)}</strong>{" "}
+          zapisanych na wydarzenie, licząc listę rezerwową.
         </span>
       ) : (
         <span>Nikt nie jest zapisany na to wydarzenie, więc nie ma do kogo wysłać wiadomości.</span>
