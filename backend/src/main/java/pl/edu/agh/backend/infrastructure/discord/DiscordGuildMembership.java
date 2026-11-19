@@ -44,7 +44,6 @@ public class DiscordGuildMembership {
         return guildSettings.findFirstBy().flatMap(DiscordGuildSettings::getAlumnRoleId);
     }
 
-    /** The member's roles, or empty when they are not on the server. */
     public Optional<List<String>> roles(String discordId) {
         return guildRoles(guildId(), discordId);
     }
