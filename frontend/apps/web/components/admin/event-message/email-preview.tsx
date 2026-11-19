@@ -25,7 +25,7 @@ export function EmailPreview({
   onBodyChange,
 }: EmailPreviewProps) {
   return (
-    <div className="border-border overflow-hidden rounded-xl border">
+    <div className="light border-border bg-background overflow-hidden rounded-xl border">
       <dl className="bg-background border-border grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-b px-4 py-3 text-xs">
         <dt className="text-muted-foreground">Od</dt>
         <dd className="text-foreground truncate">Klub Alumnów WI AGH</dd>
@@ -41,7 +41,7 @@ export function EmailPreview({
             Klub Alumnów WI AGH
           </div>
 
-          <div className="text-muted-foreground space-y-4 px-6 py-6 text-[15px] leading-relaxed sm:px-8">
+          <div className="text-muted-foreground space-y-3 px-6 py-5 text-[15px] leading-relaxed sm:px-8">
             <p className="text-[13px]">
               Wiadomość do zapisanych na wydarzenie{" "}
               <strong className="text-foreground">{event.title}</strong> (
@@ -69,11 +69,11 @@ export function EmailPreview({
               </label>
               <textarea
                 id="message-body"
-                rows={7}
+                rows={5}
                 value={body}
                 maxLength={MESSAGE_LIMITS.body}
                 placeholder="Treść wiadomości. Nowe linie zostaną zachowane."
-                className={cn(editable, "min-h-40 resize-y py-1")}
+                className={cn(editable, "min-h-28 resize-y py-1")}
                 onChange={(changeEvent) => onBodyChange(changeEvent.target.value)}
               />
               <CharacterCount value={body} limit={MESSAGE_LIMITS.body} />

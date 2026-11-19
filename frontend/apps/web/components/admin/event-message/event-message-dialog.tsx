@@ -141,7 +141,7 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
           </p>
         ) : null}
 
-        <DialogFooter>
+        <DialogFooter className="bg-popover border-border sticky -bottom-4 -mx-4 -mb-4 border-t px-4 py-3 sm:-bottom-6 sm:-mx-6 sm:-mb-6 sm:px-6">
           <Button
             type="button"
             variant="outline"
