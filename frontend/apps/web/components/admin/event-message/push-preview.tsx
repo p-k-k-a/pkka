@@ -1,3 +1,4 @@
+import { Avatar } from "@/components/ui/avatar";
 import { CharacterCount } from "@/components/admin/event-message/character-count";
 import { MESSAGE_LIMITS } from "@/components/admin/event-message/message-format";
 
@@ -10,14 +11,9 @@ type PushPreviewProps = {
 export function PushPreview({ eventTitle, text, onTextChange }: PushPreviewProps) {
   return (
     <div className="space-y-2">
-      <div className="from-band to-accent rounded-[28px] bg-gradient-to-b p-3 pt-8 pb-10 shadow-inner">
-        <div className="bg-background/95 flex gap-3 rounded-2xl p-3 shadow-lg backdrop-blur">
-          <span
-            aria-hidden
-            className="bg-primary text-primary-foreground font-heading flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold"
-          >
-            KA
-          </span>
+      <div className="bg-muted rounded-2xl p-3">
+        <div className="bg-background flex gap-3 rounded-2xl p-3 shadow-sm">
+          <Avatar fallback="Klub Alumnów" size="sm" aria-hidden />
           <div className="min-w-0 flex-1 space-y-0.5">
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-[11px]">
               <span className="truncate font-medium tracking-wide uppercase">Klub Alumnów</span>
