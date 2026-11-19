@@ -378,7 +378,9 @@ class EventMailTest {
         Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
 
         EventMessageRecipientsResponse queued = adminEventMessageService.send(
-                event.getId(), new EventMessageRequest("  Zmiana sali ", "Spotykamy się w 2.41.\nWeźcie laptopy."));
+                event.getId(),
+                new EventMessageRequest(
+                        " Sala 2.41 zamiast 1.38 ", "  Zmiana sali ", "Spotykamy się w 2.41.\nWeźcie laptopy."));
 
         assertThat(queued.recipients()).isEqualTo(2);
         ArgumentCaptor<String> to = ArgumentCaptor.forClass(String.class);
@@ -387,7 +389,7 @@ class EventMailTest {
         assertThat(to.getAllValues()).containsExactlyInAnyOrder("seated@example.com", "waiting@example.com");
         ExpoPushMessage push = capturePushes().getFirst();
         assertThat(push.title()).isEqualTo("Warsztaty");
-        assertThat(push.body()).isEqualTo("Zmiana sali");
+        assertThat(push.body()).isEqualTo("Sala 2.41 zamiast 1.38");
         assertThat(push.data()).containsEntry("type", "EVENT_MESSAGE");
     }
 

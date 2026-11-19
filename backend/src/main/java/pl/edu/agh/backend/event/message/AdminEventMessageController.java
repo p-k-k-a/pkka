@@ -39,7 +39,10 @@ public class AdminEventMessageController {
             description = "Mailed to every recipient and pushed to those with the mobile app. Delivery happens in"
                     + " the background, so the response only says how many people it was queued for.")
     @ApiResponse(responseCode = "202", description = "Message queued")
-    @ApiResponse(responseCode = "400", description = "Empty or too long subject or body", content = @Content)
+    @ApiResponse(
+            responseCode = "400",
+            description = "Empty or too long notification, subject or body",
+            content = @Content)
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
     public EventMessageRecipientsResponse sendEventMessage(
             @PathVariable UUID eventId, @Valid @RequestBody EventMessageRequest request) {

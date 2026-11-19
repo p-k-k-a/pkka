@@ -42,7 +42,7 @@ import pl.edu.agh.backend.user.UserRepository;
 class AdminEventMessageEndpointTest {
 
     private static final String MESSAGE = """
-            {"subject": "Zmiana sali", "body": "Spotykamy się w sali 2.41."}
+            {"notification": "Sala 2.41 zamiast 1.38", "subject": "Zmiana sali", "body": "Spotykamy się w sali 2.41."}
             """;
 
     @Container
@@ -151,7 +151,7 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": " ", "body": "Treść"}
+                                {"notification": "Push", "subject": " ", "body": "Treść"}
                                 """))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
@@ -159,7 +159,7 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": "Temat"}
+                                {"notification": "Push", "subject": "Temat"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -173,7 +173,29 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": "Temat\\r\\nBcc: ola@example.com", "body": "Treść"}
+                                {"notification": "Push", "subject": "Temat\\r\\nBcc: ola@example.com", "body": "Treść"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aBlankOrMultiLineNotification_isRejected() throws Exception {
+        Event event = newEvent();
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"notification": " ", "subject": "Temat", "body": "Treść"}
+                                """))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"notification": "Jeden\\nDwa", "subject": "Temat", "body": "Treść"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
