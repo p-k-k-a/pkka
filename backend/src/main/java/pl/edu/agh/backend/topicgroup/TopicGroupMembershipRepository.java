@@ -3,6 +3,7 @@ package pl.edu.agh.backend.topicgroup;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -21,6 +22,12 @@ public interface TopicGroupMembershipRepository extends JpaRepository<TopicGroup
 
     @EntityGraph(attributePaths = "user")
     List<TopicGroupMembership> findByGroupIdOrderByJoinedAtAsc(UUID groupId);
+
+    @Query("""
+            select m.group.discordRoleId
+            from TopicGroupMembership m
+            where m.user.id = :userId and m.group.discordRoleId is not null""")
+    Set<String> findDiscordRoleIdsByUserId(UUID userId);
 
     @Query("""
             select m.group.id as groupId, count(m) as members
