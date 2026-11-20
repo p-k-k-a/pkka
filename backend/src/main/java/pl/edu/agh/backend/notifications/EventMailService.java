@@ -39,6 +39,21 @@ public class EventMailService {
     private final MailService mailService;
     private final UserRepository userRepository;
 
+    /** Same audience as the push; the link carries {@code ref=email} so a sign-up from it is counted. */
+    public void mailAnnouncement(Event event) {
+        List<User> recipients =
+                switch (event.getAudience()) {
+                    case PUBLIC -> userRepository.findAll();
+                    case ALL_ALUMNI -> userRepository.findApprovedAlumni();
+                    case SPECIFIC_GROUP -> List.of();
+                };
+        mailEach(recipients, "Nowe wydarzenie: " + event.getTitle(), "event-announcement", eventVariables(event));
+    }
+
+    public void mailReminder(Event event, Collection<UUID> userIds) {
+        mailEach(userIds, "Przypomnienie: " + event.getTitle(), "event-reminder", eventVariables(event));
+    }
+
     public void mailPromotion(Event event, UUID userId) {
         mailEach(
                 List.of(userId),
@@ -67,15 +82,19 @@ public class EventMailService {
         mailEach(userIds, subject, "event-message", variables);
     }
 
-    /** One mail per person, so nobody sees who else is signed up. */
     private void mailEach(Collection<UUID> userIds, String subject, String template, Map<String, Object> variables) {
-        if (userIds.isEmpty()) {
+        if (!userIds.isEmpty()) {
+            mailEach(userRepository.findAllById(userIds), subject, template, variables);
+        }
+    }
+
+    /** One mail per person, so nobody sees who else gets it. */
+    private void mailEach(List<User> users, String subject, String template, Map<String, Object> variables) {
+        if (users.isEmpty()) {
             return;
         }
-        List<String> emails = userRepository.findAllById(userIds).stream()
-                .map(User::getEmail)
-                .filter(StringUtils::hasText)
-                .toList();
+        List<String> emails =
+                users.stream().map(User::getEmail).filter(StringUtils::hasText).toList();
         long sent = emails.stream()
                 .filter(email -> mailService.send(email, subject, template, variables))
                 .count();

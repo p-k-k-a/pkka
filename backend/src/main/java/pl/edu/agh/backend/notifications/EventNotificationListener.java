@@ -28,17 +28,35 @@ public class EventNotificationListener {
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onEventCreated(EventCreatedEvent event) {
-        eventRepository.findById(event.eventId()).ifPresent(notificationService::announce);
+    public void pushAnnouncement(EventCreatedEvent created) {
+        eventRepository.findById(created.eventId()).ifPresent(notificationService::pushAnnouncement);
+    }
+
+    @Async
+    @TransactionalEventListener
+    public void mailAnnouncement(EventCreatedEvent created) {
+        eventRepository.findById(created.eventId()).ifPresent(eventMailService::mailAnnouncement);
+    }
+
+    // The push half of a reminder runs in EventReminderScheduler, which records who was reminded.
+    @Async
+    @TransactionalEventListener
+    public void mailReminder(RemindersSentEvent reminded) {
+        if (reminded.userIds().isEmpty()) {
+            return;
+        }
+        eventRepository
+                .findById(reminded.eventId())
+                .ifPresent(event -> eventMailService.mailReminder(event, reminded.userIds()));
     }
 
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onRegistrationPromoted(RegistrationPromotedEvent promoted) {
+    public void pushPromotion(RegistrationPromotedEvent promoted) {
         eventRepository
                 .findById(promoted.eventId())
-                .ifPresent(event -> notificationService.announcePromotion(event, promoted.userId()));
+                .ifPresent(event -> notificationService.pushPromotion(event, promoted.userId()));
     }
 
     /**
@@ -60,10 +78,10 @@ public class EventNotificationListener {
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onScheduleChanged(EventScheduleChangedEvent changed) {
+    public void pushScheduleChange(EventScheduleChangedEvent changed) {
         eventRepository
                 .findById(changed.eventId())
-                .ifPresent(event -> notificationService.announceChange(event, changed, signedUp(event.getId())));
+                .ifPresent(event -> notificationService.pushScheduleChange(event, changed, signedUp(event.getId())));
     }
 
     @Async
@@ -77,8 +95,8 @@ public class EventNotificationListener {
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onCancelled(EventCancelledEvent cancelled) {
-        notificationService.announceCancellation(cancelled, signedUp(cancelled.eventId()));
+    public void pushCancellation(EventCancelledEvent cancelled) {
+        notificationService.pushCancellation(cancelled, signedUp(cancelled.eventId()));
     }
 
     @Async
@@ -90,11 +108,10 @@ public class EventNotificationListener {
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onMessageSent(EventMessageSentEvent message) {
+    public void pushMessage(EventMessageSentEvent message) {
         eventRepository
                 .findById(message.eventId())
-                .ifPresent(event ->
-                        notificationService.announceMessage(event, message.subject(), signedUp(event.getId())));
+                .ifPresent(event -> notificationService.pushMessage(event, message.subject(), signedUp(event.getId())));
     }
 
     @Async

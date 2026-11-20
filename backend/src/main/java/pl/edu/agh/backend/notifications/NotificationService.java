@@ -33,7 +33,7 @@ public class NotificationService {
     private final ExpoPushClient expoPushClient;
     private final PushTicketRepository pushTicketRepository;
 
-    public void announce(Event event) {
+    public void pushAnnouncement(Event event) {
         List<DeviceToken> devices =
                 switch (event.getAudience()) {
                     case PUBLIC -> deviceTokenRepository.findAll();
@@ -43,7 +43,7 @@ public class NotificationService {
         push(devices, NotificationType.EVENT_ANNOUNCEMENT, "Nowe wydarzenie", event.getTitle(), event.getSlug());
     }
 
-    public Set<UUID> remind(Event event, Collection<UUID> userIds) {
+    public Set<UUID> pushReminder(Event event, Collection<UUID> userIds) {
         String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
         List<DeviceToken> devices = deviceTokenRepository.findByUserIdIn(userIds);
         Set<String> refusedTokens = push(
@@ -61,7 +61,7 @@ public class NotificationService {
                 .collect(Collectors.toSet());
     }
 
-    public void announcePromotion(Event event, UUID userId) {
+    public void pushPromotion(Event event, UUID userId) {
         String startsAt = STARTS_AT.format(event.getStartsAt().atZone(POLAND));
         push(
                 deviceTokenRepository.findByUserIdIn(List.of(userId)),
@@ -72,7 +72,7 @@ public class NotificationService {
     }
 
     /** Names what changed, e.g. "„Warsztaty”: nowy termin 02.12 o 18:00; nowe miejsce: D17, sala 2.41". */
-    public void announceChange(Event event, EventScheduleChangedEvent before, Collection<UUID> userIds) {
+    public void pushScheduleChange(Event event, EventScheduleChangedEvent before, Collection<UUID> userIds) {
         pushToSignedUp(
                 userIds,
                 NotificationType.EVENT_CHANGED,
@@ -102,7 +102,7 @@ public class NotificationService {
         return changes;
     }
 
-    public void announceCancellation(EventCancelledEvent cancelled, Collection<UUID> userIds) {
+    public void pushCancellation(EventCancelledEvent cancelled, Collection<UUID> userIds) {
         pushToSignedUp(
                 userIds,
                 NotificationType.EVENT_CANCELLED,
@@ -114,7 +114,7 @@ public class NotificationService {
                 NO_TARGET);
     }
 
-    public void announceMessage(Event event, String subject, Collection<UUID> userIds) {
+    public void pushMessage(Event event, String subject, Collection<UUID> userIds) {
         pushToSignedUp(userIds, NotificationType.EVENT_MESSAGE, event.getTitle(), subject, event.getSlug());
     }
 

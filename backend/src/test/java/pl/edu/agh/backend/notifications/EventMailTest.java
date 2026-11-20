@@ -13,6 +13,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -36,6 +38,12 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import pl.edu.agh.backend.application.Application;
+import pl.edu.agh.backend.application.ApplicationRepository;
+import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.application.Faculty;
+import pl.edu.agh.backend.application.StudyType;
+import pl.edu.agh.backend.event.AdminEventResponse;
 import pl.edu.agh.backend.event.AdminEventService;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
@@ -101,6 +109,17 @@ class EventMailTest {
 
     @Autowired
     private DeviceTokenRepository deviceTokenRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private EventReminderScheduler eventReminderScheduler;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private final Caller admin = new Caller(UUID.randomUUID().toString(), Set.of("ADMIN"));
 
     @BeforeEach
     void setUp() {
@@ -243,6 +262,44 @@ class EventMailTest {
         return event;
     }
 
+    /** Users from earlier tests stay in the database, so each test mails its own unique address. */
+    private static String uniqueAddress(String name) {
+        return name + "-" + UUID.randomUUID() + "@example.com";
+    }
+
+    private User approvedAlumn(String email) {
+        User user = saveUser(email);
+        applicationRepository.save(Application.builder()
+                .applicant(user)
+                .status(ApplicationStatus.APPROVED)
+                .faculty(Faculty.WI)
+                .fieldOfStudy("Informatyka")
+                .studyType(StudyType.MASTER)
+                .graduationYear(2020)
+                .phoneNumber("+48123456789")
+                .reviewedAt(Instant.parse("2021-06-15T10:00:00Z"))
+                .build());
+        return user;
+    }
+
+    private static EventRequest newEvent(Audience audience) {
+        Instant startsAt = Instant.parse("2030-12-01T17:00:00Z");
+        return new EventRequest(
+                "Warsztaty",
+                null,
+                EventType.IN_PERSON,
+                startsAt,
+                startsAt.plus(2, ChronoUnit.HOURS),
+                null,
+                "D17, sala 1.38",
+                null,
+                null,
+                audience,
+                null,
+                null,
+                Set.of());
+    }
+
     private static EventRequest edit(Event event, Instant startsAt, String location, String description) {
         return new EventRequest(
                 event.getTitle(),
@@ -371,6 +428,75 @@ class EventMailTest {
         adminEventService.delete(event.getId());
 
         verify(mailService, after(QUIET_PERIOD_MS).never()).send(anyString(), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aNewPublicEvent_mailsEveryoneWithALinkCountedAsEmail() {
+        String address = uniqueAddress("anyone");
+        saveUser(address);
+
+        AdminEventResponse created = adminEventService.create(admin, newEvent(Audience.PUBLIC));
+
+        ArgumentCaptor<Map<String, Object>> variables = ArgumentCaptor.forClass(Map.class);
+        verify(mailService, timeout(SEND_TIMEOUT_MS))
+                .send(eq(address), eq("Nowe wydarzenie: Warsztaty"), eq("event-announcement"), variables.capture());
+        // Wait for the whole batch, so no late mail lands in the next test.
+        int withAddress = (int) userRepository.findAll().stream()
+                .filter(user -> user.getEmail() != null)
+                .count();
+        verify(mailService, timeout(SEND_TIMEOUT_MS).times(withAddress))
+                .send(anyString(), anyString(), eq("event-announcement"), anyMap());
+        assertThat(variables.getValue())
+                .containsEntry("slug", created.slug())
+                .containsEntry("startsAt", "1 grudnia 2030 o 18:00")
+                .containsEntry("location", "D17, sala 1.38");
+    }
+
+    @Test
+    void aNewAlumniOnlyEvent_mailsOnlyApprovedAlumni() {
+        String alumn = uniqueAddress("alumn");
+        String plain = uniqueAddress("plain");
+        approvedAlumn(alumn);
+        saveUser(plain);
+
+        adminEventService.create(admin, newEvent(Audience.ALL_ALUMNI));
+
+        verify(mailService, timeout(SEND_TIMEOUT_MS)).send(eq(alumn), anyString(), eq("event-announcement"), anyMap());
+        verify(mailService, after(QUIET_PERIOD_MS).never())
+                .send(eq(plain), anyString(), eq("event-announcement"), anyMap());
+    }
+
+    @Test
+    void aDueReminder_isMailedOnceEvenWithoutAPhone() {
+        Instant startsAt = Instant.now().plus(30, ChronoUnit.MINUTES);
+        Event event = eventRepository.save(Event.builder()
+                .title("Warsztaty")
+                .slug("warsztaty-" + UUID.randomUUID())
+                .type(EventType.ONLINE)
+                .startsAt(startsAt)
+                .endsAt(startsAt.plus(2, ChronoUnit.HOURS))
+                .audience(Audience.PUBLIC)
+                .reminderLeadTimeMinutes(60)
+                .build());
+        String address = uniqueAddress("attendee");
+        EventRegistration registration = eventRegistrationRepository.save(EventRegistration.builder()
+                .event(event)
+                .user(saveUser(address))
+                .status(EventRegistrationStatus.REGISTERED)
+                .build());
+        jdbcTemplate.update(
+                "update event_registrations set registered_at = ? where id = ?",
+                Timestamp.from(Instant.now().minus(1, ChronoUnit.DAYS)),
+                registration.getId());
+
+        eventReminderScheduler.sendDueReminders();
+        eventReminderScheduler.sendDueReminders();
+
+        verify(mailService, timeout(SEND_TIMEOUT_MS))
+                .send(eq(address), eq("Przypomnienie: Warsztaty"), eq("event-reminder"), anyMap());
+        verify(mailService, after(QUIET_PERIOD_MS).times(1))
+                .send(eq(address), anyString(), eq("event-reminder"), anyMap());
     }
 
     @Test

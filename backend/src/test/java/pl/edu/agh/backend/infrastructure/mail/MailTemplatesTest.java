@@ -37,6 +37,28 @@ class MailTemplatesTest {
     }
 
     @Test
+    void eventAnnouncement_linksWithTheEmailSource() {
+        String html = mail.render("event-announcement.html", "Nowe wydarzenie: Warsztaty", event("D17"));
+        String text = mail.render("event-announcement.txt", "Nowe wydarzenie: Warsztaty", event("D17"));
+
+        assertThat(html)
+                .contains("Warsztaty", "1 grudnia 2030 o 18:00", "D17")
+                .contains("href=\"https://pkka.me/events/warsztaty?ref=email\"");
+        assertThat(text).contains("Wydarzenie: Warsztaty", "https://pkka.me/events/warsztaty?ref=email");
+    }
+
+    @Test
+    void eventReminder_linksToTheEventWithoutASource() {
+        String html = mail.render("event-reminder.html", "Przypomnienie: Warsztaty", event("D17"));
+        String text = mail.render("event-reminder.txt", "Przypomnienie: Warsztaty", event("D17"));
+
+        assertThat(html)
+                .contains("Warsztaty", "1 grudnia 2030 o 18:00", "na które masz zapis")
+                .contains("href=\"https://pkka.me/events/warsztaty\"");
+        assertThat(text).contains("Termin: 1 grudnia 2030 o 18:00", "https://pkka.me/events/warsztaty\n");
+    }
+
+    @Test
     void eventChanged_listsEveryChange() {
         Map<String, Object> variables = event("D17");
         variables.put("changes", List.of("Termin: A -> B", "Miejsce: C -> D"));
