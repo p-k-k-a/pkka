@@ -45,6 +45,7 @@ class SurveyEndpointTest {
     private static final String ADMIN_SUBJECT = "66666666-6666-6666-6666-666666666666";
     private static final String ALUMN_SUBJECT = "77777777-7777-7777-7777-777777777777";
     private static final String OTHER_ALUMN_SUBJECT = "88888888-8888-8888-8888-888888888888";
+    private static final String USER_SUBJECT = "99999999-9999-9999-9999-999999999999";
 
     @Container
     @ServiceConnection
@@ -102,12 +103,12 @@ class SurveyEndpointTest {
         UUID optionId = UUID.fromString(JsonPath.read(created, "$.questions[0].options[0].id"));
         UUID textQuestionId = UUID.fromString(JsonPath.read(created, "$.questions[1].id"));
 
-        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(surveyId.toString()));
 
-        mockMvc.perform(post("/api/alumni/surveys/{id}/submissions", surveyId)
-                        .with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT))
+        mockMvc.perform(post("/api/surveys/{id}/submissions", surveyId)
+                        .with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -120,8 +121,8 @@ class SurveyEndpointTest {
                                 """.formatted(singleChoiceQuestionId, optionId, textQuestionId)))
                 .andExpect(status().isCreated());
 
-        mockMvc.perform(post("/api/alumni/surveys/{id}/submissions", surveyId)
-                        .with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT))
+        mockMvc.perform(post("/api/surveys/{id}/submissions", surveyId)
+                        .with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -299,11 +300,60 @@ class SurveyEndpointTest {
 
     @Test
     void enforcesRoles() throws Exception {
-        mockMvc.perform(get("/api/alumni/surveys")).andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asUser()))
+        mockMvc.perform(get("/api/surveys")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asUser())).andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/surveys").with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/admin/surveys").with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
-                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void aSurveyForAllUsersReachesUnverifiedUsersToo() throws Exception {
+        String forEveryone = createSurvey("ACTIVE", "ALL_USERS", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID forEveryoneId = UUID.fromString(JsonPath.read(forEveryone, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(forEveryone, "$.questions[0].id"));
+        createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
+
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asUser(USER_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(forEveryoneId.toString()));
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        mockMvc.perform(post("/api/surveys/{id}/submissions", forEveryoneId)
+                        .with(JwtTestSupport.asUser(USER_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"answers":[{"questionId":"%s","value":"Super"}]}
+                                """.formatted(questionId)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void aSurveyForVerifiedAlumniIsHiddenFromOtherUsers() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
+
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asUser(USER_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mockMvc.perform(get("/api/surveys/{id}", surveyId).with(JwtTestSupport.asUser(USER_SUBJECT)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/surveys/{id}/submissions", surveyId)
+                        .with(JwtTestSupport.asUser(USER_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"answers":[{"questionId":"%s","value":"Super"}]}
+                                """.formatted(questionId)))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -314,12 +364,12 @@ class SurveyEndpointTest {
         UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
         UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
 
-        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
         // an unpublished draft is reported as missing, so its id can't be probed for
-        mockMvc.perform(get("/api/alumni/surveys/{id}", surveyId).with(JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT)))
+        mockMvc.perform(get("/api/surveys/{id}", surveyId).with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
                 .andExpect(status().isNotFound());
 
         mockMvc.perform(submit(surveyId, """
@@ -427,7 +477,7 @@ class SurveyEndpointTest {
                 .andExpect(jsonPath("$.status").value("CLOSED"))
                 .andExpect(jsonPath("$.submissionCount").value(1))
                 .andExpect(jsonPath("$.questions[0].id").value(questionId.toString()));
-        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn(OTHER_ALUMN_SUBJECT)))
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(OTHER_ALUMN_SUBJECT)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
@@ -463,7 +513,7 @@ class SurveyEndpointTest {
         mockMvc.perform(availability(surveyId, "DRAFT", later)).andExpect(status().isConflict());
         mockMvc.perform(availability(UUID.randomUUID(), "CLOSED", later)).andExpect(status().isNotFound());
         mockMvc.perform(put("/api/admin/surveys/{id}/availability", surveyId)
-                        .with(JwtTestSupport.asVerifiedAlumn())
+                        .with(JwtTestSupport.asVerifiedAlumnUser())
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -528,12 +578,86 @@ class SurveyEndpointTest {
     }
 
     @Test
+    void aSubmittedSurveyLeavesTheSubmittersListOnly() throws Exception {
+        String answered = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID answeredId = UUID.fromString(JsonPath.read(answered, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(answered, "$.questions[0].id"));
+        String untouchedId = JsonPath.read(createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS), "$.id");
+
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+        mockMvc.perform(get("/api/surveys/{id}", answeredId).with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(submit(answeredId, ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"Super"}]}
+                        """.formatted(questionId)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(untouchedId))
+                .andExpect(jsonPath("$.content[0].questionCount").value(2));
+        mockMvc.perform(get("/api/surveys/{id}", answeredId).with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("ALREADY_SUBMITTED"));
+        mockMvc.perform(submit(answeredId, ALUMN_SUBJECT, """
+                        {"answers":[{"questionId":"%s","value":"Jeszcze raz"}]}
+                        """.formatted(questionId)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("ALREADY_SUBMITTED"));
+
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser(OTHER_ALUMN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+        mockMvc.perform(get("/api/surveys/{id}", answeredId)
+                        .with(JwtTestSupport.asVerifiedAlumnUser(OTHER_ALUMN_SUBJECT)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void rejectsAnOversizedAnswer() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID questionId = UUID.fromString(JsonPath.read(created, "$.questions[0].id"));
+
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"%s"}]}
+                        """.formatted(questionId, "a".repeat(5001))))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(submit(surveyId, """
+                        {"answers":[{"questionId":"%s","value":"%s"}]}
+                        """.formatted(questionId, "a".repeat(5000))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void aClosedSurveyIsReportedAsNotActive() throws Exception {
+        String created = createSurvey("ACTIVE", """
+                {"content":"Uwagi","type":"TEXT","options":[]}
+                """);
+        UUID surveyId = UUID.fromString(JsonPath.read(created, "$.id"));
+        mockMvc.perform(availability(surveyId, "CLOSED", Instant.now().plus(7, ChronoUnit.DAYS)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/surveys/{id}", surveyId).with(JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.reason").value("NOT_ACTIVE"));
+    }
+
+    @Test
     void alumniListOmitsQuestions() throws Exception {
         createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
         entityManager.flush();
         entityManager.clear();
 
-        mockMvc.perform(get("/api/alumni/surveys").with(JwtTestSupport.asVerifiedAlumn()))
+        mockMvc.perform(get("/api/surveys").with(JwtTestSupport.asVerifiedAlumnUser()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].title").value("Ankieta"))
@@ -567,16 +691,16 @@ class SurveyEndpointTest {
 
     @Test
     void listEndpointsRunTheSameNumberOfStatementsRegardlessOfPageSize() throws Exception {
-        RequestPostProcessor alumn = JwtTestSupport.asVerifiedAlumn(ALUMN_SUBJECT);
+        RequestPostProcessor alumn = JwtTestSupport.asVerifiedAlumnUser(ALUMN_SUBJECT);
         RequestPostProcessor admin = JwtTestSupport.asAdmin(ADMIN_SUBJECT);
         statistics().setStatisticsEnabled(true);
         try {
             createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
             createSurvey("ACTIVE", TWO_CHOICE_QUESTIONS);
             // warm up: the first request may lazily create the caller's user row, which is not what is measured
-            statementsFor("/api/alumni/surveys", alumn);
+            statementsFor("/api/surveys", alumn);
             statementsFor("/api/admin/surveys", admin);
-            long alumniWithTwoSurveys = statementsFor("/api/alumni/surveys", alumn);
+            long alumniWithTwoSurveys = statementsFor("/api/surveys", alumn);
             long adminWithTwoSurveys = statementsFor("/api/admin/surveys", admin);
             // guards against the equality below holding vacuously if the instrumentation stopped counting
             assertThat(alumniWithTwoSurveys).isPositive();
@@ -587,7 +711,7 @@ class SurveyEndpointTest {
             }
 
             // Survey.questions is not batch-fetched, so touching it per row would add statements per survey
-            assertThat(statementsFor("/api/alumni/surveys", alumn)).isEqualTo(alumniWithTwoSurveys);
+            assertThat(statementsFor("/api/surveys", alumn)).isEqualTo(alumniWithTwoSurveys);
             assertThat(statementsFor("/api/admin/surveys", admin)).isEqualTo(adminWithTwoSurveys);
         } finally {
             statistics().setStatisticsEnabled(false);
@@ -611,11 +735,15 @@ class SurveyEndpointTest {
     }
 
     private String createSurvey(String status, String questionsJson) throws Exception {
+        return createSurvey(status, "VERIFIED_ALUMNI", questionsJson);
+    }
+
+    private String createSurvey(String status, String audience, String questionsJson) throws Exception {
         return mockMvc.perform(post("/api/admin/surveys")
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(surveyBody(status, questionsJson)))
+                        .content(surveyBody(status, audience, questionsJson)))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -623,10 +751,14 @@ class SurveyEndpointTest {
     }
 
     private static String surveyBody(String status, String questionsJson) {
+        return surveyBody(status, "VERIFIED_ALUMNI", questionsJson);
+    }
+
+    private static String surveyBody(String status, String audience, String questionsJson) {
         Instant endsAt = Instant.now().plus(7, ChronoUnit.DAYS);
         return """
-                {"title":"Ankieta","endsAt":"%s","status":"%s","audience":"VERIFIED_ALUMNI","questions":[%s]}
-                """.formatted(endsAt, status, questionsJson);
+                {"title":"Ankieta","endsAt":"%s","status":"%s","audience":"%s","questions":[%s]}
+                """.formatted(endsAt, status, audience, questionsJson);
     }
 
     private static MockHttpServletRequestBuilder availability(UUID surveyId, String status, Instant endsAt) {
@@ -644,8 +776,8 @@ class SurveyEndpointTest {
     }
 
     private static MockHttpServletRequestBuilder submit(UUID surveyId, String subject, String body) {
-        return post("/api/alumni/surveys/{id}/submissions", surveyId)
-                .with(JwtTestSupport.asVerifiedAlumn(subject))
+        return post("/api/surveys/{id}/submissions", surveyId)
+                .with(JwtTestSupport.asVerifiedAlumnUser(subject))
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body);

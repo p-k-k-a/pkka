@@ -29,6 +29,18 @@ public final class JwtTestSupport {
                 .authorities(new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
     }
 
+    /** A verified alumn as Keycloak signs one in: the realm's default USER role plus VERIFIED_ALUMN. */
+    public static RequestPostProcessor asVerifiedAlumnUser(String keycloakId) {
+        return SecurityMockMvcRequestPostProcessors.jwt()
+                .jwt(jwt -> jwt.subject(keycloakId))
+                .authorities(
+                        new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
+    }
+
+    public static RequestPostProcessor asVerifiedAlumnUser() {
+        return asVerifiedAlumnUser(UUID.randomUUID().toString());
+    }
+
     public static RequestPostProcessor asAdmin(String keycloakId) {
         return SecurityMockMvcRequestPostProcessors.jwt()
                 .jwt(jwt -> jwt.subject(keycloakId))

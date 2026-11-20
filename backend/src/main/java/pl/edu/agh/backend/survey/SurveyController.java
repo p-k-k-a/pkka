@@ -22,34 +22,47 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.edu.agh.backend.security.Caller;
 
 @RestController
-@RequestMapping("/api/alumni/surveys")
+@RequestMapping("/api/surveys")
 @RequiredArgsConstructor
-@Tag(name = "Surveys", description = "Active surveys available to verified alumni")
+@Tag(name = "Surveys", description = "Active surveys for signed-in users, filtered by each survey's audience")
 public class SurveyController {
 
     private final SurveyService surveyService;
 
     @GetMapping
-    @Operation(summary = "List active surveys that have not yet ended")
+    @Operation(
+            summary = "List the open surveys the caller has not filled in yet",
+            description = "Active, before their deadline, soonest deadline first. A survey leaves the list once "
+                    + "the caller submits it.")
     public Page<SurveyListItemResponse> listActiveSurveys(
-            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return surveyService.listActive(pageable);
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable, Caller caller) {
+        return surveyService.listActive(caller, pageable);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get an active survey with questions")
     @ApiResponse(responseCode = "200", description = "Survey details")
-    @ApiResponse(responseCode = "404", description = "Survey not found or still a draft", content = @Content)
-    @ApiResponse(responseCode = "409", description = "Survey is closed or has ended", content = @Content)
-    public SurveyResponse getActiveSurvey(@PathVariable UUID id) {
-        return surveyService.getActive(id);
+    @ApiResponse(
+            responseCode = "404",
+            description = "Survey not found, still a draft or meant for another audience",
+            content = @Content)
+    @ApiResponse(
+            responseCode = "409",
+            description = "Survey is closed or has ended (`reason` NOT_ACTIVE), or the caller has already "
+                    + "filled it in (`reason` ALREADY_SUBMITTED)",
+            content = @Content)
+    public SurveyResponse getActiveSurvey(@PathVariable UUID id, Caller caller) {
+        return surveyService.getActive(id, caller);
     }
 
     @PostMapping("/{id}/submissions")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Submit answers for an active survey")
     @ApiResponse(responseCode = "201", description = "Survey submitted")
-    @ApiResponse(responseCode = "404", description = "Survey not found or still a draft", content = @Content)
+    @ApiResponse(
+            responseCode = "404",
+            description = "Survey not found, still a draft or meant for another audience",
+            content = @Content)
     @ApiResponse(responseCode = "409", description = "Survey already submitted, closed or ended", content = @Content)
     public SubmitSurveyResponse submitSurvey(
             @PathVariable UUID id, @Valid @RequestBody SubmitSurveyRequest request, Caller caller) {
