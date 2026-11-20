@@ -58,6 +58,14 @@ export function useAlumniDirectoryState() {
   const [page, setPage] = useState(initial.page);
   const debouncedQuery = useDebouncedValue(query);
 
+  // A new search starts from the first page once the typed text settles. Resetting the page on
+  // each keystroke would fetch page 0 of the old search before the debounce fires.
+  const [settledQuery, setSettledQuery] = useState(debouncedQuery);
+  if (debouncedQuery !== settledQuery) {
+    setSettledQuery(debouncedQuery);
+    setPage(0);
+  }
+
   // Kept in the URL so the criteria survive a visit to a profile and can be shared.
   const search = toAlumniSearchString({ query: debouncedQuery, filters, sort, page });
   const currentSearch = searchParams.toString();
@@ -137,10 +145,7 @@ export function AlumniDirectoryView({
                 id="alumni-search"
                 type="search"
                 value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(0);
-                }}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Szukaj po nazwisku, firmie…"
                 className="h-11 pl-9"
               />
