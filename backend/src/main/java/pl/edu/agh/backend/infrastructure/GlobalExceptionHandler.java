@@ -34,6 +34,7 @@ import pl.edu.agh.backend.survey.SurveyNotActiveException;
 import pl.edu.agh.backend.survey.SurveyNotFoundException;
 import pl.edu.agh.backend.ticket.TicketNotFoundException;
 import pl.edu.agh.backend.topicgroup.InvalidTopicGroupRequestStateException;
+import pl.edu.agh.backend.topicgroup.TopicGroupCoordinatorCannotLeaveException;
 import pl.edu.agh.backend.topicgroup.TopicGroupNameTakenException;
 import pl.edu.agh.backend.topicgroup.TopicGroupNotFoundException;
 import pl.edu.agh.backend.topicgroup.TopicGroupRequestAlreadyOpenException;
@@ -244,6 +245,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidTopicGroupRequestState(InvalidTopicGroupRequestStateException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Invalid topic group request state");
+        return problem;
+    }
+
+    @ExceptionHandler(TopicGroupCoordinatorCannotLeaveException.class)
+    public ProblemDetail handleTopicGroupCoordinatorCannotLeave(TopicGroupCoordinatorCannotLeaveException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Topic group coordinator cannot leave");
         return problem;
     }
 

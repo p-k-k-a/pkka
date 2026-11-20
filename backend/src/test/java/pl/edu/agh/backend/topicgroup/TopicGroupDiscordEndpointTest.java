@@ -97,6 +97,7 @@ class TopicGroupDiscordEndpointTest {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].name").value("Grupa AI"))
                 .andExpect(jsonPath("$.content[0].coordinator.firstName").value("Anna"))
+                .andExpect(jsonPath("$.content[0].memberCount").value(1))
                 .andExpect(jsonPath("$.content[0].discord").value("LINKED"));
     }
 
