@@ -26,13 +26,13 @@ export function DashboardHeader() {
           <Button asChild variant="outline" size="lg">
             <Link href="/dashboard/profile">
               <User data-icon="inline-start" />
-              Profil
+              <span className="sr-only sm:not-sr-only">Profil</span>
             </Link>
           </Button>
         )}
         <Button variant="ghost" size="lg" onClick={logout}>
           <LogOut data-icon="inline-start" />
-          Wyloguj się
+          <span className="sr-only sm:not-sr-only">Wyloguj się</span>
         </Button>
       </div>
     </header>
