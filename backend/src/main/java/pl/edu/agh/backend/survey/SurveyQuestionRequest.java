@@ -14,4 +14,8 @@ public record SurveyQuestionRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         QuestionType type,
 
-        List<@NotBlank @Size(max = 500) String> options) {}
+        @Schema(description = "The answers to choose from; the columns of a GRID question")
+        List<@NotBlank @Size(max = 500) String> options,
+
+        @Schema(description = "The rows of a GRID question; empty for every other type")
+        List<@NotBlank @Size(max = 500) String> rows) {}

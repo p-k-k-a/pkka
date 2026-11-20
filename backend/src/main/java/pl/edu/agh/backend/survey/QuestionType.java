@@ -7,4 +7,6 @@ public enum QuestionType {
     SINGLE_CHOICE,
     MULTI_CHOICE,
     TEXT,
+    /** Rows answered with one option each, like a rating of several things on one scale. */
+    GRID,
 }

@@ -45,6 +45,11 @@ public class Survey {
     @Column(nullable = false, length = 32)
     private SurveyStatus status = SurveyStatus.DRAFT;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private SurveyAudience audience = SurveyAudience.VERIFIED_ALUMNI;
+
     /**
      * Lazy on purpose and not batch-fetched: the questions are only needed together with a single
      * survey (see the {@code @EntityGraph} on {@link SurveyRepository#findById}). Queries that return

@@ -22,5 +22,8 @@ public record UpdateSurveyRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
         SurveyStatus status,
 
+        @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
+        SurveyAudience audience,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotEmpty @Valid
         List<SurveyQuestionRequest> questions) {}

@@ -15,7 +15,15 @@ public record SurveyResultsResponse(
             @Schema(requiredMode = RequiredMode.REQUIRED) String content,
             @Schema(requiredMode = RequiredMode.REQUIRED) QuestionType type,
             List<OptionCount> optionCounts,
-            List<String> textAnswers) {}
+            List<String> textAnswers,
+
+            @Schema(description = "One entry per row of a GRID question, each with a count per option")
+            List<RowResult> rowResults) {}
+
+    public record RowResult(
+            @Schema(requiredMode = RequiredMode.REQUIRED) UUID rowId,
+            @Schema(requiredMode = RequiredMode.REQUIRED) String label,
+            @Schema(requiredMode = RequiredMode.REQUIRED) List<OptionCount> optionCounts) {}
 
     public record OptionCount(
             @Schema(requiredMode = RequiredMode.REQUIRED) UUID optionId,

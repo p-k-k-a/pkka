@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
+  ClipboardList,
   Inbox,
   Library,
   Megaphone,
@@ -80,6 +81,12 @@ const adminItems: SidebarItem[] = [
     label: "Materiały",
     icon: Library,
     match: (pathname) => pathname.startsWith("/dashboard/admin/materials"),
+  },
+  {
+    href: "/dashboard/admin/surveys",
+    label: "Ankiety",
+    icon: ClipboardList,
+    match: (pathname) => pathname.startsWith("/dashboard/admin/surveys"),
   },
   {
     href: "/dashboard/admin/alumni",

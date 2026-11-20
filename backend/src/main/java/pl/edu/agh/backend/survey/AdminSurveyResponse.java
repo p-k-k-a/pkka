@@ -12,18 +12,27 @@ public record AdminSurveyResponse(
         String description,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant endsAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) SurveyStatus status,
+        @Schema(requiredMode = RequiredMode.REQUIRED) SurveyAudience audience,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<SurveyQuestionResponse> questions,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "Once above zero, the questions are frozen and the survey can't be deleted")
+        int submissionCount,
+
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant createdAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
-    static AdminSurveyResponse from(Survey survey) {
+    static AdminSurveyResponse from(Survey survey, int submissionCount) {
         return new AdminSurveyResponse(
                 survey.getId(),
                 survey.getTitle(),
                 survey.getDescription(),
                 survey.getEndsAt(),
                 survey.getStatus(),
+                survey.getAudience(),
                 survey.getQuestions().stream().map(SurveyQuestionResponse::from).toList(),
+                submissionCount,
                 survey.getCreatedAt(),
                 survey.getUpdatedAt());
     }

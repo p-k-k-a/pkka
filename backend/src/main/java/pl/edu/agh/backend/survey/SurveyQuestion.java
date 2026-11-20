@@ -43,4 +43,10 @@ public class SurveyQuestion {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder ASC")
     private List<SurveyQuestionOption> options = new ArrayList<>();
+
+    /** Empty except for {@link QuestionType#GRID}, whose options are then the columns. */
+    @BatchSize(size = 50)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC")
+    private List<SurveyQuestionRow> rows = new ArrayList<>();
 }
