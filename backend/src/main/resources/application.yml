@@ -3,6 +3,10 @@ spring:
     name: pkka-backend
   profiles:
     default: dev
+  task:
+    scheduling:
+      pool:
+        size: 2
 
   config:
     import:
@@ -86,6 +90,8 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}
@@ -209,6 +215,8 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}

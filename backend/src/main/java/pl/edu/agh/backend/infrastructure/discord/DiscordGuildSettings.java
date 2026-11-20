@@ -28,6 +28,9 @@ public class DiscordGuildSettings {
     @Column(name = "groups_category_id", length = 32)
     private String groupsCategoryId;
 
+    @Column(name = "invite_code", length = 32)
+    private String inviteCode;
+
     DiscordGuildSettings(String guildId, String announcementsChannelId, String alumnRoleId) {
         this.guildId = guildId;
         this.announcementsChannelId = announcementsChannelId;
@@ -35,9 +38,20 @@ public class DiscordGuildSettings {
     }
 
     void configure(Optional<String> channelId, Optional<String> roleId, Optional<String> categoryId) {
-        channelId.ifPresent(id -> announcementsChannelId = id);
+        channelId.ifPresent(id -> {
+            announcementsChannelId = id;
+            inviteCode = null;
+        });
         roleId.ifPresent(id -> alumnRoleId = id);
         categoryId.ifPresent(id -> groupsCategoryId = id);
+    }
+
+    void setInviteCode(String inviteCode) {
+        this.inviteCode = inviteCode;
+    }
+
+    public Optional<String> getInviteCode() {
+        return Optional.ofNullable(inviteCode);
     }
 
     public Optional<String> getAnnouncementsChannelId() {
