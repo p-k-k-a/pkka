@@ -28,6 +28,7 @@ export function AdminAlumniProfile({ id }: { id: string }) {
         profile && {
           ...profile,
           visibility: { name: true, email: true, discord: true, phone: true },
+          isContact: false,
         }
       }
       isPending={isPending}
