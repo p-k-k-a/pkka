@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 import pl.edu.agh.backend.event.EventVisibility;
+import pl.edu.agh.backend.infrastructure.persistence.LikePatterns;
 import pl.edu.agh.backend.security.Caller;
 
 @UtilityClass
@@ -21,6 +22,21 @@ public class MaterialSpecifications {
     public Specification<Material> hasEventId(UUID eventId) {
         return (root, query, cb) ->
                 eventId == null ? null : cb.equal(root.get("event").get("id"), eventId);
+    }
+
+    /** The event join is LEFT so materials without an event still match on their own fields. */
+    public Specification<Material> matchesQuery(String rawQuery) {
+        return (root, query, cb) -> {
+            if (rawQuery == null || rawQuery.isBlank()) {
+                return null;
+            }
+            String pattern = LikePatterns.contains(rawQuery.trim());
+            Join<Material, Event> event = root.join("event", JoinType.LEFT);
+            return cb.or(
+                    cb.like(cb.lower(root.get("title")), pattern, LikePatterns.ESCAPE),
+                    cb.like(cb.lower(root.get("description")), pattern, LikePatterns.ESCAPE),
+                    cb.like(cb.lower(event.get("title")), pattern, LikePatterns.ESCAPE));
+        };
     }
 
     /**

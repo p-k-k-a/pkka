@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, CalendarPlus, CircleCheck, Download, Hourglass } from "lucide-react";
+import { ArrowUpRight, CalendarPlus, CircleCheck, Download, Hourglass, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
   EventRegistrationStatus,
+  EventType,
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
   useCancelEventRegistration,
@@ -14,10 +15,13 @@ import {
   type EventDetailsResponse,
 } from "@pkka/api";
 import {
+  eventCalendarDetails,
+  eventCalendarLocation,
   eventRegistrationErrorMessage,
   type EventRegistrationAction,
   formatSeatsRemaining,
   googleCalendarUrl,
+  hasOnlineLink,
   isEventFull,
   isEventRegistrationClosed,
 } from "@pkka/domain";
@@ -61,6 +65,12 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const waitlisted = status === EventRegistrationStatus.WAITLISTED;
   const full = isEventFull(event.seatLimit, event.seatsTaken);
   const closed = isEventRegistrationClosed(event);
+  const online = hasOnlineLink(event.type);
+  // A link left on an event later switched to in person is not offered.
+  const meetingUrl = online ? event.transmissionUrl : undefined;
+  // Waiting for a seat in the room of a hybrid event, but free to follow it online meanwhile.
+  const onlineOnly = waitlisted && Boolean(meetingUrl);
+  const calendarLocation = onlineOnly ? undefined : event.location;
 
   const refresh = () =>
     Promise.all([
@@ -74,7 +84,8 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const openGoogleCalendar = () => {
     const url = googleCalendarUrl({
       ...event,
-      details: `Szczegóły wydarzenia: ${eventPageUrl()}`,
+      location: eventCalendarLocation(calendarLocation, meetingUrl),
+      details: eventCalendarDetails(eventPageUrl(), meetingUrl),
     });
     setCalendarOpen(false);
     if (url) {
@@ -87,13 +98,21 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
   const downloadCalendarFile = () => {
     setCalendarOpen(false);
     try {
-      downloadIcs(`${event.slug}.ics`, buildEventIcs({ ...event, url: eventPageUrl() }));
+      downloadIcs(
+        `${event.slug}.ics`,
+        buildEventIcs({
+          ...event,
+          location: calendarLocation,
+          transmissionUrl: meetingUrl,
+          url: eventPageUrl(),
+        }),
+      );
     } catch {
       toast.error("Nie udało się przygotować pliku kalendarza.");
     }
   };
 
-  // A toast rather than an inline line: when the event has just started, the refetch
+  // A toast rather than an inline line: when the event has just ended, the refetch
   // unmounts this component and an inline error would vanish with it.
   const showError = (error: unknown, action: EventRegistrationAction) => {
     const sessionExpired = error instanceof ApiError && error.status === 401;
@@ -158,11 +177,30 @@ export function EventRegistration({ event }: { event: EventDetailsResponse }) {
             ? "Jesteś na liście rezerwowej. Dostaniesz miejsce, gdy ktoś zrezygnuje."
             : "Jesteś zapisany na to wydarzenie."}
         </p>
+        {onlineOnly ? (
+          <p className="text-muted-foreground text-xs">
+            Do tego czasu możesz uczestniczyć w wydarzeniu online.
+          </p>
+        ) : online && !meetingUrl ? (
+          <p className="text-muted-foreground text-xs">
+            {waitlisted && event.type === EventType.ONLINE
+              ? "Link do spotkania dostaniesz, gdy zwolni się dla Ciebie miejsce."
+              : "Link do spotkania pojawi się tutaj, gdy organizator go doda."}
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-3">
-          {waitlisted ? null : (
+          {meetingUrl ? (
+            <Button size="xl" className="gap-2" asChild>
+              <a href={meetingUrl} target="_blank" rel="noopener noreferrer">
+                <Video data-icon="inline-start" />
+                Dołącz do spotkania
+              </a>
+            </Button>
+          ) : null}
+          {waitlisted && !onlineOnly ? null : (
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
-                <Button size="xl" className="gap-2">
+                <Button size="xl" variant={meetingUrl ? "outline" : "default"} className="gap-2">
                   <CalendarPlus data-icon="inline-start" />
                   Dodaj do kalendarza
                 </Button>

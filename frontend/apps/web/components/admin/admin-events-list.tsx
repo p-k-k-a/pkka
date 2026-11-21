@@ -168,7 +168,8 @@ export function AdminEventsList() {
   const occupancyRows = occupancy.data?.data ?? [];
   const occupancyById = new Map(occupancyRows.map((row) => [row.eventId, row]));
   const now = new Date();
-  const upcomingRows = occupancyRows.filter((row) => parseISO(row.startsAt) > now);
+  // Same split as the UPCOMING list: an event under way still counts until it ends.
+  const upcomingRows = occupancyRows.filter((row) => parseISO(row.endsAt) > now);
 
   return (
     <div>

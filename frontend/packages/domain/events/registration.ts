@@ -2,7 +2,7 @@
 const CONFLICT_MESSAGES: Record<string, string> = {
   ALREADY_REGISTERED: "Jesteś już zapisany na to wydarzenie.",
   REGISTRATION_CLOSED: "Rejestracja na to wydarzenie została zamknięta.",
-  EVENT_ALREADY_STARTED: "Wydarzenie już się rozpoczęło.",
+  EVENT_ENDED: "Wydarzenie już się zakończyło.",
 };
 
 export type EventRegistrationAction = "join" | "leave";
@@ -28,14 +28,14 @@ export function eventRegistrationErrorMessage(error: unknown, action: EventRegis
     : "Nie udało się wypisać z wydarzenia. Spróbuj ponownie.";
 }
 
-/** Mirrors the backend: closed once the event has started or `registrationClosesAt` has passed. */
+/** Mirrors the backend: closed once the event has ended or `registrationClosesAt` has passed. */
 export function isEventRegistrationClosed(
-  event: { startsAt: string; registrationClosesAt?: string },
+  event: { endsAt: string; registrationClosesAt?: string },
   now: number = Date.now(),
 ) {
-  const startsAt = Date.parse(event.startsAt);
+  const endsAt = Date.parse(event.endsAt);
   const closesAt = event.registrationClosesAt ? Date.parse(event.registrationClosesAt) : NaN;
-  return now >= startsAt || (!Number.isNaN(closesAt) && now >= closesAt);
+  return now >= endsAt || (!Number.isNaN(closesAt) && now >= closesAt);
 }
 
 /** Only held seats count, so a full event still takes sign-ups — onto the waitlist. */

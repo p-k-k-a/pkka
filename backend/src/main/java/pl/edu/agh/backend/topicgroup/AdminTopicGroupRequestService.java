@@ -2,6 +2,7 @@ package pl.edu.agh.backend.topicgroup;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +19,9 @@ public class AdminTopicGroupRequestService {
 
     private final TopicGroupRequestRepository topicGroupRequestRepository;
     private final TopicGroupRepository topicGroupRepository;
+    private final TopicGroupMembershipRepository membershipRepository;
     private final CallerUserService callerUserService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<TopicGroupRequestResponse> list(TopicGroupRequestStatus status, Pageable pageable) {
@@ -48,7 +51,9 @@ public class AdminTopicGroupRequestService {
         } catch (DataIntegrityViolationException ex) {
             throw new TopicGroupNameTakenException(request.getProposedName());
         }
+        membershipRepository.save(new TopicGroupMembership(group, request.getRequester()));
         request.approve(reviewer, group);
+        eventPublisher.publishEvent(new TopicGroupCreatedEvent(group.getId()));
         return TopicGroupRequestResponse.from(topicGroupRequestRepository.saveAndFlush(request));
     }
 
