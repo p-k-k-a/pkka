@@ -1086,7 +1086,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>user</code></td><td>Zalogowany użytkownik</td><td>Składanie wniosku o dołączenie, przeglądanie statusu, linkowanie konta Discord</td></tr>
       <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumn</td><td>Lista alumnów, materiały, wydarzenia, edycja profilu, grupy tematyczne</td></tr>
       <tr><td><code>admin</code></td><td>Administrator</td><td>Panel administracyjny, weryfikacja wniosków, tworzenie wydarzeń, ankiety, statystyki</td></tr>
-      <tr><td><code>bot</code></td><td>Bot Discord</td><td>Service account — synchronizacja ról, powiadamianie o wydarzeniach</td></tr>
+      <tr><td><code>bot</code> <span class="tag off">wycofane</span></td><td>Bot Discord</td><td>Nieużywana — bot działa jako moduł backendu (token bota w <code>.env</code>), nie ma konta w Keycloaku</td></tr>
     </table>
 
     <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>.</div></div>
@@ -1098,7 +1098,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>users</code></td><td><code>user</code></td><td>Domyślna grupa — każdy nowo zarejestrowany użytkownik (ustaw jako Default Group)</td></tr>
       <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Alumn po pozytywnym rozpatrzeniu wniosku przez admina</td></tr>
       <tr><td><code>administrators</code></td><td><code>user</code>, <code>verified-alumn</code>, <code>admin</code></td><td>Pracownicy wydziału / zarząd klubu</td></tr>
-      <tr><td><code>bots</code></td><td><code>bot</code></td><td>Service account bota Discord</td></tr>
+      <tr><td><code>bots</code> <span class="tag off">wycofane</span></td><td><code>bot</code></td><td>Pusta, pozostałość po planie osobnego konta bota</td></tr>
     </table>
 
     <h3>Jak utworzyć role w Keycloak</h3>
@@ -1108,7 +1108,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>user</code></td><td>Registered platform user</td></tr>
       <tr><td><code>verified-alumn</code></td><td>Verified AGH alumn</td></tr>
       <tr><td><code>admin</code></td><td>App admin</td></tr>
-      <tr><td><code>bot</code></td><td>Discord bot service account</td></tr>
+      <tr><td><code>bot</code> <span class="tag off">wycofane</span></td><td>Nie twórz — patrz wyżej</td></tr>
     </table>
 
     <h3>Jak utworzyć grupy w Keycloak</h3>
@@ -1134,7 +1134,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td>Grupy tematyczne</td><td><code>verified-alumn</code></td></tr>
       <tr><td>Panel administracyjny, weryfikacja wniosków</td><td><code>admin</code></td></tr>
       <tr><td>Tworzenie wydarzeń, ankiety, statystyki</td><td><code>admin</code></td></tr>
-      <tr><td>Synchronizacja Discord, powiadomienia</td><td><code>bot</code></td></tr>
+      <tr><td>Interakcje Discorda (<code>/api/public/discord/interactions</code>)</td><td>Brak (publiczne, weryfikowane podpisem Ed25519 Discorda)</td></tr>
     </table>
 
     <h3>Jak odczytać rolę w Spring Boot</h3>
