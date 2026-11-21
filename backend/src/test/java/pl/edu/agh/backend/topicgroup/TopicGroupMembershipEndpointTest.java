@@ -91,6 +91,33 @@ class TopicGroupMembershipEndpointTest {
     }
 
     @Test
+    void listTellsTheCoordinatorApart() throws Exception {
+        join(piotr).andExpect(status().isNoContent());
+
+        listAs(anna).andExpect(jsonPath("$.content[0].coordinator").value(true));
+        listAs(piotr).andExpect(jsonPath("$.content[0].coordinator").value(false));
+    }
+
+    @Test
+    void groupIsFoundBySlug() throws Exception {
+        join(piotr).andExpect(status().isNoContent());
+
+        mockMvc.perform(get(GROUPS + "/{slug}", "grupa-ai").with(JwtTestSupport.asVerifiedAlumn(piotr.getKeycloakId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(group.getId().toString()))
+                .andExpect(jsonPath("$.name").value("Grupa AI"))
+                .andExpect(jsonPath("$.memberCount").value(2))
+                .andExpect(jsonPath("$.member").value(true))
+                .andExpect(jsonPath("$.coordinator").value(false));
+    }
+
+    @Test
+    void unknownSlugReturns404() throws Exception {
+        mockMvc.perform(get(GROUPS + "/{slug}", "nie-ma").with(JwtTestSupport.asVerifiedAlumn(piotr.getKeycloakId())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void alumnJoinsWithoutApprovalAndJoiningAgainChangesNothing() throws Exception {
         join(piotr).andExpect(status().isNoContent());
         join(piotr).andExpect(status().isNoContent());
@@ -131,6 +158,8 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(anna.getId().toString()))
                 .andExpect(jsonPath("$[0].firstName").value("Anna"))
+                .andExpect(jsonPath("$[0].coordinator").value(true))
+                .andExpect(jsonPath("$[1].coordinator").value(false))
                 .andExpect(jsonPath("$[0].joinedAt").exists())
                 .andExpect(jsonPath("$[1].id").value(piotr.getId().toString()))
                 .andExpect(jsonPath("$[1].firstName").doesNotExist())

@@ -1,7 +1,12 @@
+import { GroupList } from "@/components/topic-groups/group-list";
 import { RequestCard } from "@/components/topic-groups/request-card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
+import {
+  TopicGroupRequestStatus,
+  useListMyTopicGroupRequests,
+  useListTopicGroups,
+} from "@pkka/api";
 import { router } from "expo-router";
 import { ChevronRight, Plus } from "lucide-react-native";
 import { useState } from "react";
@@ -33,12 +38,13 @@ function ProposeGroupRow() {
 
 export function TopicGroups() {
   const { data, isLoading, isError, refetch } = useListMyTopicGroupRequests();
+  const groups = useListTopicGroups({ size: 100 });
   const [refreshing, setRefreshing] = useState(false);
   const latest = data?.data[0];
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([refetch(), groups.refetch()]);
     setRefreshing(false);
   };
 
@@ -76,6 +82,12 @@ export function TopicGroups() {
           {latest ? <RequestCard request={latest} /> : null}
         </View>
       )}
+
+      <GroupList
+        groups={groups.data?.data.content}
+        isLoading={groups.isLoading}
+        isError={groups.isError}
+      />
     </ScrollView>
   );
 }

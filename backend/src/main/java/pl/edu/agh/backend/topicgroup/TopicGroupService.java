@@ -30,12 +30,21 @@ public class TopicGroupService {
         Page<TopicGroup> groups = topicGroupRepository.findAllByOrderByCreatedAtDesc(pageable);
         Map<UUID, Long> memberCounts = membershipRepository.memberCounts(
                 groups.stream().map(TopicGroup::getId).toList());
-        Set<UUID> joined = callerUserService.findId(caller).stream()
-                .flatMap(userId -> membershipRepository.findByUserId(userId).stream())
-                .map(membership -> membership.getGroup().getId())
-                .collect(Collectors.toSet());
+        UUID callerId = callerUserService.findId(caller).orElse(null);
+        Set<UUID> joined = callerId == null
+                ? Set.of()
+                : membershipRepository.findByUserId(callerId).stream()
+                        .map(membership -> membership.getGroup().getId())
+                        .collect(Collectors.toSet());
         return groups.map(group -> TopicGroupResponse.from(
-                group, memberCounts.getOrDefault(group.getId(), 0L), joined.contains(group.getId())));
+                group, memberCounts.getOrDefault(group.getId(), 0L), joined.contains(group.getId()), callerId));
+    }
+
+    public TopicGroupResponse get(Caller caller, String slug) {
+        TopicGroup group = topicGroupRepository.findBySlug(slug).orElseThrow(TopicGroupNotFoundException::new);
+        UUID callerId = callerUserService.findId(caller).orElse(null);
+        boolean member = callerId != null && membershipRepository.existsByGroupIdAndUserId(group.getId(), callerId);
+        return TopicGroupResponse.from(group, membershipRepository.countByGroupId(group.getId()), member, callerId);
     }
 
     @Transactional

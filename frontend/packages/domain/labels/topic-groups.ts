@@ -1,4 +1,5 @@
-import type { TopicGroupRequestStatus } from "@pkka/api";
+import type { TopicGroupMemberResponse, TopicGroupRequestStatus } from "@pkka/api";
+import { pluralPl } from "../format/plural";
 
 export const TOPIC_GROUP_NAME_MAX_LENGTH = 200;
 export const TOPIC_GROUP_DESCRIPTION_MAX_LENGTH = 2000;
@@ -38,4 +39,21 @@ export function topicGroupRequestReviewErrorMessage(status: number | undefined, 
   return isTopicGroupNameTaken(status, body)
     ? "Grupa o tej nazwie już istnieje. Odrzuć wniosek i poproś o inną nazwę."
     : "Nie udało się zapisać decyzji. Odśwież stronę i spróbuj ponownie.";
+}
+
+export function topicGroupMemberCountLabel(count: number) {
+  return `${count} ${pluralPl(count, "członek", "członkowie", "członków")}`;
+}
+
+export function topicGroupMemberName(member: TopicGroupMemberResponse) {
+  const name = [member.firstName, member.lastName].filter(Boolean).join(" ");
+  return name || "Alumn";
+}
+
+export function topicGroupMembershipErrorMessage(status: number | undefined, joining: boolean) {
+  if (status === 409) return "Najpierw przekaż grupę innemu członkowi.";
+  if (status === 404) return "Ta grupa już nie istnieje.";
+  return joining
+    ? "Nie udało się dołączyć do grupy. Spróbuj ponownie."
+    : "Nie udało się opuścić grupy. Spróbuj ponownie.";
 }

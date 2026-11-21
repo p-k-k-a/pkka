@@ -36,6 +36,14 @@ public class TopicGroupController {
         return topicGroupService.list(caller, pageable);
     }
 
+    @GetMapping("/{slug}")
+    @Operation(summary = "Get a topic group by its slug, with its member count and the caller's place in it")
+    @ApiResponse(responseCode = "200", description = "The group")
+    @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
+    public TopicGroupResponse getTopicGroup(@PathVariable String slug, Caller caller) {
+        return topicGroupService.get(caller, slug);
+    }
+
     @PutMapping("/{id}/members/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Join a topic group", description = "Idempotent: joining a group one is in changes nothing.")
