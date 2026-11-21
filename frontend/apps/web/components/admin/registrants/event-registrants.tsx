@@ -26,7 +26,7 @@ function exportCsv(eventSlug: string, registrations: AdminEventRegistrationRespo
   const csv = toCsv(
     ["Imię i nazwisko", "E-mail", "Status", "Pozycja na liście rezerwowej", "Data dołączenia"],
     registrations.map((registration) => [
-      registration.displayName,
+      registration.displayName ?? "Usunięte konto",
       registration.email,
       registration.status === EventRegistrationStatus.WAITLISTED ? "Lista rezerwowa" : "Zapisany",
       registration.waitlistPosition,
@@ -118,7 +118,9 @@ export function EventRegistrants({ eventId, eventSlug, eventTitle }: EventRegist
                         {registration.displayName}
                       </Link>
                     ) : (
-                      <p className="text-foreground font-semibold">{registration.displayName}</p>
+                      <p className="text-foreground font-semibold">
+                        {registration.displayName ?? "Usunięte konto"}
+                      </p>
                     )}
                     <p className="text-muted-foreground text-xs break-all">{registration.email}</p>
                   </td>

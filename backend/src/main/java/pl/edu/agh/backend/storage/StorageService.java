@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Clock;
@@ -13,10 +14,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
@@ -66,6 +71,7 @@ public class StorageService implements AutoCloseable {
     private final String bucket;
     private final URI endpoint;
     private final Cache<String, String> downloadUrls;
+    private final RestClient restClient;
 
     /**
      * @param presigner {@code null} when storage is not configured
@@ -81,6 +87,10 @@ public class StorageService implements AutoCloseable {
                 .expireAfterWrite(DOWNLOAD_URL_TTL.minus(MIN_REMAINING_VALIDITY))
                 .ticker(() -> clock.millis() * 1_000_000L)
                 .build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(
+                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build());
+        requestFactory.setReadTimeout(Duration.ofSeconds(5));
+        this.restClient = RestClient.builder().requestFactory(requestFactory).build();
     }
 
     public boolean isConfigured() {
@@ -153,6 +163,26 @@ public class StorageService implements AutoCloseable {
         }
         requireConfigured();
         return value;
+    }
+
+    public void delete(String key) {
+        if (key == null || !isConfigured() || !isKnownKey(key)) {
+            return;
+        }
+        restClient.delete().uri(URI.create(presignDelete(key))).retrieve().toBodilessEntity();
+    }
+
+    String presignDelete(String key) {
+        return presigner
+                .presignDeleteObject(DeleteObjectPresignRequest.builder()
+                        .signatureDuration(Duration.ofMinutes(1))
+                        .deleteObjectRequest(DeleteObjectRequest.builder()
+                                .bucket(bucket)
+                                .key(key)
+                                .build())
+                        .build())
+                .url()
+                .toExternalForm();
     }
 
     /**

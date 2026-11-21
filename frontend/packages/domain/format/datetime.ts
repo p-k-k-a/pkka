@@ -61,8 +61,10 @@ export function formatTimeRange(startsAt: string, endsAt: string) {
   return end ? `${startLabel} – ${format(end, "HH:mm", { locale: pl })}` : startLabel;
 }
 
-export function isEventPast(startsAt?: string) {
-  const date = parseDate(startsAt);
+// Past once it has ended, not once it has started: an event under way still shows how to
+// join it. Matches the backend's UPCOMING / PAST split.
+export function isEventPast(endsAt?: string) {
+  const date = parseDate(endsAt);
   return date != null && date.getTime() <= Date.now();
 }
 

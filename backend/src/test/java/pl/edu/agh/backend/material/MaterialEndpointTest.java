@@ -205,6 +205,81 @@ class MaterialEndpointTest {
                 .andExpect(jsonPath("$.content[0].eventId").doesNotExist());
     }
 
+    @Test
+    void searchMatchesTitleDescriptionAndLinkedEventTitleCaseInsensitively() throws Exception {
+        String eventBody = mockMvc.perform(post("/api/admin/events")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(eventRequestBody("PUBLIC")))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        UUID eventId = UUID.fromString(JsonPath.read(eventBody, "$.id"));
+
+        createMaterial("""
+                {"title":"Kubernetes w praktyce","type":"RECORDING","url":"https://example.com/a"}
+                """);
+        createMaterial("""
+                {"title":"Slajdy","description":"Wstęp do Kubernetesa","type":"PRESENTATION","url":"https://example.com/b"}
+                """);
+        createMaterial("""
+                {"title":"Nagranie","type":"RECORDING","url":"https://example.com/c","eventId":"%s"}
+                """.formatted(eventId));
+        createMaterial("""
+                {"title":"Inne","type":"OTHER","url":"https://example.com/d"}
+                """);
+
+        mockMvc.perform(get("/api/alumni/materials").param("q", "  KUBERNETES ").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        // "Wydarzenie" is the linked event's title, not the material's.
+        mockMvc.perform(get("/api/alumni/materials").param("q", "wydarz").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Nagranie"));
+
+        // Combines with the other filters.
+        mockMvc.perform(get("/api/alumni/materials")
+                        .param("q", "kubernetes")
+                        .param("type", "PRESENTATION")
+                        .with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Slajdy"));
+
+        mockMvc.perform(get("/api/admin/materials")
+                        .param("q", "kubernetes")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void searchTreatsLikeWildcardsLiterally() throws Exception {
+        createMaterial("""
+                {"title":"Nagranie","type":"RECORDING","url":"https://example.com/a"}
+                """);
+
+        mockMvc.perform(get("/api/alumni/materials").param("q", "%").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+        mockMvc.perform(get("/api/alumni/materials").param("q", "N_granie").with(JwtTestSupport.asVerifiedAlumn()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    private void createMaterial(String body) throws Exception {
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+    }
+
     private static String eventRequestBody(String audience) {
         Instant start = Instant.now().plus(2, ChronoUnit.DAYS);
         Instant end = start.plus(1, ChronoUnit.HOURS);

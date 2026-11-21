@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.material;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,11 +28,14 @@ public class MaterialController {
     @GetMapping
     @Operation(summary = "List materials with pagination and optional filters")
     public Page<MaterialResponse> listMaterials(
+            @Parameter(description = "Matches the title, the description or the linked event's title")
+                    @RequestParam(required = false)
+                    String q,
             @RequestParam(required = false) MaterialType type,
             @RequestParam(required = false) UUID eventId,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
                     Pageable pageable,
             Caller caller) {
-        return materialService.list(Optional.ofNullable(type), Optional.ofNullable(eventId), pageable, caller);
+        return materialService.list(q, Optional.ofNullable(type), Optional.ofNullable(eventId), pageable, caller);
     }
 }
