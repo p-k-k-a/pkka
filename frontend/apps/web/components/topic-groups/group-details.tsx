@@ -1,0 +1,117 @@
+"use client";
+
+import Link from "next/link";
+import { Users } from "lucide-react";
+import {
+  useGetTopicGroup,
+  useListTopicGroupMembers,
+  type TopicGroupMemberResponse,
+} from "@pkka/api";
+import { isAdmin, topicGroupMemberCountLabel, topicGroupMemberName } from "@pkka/domain";
+import { Avatar } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DetailBackLink } from "@/components/content/detail-back-link";
+import { DiscordBanner } from "@/components/topic-groups/discord-banner";
+import { MembershipButton } from "@/components/topic-groups/membership-button";
+import { useAuth } from "@/lib/auth-context";
+
+const BACK_HREF = "/dashboard/groups";
+const BACK_LABEL = "Wróć do grup";
+
+function MemberItem({ member }: { member: TopicGroupMemberResponse }) {
+  const name = topicGroupMemberName(member);
+  return (
+    <li>
+      <Link
+        href={`/dashboard/alumni/${member.id}`}
+        className="hover:bg-muted focus-visible:ring-ring flex items-center gap-3 p-3 focus-visible:ring-2 focus-visible:outline-none"
+      >
+        <Avatar fallback={name} alt="" size="md" />
+        <span className="min-w-0">
+          <span className="text-foreground block font-semibold">{name}</span>
+          {member.coordinator ? (
+            <span className="text-muted-foreground block text-sm">Koordynator</span>
+          ) : null}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function Members({ groupId }: { groupId: string }) {
+  const { data, isLoading, isError } = useListTopicGroupMembers(groupId);
+
+  return (
+    <section className="space-y-4">
+      <h2 className="font-heading text-foreground text-[23px] font-semibold">Członkowie</h2>
+      {isLoading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : isError || data?.status !== 200 ? (
+        <p className="text-destructive font-medium">Nie udało się załadować członków.</p>
+      ) : (
+        <ul className="grid gap-1 sm:grid-cols-2">
+          {data.data.map((member) => (
+            <MemberItem key={member.id} member={member} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+export function TopicGroupDetails({ slug }: { slug: string }) {
+  const { user } = useAuth();
+  const { data, isLoading, isError } = useGetTopicGroup(slug);
+  const group = data?.status === 200 ? data.data : undefined;
+
+  return (
+    <div className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <div className="mx-auto max-w-[1280px] space-y-10">
+        <DetailBackLink href={BACK_HREF} label={BACK_LABEL} />
+        {isLoading ? (
+          <Skeleton className="h-60 w-full max-w-3xl" />
+        ) : isError || !group ? (
+          <p className="text-destructive font-medium">
+            Nie udało się załadować grupy. Mogła zostać usunięta.
+          </p>
+        ) : (
+          <div className="max-w-3xl space-y-10">
+            <div className="space-y-4">
+              <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
+                {group.name}
+              </h1>
+              <p className="text-muted-foreground inline-flex items-center gap-1.5 text-sm font-medium">
+                <Users className="size-4" aria-hidden="true" />
+                {topicGroupMemberCountLabel(group.memberCount)}
+              </p>
+              {group.description ? (
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {group.description}
+                </p>
+              ) : null}
+            </div>
+
+            {group.coordinator ? (
+              <div className="bg-muted space-y-1 p-6">
+                <p className="text-foreground font-semibold">Koordynujesz tę grupę</p>
+                <p className="text-muted-foreground text-sm">
+                  Najpierw przekaż grupę innemu członkowi, a potem możesz z niej odejść.
+                </p>
+              </div>
+            ) : (
+              <MembershipButton group={group} prominent />
+            )}
+
+            {group.member ? <DiscordBanner /> : null}
+
+            {group.member || isAdmin(user?.roles) ? (
+              <Members groupId={group.id} />
+            ) : (
+              <p className="text-muted-foreground">Dołącz do grupy, żeby zobaczyć jej członków.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
