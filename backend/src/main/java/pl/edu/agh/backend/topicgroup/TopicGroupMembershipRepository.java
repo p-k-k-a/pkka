@@ -14,7 +14,7 @@ public interface TopicGroupMembershipRepository extends JpaRepository<TopicGroup
 
     boolean existsByGroupIdAndUserId(UUID groupId, UUID userId);
 
-    void deleteByGroupIdAndUserId(UUID groupId, UUID userId);
+    long deleteByGroupIdAndUserId(UUID groupId, UUID userId);
 
     long countByGroupId(UUID groupId);
 
