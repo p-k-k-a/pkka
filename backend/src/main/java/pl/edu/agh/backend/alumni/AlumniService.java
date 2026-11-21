@@ -12,10 +12,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.alumni.contact.ContactService;
 import pl.edu.agh.backend.application.AlumnEducation;
 import pl.edu.agh.backend.application.Application;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 import pl.edu.agh.backend.user.UserSpecifications;
@@ -45,6 +47,7 @@ public class AlumniService {
 
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
+    private final ContactService contactService;
 
     public Page<AlumniListItemResponse> search(
             String query,
@@ -69,8 +72,8 @@ public class AlumniService {
                 .map(AdminAlumniListItemResponse::from);
     }
 
-    public AlumniProfileResponse getProfile(UUID id) {
-        return AlumniProfileResponse.from(findAlumnus(id), educationOf(id));
+    public AlumniProfileResponse getProfile(UUID id, Caller caller) {
+        return AlumniProfileResponse.from(findAlumnus(id), educationOf(id), contactService.isContact(caller, id));
     }
 
     public AdminAlumniProfileResponse getProfileForAdmin(UUID id) {

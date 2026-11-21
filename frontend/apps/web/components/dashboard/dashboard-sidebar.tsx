@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Inbox,
+  Library,
   Megaphone,
   MessagesSquare,
   Newspaper,
@@ -49,6 +50,12 @@ const userItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/groups"),
   },
   {
+    href: "/dashboard/materials",
+    label: "Materiały",
+    icon: Library,
+    match: (pathname) => pathname.startsWith("/dashboard/materials"),
+  },
+  {
     href: "/dashboard/verification",
     label: "Zweryfikuj się",
     icon: ShieldCheck,
@@ -76,6 +83,12 @@ const adminItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/admin/events"),
   },
   {
+    href: "/dashboard/admin/materials",
+    label: "Materiały",
+    icon: Library,
+    match: (pathname) => pathname.startsWith("/dashboard/admin/materials"),
+  },
+  {
     href: "/dashboard/admin/alumni",
     label: "Alumni",
     icon: Users,
@@ -93,12 +106,16 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
 
-  // Verification is offered until it succeeds, the directory only after it does.
+  // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/groups") {
+        if (
+          item.href === "/dashboard/alumni" ||
+          item.href === "/dashboard/groups" ||
+          item.href === "/dashboard/materials"
+        ) {
           return isVerified;
         }
         return true;

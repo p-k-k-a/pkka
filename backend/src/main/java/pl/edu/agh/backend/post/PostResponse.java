@@ -15,7 +15,7 @@ public record PostResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
         @Schema(requiredMode = RequiredMode.REQUIRED) String content,
-        @Schema(requiredMode = RequiredMode.REQUIRED) String authorId,
+        String authorId,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant updatedAt) {
 
@@ -25,7 +25,7 @@ public record PostResponse(
                 post.getSlug(),
                 post.getTitle(),
                 post.getContent(),
-                post.getAuthor().getKeycloakId(),
+                post.getAuthor() == null ? null : post.getAuthor().getKeycloakId(),
                 post.getPublishedAt(),
                 post.getUpdatedAt());
     }

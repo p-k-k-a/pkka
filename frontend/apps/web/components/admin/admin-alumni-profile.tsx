@@ -27,6 +27,7 @@ export function AdminAlumniProfile({ id }: { id: string }) {
       profile={
         profile && {
           ...profile,
+          isContact: false,
           visibility: { name: true, email: true, discord: true, phone: true },
         }
       }

@@ -6,13 +6,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.storage.AvatarPresignRequest;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
+import pl.edu.agh.backend.user.AccountDeletionService;
+import pl.edu.agh.backend.user.profile.dto.DeleteAccountRequest;
 import pl.edu.agh.backend.user.profile.dto.ProfileResponse;
 import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 
@@ -23,6 +29,7 @@ import pl.edu.agh.backend.user.profile.dto.UpdateProfileRequest;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final AccountDeletionService accountDeletionService;
 
     @GetMapping
     @Operation(summary = "Get own profile")
@@ -61,5 +68,24 @@ public class ProfileController {
     })
     public PresignedUploadResponse presignAvatar(Caller caller, @Valid @RequestBody AvatarPresignRequest request) {
         return profileService.presignAvatarUpload(caller.requireKeycloakId(), request);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Delete own account with all its data",
+            description = "Removes the user from Keycloak and the database, frees their seats at upcoming events "
+                    + "and ends the web session")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Account deleted"),
+        @ApiResponse(
+                responseCode = "400",
+                description = "The e-mail does not match the account",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    public void deleteMyAccount(
+            Caller caller, @Valid @RequestBody DeleteAccountRequest request, HttpServletRequest httpRequest) {
+        accountDeletionService.deleteAccount(caller.requireKeycloakId(), request.email());
+        Optional.ofNullable(httpRequest.getSession(false)).ifPresent(HttpSession::invalidate);
     }
 }

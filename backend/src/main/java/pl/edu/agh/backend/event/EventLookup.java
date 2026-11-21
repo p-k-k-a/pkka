@@ -34,6 +34,11 @@ public class EventLookup {
         return requireVisible(eventRepository.findForUpdateById(id), () -> new EventNotFoundException(id), caller);
     }
 
+    @Transactional(propagation = Propagation.MANDATORY)
+    public Optional<Event> findForUpdate(UUID id) {
+        return eventRepository.findForUpdateById(id);
+    }
+
     /** Not visible is reported as not existing, so the caller cannot probe for hidden events. */
     private Event requireVisible(Optional<Event> found, Supplier<EventNotFoundException> notFound, Caller caller) {
         Event event = found.orElseThrow(notFound);

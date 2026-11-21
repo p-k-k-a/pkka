@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.event.registration;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,11 +34,15 @@ public class EventRegistrationController {
                     `status`, and a queued sign-up also carries its `waitlistPosition`. Conflicts carry a
                     `reason` property (`ALREADY_REGISTERED`, `REGISTRATION_CLOSED`) so they can be told apart
                     without parsing the message. Registration closes at `registrationClosesAt`, and at the
-                    event's start in any case; the waitlist closes with it.
+                    event's end in any case, so an event under way still takes sign-ups; the waitlist closes
+                    with it.
 
                     Who may sign up follows the event's `audience`, exactly like who may see it: `PUBLIC`
                     events are open to every signed-in user, `ALL_ALUMNI` events to verified alumni only.
                     An event the caller cannot see reports 404 rather than 403.
+
+                    The sign-up is counted under `source` in the event's statistics: the link the user
+                    followed, if any, otherwise the client the sign-up was made in.
                     """)
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Seat taken, or a place on the waitlist"),
@@ -50,8 +55,16 @@ public class EventRegistrationController {
                 description = "Already registered, or registration closed",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
-    public EventRegistrationResponse registerForEvent(@PathVariable UUID eventId, Caller caller) {
-        return eventRegistrationService.register(eventId, caller);
+    public EventRegistrationResponse registerForEvent(
+            @PathVariable UUID eventId,
+            @Parameter(
+                            description =
+                                    "Where the link the user followed came from, e.g. `DISCORD` for `?ref=discord`;"
+                                            + " omit it to use the client the sign-up is made in (`WEB` or `MOBILE`)")
+                    @RequestParam(required = false)
+                    RegistrationSource source,
+            Caller caller) {
+        return eventRegistrationService.register(eventId, caller, source);
     }
 
     @GetMapping
@@ -76,8 +89,8 @@ public class EventRegistrationController {
     @Operation(summary = "Cancel the current user's registration", description = """
                     Frees the seat, which goes straight to the first person on the waitlist — also after
                     `registrationClosesAt`, since they signed up while registration was still open. Leaving the
-                    waitlist frees nothing and promotes nobody. Once the event has started cancelling achieves
-                    nothing and is rejected with a `reason` of `EVENT_ALREADY_STARTED`.
+                    waitlist frees nothing and promotes nobody. Cancelling works until the event ends, also while
+                    it is under way; after that it is rejected with a `reason` of `EVENT_ENDED`.
                     """)
     @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Registration cancelled"),
@@ -87,7 +100,7 @@ public class EventRegistrationController {
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
         @ApiResponse(
                 responseCode = "409",
-                description = "The event has already started",
+                description = "The event has already ended",
                 content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     })
     public void cancelEventRegistration(@PathVariable UUID eventId, Caller caller) {

@@ -37,11 +37,13 @@ JOIN users u ON u.id = ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0')
 ON CONFLICT DO NOTHING;
 
 -- The statistics screen reads history from this log; seeded sign-ups bypass the service that writes it.
-INSERT INTO event_registration_activities (id, event_id, user_id, type, occurred_at)
+-- Sources are spread by the seed user's number, so every channel shows up on the statistics screen.
+INSERT INTO event_registration_activities (id, event_id, user_id, type, source, occurred_at)
 SELECT md5('activity' || r.id::text)::uuid,
        r.event_id,
        r.user_id,
        CASE r.status WHEN 'WAITLISTED' THEN 'WAITLISTED' ELSE 'SIGNED_UP' END,
+       (ARRAY['DISCORD', 'EMAIL', 'WEB', 'MOBILE'])[1 + ('x' || right(r.user_id::text, 8))::bit(32)::int % 4],
        r.registered_at
 FROM event_registrations r
 WHERE r.event_id IN (
@@ -51,11 +53,12 @@ WHERE r.event_id IN (
 ON CONFLICT DO NOTHING;
 
 -- People who signed up for the AI workshop and later dropped out, so cancellations show up per day.
-INSERT INTO event_registration_activities (id, event_id, user_id, type, occurred_at)
+INSERT INTO event_registration_activities (id, event_id, user_id, type, source, occurred_at)
 SELECT md5(a.kind || '22222222-2222-2222-2222-222222222201' || s.n)::uuid,
        '22222222-2222-2222-2222-222222222201'::uuid,
        ('d0000000-0000-4000-8000-' || lpad(to_hex(s.n), 12, '0'))::uuid,
        a.kind,
+       CASE a.kind WHEN 'SIGNED_UP' THEN (ARRAY['DISCORD', 'EMAIL', 'WEB', 'MOBILE'])[1 + s.n % 4] END,
        now() - ((26 - s.n) * interval '1 day') + a.later
 FROM generate_series(19, 24) AS s(n)
 CROSS JOIN (VALUES ('SIGNED_UP', interval '0 hours'), ('CANCELLED', interval '1 day 3 hours')) AS a(kind, later)

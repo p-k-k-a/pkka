@@ -37,9 +37,12 @@ public class EventRegistrationService {
     /**
      * Counting seats and inserting is a check-then-act, so it opens by locking the event row and the
      * unique constraint on {@code (event_id, user_id)} backs up the duplicate check below.
+     *
+     * <p>{@code linkSource} is where the link the user followed came from; without one the sign-up is counted
+     * under the app the caller used.
      */
     @Transactional
-    public EventRegistrationResponse register(UUID eventId, Caller caller) {
+    public EventRegistrationResponse register(UUID eventId, Caller caller, RegistrationSource linkSource) {
         User user = callerUserService.getOrCreate(caller);
         Event event = eventLookup.findVisibleForUpdate(eventId, caller);
 
@@ -64,7 +67,10 @@ public class EventRegistrationService {
             throw EventRegistrationConflictException.alreadyRegistered(eventId);
         }
         recordActivity(
-                event, user, takesASeat ? RegistrationActivityType.SIGNED_UP : RegistrationActivityType.WAITLISTED);
+                event,
+                user,
+                takesASeat ? RegistrationActivityType.SIGNED_UP : RegistrationActivityType.WAITLISTED,
+                linkSource != null ? linkSource : sourceOf(caller.client()));
 
         return toResponse(registration, event, seatsTaken + (takesASeat ? 1 : 0));
     }
@@ -85,17 +91,35 @@ public class EventRegistrationService {
     public void unregister(UUID eventId, Caller caller) {
         User user = callerUserService.getOrCreate(caller);
         Event event = eventLookup.findVisibleForUpdate(eventId, caller);
-        if (hasStarted(event)) {
-            throw EventRegistrationConflictException.eventAlreadyStarted(eventId);
+        if (hasEnded(event)) {
+            throw EventRegistrationConflictException.eventEnded(eventId);
         }
 
         EventRegistration registration = eventRegistrationRepository
                 .findByEventIdAndUserId(event.getId(), user.getId())
                 .orElseThrow(() -> new EventRegistrationNotFoundException(eventId));
+        cancel(event, user, registration);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void cancelUpcomingRegistrations(User user) {
+        eventRegistrationRepository
+                .findUpcomingEventIds(user.getId(), Instant.now(clock))
+                .forEach(eventId -> eventLookup
+                        .findForUpdate(eventId)
+                        .ifPresent(event -> eventRegistrationRepository
+                                .findByEventIdAndUserId(eventId, user.getId())
+                                .ifPresent(registration -> cancel(event, user, registration))));
+    }
+
+    private void cancel(Event event, User user, EventRegistration registration) {
         boolean freedASeat = registration.getStatus() == EventRegistrationStatus.REGISTERED;
         eventRegistrationRepository.delete(registration);
         recordActivity(
-                event, user, freedASeat ? RegistrationActivityType.CANCELLED : RegistrationActivityType.LEFT_WAITLIST);
+                event,
+                user,
+                freedASeat ? RegistrationActivityType.CANCELLED : RegistrationActivityType.LEFT_WAITLIST,
+                null);
 
         if (freedASeat) {
             fillFreeSeats(event);
@@ -105,14 +129,15 @@ public class EventRegistrationService {
     /**
      * Moves as many people from the head of the waitlist onto a seat as the event has free seats — one after
      * a cancellation, possibly several after the seat limit is raised, everyone once the limit is lifted.
-     * Nobody is promoted once the event has started, since the seat is no use to them any more.
+     * Promotion goes on while the event is under way, since an online meeting can still be joined; nobody is
+     * promoted once it has ended.
      *
      * <p>{@code MANDATORY} because the caller must already hold the lock on the event row: two promotions
      * running side by side would read the same head of the queue.
      */
     @Transactional(propagation = Propagation.MANDATORY)
     public void fillFreeSeats(Event event) {
-        if (hasStarted(event)) {
+        if (hasEnded(event)) {
             return;
         }
         eventRegistrationRepository.flush();
@@ -170,11 +195,20 @@ public class EventRegistrationService {
                 .orElseGet(Map::of);
     }
 
-    private void recordActivity(Event event, User user, RegistrationActivityType type) {
+    private static RegistrationSource sourceOf(Caller.Client client) {
+        return switch (client) {
+            case WEB -> RegistrationSource.WEB;
+            case MOBILE -> RegistrationSource.MOBILE;
+            case null -> null;
+        };
+    }
+
+    private void recordActivity(Event event, User user, RegistrationActivityType type, RegistrationSource source) {
         registrationActivityRepository.save(RegistrationActivity.builder()
                 .event(event)
                 .user(user)
                 .type(type)
+                .source(source)
                 .occurredAt(Instant.now(clock))
                 .build());
     }
@@ -207,10 +241,12 @@ public class EventRegistrationService {
 
     private boolean isRegistrationClosed(Event event) {
         Instant closesAt = event.getRegistrationClosesAt();
-        return hasStarted(event) || (closesAt != null && !Instant.now(clock).isBefore(closesAt));
+        return hasEnded(event) || (closesAt != null && !Instant.now(clock).isBefore(closesAt));
     }
 
-    private boolean hasStarted(Event event) {
-        return !Instant.now(clock).isBefore(event.getStartsAt());
+    // An event is open until it ends, not until it starts: people can still sign up for, leave, or be
+    // promoted into a meeting that is under way.
+    private boolean hasEnded(Event event) {
+        return !Instant.now(clock).isBefore(event.getEndsAt());
     }
 }

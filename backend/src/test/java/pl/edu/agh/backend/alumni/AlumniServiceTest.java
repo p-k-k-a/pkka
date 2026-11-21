@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import pl.edu.agh.backend.application.ApplicationRepository;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,6 +63,7 @@ class AlumniServiceTest {
                         id, pl.edu.agh.backend.application.ApplicationStatus.APPROVED))
                 .thenReturn(java.util.Optional.empty());
 
-        assertThatThrownBy(() -> alumniService.getProfile(id)).isInstanceOf(AlumniNotFoundException.class);
+        assertThatThrownBy(() -> alumniService.getProfile(id, Caller.anonymous()))
+                .isInstanceOf(AlumniNotFoundException.class);
     }
 }
