@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useGetMyDiscordStatus } from "@pkka/api";
 import { useAuth } from "@/lib/auth-context";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
@@ -10,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  useGetMyDiscordStatus({ query: { enabled: isAuthenticated } });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

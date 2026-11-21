@@ -4,6 +4,7 @@ import { useState } from "react";
 import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
+import { GroupList } from "@/components/topic-groups/group-list";
 import { RequestCard } from "@/components/topic-groups/request-card";
 import { RequestForm } from "@/components/topic-groups/request-form";
 
@@ -16,40 +17,50 @@ export function TopicGroupsContent() {
   const showForm = !latest || (isProposing && !underReview);
 
   return (
-    <SectionShell
-      title="Grupy tematyczne"
-      description="Miejsce dla alumnów o podobnych zainteresowaniach. Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz właścicielem grupy."
-      as="section"
-    >
-      <div className="max-w-2xl">
-        {isLoading ? (
-          <Skeleton className="h-72 w-full rounded-2xl" />
-        ) : isError && !data ? (
-          <p className="text-destructive font-medium">
-            Nie udało się załadować Twojego wniosku. Odśwież stronę i spróbuj ponownie.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {latest ? (
-              <RequestCard request={latest} onPropose={() => setIsProposing(true)} />
-            ) : null}
-            {showForm ? (
-              <RequestForm
-                onSubmitted={async () => {
-                  await refetch();
-                  setIsProposing(false);
-                }}
-                onConflict={async () => {
-                  const { data: fresh } = await refetch();
-                  if (fresh?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
+    <>
+      <SectionShell
+        title="Grupy tematyczne"
+        description="Miejsce dla alumnów o podobnych zainteresowaniach. Dołącz do grupy, a dostaniesz dostęp do jej kanału na Discordzie."
+        as="section"
+      >
+        <GroupList />
+      </SectionShell>
+      <SectionShell
+        title="Zaproponuj grupę"
+        description="Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
+        as="section"
+        tone="muted"
+      >
+        <div className="max-w-2xl">
+          {isLoading ? (
+            <Skeleton className="h-72 w-full rounded-2xl" />
+          ) : isError && !data ? (
+            <p className="text-destructive font-medium">
+              Nie udało się załadować Twojego wniosku. Odśwież stronę i spróbuj ponownie.
+            </p>
+          ) : (
+            <div className="space-y-6">
+              {latest ? (
+                <RequestCard request={latest} onPropose={() => setIsProposing(true)} />
+              ) : null}
+              {showForm ? (
+                <RequestForm
+                  onSubmitted={async () => {
+                    await refetch();
                     setIsProposing(false);
-                  }
-                }}
-              />
-            ) : null}
-          </div>
-        )}
-      </div>
-    </SectionShell>
+                  }}
+                  onConflict={async () => {
+                    const { data: fresh } = await refetch();
+                    if (fresh?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
+                      setIsProposing(false);
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
+          )}
+        </div>
+      </SectionShell>
+    </>
   );
 }
