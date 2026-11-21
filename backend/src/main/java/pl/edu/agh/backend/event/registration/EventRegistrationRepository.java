@@ -19,6 +19,16 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
 
     long countByEventIdAndStatus(UUID eventId, EventRegistrationStatus status);
 
+    /**
+     * Everyone holding a seat or waiting for one, skipping sign-ups left by deleted accounts. Goes through the
+     * foreign key only, so it still answers for a soft-deleted event.
+     */
+    @Query("select r.user.id from EventRegistration r where r.event.id = :eventId and r.user is not null")
+    List<UUID> findRecipientIds(@Param("eventId") UUID eventId);
+
+    @Query("select count(r) from EventRegistration r where r.event.id = :eventId and r.user is not null")
+    long countRecipients(@Param("eventId") UUID eventId);
+
     @Query("""
             select r.event.id
             from EventRegistration r

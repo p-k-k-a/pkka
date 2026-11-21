@@ -1,0 +1,9 @@
+Wiadomość do zapisanych na wydarzenie „[(${title})]” ([(${startsAt})])
+
+[(${subject})]
+
+[(${message})]
+
+Szczegóły wydarzenia: [(${webBaseUrl})]/events/[(${slug})]
+
+[# th:insert="~{footer.txt}" /]
