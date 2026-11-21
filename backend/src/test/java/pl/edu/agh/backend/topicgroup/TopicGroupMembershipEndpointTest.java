@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.topicgroup;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,8 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -33,6 +37,7 @@ import pl.edu.agh.backend.user.UserRepository;
 @AutoConfigureMockMvc
 @Testcontainers
 @Transactional
+@RecordApplicationEvents
 @Import(TestSecurityConfig.class)
 class TopicGroupMembershipEndpointTest {
 
@@ -44,6 +49,9 @@ class TopicGroupMembershipEndpointTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ApplicationEvents events;
 
     @Autowired
     private UserRepository userRepository;
@@ -98,6 +106,7 @@ class TopicGroupMembershipEndpointTest {
         listAs(piotr)
                 .andExpect(jsonPath("$.content[0].memberCount").value(2))
                 .andExpect(jsonPath("$.content[0].member").value(true));
+        assertThat(membershipChanges()).containsExactly(new TopicGroupMembershipChangedEvent(piotr.getId()));
     }
 
     @Test
@@ -110,6 +119,10 @@ class TopicGroupMembershipEndpointTest {
         listAs(piotr)
                 .andExpect(jsonPath("$.content[0].memberCount").value(1))
                 .andExpect(jsonPath("$.content[0].member").value(false));
+        assertThat(membershipChanges())
+                .containsExactly(
+                        new TopicGroupMembershipChangedEvent(piotr.getId()),
+                        new TopicGroupMembershipChangedEvent(piotr.getId()));
     }
 
     @Test
@@ -119,6 +132,7 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.title").value("Topic group coordinator cannot leave"));
 
         listAs(anna).andExpect(jsonPath("$.content[0].member").value(true));
+        assertThat(membershipChanges()).isEmpty();
     }
 
     @Test
@@ -178,6 +192,10 @@ class TopicGroupMembershipEndpointTest {
     private ResultActions listAs(User caller) throws Exception {
         return mockMvc.perform(get(GROUPS).with(JwtTestSupport.asVerifiedAlumn(caller.getKeycloakId())))
                 .andExpect(status().isOk());
+    }
+
+    private List<TopicGroupMembershipChangedEvent> membershipChanges() {
+        return events.stream(TopicGroupMembershipChangedEvent.class).toList();
     }
 
     private ResultActions join(User caller) throws Exception {
