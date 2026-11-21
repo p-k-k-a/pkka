@@ -1,6 +1,7 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { useAuth } from "@/lib/auth-context";
 import { useAppColorScheme, useThemeColors } from "@/lib/theme";
+import { useGetMyDiscordStatus } from "@pkka/api";
 import { Tabs } from "expo-router";
 import { Calendar, Home, LogIn, User, Users, type LucideIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
@@ -46,6 +47,7 @@ export default function TabsLayout() {
   const scheme = useAppColorScheme();
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
+  useGetMyDiscordStatus({ query: { enabled: !!user } });
 
   return (
     <Tabs
