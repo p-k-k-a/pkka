@@ -16,6 +16,7 @@ public class EventNotificationListener {
 
     private final EventRepository eventRepository;
     private final NotificationService notificationService;
+    private final EventMailService eventMailService;
 
     @Async
     @TransactionalEventListener
@@ -31,5 +32,17 @@ public class EventNotificationListener {
         eventRepository
                 .findById(promoted.eventId())
                 .ifPresent(event -> notificationService.announcePromotion(event, promoted.userId()));
+    }
+
+    /**
+     * Apart from the push, so a failed push does not cost the mail. No transaction around it: the event and
+     * the address are read up front and the SMTP call should not hold a database connection.
+     */
+    @Async
+    @TransactionalEventListener
+    public void mailPromotion(RegistrationPromotedEvent promoted) {
+        eventRepository
+                .findById(promoted.eventId())
+                .ifPresent(event -> eventMailService.mailPromotion(event, promoted.userId()));
     }
 }
