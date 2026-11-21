@@ -18,6 +18,9 @@ public interface TopicGroupRepository extends JpaRepository<TopicGroup, UUID> {
     /** Feeds {@code SlugUtils.uniqueSlug} when a group is named after an approved request. */
     boolean existsBySlug(String slug);
 
+    @EntityGraph(attributePaths = "coordinator")
+    Optional<TopicGroup> findBySlug(String slug);
+
     boolean existsByNameIgnoreCase(String name);
 
     @EntityGraph(attributePaths = "coordinator")
