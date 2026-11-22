@@ -18,17 +18,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailPreview } from "@/components/admin/event-message/email-preview";
 import { PushPreview } from "@/components/admin/event-message/push-preview";
-import { formatMailStartsAt } from "@/components/admin/event-message/message-format";
-
-export type MessagedEvent = {
-  id: string;
-  title: string;
-  slug: string;
-  startsAt: string;
-};
 
 type EventMessageDialogProps = {
-  event: MessagedEvent;
+  event: { id: string; title: string };
   children: ReactNode;
 };
 
@@ -36,10 +28,10 @@ const people = (count: number) => `${count} ${pluralPl(count, "osoby", "osób", 
 
 export function EventMessageDialog({ event, children }: EventMessageDialogProps) {
   const [open, setOpen] = useState(false);
-  const [notificationTitle, setNotificationTitle] = useState(event.title);
-  const [notification, setNotification] = useState("");
-  const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const empty = { pushTitle: event.title, pushText: "", subject: "", body: "" };
+  const [draft, setDraft] = useState(empty);
+  const update = (field: keyof typeof empty) => (value: string) =>
+    setDraft((current) => ({ ...current, [field]: value }));
   const descriptionId = useId();
 
   const recipientsQuery = useCountEventMessageRecipients(event.id, {
@@ -47,13 +39,6 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
   });
   const recipients =
     recipientsQuery.data?.status === 200 ? recipientsQuery.data.data.recipients : undefined;
-
-  const reset = () => {
-    setNotificationTitle(event.title);
-    setNotification("");
-    setSubject("");
-    setBody("");
-  };
 
   const sendMessage = useSendEventMessage({
     mutation: {
@@ -64,15 +49,14 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
             ? `Wiadomość wysłana do ${people(sentTo)}`
             : "Nikt nie był zapisany, nic nie wysłano",
         );
-        reset();
+        setDraft(empty);
         setOpen(false);
       },
     },
   });
 
-  const isDirty =
-    notificationTitle !== event.title || notification !== "" || subject !== "" || body !== "";
-  const isComplete = notification.trim() !== "" && subject.trim() !== "" && body.trim() !== "";
+  const isComplete =
+    draft.pushText.trim() !== "" && draft.subject.trim() !== "" && draft.body.trim() !== "";
   const canSend =
     isComplete && recipients !== undefined && recipients > 0 && !sendMessage.isPending;
 
@@ -89,15 +73,10 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
       <DialogContent
         aria-describedby={descriptionId}
         className="max-w-[calc(100%-2rem)] gap-6 lg:max-w-5xl"
-        onInteractOutside={(interaction) => {
-          if (isDirty) interaction.preventDefault();
-        }}
       >
         <DialogHeader>
           <DialogTitle>Wiadomość do zapisanych</DialogTitle>
-          <DialogDescription id={descriptionId}>
-            {event.title}, {formatMailStartsAt(event.startsAt)}
-          </DialogDescription>
+          <DialogDescription id={descriptionId}>{event.title}</DialogDescription>
         </DialogHeader>
 
         <RecipientsNote
@@ -112,20 +91,20 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
             <ChannelHeading id="push-heading" icon={<Smartphone />} title="Powiadomienie push" />
             <PushPreview
               eventTitle={event.title}
-              title={notificationTitle}
-              text={notification}
-              onTitleChange={setNotificationTitle}
-              onTextChange={setNotification}
+              title={draft.pushTitle}
+              text={draft.pushText}
+              onTitleChange={update("pushTitle")}
+              onTextChange={update("pushText")}
             />
           </section>
 
           <section aria-labelledby="email-heading" className="space-y-3">
             <ChannelHeading id="email-heading" icon={<Mail />} title="E-mail" />
             <EmailPreview
-              subject={subject}
-              body={body}
-              onSubjectChange={setSubject}
-              onBodyChange={setBody}
+              subject={draft.subject}
+              body={draft.body}
+              onSubjectChange={update("subject")}
+              onBodyChange={update("body")}
             />
           </section>
         </div>
@@ -156,10 +135,10 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
                 eventId: event.id,
                 data: {
                   push: {
-                    title: notificationTitle.trim() || undefined,
-                    text: notification.trim(),
+                    title: draft.pushTitle.trim() || undefined,
+                    text: draft.pushText.trim(),
                   },
-                  mail: { subject: subject.trim(), body: body.trim() },
+                  mail: { subject: draft.subject.trim(), body: draft.body.trim() },
                 },
               })
             }
