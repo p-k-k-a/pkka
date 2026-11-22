@@ -155,10 +155,11 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
               sendMessage.mutate({
                 eventId: event.id,
                 data: {
-                  notificationTitle: notificationTitle.trim() || undefined,
-                  notification: notification.trim(),
-                  subject: subject.trim(),
-                  body: body.trim(),
+                  push: {
+                    title: notificationTitle.trim() || undefined,
+                    text: notification.trim(),
+                  },
+                  mail: { subject: subject.trim(), body: body.trim() },
                 },
               })
             }
