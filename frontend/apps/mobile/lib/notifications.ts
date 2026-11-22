@@ -44,17 +44,17 @@ export async function setPushEnabled(enabled: boolean): Promise<void> {
 async function ensureChannels(): Promise<void> {
   await Notifications.setNotificationChannelAsync("events", {
     name: "Nowe wydarzenia",
-    description: "Nowo opublikowane wydarzenia Klubu Alumnów",
+    description: "Gdy klub ogłosi nowe wydarzenie",
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   await Notifications.setNotificationChannelAsync("registrations", {
     name: "Twoje wydarzenia",
-    description: "Zmiany, odwołania i wiadomości od organizatora oraz zwolnione miejsce na liście",
+    description: "Zmiany, odwołania, wiadomości od organizatora i miejsce z listy rezerwowej",
     importance: Notifications.AndroidImportance.HIGH,
   });
   await Notifications.setNotificationChannelAsync("reminders", {
     name: "Przypomnienia",
-    description: "Przypomnienia o zbliżających się wydarzeniach, na które jesteś zapisany",
+    description: "Przed wydarzeniami, na które jesteś zapisany",
     importance: Notifications.AndroidImportance.HIGH,
   });
 }
