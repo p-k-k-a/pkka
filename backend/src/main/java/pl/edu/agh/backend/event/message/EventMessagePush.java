@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 @Schema(description = "The push notification part of an event message")
 public record EventMessagePush(
         @Schema(description = "One line: the push title; empty uses the event title", example = "Zmiana sali")
-        @Size(max = 100)
+        @Size(max = 200)
         @Pattern(regexp = "[^\\r\\n]*", message = "must be a single line")
         String title,
 

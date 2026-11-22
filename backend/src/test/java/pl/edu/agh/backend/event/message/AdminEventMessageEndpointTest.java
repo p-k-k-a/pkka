@@ -235,4 +235,25 @@ class AdminEventMessageEndpointTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void aPushTitle_fitsAnEventTitleButNotMore() throws Exception {
+        Event event = newEvent();
+        String body = """
+                {"push": {"title": "%s", "text": "Push"}, "mail": {"subject": "Temat", "body": "Treść"}}
+                """;
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.formatted("a".repeat(200))))
+                .andExpect(status().isAccepted());
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.formatted("a".repeat(201))))
+                .andExpect(status().isBadRequest());
+    }
 }

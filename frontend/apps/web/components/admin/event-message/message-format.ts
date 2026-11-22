@@ -1,5 +1,5 @@
 export const MESSAGE_LIMITS = {
-  notificationTitle: 100,
+  notificationTitle: 200,
   notification: 150,
   subject: 150,
   body: 5000,
