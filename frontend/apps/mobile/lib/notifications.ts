@@ -47,7 +47,8 @@ async function ensureChannels(): Promise<void> {
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   await Notifications.setNotificationChannelAsync("registrations", {
-    name: "Twoje zapisy",
+    name: "Twoje wydarzenia",
+    description: "Zmiany, odwołania i wiadomości od organizatora oraz zwolnione miejsce na liście",
     importance: Notifications.AndroidImportance.HIGH,
   });
   await Notifications.setNotificationChannelAsync("reminders", {
