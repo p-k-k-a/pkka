@@ -36,6 +36,7 @@ const people = (count: number) => `${count} ${pluralPl(count, "osoby", "osób", 
 
 export function EventMessageDialog({ event, children }: EventMessageDialogProps) {
   const [open, setOpen] = useState(false);
+  const [notificationTitle, setNotificationTitle] = useState(event.title);
   const [notification, setNotification] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
@@ -48,6 +49,7 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
     recipientsQuery.data?.status === 200 ? recipientsQuery.data.data.recipients : undefined;
 
   const reset = () => {
+    setNotificationTitle(event.title);
     setNotification("");
     setSubject("");
     setBody("");
@@ -68,7 +70,8 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
     },
   });
 
-  const isDirty = notification !== "" || subject !== "" || body !== "";
+  const isDirty =
+    notificationTitle !== event.title || notification !== "" || subject !== "" || body !== "";
   const isComplete = notification.trim() !== "" && subject.trim() !== "" && body.trim() !== "";
   const canSend =
     isComplete && recipients !== undefined && recipients > 0 && !sendMessage.isPending;
@@ -106,28 +109,19 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
 
         <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
           <section aria-labelledby="push-heading" className="space-y-3">
-            <ChannelHeading
-              id="push-heading"
-              icon={<Smartphone />}
-              title="Powiadomienie push"
-              hint="Dla osób z aplikacją mobilną. Tytuł to nazwa wydarzenia."
-            />
+            <ChannelHeading id="push-heading" icon={<Smartphone />} title="Powiadomienie push" />
             <PushPreview
               eventTitle={event.title}
+              title={notificationTitle}
               text={notification}
+              onTitleChange={setNotificationTitle}
               onTextChange={setNotification}
             />
           </section>
 
           <section aria-labelledby="email-heading" className="space-y-3">
-            <ChannelHeading
-              id="email-heading"
-              icon={<Mail />}
-              title="E-mail"
-              hint="Dla każdej zapisanej osoby. Uzupełnij temat i treść, resztę dodamy sami."
-            />
+            <ChannelHeading id="email-heading" icon={<Mail />} title="E-mail" />
             <EmailPreview
-              event={event}
               subject={subject}
               body={body}
               onSubjectChange={setSubject}
@@ -161,6 +155,7 @@ export function EventMessageDialog({ event, children }: EventMessageDialogProps)
               sendMessage.mutate({
                 eventId: event.id,
                 data: {
+                  notificationTitle: notificationTitle.trim() || undefined,
                   notification: notification.trim(),
                   subject: subject.trim(),
                   body: body.trim(),
@@ -208,7 +203,7 @@ function RecipientsNote({
       {recipients > 0 ? (
         <span>
           Wiadomość trafi do <strong className="tabular-nums">{people(recipients)}</strong>{" "}
-          zapisanych na wydarzenie, licząc listę rezerwową.
+          zapisanych na wydarzenie, włącznie z listą rezerwową.
         </span>
       ) : (
         <span>Nikt nie jest zapisany na to wydarzenie, więc nie ma do kogo wysłać wiadomości.</span>
@@ -217,27 +212,14 @@ function RecipientsNote({
   );
 }
 
-function ChannelHeading({
-  id,
-  icon,
-  title,
-  hint,
-}: {
-  id: string;
-  icon: ReactNode;
-  title: string;
-  hint: string;
-}) {
+function ChannelHeading({ id, icon, title }: { id: string; icon: ReactNode; title: string }) {
   return (
-    <div className="space-y-1">
-      <h3
-        id={id}
-        className="text-foreground [&_svg]:text-muted-foreground flex items-center gap-2 text-sm font-semibold [&_svg]:size-4"
-      >
-        {icon}
-        {title}
-      </h3>
-      <p className="text-muted-foreground text-xs">{hint}</p>
-    </div>
+    <h3
+      id={id}
+      className="text-foreground [&_svg]:text-muted-foreground flex items-center gap-2 text-sm font-semibold [&_svg]:size-4"
+    >
+      {icon}
+      {title}
+    </h3>
   );
 }

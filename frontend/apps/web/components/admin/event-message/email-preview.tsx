@@ -1,13 +1,8 @@
 import { cn } from "@/lib/utils";
 import { CharacterCount } from "@/components/admin/event-message/character-count";
-import {
-  formatMailStartsAt,
-  MESSAGE_LIMITS,
-} from "@/components/admin/event-message/message-format";
-import type { MessagedEvent } from "@/components/admin/event-message/event-message-dialog";
+import { MESSAGE_LIMITS } from "@/components/admin/event-message/message-format";
 
 type EmailPreviewProps = {
-  event: MessagedEvent;
   subject: string;
   body: string;
   onSubjectChange: (subject: string) => void;
@@ -17,13 +12,7 @@ type EmailPreviewProps = {
 const editable =
   "hover:border-muted-foreground/40 focus-visible:border-primary focus-visible:ring-primary/30 placeholder:text-muted-foreground/70 -mx-2 block w-[calc(100%+1rem)] rounded-md border border-dashed border-transparent bg-transparent px-2 outline-none focus-visible:ring-2";
 
-export function EmailPreview({
-  event,
-  subject,
-  body,
-  onSubjectChange,
-  onBodyChange,
-}: EmailPreviewProps) {
+export function EmailPreview({ subject, body, onSubjectChange, onBodyChange }: EmailPreviewProps) {
   return (
     <div className="light border-border bg-background overflow-hidden rounded-xl border">
       <dl className="bg-background border-border grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-b px-4 py-3 text-xs">
@@ -42,12 +31,6 @@ export function EmailPreview({
           </div>
 
           <div className="text-muted-foreground space-y-3 px-6 py-5 text-[15px] leading-relaxed sm:px-8">
-            <p className="text-[13px]">
-              Wiadomość do zapisanych na wydarzenie{" "}
-              <strong className="text-foreground">{event.title}</strong> (
-              {formatMailStartsAt(event.startsAt)})
-            </p>
-
             <div>
               <label htmlFor="message-subject" className="sr-only">
                 Temat maila
