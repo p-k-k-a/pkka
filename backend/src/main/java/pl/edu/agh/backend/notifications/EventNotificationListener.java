@@ -112,7 +112,7 @@ public class EventNotificationListener {
         eventRepository
                 .findById(message.eventId())
                 .ifPresent(event -> notificationService.pushMessage(
-                        event, message.notificationTitle(), message.notification(), signedUp(event.getId())));
+                        event, message.pushTitle(), message.pushText(), signedUp(event.getId())));
     }
 
     @Async
@@ -121,7 +121,7 @@ public class EventNotificationListener {
         eventRepository
                 .findById(message.eventId())
                 .ifPresent(event -> eventMailService.mailMessage(
-                        event, message.subject(), message.body(), signedUp(event.getId())));
+                        event, message.mailSubject(), message.mailBody(), signedUp(event.getId())));
     }
 
     private List<UUID> signedUp(UUID eventId) {
