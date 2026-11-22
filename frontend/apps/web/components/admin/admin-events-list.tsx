@@ -294,38 +294,42 @@ export function AdminEventsList() {
                       footer={
                         <div className="mt-auto flex flex-col gap-4 pt-2">
                           {row ? <CardOccupancy row={row} /> : null}
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground w-full text-xs font-semibold tracking-widest uppercase">
+                          <div className="flex flex-col gap-2">
+                            <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
                               {audienceLabel(item.audience)}
                             </span>
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
-                                <ChartColumn data-icon="inline-start" />
-                                Statystyki
-                              </Link>
-                            </Button>
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}/edit`}>
-                                <Pencil data-icon="inline-start" />
-                                Edytuj
-                              </Link>
-                            </Button>
-                            <EventMessageDialog event={item}>
-                              <Button type="button" variant="outline" size="sm">
-                                <Send data-icon="inline-start" />
-                                Wiadomość
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
+                                  <ChartColumn data-icon="inline-start" />
+                                  Statystyki
+                                </Link>
                               </Button>
-                            </EventMessageDialog>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setEventToDelete(item)}
-                            >
-                              <Trash2 data-icon="inline-start" />
-                              Usuń
-                            </Button>
+                              <EventMessageDialog event={item}>
+                                <Button type="button" variant="outline" size="sm">
+                                  <Send data-icon="inline-start" />
+                                  Wiadomość
+                                </Button>
+                              </EventMessageDialog>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}/edit`}>
+                                  <Pencil data-icon="inline-start" />
+                                  Edytuj
+                                </Link>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setEventToDelete(item)}
+                              >
+                                <Trash2 data-icon="inline-start" />
+                                Usuń
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       }
