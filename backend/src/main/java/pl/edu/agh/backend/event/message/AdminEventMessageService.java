@@ -31,6 +31,10 @@ public class AdminEventMessageService {
         if (recipients > 0) {
             eventPublisher.publishEvent(new EventMessageSentEvent(
                     eventId,
+                    request.notificationTitle() == null
+                                    || request.notificationTitle().isBlank()
+                            ? null
+                            : request.notificationTitle().strip(),
                     request.notification().strip(),
                     request.subject().strip(),
                     request.body().strip()));

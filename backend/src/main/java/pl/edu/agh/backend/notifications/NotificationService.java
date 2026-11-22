@@ -114,8 +114,13 @@ public class NotificationService {
                 NO_TARGET);
     }
 
-    public void pushMessage(Event event, String text, Collection<UUID> userIds) {
-        pushToSignedUp(userIds, NotificationType.EVENT_MESSAGE, event.getTitle(), text, event.getSlug());
+    public void pushMessage(Event event, String title, String text, Collection<UUID> userIds) {
+        pushToSignedUp(
+                userIds,
+                NotificationType.EVENT_MESSAGE,
+                title == null ? event.getTitle() : title,
+                text,
+                event.getSlug());
     }
 
     private void pushToSignedUp(

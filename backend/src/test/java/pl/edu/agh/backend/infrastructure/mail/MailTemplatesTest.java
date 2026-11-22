@@ -92,6 +92,8 @@ class MailTemplatesTest {
                 .contains("Zmiana sali", "Sala 2.41.<br/>&lt;script&gt;alert(1)&lt;/script&gt;")
                 .doesNotContain("<script>", "pre-line");
         assertThat(text).contains("Zmiana sali", "Sala 2.41.\n");
+        assertThat(html).doesNotContain("Wiadomość do zapisanych");
+        assertThat(text).doesNotContain("Wiadomość do zapisanych");
     }
 
     @Test
