@@ -31,13 +31,12 @@ public class AdminEventMessageService {
         if (recipients > 0) {
             eventPublisher.publishEvent(new EventMessageSentEvent(
                     eventId,
-                    request.notificationTitle() == null
-                                    || request.notificationTitle().isBlank()
+                    request.push().title() == null || request.push().title().isBlank()
                             ? null
-                            : request.notificationTitle().strip(),
-                    request.notification().strip(),
-                    request.subject().strip(),
-                    request.body().strip()));
+                            : request.push().title().strip(),
+                    request.push().text().strip(),
+                    request.mail().subject().strip(),
+                    request.mail().body().strip()));
         }
         return new EventMessageRecipientsResponse(recipients);
     }

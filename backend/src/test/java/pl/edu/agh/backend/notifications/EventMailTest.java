@@ -51,6 +51,8 @@ import pl.edu.agh.backend.event.EventRepository;
 import pl.edu.agh.backend.event.EventRequest;
 import pl.edu.agh.backend.event.EventType;
 import pl.edu.agh.backend.event.message.AdminEventMessageService;
+import pl.edu.agh.backend.event.message.EventMessageMail;
+import pl.edu.agh.backend.event.message.EventMessagePush;
 import pl.edu.agh.backend.event.message.EventMessageRecipientsResponse;
 import pl.edu.agh.backend.event.message.EventMessageRequest;
 import pl.edu.agh.backend.event.registration.EventRegistration;
@@ -506,7 +508,8 @@ class EventMailTest {
         EventMessageRecipientsResponse queued = adminEventMessageService.send(
                 event.getId(),
                 new EventMessageRequest(
-                        null, " Sala 2.41 zamiast 1.38 ", "  Zmiana sali ", "Spotykamy się w 2.41.\nWeźcie laptopy."));
+                        new EventMessagePush(null, " Sala 2.41 zamiast 1.38 "),
+                        new EventMessageMail("  Zmiana sali ", "Spotykamy się w 2.41.\nWeźcie laptopy.")));
 
         assertThat(queued.recipients()).isEqualTo(2);
         ArgumentCaptor<String> to = ArgumentCaptor.forClass(String.class);
@@ -524,7 +527,9 @@ class EventMailTest {
         Event event = eventWithSeatAndWaitlist(Instant.parse("2030-12-01T17:00:00Z"));
 
         adminEventMessageService.send(
-                event.getId(), new EventMessageRequest(" Zmiana sali ", "Sala 2.41", "Temat", "Treść"));
+                event.getId(),
+                new EventMessageRequest(
+                        new EventMessagePush(" Zmiana sali ", "Sala 2.41"), new EventMessageMail("Temat", "Treść")));
 
         ExpoPushMessage push = capturePushes().getFirst();
         assertThat(push.title()).isEqualTo("Zmiana sali");

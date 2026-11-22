@@ -41,7 +41,7 @@ public class AdminEventMessageController {
     @ApiResponse(responseCode = "202", description = "Message queued")
     @ApiResponse(
             responseCode = "400",
-            description = "Empty or too long notification, subject or body",
+            description = "Missing push or mail, or a field that is blank, too long or on more than one line",
             content = @Content)
     @ApiResponse(responseCode = "404", description = "Event not found", content = @Content)
     public EventMessageRecipientsResponse sendEventMessage(
