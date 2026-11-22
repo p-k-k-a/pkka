@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { CharacterCount } from "@/components/admin/event-message/character-count";
 import { MESSAGE_LIMITS } from "@/components/admin/event-message/message-format";
 
@@ -31,12 +33,12 @@ export function EmailPreview({ subject, body, onSubjectChange, onBodyChange }: E
               <label htmlFor="message-subject" className="sr-only">
                 Temat maila
               </label>
-              <input
+              <Input
                 id="message-subject"
                 value={subject}
                 maxLength={MESSAGE_LIMITS.subject}
                 placeholder="Temat, np. Zmiana sali"
-                className="focus-visible:border-primary focus-visible:ring-primary/30 -mx-2 block w-[calc(100%+1rem)] rounded-md border border-dashed border-transparent bg-transparent px-2 py-1 text-xl font-bold text-[#16212F] outline-none placeholder:text-[#486284]/70 hover:border-[#486284]/40 focus-visible:ring-2"
+                className="h-auto border-[#D5DEEA] bg-white py-2 text-xl font-bold text-[#16212F] placeholder:text-[#486284]/70"
                 onChange={(changeEvent) => onSubjectChange(changeEvent.target.value)}
               />
               <CharacterCount
@@ -50,13 +52,13 @@ export function EmailPreview({ subject, body, onSubjectChange, onBodyChange }: E
               <label htmlFor="message-body" className="sr-only">
                 Treść maila
               </label>
-              <textarea
+              <Textarea
                 id="message-body"
                 rows={5}
                 value={body}
                 maxLength={MESSAGE_LIMITS.body}
                 placeholder="Treść wiadomości. Nowe linie zostaną zachowane."
-                className="focus-visible:border-primary focus-visible:ring-primary/30 -mx-2 block min-h-28 w-[calc(100%+1rem)] resize-y rounded-md border border-dashed border-transparent bg-transparent px-2 py-1 outline-none placeholder:text-[#486284]/70 hover:border-[#486284]/40 focus-visible:ring-2"
+                className="min-h-28 resize-y border-[#D5DEEA] bg-white text-[15px] leading-relaxed text-[#486284] placeholder:text-[#486284]/70"
                 onChange={(changeEvent) => onBodyChange(changeEvent.target.value)}
               />
               <CharacterCount value={body} limit={MESSAGE_LIMITS.body} className="text-[#486284]" />
