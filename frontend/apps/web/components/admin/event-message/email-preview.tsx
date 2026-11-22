@@ -61,19 +61,6 @@ export function EmailPreview({ subject, body, onSubjectChange, onBodyChange }: E
               />
               <CharacterCount value={body} limit={MESSAGE_LIMITS.body} />
             </div>
-
-            <span
-              aria-hidden
-              className="bg-primary text-primary-foreground inline-block rounded-lg px-5 py-3 text-sm font-bold"
-            >
-              Szczegóły wydarzenia
-            </span>
-          </div>
-
-          <div className="border-muted text-muted-foreground border-t px-6 py-4 text-xs leading-normal sm:px-8">
-            Masz pytania? Odpowiedz na tę wiadomość.
-            <br />
-            <span className="text-accent">pkka.me</span>
           </div>
         </div>
       </div>
