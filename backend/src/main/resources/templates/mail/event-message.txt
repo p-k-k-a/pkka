@@ -1,3 +1,5 @@
+Wiadomość do zapisanych na wydarzenie „[(${title})]” ([(${startsAt})])
+
 [(${subject})]
 
 [(${message})]

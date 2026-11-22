@@ -2,6 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
 <body>
 <main>
+    <p style="margin:0 0 4px;font-size:13px;">
+        Wiadomość do zapisanych na wydarzenie <strong th:text="${title}">Warsztaty</strong>
+        (<span th:text="${startsAt}">1 grudnia 2026 o 18:00</span>)
+    </p>
     <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;" th:text="${subject}">Zmiana sali</h1>
     <!--/* Lines joined with br tags: some mail clients ignore white-space: pre-line. */-->
     <p style="margin:0 0 24px;">
