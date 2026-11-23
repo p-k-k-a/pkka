@@ -34,6 +34,7 @@ import { Camera, Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { DeleteAccount } from "@/components/profile/delete-account";
+import { ManageAccount } from "@/components/profile/manage-account";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -409,6 +410,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
         )}
       </form.Subscribe>
 
+      <ManageAccount />
       <DeleteAccount accountEmail={profile.email} />
     </KeyboardAwareScrollView>
   );

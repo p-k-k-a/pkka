@@ -24,7 +24,8 @@
         "OPENAPI_INPUT": "../../../backend/openapi.json",
         "EXPO_PUBLIC_API_URL": "https://api.pkka.me",
         "EXPO_PUBLIC_KEYCLOAK_URL": "https://api.pkka.me/oauth2/authorization/keycloak-mobile",
-        "EXPO_PUBLIC_DISCORD_URL": "https://api.pkka.me/oauth2/authorization/keycloak-mobile?idp=discord"
+        "EXPO_PUBLIC_DISCORD_URL": "https://api.pkka.me/oauth2/authorization/keycloak-mobile?idp=discord",
+        "EXPO_PUBLIC_KEYCLOAK_ACCOUNT_URL": "https://auth.pkka.me/realms/pkka/account"
       }
     }
   },
