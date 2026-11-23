@@ -29,8 +29,15 @@ public class AdminEventMessageService {
         requireEvent(eventId);
         long recipients = eventRegistrationRepository.countRecipients(eventId);
         if (recipients > 0) {
+            String title = request.push().title();
             eventPublisher.publishEvent(new EventMessageSentEvent(
-                    eventId, request.subject().strip(), request.body().strip()));
+                    eventId,
+                    new EventMessagePush(
+                            title == null || title.isBlank() ? null : title.strip(),
+                            request.push().text().strip()),
+                    new EventMessageMail(
+                            request.mail().subject().strip(),
+                            request.mail().body().strip())));
         }
         return new EventMessageRecipientsResponse(recipients);
     }

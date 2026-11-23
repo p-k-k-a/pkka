@@ -81,7 +81,8 @@ public class EventNotificationListener {
     public void pushScheduleChange(EventScheduleChangedEvent changed) {
         eventRepository
                 .findById(changed.eventId())
-                .ifPresent(event -> notificationService.pushScheduleChange(event, changed, signedUp(event.getId())));
+                .ifPresent(
+                        event -> notificationService.pushScheduleChange(event, changed, recipientIds(event.getId())));
     }
 
     @Async
@@ -89,20 +90,20 @@ public class EventNotificationListener {
     public void mailScheduleChange(EventScheduleChangedEvent changed) {
         eventRepository
                 .findById(changed.eventId())
-                .ifPresent(event -> eventMailService.mailScheduleChange(event, changed, signedUp(event.getId())));
+                .ifPresent(event -> eventMailService.mailScheduleChange(event, changed, recipientIds(event.getId())));
     }
 
     @Async
     @TransactionalEventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void pushCancellation(EventCancelledEvent cancelled) {
-        notificationService.pushCancellation(cancelled, signedUp(cancelled.eventId()));
+        notificationService.pushCancellation(cancelled, recipientIds(cancelled.eventId()));
     }
 
     @Async
     @TransactionalEventListener
     public void mailCancellation(EventCancelledEvent cancelled) {
-        eventMailService.mailCancellation(cancelled, signedUp(cancelled.eventId()));
+        eventMailService.mailCancellation(cancelled, recipientIds(cancelled.eventId()));
     }
 
     @Async
@@ -111,7 +112,8 @@ public class EventNotificationListener {
     public void pushMessage(EventMessageSentEvent message) {
         eventRepository
                 .findById(message.eventId())
-                .ifPresent(event -> notificationService.pushMessage(event, message.subject(), signedUp(event.getId())));
+                .ifPresent(event -> notificationService.pushMessage(
+                        event, message.push().title(), message.push().text(), recipientIds(event.getId())));
     }
 
     @Async
@@ -120,10 +122,10 @@ public class EventNotificationListener {
         eventRepository
                 .findById(message.eventId())
                 .ifPresent(event -> eventMailService.mailMessage(
-                        event, message.subject(), message.body(), signedUp(event.getId())));
+                        event, message.mail().subject(), message.mail().body(), recipientIds(event.getId())));
     }
 
-    private List<UUID> signedUp(UUID eventId) {
+    private List<UUID> recipientIds(UUID eventId) {
         return eventRegistrationRepository.findRecipientIds(eventId);
     }
 }

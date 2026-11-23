@@ -42,7 +42,7 @@ import pl.edu.agh.backend.user.UserRepository;
 class AdminEventMessageEndpointTest {
 
     private static final String MESSAGE = """
-            {"subject": "Zmiana sali", "body": "Spotykamy się w sali 2.41."}
+            {"push": {"text": "Sala 2.41 zamiast 1.38"}, "mail": {"subject": "Zmiana sali", "body": "Spotykamy się w sali 2.41."}}
             """;
 
     @Container
@@ -151,7 +151,7 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": " ", "body": "Treść"}
+                                {"push": {"text": "Push"}, "mail": {"subject": " ", "body": "Treść"}}
                                 """))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
@@ -159,7 +159,7 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": "Temat"}
+                                {"push": {"text": "Push"}, "mail": {"subject": "Temat"}}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -173,8 +173,87 @@ class AdminEventMessageEndpointTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"subject": "Temat\\r\\nBcc: ola@example.com", "body": "Treść"}
+                                {"push": {"text": "Push"}, "mail": {"subject": "Temat\\r\\nBcc: ola@example.com", "body": "Treść"}}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aBlankOrMultiLineNotification_isRejected() throws Exception {
+        Event event = newEvent();
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"push": {"text": " "}, "mail": {"subject": "Temat", "body": "Treść"}}
+                                """))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"push": {"text": "Jeden\\nDwa"}, "mail": {"subject": "Temat", "body": "Treść"}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aNotificationTitleOnMoreThanOneLine_isRejected() throws Exception {
+        Event event = newEvent();
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"push": {"title": "Jeden\\nDwa", "text": "Push"}, "mail": {"subject": "Temat", "body": "Treść"}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aMessageWithoutPushOrMail_isRejected() throws Exception {
+        Event event = newEvent();
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"mail": {"subject": "Temat", "body": "Treść"}}
+                                """))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"push": {"text": "Push"}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aPushTitle_fitsAnEventTitleButNotMore() throws Exception {
+        Event event = newEvent();
+        String body = """
+                {"push": {"title": "%s", "text": "Push"}, "mail": {"subject": "Temat", "body": "Treść"}}
+                """;
+
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.formatted("a".repeat(200))))
+                .andExpect(status().isAccepted());
+        mockMvc.perform(post("/api/admin/events/{id}/messages", event.getId())
+                        .with(JwtTestSupport.asAdmin())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.formatted("a".repeat(201))))
                 .andExpect(status().isBadRequest());
     }
 }
