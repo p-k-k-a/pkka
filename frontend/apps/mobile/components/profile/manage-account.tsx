@@ -13,7 +13,6 @@ export function ManageAccount() {
       size="lg"
       variant="outline"
       className="w-full"
-      accessibilityHint="Otwiera w przeglądarce ustawienia hasła, 2FA, sesji i konta Discord"
       onPress={() => WebBrowser.openBrowserAsync(ACCOUNT_CONSOLE_URL)}
     >
       <UserCog size={18} color={colors.foreground} />
