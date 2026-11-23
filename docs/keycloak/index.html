@@ -1089,7 +1089,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>bot</code> <span class="tag off">wycofane</span></td><td>Bot Discord</td><td>Nieużywana — bot działa jako moduł backendu (token bota w <code>.env</code>), nie ma konta w Keycloaku</td></tr>
     </table>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>, ale nie łączy się ich na jednym koncie: konto admina służy tylko do zarządzania.</div></div>
 
     <h3>Grupy (Groups)</h3>
     <p>Grupy upraszczają zarządzanie — zamiast przypisywać role każdemu użytkownikowi osobno, dodajesz go do grupy.</p>
@@ -1097,7 +1097,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><th>Grupa</th><th>Role przypisane do grupy</th><th>Kto trafia do grupy</th></tr>
       <tr><td><code>users</code></td><td><code>user</code></td><td>Domyślna grupa — każdy nowo zarejestrowany użytkownik (ustaw jako Default Group)</td></tr>
       <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Obecnie nieużywana przez backend — po akceptacji wniosku <code>KeycloakRoleService</code> nadaje rolę <code>verified-alumn</code> bezpośrednio do konta (role mapping), użytkownik zostaje tylko w <code>users</code>. Grupę można użyć przy ręcznym nadawaniu statusu w konsoli</td></tr>
-      <tr><td><code>administrators</code></td><td><code>user</code>, <code>verified-alumn</code>, <code>admin</code></td><td>Pracownicy wydziału / zarząd klubu</td></tr>
+      <tr><td><code>administrators</code></td><td><code>user</code>, <code>admin</code></td><td>Administratorzy, dodawani ręcznie w konsoli. Konto admina nie jest kontem alumna: admin, który chce korzystać z platformy jako członek Klubu, zakłada osobne konto</td></tr>
       <tr><td><code>bots</code> <span class="tag off">wycofane</span></td><td><code>bot</code></td><td>Pusta, pozostałość po planie osobnego konta bota</td></tr>
     </table>
 
