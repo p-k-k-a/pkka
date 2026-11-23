@@ -444,8 +444,10 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               </Card>
             ) : null}
 
-            <ManageAccount />
-            <DeleteAccount accountEmail={profile.email} />
+            <div className="flex flex-col gap-3">
+              <ManageAccount />
+              <DeleteAccount accountEmail={profile.email} />
+            </div>
           </div>
         </div>
       </div>
