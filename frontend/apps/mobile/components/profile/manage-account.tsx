@@ -17,7 +17,7 @@ export function ManageAccount() {
       onPress={() => WebBrowser.openBrowserAsync(ACCOUNT_CONSOLE_URL)}
     >
       <UserCog size={18} color={colors.foreground} />
-      <Text className="font-bold">Zarządzaj kontem</Text>
+      <Text className="font-bold">Zarządzaj kontem Keycloak</Text>
       <ExternalLink size={16} color={colors.mutedForeground} />
     </Button>
   );
