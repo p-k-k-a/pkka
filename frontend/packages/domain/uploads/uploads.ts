@@ -85,6 +85,8 @@ export function uploadErrorMessage(error: unknown, rule: LabelledUploadRule) {
       return `Plik jest za duży. Maksymalny rozmiar to ${uploadLimitLabel(rule)}.`;
     case "empty":
       return "Ten plik jest pusty. Wybierz inny.";
+    case "too-many":
+      return "Przesłano już za dużo plików. Spróbuj ponownie za kilka godzin.";
     case "unavailable":
       return "Przesyłanie plików jest chwilowo niedostępne. Spróbuj ponownie później.";
     case "network":

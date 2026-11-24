@@ -2,7 +2,8 @@ import { ApiError } from "@pkka/api";
 
 /**
  * The API answers 503 when a record that has an uploaded file attached is saved while the
- * object storage is not configured: it refuses rather than silently detaching the file.
+ * object storage is not configured (it refuses rather than silently detaching the file), or
+ * when a newly uploaded file cannot be checked because the storage does not answer.
  */
 export function isStorageUnavailable(error: unknown) {
   return error instanceof ApiError && error.status === 503;
