@@ -3,9 +3,15 @@ package pl.edu.agh.backend.storage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +19,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +28,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -36,6 +49,7 @@ class StorageServiceTest {
     private static final String POST_IMAGE_KEY = "posts/images/0f3a1c8e-1111-4000-8000-000000000004.jpg";
 
     private S3Presigner presigner;
+    private S3Client client;
     private AdjustableClock clock;
     private StorageService storage;
 
@@ -43,7 +57,13 @@ class StorageServiceTest {
     void setUp() {
         presigner = spy(StorageConfig.presigner(ENDPOINT, "key-id", "secret"));
         clock = new AdjustableClock(Instant.now());
-        storage = new StorageService(presigner, "pkka-files", URI.create(ENDPOINT), clock);
+        client = mock(S3Client.class);
+        // by default every file has been uploaded as it was issued
+        lenient().when(client.headObject(any(HeadObjectRequest.class))).thenAnswer(call -> {
+            String key = call.<HeadObjectRequest>getArgument(0).key();
+            return uploaded(1024, contentTypeOf(key));
+        });
+        storage = new StorageService(presigner, client, "pkka-files", URI.create(ENDPOINT), clock);
     }
 
     @AfterEach
@@ -165,7 +185,7 @@ class StorageServiceTest {
 
         assertThat(cover.objectKey()).matches("covers/posts/[0-9a-f-]{36}\\.webp");
         assertThat(image.objectKey()).matches("posts/images/[0-9a-f-]{36}\\.png");
-        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, cover.objectKey()))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, cover.objectKey(), null))
                 .isEqualTo(cover.objectKey());
 
         long mb = 1024L * 1024L;
@@ -182,15 +202,16 @@ class StorageServiceTest {
 
     @Test
     void aPostCoverIsNotInterchangeableWithOtherUploads() {
-        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, storage.resolveUrl(POST_COVER_KEY)))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, storage.resolveUrl(POST_COVER_KEY), null))
                 .isEqualTo(POST_COVER_KEY);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, COVER_KEY), InvalidFileException.class);
-        assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, POST_IMAGE_KEY),
+                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, COVER_KEY, null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, POST_COVER_KEY),
+                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, POST_IMAGE_KEY, null),
+                InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, POST_COVER_KEY, null),
                 InvalidFileException.class);
     }
 
@@ -214,14 +235,14 @@ class StorageServiceTest {
         String echoedBack = storage.resolveContent(stored);
 
         assertThat(echoedBack).doesNotContain("](" + POST_IMAGE_KEY);
-        assertThat(storage.toStoredContent(echoedBack)).isEqualTo(stored);
+        assertThat(storage.toStoredContent(echoedBack, null)).isEqualTo(stored);
     }
 
     @Test
     void aFreshlyUploadedPictureIsStoredByItsKey() {
         String content = "![nowe](" + POST_IMAGE_KEY + ")";
 
-        assertThat(storage.toStoredContent(content)).isEqualTo(content);
+        assertThat(storage.toStoredContent(content, null)).isEqualTo(content);
     }
 
     @Test
@@ -237,17 +258,17 @@ class StorageServiceTest {
         String foreign = "https://elsewhere.example.com/pkka-files/" + POST_IMAGE_KEY + "?X-Amz-Signature=abc";
         String content = "[strona](https://example.com/a_(b)) ![f](" + foreign + ")";
 
-        assertThat(storage.toStoredContent(content)).isEqualTo(content);
+        assertThat(storage.toStoredContent(content, null)).isEqualTo(content);
     }
 
     @Test
     void aSignedUrlOfAnotherStoredFileIsRejectedInContent() {
         // it would be saved verbatim and stop working within the hour
         assertStatus(
-                () -> storage.toStoredContent("[slajdy](" + storage.resolveUrl(MATERIAL_KEY) + ")"),
+                () -> storage.toStoredContent("[slajdy](" + storage.resolveUrl(MATERIAL_KEY) + ")", null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredContent("![okładka](" + storage.resolveUrl(COVER_KEY) + ")"),
+                () -> storage.toStoredContent("![okładka](" + storage.resolveUrl(COVER_KEY) + ")", null),
                 InvalidFileException.class);
     }
 
@@ -255,7 +276,7 @@ class StorageServiceTest {
     void aSignedPostPictureIsReducedToItsKeyEvenInsideAPlainLink() {
         String signed = storage.resolveUrl(POST_IMAGE_KEY);
 
-        assertThat(storage.toStoredContent("[zobacz zdjęcie](" + signed + ")"))
+        assertThat(storage.toStoredContent("[zobacz zdjęcie](" + signed + ")", null))
                 .isEqualTo("[zobacz zdjęcie](" + POST_IMAGE_KEY + ")");
     }
 
@@ -263,9 +284,10 @@ class StorageServiceTest {
     void aBrowserLocalPreviewIsRejectedInContent() {
         String content = "![](blob:https://klub.example.com/0f3a1c8e-1111-4000-8000-000000000009)";
 
-        assertStatus(() -> storage.toStoredContent(content), InvalidFileException.class);
-        assertStatus(() -> unconfigured().toStoredContent(content), InvalidFileException.class);
-        assertStatus(() -> storage.toStoredContent(content.replace("blob:", "BLOB:")), InvalidFileException.class);
+        assertStatus(() -> storage.toStoredContent(content, null), InvalidFileException.class);
+        assertStatus(() -> unconfigured().toStoredContent(content, null), InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredContent(content.replace("blob:", "BLOB:"), null), InvalidFileException.class);
     }
 
     @Test
@@ -283,10 +305,10 @@ class StorageServiceTest {
         String content = "![a](" + POST_IMAGE_KEY + ")";
 
         assertThat(unconfigured().resolveContent(content)).isEqualTo(content);
-        assertThat(unconfigured().toStoredContent(storage.resolveContent(content)))
+        assertThat(unconfigured().toStoredContent(storage.resolveContent(content), null))
                 .isEqualTo(storage.resolveContent(content));
         assertThat(storage.resolveContent(null)).isNull();
-        assertThat(storage.toStoredContent(null)).isNull();
+        assertThat(storage.toStoredContent(null, null)).isNull();
     }
 
     @Test
@@ -296,9 +318,9 @@ class StorageServiceTest {
         String cover = storage.presignAdminUpload(AdminUploadPurpose.EVENT_COVER, "image/webp", 10)
                 .objectKey();
 
-        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, material))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, material, null))
                 .isEqualTo(material);
-        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, cover))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, cover, null))
                 .isEqualTo(cover);
     }
 
@@ -352,7 +374,7 @@ class StorageServiceTest {
     @Test
     void anAvatarKeyCannotBeStoredWhileStorageIsNotConfigured() {
         assertStatus(
-                () -> unconfigured().toStoredAvatarKey(USER_ID, "avatars/" + USER_ID + "/x.png"),
+                () -> unconfigured().toStoredAvatarKey(USER_ID, "avatars/" + USER_ID + "/x.png", null),
                 StorageNotConfiguredException.class);
     }
 
@@ -360,11 +382,11 @@ class StorageServiceTest {
     void anAvatarKeyIsStoredTrimmedAndBlankRemovesIt() {
         String key = storage.presignAvatar(USER_ID, "image/png", 1024).objectKey();
 
-        assertThat(storage.toStoredAvatarKey(USER_ID, "  " + key + " ")).isEqualTo(key);
-        assertThat(storage.toStoredAvatarKey(USER_ID, "  ")).isNull();
-        assertThat(unconfigured().toStoredAvatarKey(USER_ID, "")).isNull();
+        assertThat(storage.toStoredAvatarKey(USER_ID, "  " + key + " ", null)).isEqualTo(key);
+        assertThat(storage.toStoredAvatarKey(USER_ID, "  ", null)).isNull();
+        assertThat(unconfigured().toStoredAvatarKey(USER_ID, "", null)).isNull();
         assertStatus(
-                () -> storage.toStoredAvatarKey(USER_ID, "avatars/" + UUID.randomUUID() + "/a.png"),
+                () -> storage.toStoredAvatarKey(USER_ID, "avatars/" + UUID.randomUUID() + "/a.png", null),
                 InvalidFileException.class);
     }
 
@@ -399,17 +421,17 @@ class StorageServiceTest {
 
     @Test
     void blankReferencesAreStoredAsNull() {
-        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, null))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, null, null))
                 .isNull();
-        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, "   "))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, "   ", null))
                 .isNull();
     }
 
     @Test
     void externalUrlsAreKeptAsTheyAre() {
-        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, " https://youtu.be/abc "))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, " https://youtu.be/abc ", null))
                 .isEqualTo("https://youtu.be/abc");
-        assertThat(unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, "https://youtu.be/abc"))
+        assertThat(unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, "https://youtu.be/abc", null))
                 .isEqualTo("https://youtu.be/abc");
     }
 
@@ -417,7 +439,7 @@ class StorageServiceTest {
     void aSignedUrlOfOurBucketIsReducedToItsKey() {
         String signed = storage.resolveUrl(COVER_KEY);
 
-        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, signed))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, signed, null))
                 .isEqualTo(COVER_KEY);
     }
 
@@ -426,44 +448,47 @@ class StorageServiceTest {
         // the web app sends an uploaded material back without the query, which can get very long
         String unsigned = ENDPOINT + "/pkka-files/" + MATERIAL_KEY;
 
-        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, unsigned))
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, unsigned, null))
                 .isEqualTo(MATERIAL_KEY);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, unsigned), InvalidFileException.class);
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, unsigned, null),
+                InvalidFileException.class);
     }
 
     @Test
     void aKeyForAnotherPurposeIsRejected() {
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, MATERIAL_KEY),
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, MATERIAL_KEY, null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, COVER_KEY), InvalidFileException.class);
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, COVER_KEY, null),
+                InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, storage.resolveUrl(COVER_KEY)),
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, storage.resolveUrl(COVER_KEY), null),
                 InvalidFileException.class);
     }
 
     @Test
     void valuesThatAreNeitherUrlNorOurKeyAreRejected() {
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/x.pdf"),
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/x.pdf", null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/../" + MATERIAL_KEY),
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "materials/../" + MATERIAL_KEY, null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "meet.google.com/x"),
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, "meet.google.com/x", null),
                 InvalidFileException.class);
         assertStatus(
-                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY.toUpperCase(Locale.ROOT)),
+                () -> storage.toStoredReference(
+                        AdminUploadPurpose.MATERIAL, MATERIAL_KEY.toUpperCase(Locale.ROOT), null),
                 InvalidFileException.class);
     }
 
     @Test
     void aKeyCannotBeStoredWhileStorageIsNotConfigured() {
         assertStatus(
-                () -> unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY),
+                () -> unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, null),
                 StorageNotConfiguredException.class);
     }
 
@@ -542,9 +567,9 @@ class StorageServiceTest {
 
     @Test
     void whatTheCleanupNeedsFromTheBucketNeedsAClient() {
-        assertStatus(() -> storage.listObjects(), StorageNotConfiguredException.class);
-        assertStatus(() -> storage.readCleanupOwner(), StorageNotConfiguredException.class);
-        assertStatus(() -> storage.writeCleanupOwner("id"), StorageNotConfiguredException.class);
+        assertStatus(() -> unconfigured().listObjects(), StorageNotConfiguredException.class);
+        assertStatus(() -> unconfigured().readCleanupOwner(), StorageNotConfiguredException.class);
+        assertStatus(() -> unconfigured().writeCleanupOwner("id"), StorageNotConfiguredException.class);
     }
 
     @Test
@@ -560,6 +585,92 @@ class StorageServiceTest {
                 .isTrue();
         assertThat(StorageService.isIssuedKey("materials/notes.pdf")).isFalse();
         assertThat(StorageService.isIssuedKey("backups/" + MATERIAL_KEY)).isFalse();
+    }
+
+    // --- files that were never uploaded ------------------------------------------------------------
+
+    @Test
+    void aKeyNothingWasUploadedUnderIsNotStored() {
+        when(client.headObject(any(HeadObjectRequest.class)))
+                .thenThrow(NoSuchKeyException.builder().statusCode(404).build());
+        String avatar = storage.presignAvatar(USER_ID, "image/png", 1024).objectKey();
+
+        assertStatus(() -> storage.toStoredAvatarKey(USER_ID, avatar, null), InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, null),
+                InvalidFileException.class);
+        assertStatus(() -> storage.toStoredContent("![a](" + POST_IMAGE_KEY + ")", null), InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredContent("![a](" + storage.resolveUrl(POST_IMAGE_KEY) + ")", "other content"),
+                InvalidFileException.class);
+    }
+
+    @Test
+    void aFileTheRecordAlreadyPointsAtIsNotLookedUpAgain() {
+        String avatar = storage.presignAvatar(USER_ID, "image/png", 1024).objectKey();
+        String content = "![a](" + POST_IMAGE_KEY + ")";
+
+        assertThat(storage.toStoredAvatarKey(USER_ID, avatar, avatar)).isEqualTo(avatar);
+        assertThat(storage.toStoredReference(
+                        AdminUploadPurpose.MATERIAL, storage.resolveUrl(MATERIAL_KEY), MATERIAL_KEY))
+                .isEqualTo(MATERIAL_KEY);
+        assertThat(storage.toStoredContent(content + " edited", content)).isEqualTo(content + " edited");
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, "https://youtu.be/abc", MATERIAL_KEY))
+                .isEqualTo("https://youtu.be/abc");
+
+        verify(client, never()).headObject(any(HeadObjectRequest.class));
+    }
+
+    @Test
+    void aPictureUsedTwiceIsLookedUpOnce() {
+        storage.toStoredContent("![a](" + POST_IMAGE_KEY + ") ![b](" + POST_IMAGE_KEY + ")", null);
+
+        verify(client, times(1)).headObject(any(HeadObjectRequest.class));
+    }
+
+    @Test
+    void aFileOfAnotherSizeOrTypeThanAllowedIsNotStored() {
+        for (HeadObjectResponse object : List.of(
+                uploaded(0, "image/png"),
+                uploaded(6L * 1024 * 1024, "image/png"),
+                uploaded(1024, "image/jpeg"),
+                uploaded(1024, "text/html"),
+                HeadObjectResponse.builder().build())) {
+            doReturn(object).when(client).headObject(any(HeadObjectRequest.class));
+            assertStatus(
+                    () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, COVER_KEY, null),
+                    InvalidFileException.class);
+        }
+    }
+
+    @Test
+    void storageThatDoesNotAnswerIsNotMistakenForAMissingFile() {
+        for (Exception failure : List.of(
+                S3Exception.builder().statusCode(403).build(),
+                S3Exception.builder().statusCode(500).build(),
+                SdkClientException.create("timed out"))) {
+            doThrow(failure).when(client).headObject(any(HeadObjectRequest.class));
+            assertStatus(
+                    () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, COVER_KEY, null),
+                    StorageUnavailableException.class);
+        }
+    }
+
+    private static HeadObjectResponse uploaded(long size, String contentType) {
+        return HeadObjectResponse.builder()
+                .contentLength(size)
+                .contentType(contentType)
+                .build();
+    }
+
+    private static String contentTypeOf(String key) {
+        return switch (key.substring(key.lastIndexOf('.') + 1)) {
+            case "pdf" -> "application/pdf";
+            case "webm" -> "video/webm";
+            case "jpg" -> "image/jpeg";
+            case "webp" -> "image/webp";
+            default -> "image/png";
+        };
     }
 
     // --- helpers -----------------------------------------------------------------------------------

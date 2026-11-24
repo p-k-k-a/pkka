@@ -61,7 +61,8 @@ public class AdminMaterialService {
         material.setTitle(request.title());
         material.setDescription(request.description());
         material.setType(request.type());
-        material.setUrl(storageService.toStoredReference(AdminUploadPurpose.MATERIAL, request.url()));
+        material.setUrl(
+                storageService.toStoredReference(AdminUploadPurpose.MATERIAL, request.url(), material.getUrl()));
         if (!keepsDeletedEvent(material, request.eventId())) {
             material.linkEvent(resolveEvent(request.eventId()));
         }

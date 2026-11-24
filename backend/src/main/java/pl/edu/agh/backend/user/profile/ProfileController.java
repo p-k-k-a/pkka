@@ -47,7 +47,7 @@ public class ProfileController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(
             responseCode = "503",
-            description = "avatarKey was sent but object storage is not configured",
+            description = "a new avatarKey was sent but object storage is not configured or not available",
             content = @Content)
     public ProfileResponse updateMyProfile(Caller caller, @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(caller.requireKeycloakId(), request);

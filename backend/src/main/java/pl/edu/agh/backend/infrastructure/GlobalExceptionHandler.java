@@ -26,6 +26,7 @@ import pl.edu.agh.backend.storage.FileTooLargeException;
 import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.InvalidPostContentException;
 import pl.edu.agh.backend.storage.StorageNotConfiguredException;
+import pl.edu.agh.backend.storage.StorageUnavailableException;
 import pl.edu.agh.backend.storage.UnsupportedFileTypeException;
 import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
 import pl.edu.agh.backend.survey.InvalidSurveyException;
@@ -189,6 +190,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleStorageNotConfigured(StorageNotConfiguredException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
         problem.setTitle("File storage not configured");
+        return problem;
+    }
+
+    @ExceptionHandler(StorageUnavailableException.class)
+    public ProblemDetail handleStorageUnavailable(StorageUnavailableException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problem.setTitle("File storage not available");
         return problem;
     }
 

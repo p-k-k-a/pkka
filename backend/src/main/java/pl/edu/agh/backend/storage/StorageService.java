@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,14 +21,18 @@ import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -54,6 +59,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
  * <p>Built by {@link StorageConfig}. When R2 is not configured the presigner is {@code null}: uploads fail with
  * 503 and keys cannot be resolved, but external {@code http(s)} URLs keep passing through untouched.
  */
+@Slf4j
 public class StorageService implements AutoCloseable {
 
     /**
@@ -71,6 +77,9 @@ public class StorageService implements AutoCloseable {
      * caches in the apps effective (a fresh signature would change the URL on every request).
      */
     static final Duration MIN_REMAINING_VALIDITY = Duration.ofMinutes(10);
+
+    /** A save waits for R2 at most this long per newly attached file. */
+    private static final Duration LOOKUP_TIMEOUT = Duration.ofSeconds(5);
 
     private static final int MAX_CACHED_URLS = 5_000;
 
@@ -92,14 +101,14 @@ public class StorageService implements AutoCloseable {
     private final Cache<String, String> downloadUrls;
     private final RestClient restClient;
 
-    /** Without a client: everything works except what the cleanup needs from the bucket. */
+    /** Without a client: nothing that has to ask the bucket works (newly attached files, the cleanup). */
     StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
         this(presigner, null, bucket, endpoint, clock);
     }
 
     /**
      * @param presigner {@code null} when storage is not configured
-     * @param client only needed by the cleanup (listing, the owner marker); {@code null} when storage is not
+     * @param client looks up newly attached files and serves the cleanup; {@code null} when storage is not
      *     configured
      * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.eu.r2.cloudflarestorage.com}
      */
@@ -147,10 +156,13 @@ public class StorageService implements AutoCloseable {
      * Turns the {@code avatarKey} a user sent into what gets stored: {@code null} for blank (removes the avatar),
      * otherwise the trimmed key, which must be an avatar this service issued for {@code userId}.
      *
-     * @throws InvalidFileException when the key is not the user's own avatar upload
+     * @param current what the record holds now ({@code null} for a new one); a file it already points at is
+     *     not looked up again, so an unchanged record can be saved while storage is down
+     * @throws InvalidFileException when the key is not the user's own avatar upload, or nothing was uploaded
+     * @throws StorageUnavailableException when storage does not answer
      * @throws StorageNotConfiguredException for a key while storage is not configured
      */
-    public String toStoredAvatarKey(UUID userId, String input) {
+    public String toStoredAvatarKey(UUID userId, String input, String current) {
         if (input == null || input.isBlank()) {
             return null;
         }
@@ -159,6 +171,9 @@ public class StorageService implements AutoCloseable {
         if (!isAvatarKeyOwnedBy(userId, key)) {
             throw new InvalidFileException(
                     "avatarKey must be the objectKey of an avatar uploaded through the avatar presign endpoint");
+        }
+        if (!key.equals(current)) {
+            requireUploaded(key);
         }
         return key;
     }
@@ -169,9 +184,13 @@ public class StorageService implements AutoCloseable {
      * (what the read endpoints return, and clients echo back when an edit form is saved unchanged) is reduced to
      * its key, so an expiring link never lands in the database.
      *
-     * @throws InvalidFileException for anything else, {@link StorageNotConfiguredException} for a key while storage is not configured
+     * @param current what the record holds now ({@code null} for a new one); a file it already points at is
+     *     not looked up again, so an unchanged record can be saved while storage is down
+     * @throws InvalidFileException for anything else, or a key nothing was uploaded under
+     * @throws StorageNotConfiguredException for a key while storage is not configured
+     * @throws StorageUnavailableException when storage does not answer
      */
-    public String toStoredReference(AdminUploadPurpose purpose, String input) {
+    public String toStoredReference(AdminUploadPurpose purpose, String input, String current) {
         if (input == null || input.isBlank()) {
             return null;
         }
@@ -189,6 +208,9 @@ public class StorageService implements AutoCloseable {
                     "Expected an http(s) URL or the objectKey of a file uploaded for " + purpose);
         }
         requireConfigured();
+        if (!value.equals(current)) {
+            requireUploaded(value);
+        }
         return value;
     }
 
@@ -198,15 +220,30 @@ public class StorageService implements AutoCloseable {
      * reduced to its object key here, so an expiring link never lands in the database. Links to other sites
      * are kept as they are.
      *
-     * @throws InvalidFileException for a target that would be dead on arrival: a signed URL of any other file
+     * @param current what the record holds now ({@code null} for a new one); a file it already points at is
+     *     not looked up again, so an unchanged record can be saved while storage is down
+     * @throws InvalidFileException for a picture nothing was uploaded under, or a target that would be dead on arrival: a signed URL of any other file
      *     in our bucket (it expires within the hour), or a browser-local {@code blob:} preview of a picture
      *     that was never attached
+     * @throws StorageUnavailableException when storage does not answer
      */
-    public String toStoredContent(String markdown) {
+    public String toStoredContent(String markdown, String current) {
         if (markdown == null) {
             return null;
         }
-        return replaceMarkdownTargets(markdown, this::toStoredContentTarget);
+        Set<String> newPictures = new LinkedHashSet<>();
+        String stored = replaceMarkdownTargets(markdown, target -> {
+            String value = toStoredContentTarget(target);
+            if (UploadCategory.POST_IMAGE.isValidKey(value) && (current == null || !current.contains(value))) {
+                newPictures.add(value);
+            }
+            return value;
+        });
+        // Without storage a bare key stays as it is, like every other target.
+        if (isConfigured()) {
+            newPictures.forEach(this::requireUploaded);
+        }
+        return stored;
     }
 
     private String toStoredContentTarget(String target) {
@@ -248,6 +285,46 @@ public class StorageService implements AutoCloseable {
         return MARKDOWN_TARGET
                 .matcher(markdown)
                 .replaceAll(match -> Matcher.quoteReplacement(replacement.apply(match.group())));
+    }
+
+    /**
+     * Asks R2 (HEAD, headers only) whether the file behind a key that is about to be stored was really
+     * uploaded. Size and type are signed into the upload URL; checking them here as well means nothing that
+     * reached the bucket another way gets attached.
+     */
+    void requireUploaded(String key) {
+        requireClient();
+        UploadCategory category = UploadCategory.ofKey(key)
+                .orElseThrow(() -> new InvalidFileException("Not the objectKey of an upload: " + key));
+        HeadObjectResponse object;
+        try {
+            object = client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .overrideConfiguration(request -> request.apiCallTimeout(LOOKUP_TIMEOUT))
+                    .build());
+        } catch (S3Exception ex) {
+            if (ex.statusCode() == HttpStatus.NOT_FOUND.value()) {
+                throw new InvalidFileException("No file was uploaded under " + key);
+            }
+            throw unavailable(ex);
+        } catch (SdkException ex) {
+            throw unavailable(ex);
+        }
+        long size = object.contentLength() == null ? 0 : object.contentLength();
+        if (size <= 0 || size > category.maxBytes()) {
+            throw new InvalidFileException("The size of the file uploaded under " + key + " is not allowed");
+        }
+        String type = object.contentType() == null ? "" : object.contentType().toLowerCase(Locale.ROOT);
+        String extension = key.substring(key.lastIndexOf('.') + 1);
+        if (!category.extensionFor(type).equals(Optional.of(extension))) {
+            throw new InvalidFileException("The file uploaded under " + key + " is of another type");
+        }
+    }
+
+    private static StorageUnavailableException unavailable(SdkException ex) {
+        log.warn("Object storage could not look up a file", ex);
+        return new StorageUnavailableException(ex);
     }
 
     public void delete(String key) {
@@ -461,12 +538,7 @@ public class StorageService implements AutoCloseable {
     }
 
     private static boolean isKnownKey(String value) {
-        for (UploadCategory category : UploadCategory.values()) {
-            if (category.isValidKey(value)) {
-                return true;
-            }
-        }
-        return false;
+        return UploadCategory.ofKey(value).isPresent();
     }
 
     private static boolean isHttpUrl(String value) {

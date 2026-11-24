@@ -61,7 +61,7 @@ public class ProfileService {
             user.setPhoneNumber(blankToNull(request.phoneNumber()));
         }
         if (request.avatarKey() != null) {
-            user.setAvatarKey(storageService.toStoredAvatarKey(user.getId(), request.avatarKey()));
+            user.setAvatarKey(storageService.toStoredAvatarKey(user.getId(), request.avatarKey(), user.getAvatarKey()));
         }
         if (request.willingToMentor() != null) {
             user.setWillingToMentor(request.willingToMentor());

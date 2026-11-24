@@ -148,7 +148,7 @@ class AdminEventServiceTest {
         User author = new User();
         when(callerUserService.getOrCreate(ADMIN)).thenReturn(author);
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, "covers/events/a.png"))
+        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, "covers/events/a.png", null))
                 .thenReturn("covers/events/a.png");
         when(storageService.resolveForEditing("covers/events/a.png")).thenReturn("https://r2.example/signed");
 
@@ -163,7 +163,7 @@ class AdminEventServiceTest {
     @Test
     void createRejectsACoverReferenceTooLongToStore() {
         String tooLong = "https://example.com/" + "a".repeat(600);
-        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, tooLong))
+        when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, tooLong, null))
                 .thenReturn(tooLong);
 
         assertThatThrownBy(() -> adminEventService.create(ADMIN, requestWithCover(tooLong)))
