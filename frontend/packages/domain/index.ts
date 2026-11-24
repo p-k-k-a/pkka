@@ -9,7 +9,6 @@ export * from "./format/plural";
 export * from "./labels/application";
 export * from "./labels/events";
 export * from "./materials/materials";
-export * from "./posts/cover";
 export * from "./profile/avatar";
 export * from "./profile/contacts";
 export * from "./profile/links";
