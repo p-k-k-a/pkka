@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -153,6 +155,33 @@ class StorageEndpointTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void oneUserGetsALimitedNumberOfAvatarUploads() throws Exception {
+        User user = savedUser();
+        String valid = "{\"contentType\":\"image/webp\",\"sizeBytes\":4096}";
+
+        // rejected requests do not use the limit up
+        avatarPresign(user, "{\"contentType\":\"text/html\",\"sizeBytes\":4096}")
+                .andExpect(status().isUnsupportedMediaType());
+        for (int i = 0; i < UploadLimiter.Kind.AVATAR.maxPerWindow(); i++) {
+            avatarPresign(user, valid).andExpect(status().isOk());
+        }
+
+        avatarPresign(user, valid)
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(jsonPath("$.title").value("Too many uploads"));
+        avatarPresign(savedUser(), valid).andExpect(status().isOk());
+    }
+
+    private ResultActions avatarPresign(User user, String body) throws Exception {
+        return mockMvc.perform(post("/api/profiles/me/avatar/presign")
+                .with(JwtTestSupport.asUser(user.getKeycloakId()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
     }
 
     @Test

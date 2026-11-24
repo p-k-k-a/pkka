@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/admin/files")
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminFileController {
 
     private final StorageService storageService;
+    private final UploadLimiter uploadLimiter;
 
     @PostMapping("/presign")
     @Operation(
@@ -30,8 +32,14 @@ public class AdminFileController {
     @ApiResponse(responseCode = "200", description = "Upload URL issued")
     @ApiResponse(responseCode = "413", description = "File larger than the limit for this purpose", content = @Content)
     @ApiResponse(responseCode = "415", description = "Content type not allowed for this purpose", content = @Content)
+    @ApiResponse(responseCode = "429", description = "Too many uploads within 24 hours", content = @Content)
     @ApiResponse(responseCode = "503", description = "Object storage is not configured", content = @Content)
-    public PresignedUploadResponse presignAdminUpload(@Valid @RequestBody AdminPresignUploadRequest request) {
-        return storageService.presignAdminUpload(request.purpose(), request.contentType(), request.sizeBytes());
+    public PresignedUploadResponse presignAdminUpload(
+            Caller caller, @Valid @RequestBody AdminPresignUploadRequest request) {
+        PresignedUploadResponse upload =
+                storageService.presignAdminUpload(request.purpose(), request.contentType(), request.sizeBytes());
+        // after signing, so a request that is rejected anyway does not count
+        uploadLimiter.count(UploadLimiter.Kind.ADMIN, caller.requireKeycloakId());
+        return upload;
     }
 }

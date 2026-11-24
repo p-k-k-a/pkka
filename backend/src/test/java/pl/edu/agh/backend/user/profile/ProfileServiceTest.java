@@ -24,6 +24,7 @@ import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
 import pl.edu.agh.backend.storage.StorageNotConfiguredException;
 import pl.edu.agh.backend.storage.StorageService;
+import pl.edu.agh.backend.storage.UploadLimiter;
 import pl.edu.agh.backend.user.AlumniTag;
 import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
@@ -44,6 +45,9 @@ class ProfileServiceTest {
 
     @Mock
     private StorageService storageService;
+
+    @Mock
+    private UploadLimiter uploadLimiter;
 
     @InjectMocks
     private ProfileService profileService;
@@ -137,6 +141,7 @@ class ProfileServiceTest {
         when(storageService.presignAvatar(user.getId(), "image/png", 1024L)).thenReturn(expected);
 
         assertThat(profileService.presignAvatarUpload("kc-1", request)).isSameAs(expected);
+        verify(uploadLimiter).count(UploadLimiter.Kind.AVATAR, "kc-1");
     }
 
     @Test
