@@ -7,6 +7,7 @@ import { topicGroupMemberCountLabel } from "@pkka/domain";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MembershipButton } from "@/components/topic-groups/membership-button";
+import { CoordinatorBadge } from "@/components/topic-groups/coordinator-badge";
 
 function GroupCard({ group }: { group: TopicGroupResponse }) {
   return (
@@ -32,7 +33,7 @@ function GroupCard({ group }: { group: TopicGroupResponse }) {
           {topicGroupMemberCountLabel(group.memberCount)}
         </span>
         {group.coordinator ? (
-          <span className="text-muted-foreground text-sm font-semibold">Koordynujesz</span>
+          <CoordinatorBadge label="Koordynujesz" />
         ) : (
           <MembershipButton group={group} />
         )}

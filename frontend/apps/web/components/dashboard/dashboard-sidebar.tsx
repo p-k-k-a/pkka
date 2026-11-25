@@ -12,11 +12,17 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { TopicGroupRequestStatus, useListAdminTopicGroupRequests } from "@pkka/api";
+import {
+  ApplicationStatus,
+  TopicGroupRequestStatus,
+  useListAdminApplications,
+  useListAdminTopicGroupRequests,
+} from "@pkka/api";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const APPLICATIONS_HREF = "/dashboard/applications";
 const ADMIN_GROUPS_HREF = "/dashboard/admin/groups";
 
 type SidebarItem = {
@@ -68,7 +74,7 @@ const userItems: SidebarItem[] = [
 
 const adminItems: SidebarItem[] = [
   {
-    href: "/dashboard/applications",
+    href: APPLICATIONS_HREF,
     label: "Wnioski",
     icon: Inbox,
     match: (pathname) => pathname.startsWith("/dashboard/applications"),
@@ -105,18 +111,26 @@ const adminItems: SidebarItem[] = [
   },
 ];
 
-function usePendingTopicGroupRequests(admin: boolean) {
-  const { data } = useListAdminTopicGroupRequests(
-    { status: TopicGroupRequestStatus.UNDER_REVIEW, size: 1 },
-    { query: { enabled: admin } },
+function usePendingCounts(admin: boolean): Record<string, number> {
+  const query = { query: { enabled: admin } };
+  const { data: applications } = useListAdminApplications(
+    { status: ApplicationStatus.UNDER_REVIEW, size: 1 },
+    query,
   );
-  return data?.data.totalElements ?? 0;
+  const { data: groupRequests } = useListAdminTopicGroupRequests(
+    { status: TopicGroupRequestStatus.UNDER_REVIEW, size: 1 },
+    query,
+  );
+  return {
+    [APPLICATIONS_HREF]: applications?.data.totalElements ?? 0,
+    [ADMIN_GROUPS_HREF]: groupRequests?.data.totalElements ?? 0,
+  };
 }
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
-  const pendingGroupRequests = usePendingTopicGroupRequests(admin);
+  const pendingCounts = usePendingCounts(admin);
 
   // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
@@ -145,6 +159,7 @@ export function DashboardSidebar() {
         ) : (
           items.map(({ href, label, icon: Icon, match }) => {
             const isActive = match(pathname);
+            const pending = admin ? (pendingCounts[href] ?? 0) : 0;
 
             return (
               <Link
@@ -160,12 +175,12 @@ export function DashboardSidebar() {
               >
                 <span className="relative shrink-0">
                   <Icon className="size-4" aria-hidden="true" />
-                  {href === ADMIN_GROUPS_HREF && pendingGroupRequests > 0 ? (
+                  {pending > 0 ? (
                     <span
-                      aria-label={`Wnioski oczekujące na decyzję: ${pendingGroupRequests}`}
+                      aria-label={`Oczekujące na decyzję: ${pending}`}
                       className="bg-primary text-primary-foreground ring-muted absolute -top-2 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2"
                     >
-                      {pendingGroupRequests}
+                      {pending > 99 ? "99+" : pending}
                     </span>
                   ) : null}
                 </span>

@@ -14,6 +14,7 @@ import { DetailBackLink } from "@/components/content/detail-back-link";
 import { DiscordBanner } from "@/components/topic-groups/discord-banner";
 import { MembershipButton } from "@/components/topic-groups/membership-button";
 import { useAuth } from "@/lib/auth-context";
+import { CoordinatorBadge } from "@/components/topic-groups/coordinator-badge";
 
 const BACK_HREF = "/dashboard/groups";
 const BACK_LABEL = "Wróć do grup";
@@ -27,12 +28,8 @@ function MemberItem({ member }: { member: TopicGroupMemberResponse }) {
         className="hover:bg-muted focus-visible:ring-ring flex items-center gap-3 p-3 focus-visible:ring-2 focus-visible:outline-none"
       >
         <Avatar fallback={name} alt="" size="md" />
-        <span className="min-w-0">
-          <span className="text-foreground block font-semibold">{name}</span>
-          {member.coordinator ? (
-            <span className="text-muted-foreground block text-sm">Koordynator</span>
-          ) : null}
-        </span>
+        <span className="text-foreground min-w-0 truncate font-semibold">{name}</span>
+        {member.coordinator ? <CoordinatorBadge label="Koordynator" /> : null}
       </Link>
     </li>
   );

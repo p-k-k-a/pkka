@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { CoordinatorBadge } from "@/components/topic-groups/coordinator-badge";
 
 const PAGE_SIZE = 20;
 
@@ -40,22 +41,18 @@ function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
   }
 
   return (
-    <ul className="border-border grid grid-cols-2 gap-x-2 gap-y-0.5 border-t pt-3 sm:grid-cols-3">
+    <ul className="border-border flex flex-wrap gap-x-3 gap-y-1 border-t pt-3">
       {data.data.map((member) => {
         const name = topicGroupMemberName(member);
         return (
-          <li key={member.id} className="min-w-0">
+          <li key={member.id}>
             <Link
               href={`/dashboard/admin/alumni/${member.id}`}
               className="hover:bg-muted focus-visible:ring-ring flex items-center gap-2 rounded-md px-1.5 py-1 focus-visible:ring-2 focus-visible:outline-none"
             >
               <Avatar fallback={name} alt="" size="sm" />
-              <span className="text-foreground truncate text-sm font-medium">{name}</span>
-              {member.coordinator ? (
-                <span className="bg-primary/15 text-secondary-foreground dark:text-primary shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold">
-                  Koordynator
-                </span>
-              ) : null}
+              <span className="text-foreground text-sm font-medium whitespace-nowrap">{name}</span>
+              {member.coordinator ? <CoordinatorBadge label="Koordynator" /> : null}
             </Link>
           </li>
         );
