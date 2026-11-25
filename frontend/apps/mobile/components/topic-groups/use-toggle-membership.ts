@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
 import {
   ApiError,
   getGetTopicGroupQueryKey,
@@ -13,17 +11,10 @@ import { topicGroupMembershipErrorMessage } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert } from "react-native";
 
-type MembershipButtonProps = {
-  group: TopicGroupResponse;
-  prominent?: boolean;
-  className?: string;
-};
-
-export function MembershipButton({ group, prominent, className }: MembershipButtonProps) {
+export function useToggleMembership(group: TopicGroupResponse) {
   const queryClient = useQueryClient();
   const join = useJoinTopicGroup();
   const leave = useLeaveTopicGroup();
-  const isPending = join.isPending || leave.isPending;
 
   const toggle = async () => {
     const joining = !group.member;
@@ -45,25 +36,5 @@ export function MembershipButton({ group, prominent, className }: MembershipButt
     ]);
   };
 
-  if (group.coordinator) return null;
-
-  return (
-    <Button
-      variant={group.member ? (prominent ? "outline" : "ghost") : prominent ? "default" : "outline"}
-      size="sm"
-      onPress={toggle}
-      disabled={isPending}
-      className={className}
-    >
-      <Text className="font-semibold">
-        {group.member
-          ? isPending
-            ? "Opuszczanie…"
-            : "Opuść"
-          : isPending
-            ? "Dołączanie…"
-            : "Dołącz"}
-      </Text>
-    </Button>
-  );
+  return { toggle, isPending: join.isPending || leave.isPending };
 }
