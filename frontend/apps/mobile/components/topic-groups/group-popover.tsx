@@ -221,9 +221,9 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   accessibilityLabel="Zamknij"
                   onPress={close}
                   hitSlop={8}
-                  className="bg-muted dark:bg-input size-9 items-center justify-center rounded-full active:opacity-70"
+                  className="active:bg-muted dark:active:bg-input size-10 items-center justify-center rounded-full"
                 >
-                  <X size={18} color={theme.mutedForeground} />
+                  <X size={22} color={theme.foreground} />
                 </Pressable>
               </View>
 
