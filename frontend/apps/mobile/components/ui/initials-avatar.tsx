@@ -4,6 +4,7 @@ import { avatarColors, avatarInitials } from "@pkka/domain";
 import { View } from "react-native";
 
 const SIZES = {
+  "2xs": { box: "size-6", text: "text-[9px]" },
   xs: { box: "size-8", text: "text-xs" },
   sm: { box: "size-10", text: "text-sm" },
   md: { box: "size-16", text: "text-lg" },

@@ -16,7 +16,7 @@ export function DiscordBanner() {
 
   if (status === DiscordStatus.NOT_LINKED) {
     return (
-      <View className="bg-muted dark:bg-card gap-3 rounded-2xl p-5">
+      <View className="bg-muted dark:bg-input gap-3 rounded-2xl p-5">
         <Text className="text-foreground text-base font-semibold">
           Podepnij Discorda, żeby wejść na kanał grupy
         </Text>
@@ -30,7 +30,7 @@ export function DiscordBanner() {
 
   if (status === DiscordStatus.NOT_ON_SERVER && inviteUrl) {
     return (
-      <View className="bg-muted dark:bg-card gap-3 rounded-2xl p-5">
+      <View className="bg-muted dark:bg-input gap-3 rounded-2xl p-5">
         <View className="gap-1">
           <Text className="text-foreground text-base font-semibold">
             Nie ma Cię na serwerze klubu

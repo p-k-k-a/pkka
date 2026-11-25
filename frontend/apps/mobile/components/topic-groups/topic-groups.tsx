@@ -8,7 +8,7 @@ import {
   useListTopicGroups,
 } from "@pkka/api";
 import { router } from "expo-router";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
 
@@ -16,28 +16,27 @@ function openRequestForm() {
   router.push("/topic-groups/request");
 }
 
-function ProposeGroupRow() {
+function ProposeGroupCard() {
   const theme = useThemeColors();
   return (
     <Pressable
       role="button"
       onPress={openRequestForm}
-      className="bg-muted flex-row items-center gap-3 rounded-xl px-4 py-4 active:opacity-70"
+      className="border-muted-foreground/25 dark:border-border flex-row items-center gap-3 rounded-[20px] border-[1.5px] border-dashed p-3.5 active:opacity-70"
     >
-      <View className="bg-primary h-10 w-10 items-center justify-center rounded-full">
-        <Plus size={20} color={theme.primaryForeground} />
+      <View className="border-primary size-11 items-center justify-center rounded-xl border-[1.5px] border-dashed">
+        <Plus size={20} color={theme.primary} />
       </View>
       <View className="flex-1 gap-0.5">
-        <Text className="text-foreground text-base font-semibold">Brakuje grupy dla Ciebie?</Text>
-        <Text className="text-muted-foreground text-sm">Zaproponuj własną</Text>
+        <Text className="text-foreground text-[15px] font-semibold">Brakuje grupy dla Ciebie?</Text>
+        <Text className="text-muted-foreground text-[13px]">Zaproponuj własną</Text>
       </View>
-      <ChevronRight size={20} color={theme.foreground} />
     </Pressable>
   );
 }
 
 export function TopicGroups() {
-  const { data, isLoading, isError, refetch } = useListMyTopicGroupRequests();
+  const { data, isLoading, refetch } = useListMyTopicGroupRequests();
   const groups = useListTopicGroups({ size: 100 });
   const [refreshing, setRefreshing] = useState(false);
   const latest = data?.data[0];
@@ -64,30 +63,21 @@ export function TopicGroups() {
           Grupy tematyczne
         </Text>
         <Text className="text-muted-foreground text-sm leading-relaxed">
-          Dołącz do alumnów o podobnych zainteresowaniach.
+          Dołącz do dyskusji na interesujące Cię tematy z innymi alumnami!
         </Text>
       </View>
 
-      {isLoading ? (
+      {isLoading || groups.isLoading ? (
         <View className="py-16">
           <ActivityIndicator />
         </View>
-      ) : isError && !latest ? (
-        <Text className="text-muted-foreground py-16 text-center text-sm">
-          Nie udało się załadować Twojego wniosku.
-        </Text>
       ) : (
-        <View className="gap-4">
-          {latest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : <ProposeGroupRow />}
+        <>
+          <GroupList groups={groups.data?.data.content} isError={groups.isError} />
           {latest ? <RequestCard request={latest} /> : null}
-        </View>
+          {latest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : <ProposeGroupCard />}
+        </>
       )}
-
-      <GroupList
-        groups={groups.data?.data.content}
-        isLoading={groups.isLoading}
-        isError={groups.isError}
-      />
     </ScrollView>
   );
 }
