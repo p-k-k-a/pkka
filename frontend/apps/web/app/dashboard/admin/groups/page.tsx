@@ -1,5 +1,5 @@
-import { TopicGroupRequestsList } from "@/components/admin/topic-group-requests-list";
+import { AdminTopicGroups } from "@/components/admin/admin-topic-groups";
 
 export default function DashboardAdminGroupsPage() {
-  return <TopicGroupRequestsList />;
+  return <AdminTopicGroups />;
 }
