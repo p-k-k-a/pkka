@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.topicgroup;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -46,6 +47,18 @@ public class AdminTopicGroupService {
                         discordGroupChannels.isConfigured(),
                         TopicGroupService.discordChannelUrl(group, guildId())))
                 .orElseThrow(TopicGroupNotFoundException::new);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TopicGroupMemberResponse> members(UUID groupId) {
+        TopicGroup group =
+                topicGroupRepository.findWithCoordinatorById(groupId).orElseThrow(TopicGroupNotFoundException::new);
+        return membershipRepository.findByGroupIdOrderByJoinedAtAsc(groupId).stream()
+                .map(membership -> TopicGroupMemberResponse.withName(
+                        membership,
+                        TopicGroupService.coordinates(
+                                group, membership.getUser().getId())))
+                .toList();
     }
 
     private Optional<String> guildId() {

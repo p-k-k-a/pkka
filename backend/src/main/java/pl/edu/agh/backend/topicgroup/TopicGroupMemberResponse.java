@@ -17,8 +17,16 @@ public record TopicGroupMemberResponse(
         boolean coordinator) {
 
     static TopicGroupMemberResponse from(TopicGroupMembership membership, boolean coordinator) {
+        return build(membership, coordinator, membership.getUser().isShowName());
+    }
+
+    static TopicGroupMemberResponse withName(TopicGroupMembership membership, boolean coordinator) {
+        return build(membership, coordinator, true);
+    }
+
+    private static TopicGroupMemberResponse build(
+            TopicGroupMembership membership, boolean coordinator, boolean showName) {
         User user = membership.getUser();
-        boolean showName = user.isShowName();
         return new TopicGroupMemberResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,

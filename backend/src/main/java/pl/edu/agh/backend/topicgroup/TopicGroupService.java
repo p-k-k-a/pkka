@@ -105,7 +105,7 @@ public class TopicGroupService {
                 .toList();
     }
 
-    private static boolean coordinates(TopicGroup group, UUID userId) {
+    static boolean coordinates(TopicGroup group, UUID userId) {
         return group.getCoordinator() != null
                 && userId.equals(group.getCoordinator().getId());
     }

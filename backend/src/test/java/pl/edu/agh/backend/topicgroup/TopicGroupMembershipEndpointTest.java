@@ -43,6 +43,7 @@ import pl.edu.agh.backend.user.UserRepository;
 class TopicGroupMembershipEndpointTest {
 
     private static final String GROUPS = "/api/alumni/topic-groups";
+    private static final String ADMIN_GROUPS = "/api/admin/topic-groups";
 
     @Container
     @ServiceConnection
@@ -199,6 +200,31 @@ class TopicGroupMembershipEndpointTest {
     }
 
     @Test
+    void clubAdminSeesTheMembersWithTheirNamesWithoutTheAlumnRole() throws Exception {
+        piotr.setShowName(false);
+        userRepository.save(piotr);
+        join(piotr).andExpect(status().isNoContent());
+
+        mockMvc.perform(get(ADMIN_GROUPS + "/{id}/members", group.getId()).with(asAdminOnly()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].firstName").value("Anna"))
+                .andExpect(jsonPath("$[0].coordinator").value(true))
+                .andExpect(jsonPath("$[1].firstName").value("Piotr"))
+                .andExpect(jsonPath("$[1].lastName").value("Zieliński"))
+                .andExpect(jsonPath("$[1].coordinator").value(false));
+    }
+
+    @Test
+    void theAdminMembersListIsOnlyForAdminsAndKnownGroups() throws Exception {
+        mockMvc.perform(get(ADMIN_GROUPS + "/{id}/members", group.getId())
+                        .with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get(ADMIN_GROUPS + "/{id}/members", UUID.randomUUID()).with(asAdminOnly()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void clubAdminJoinsLikeAnAlumn() throws Exception {
         User admin = user("Adam", "Admin");
 
@@ -252,6 +278,11 @@ class TopicGroupMembershipEndpointTest {
 
     private ResultActions members(RequestPostProcessor caller) throws Exception {
         return mockMvc.perform(get(GROUPS + "/{id}/members", group.getId()).with(caller));
+    }
+
+    private RequestPostProcessor asAdminOnly() {
+        return jwt().jwt(token -> token.subject(user("Adam", "Admin").getKeycloakId()))
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
     }
 
     private static RequestPostProcessor asClubAdmin(User admin) {
