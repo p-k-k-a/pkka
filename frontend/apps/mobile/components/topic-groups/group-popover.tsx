@@ -21,16 +21,9 @@ import {
   topicGroupMemberName,
   topicGroupMemberShortName,
 } from "@pkka/domain";
+import { DiscordIcon } from "@pkka/icons/native";
 import { router } from "expo-router";
-import {
-  ArrowUpRight,
-  ChevronDown,
-  ChevronRight,
-  LogOut,
-  MessageCircle,
-  Users,
-  X,
-} from "lucide-react-native";
+import { ArrowUpRight, ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
   Linking,
@@ -320,24 +313,14 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                     <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
                   </Button>
                 ) : discordUrl ? (
-                  <Pressable
-                    role="link"
+                  <Button
+                    variant="outline"
                     onPress={() => void Linking.openURL(discordUrl)}
-                    className="bg-band flex-row items-center gap-3 rounded-[14px] py-2.5 pl-3 pr-2.5 active:opacity-80"
+                    className="w-full"
                   >
-                    <View className="size-9 items-center justify-center rounded-[10px] bg-white/10">
-                      <MessageCircle size={18} color={theme.bandForeground} />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-band-foreground text-sm font-semibold">
-                        Serwer Discord
-                      </Text>
-                      <Text className="text-band-foreground/70 text-xs">Otwórz kanał grupy</Text>
-                    </View>
-                    <View className="bg-primary size-11 items-center justify-center rounded-full">
-                      <ArrowUpRight size={20} color={theme.primaryForeground} />
-                    </View>
-                  </Pressable>
+                    <DiscordIcon size={18} color={theme.foreground} />
+                    <Text className="font-semibold">Otwórz kanał na Discordzie</Text>
+                  </Button>
                 ) : (
                   <DiscordBanner />
                 )}
