@@ -131,8 +131,9 @@ Backend sam pilnuje dwóch rodzajów ról: `@Absolwent` (z `/setup`) i ról grup
 - Koordynator dostaje zarządzanie wiadomościami na kanale swojej grupy także wtedy, gdy podpiął Discorda później.
 - Usunięcie konta zdejmuje oba rodzaje ról.
 
-Synchronizacja idzie przy `GET /api/me/discord` (najwyżej raz na minutę na użytkownika) i co 15 minut dla wszystkich
-z podpiętym Discordem. Żeby nie czekać, ustaw w `backend/.env` `DISCORD_ROLE_SYNC_CRON=0 * * * * *` (co minutę).
+Synchronizacja idzie od razu po dołączeniu do koła i wyjściu z niego, przy `GET /api/me/discord` (najwyżej raz na
+minutę na użytkownika) i co 15 minut dla wszystkich z podpiętym Discordem. Żeby nie czekać na zadanie cykliczne, ustaw
+w `backend/.env` `DISCORD_ROLE_SYNC_CRON=0 * * * * *` (co minutę).
 
 `GET /api/me/discord` zwraca `status`: `NOT_LINKED`, `NOT_ON_SERVER`, `ON_SERVER` albo `UNKNOWN`, gdy Discord nie
 odpowiada lub bot nie jest skonfigurowany. Przy `NOT_ON_SERVER` dochodzi `inviteUrl`: bot tworzy stałe zaproszenie
