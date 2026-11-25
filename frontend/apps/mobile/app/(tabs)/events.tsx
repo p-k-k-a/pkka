@@ -14,8 +14,8 @@ import { useAuth } from "@/lib/auth-context";
 import { END_REACHED_THRESHOLD, nextPageParam, pageItems } from "@/lib/pagination";
 import { useThemeColors } from "@/lib/theme";
 import { Audience, EventTimeframe, useListEventsInfinite } from "@pkka/api";
-import { router } from "expo-router";
-import { SlidersHorizontal } from "lucide-react-native";
+import { Link, router } from "expo-router";
+import { Library, SlidersHorizontal } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
@@ -37,7 +37,7 @@ function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: 
   const theme = useThemeColors();
 
   return (
-    <Button variant="outline" className="active:bg-muted" onPress={onPress}>
+    <Button variant="outline" className="flex-1 active:bg-muted" onPress={onPress}>
       <SlidersHorizontal size={16} color={theme.foreground} />
       <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
         Filtruj
@@ -48,6 +48,21 @@ function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: 
         </View>
       ) : null}
     </Button>
+  );
+}
+
+function MaterialsButton() {
+  const theme = useThemeColors();
+
+  return (
+    <Link href="/materials" asChild>
+      <Button variant="outline" className="flex-1 active:bg-muted">
+        <Library size={16} color={theme.foreground} />
+        <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
+          Materiały
+        </Text>
+      </Button>
+    </Link>
   );
 }
 
@@ -69,8 +84,9 @@ function ListHeader({
           <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
         </View>
       )}
-      <View className="px-5">
+      <View className="flex-row gap-3 px-5">
         <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
+        {user ? <MaterialsButton /> : null}
       </View>
     </View>
   );
