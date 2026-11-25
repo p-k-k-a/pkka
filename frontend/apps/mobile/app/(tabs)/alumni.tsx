@@ -19,12 +19,7 @@ export default function AlumniScreen() {
   return (
     <RequireAlumni>
       <View className="bg-background flex-1">
-        <UnderlineTabs
-          options={SECTIONS}
-          value={section}
-          onChange={setSection}
-          className="px-5 pt-4"
-        />
+        <UnderlineTabs options={SECTIONS} value={section} onChange={setSection} className="pt-4" />
         <View className={cn("flex-1", section !== "directory" && "hidden")}>
           <AlumniDirectory />
         </View>
