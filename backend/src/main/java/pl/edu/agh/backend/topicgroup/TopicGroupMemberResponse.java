@@ -13,18 +13,17 @@ public record TopicGroupMemberResponse(
         String lastName,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant joinedAt,
 
-        @Schema(description = "Whether the member coordinates the group", requiredMode = RequiredMode.REQUIRED)
+        @Schema(description = "Whether this member coordinates the group", requiredMode = RequiredMode.REQUIRED)
         boolean coordinator) {
 
-    static TopicGroupMemberResponse from(TopicGroupMembership membership) {
+    static TopicGroupMemberResponse from(TopicGroupMembership membership, boolean coordinator) {
         User user = membership.getUser();
         boolean showName = user.isShowName();
-        User coordinator = membership.getGroup().getCoordinator();
         return new TopicGroupMemberResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
                 showName ? user.getLastName() : null,
                 membership.getJoinedAt(),
-                coordinator != null && coordinator.getId().equals(user.getId()));
+                coordinator);
     }
 }

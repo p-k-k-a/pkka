@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.topicgroup;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -8,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +18,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
@@ -33,6 +38,7 @@ import pl.edu.agh.backend.user.UserRepository;
 @AutoConfigureMockMvc
 @Testcontainers
 @Transactional
+@RecordApplicationEvents
 @Import(TestSecurityConfig.class)
 class TopicGroupMembershipEndpointTest {
 
@@ -46,6 +52,9 @@ class TopicGroupMembershipEndpointTest {
     private MockMvc mockMvc;
 
     @Autowired
+    private ApplicationEvents events;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -53,6 +62,9 @@ class TopicGroupMembershipEndpointTest {
 
     @Autowired
     private TopicGroupMembershipRepository membershipRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private User anna;
     private User piotr;
@@ -84,18 +96,12 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.content[0].name").value("Grupa chmurowa"))
                 .andExpect(jsonPath("$.content[0].memberCount").value(0))
                 .andExpect(jsonPath("$.content[0].member").value(false))
+                .andExpect(jsonPath("$.content[0].coordinator").value(false))
                 .andExpect(jsonPath("$.content[1].name").value("Grupa AI"))
                 .andExpect(jsonPath("$.content[1].description").value("Wymiana doświadczeń z wdrożeń AI."))
                 .andExpect(jsonPath("$.content[1].memberCount").value(1))
-                .andExpect(jsonPath("$.content[1].member").value(true));
-    }
-
-    @Test
-    void listTellsTheCoordinatorApart() throws Exception {
-        join(piotr).andExpect(status().isNoContent());
-
-        listAs(anna).andExpect(jsonPath("$.content[0].coordinator").value(true));
-        listAs(piotr).andExpect(jsonPath("$.content[0].coordinator").value(false));
+                .andExpect(jsonPath("$.content[1].member").value(true))
+                .andExpect(jsonPath("$.content[1].coordinator").value(true));
     }
 
     @Test
@@ -124,7 +130,9 @@ class TopicGroupMembershipEndpointTest {
 
         listAs(piotr)
                 .andExpect(jsonPath("$.content[0].memberCount").value(2))
-                .andExpect(jsonPath("$.content[0].member").value(true));
+                .andExpect(jsonPath("$.content[0].member").value(true))
+                .andExpect(jsonPath("$.content[0].coordinator").value(false));
+        assertThat(membershipChanges()).containsExactly(new TopicGroupMembershipChangedEvent(piotr.getId()));
     }
 
     @Test
@@ -137,6 +145,10 @@ class TopicGroupMembershipEndpointTest {
         listAs(piotr)
                 .andExpect(jsonPath("$.content[0].memberCount").value(1))
                 .andExpect(jsonPath("$.content[0].member").value(false));
+        assertThat(membershipChanges())
+                .containsExactly(
+                        new TopicGroupMembershipChangedEvent(piotr.getId()),
+                        new TopicGroupMembershipChangedEvent(piotr.getId()));
     }
 
     @Test
@@ -146,6 +158,7 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.title").value("Topic group coordinator cannot leave"));
 
         listAs(anna).andExpect(jsonPath("$.content[0].member").value(true));
+        assertThat(membershipChanges()).isEmpty();
     }
 
     @Test
@@ -158,12 +171,24 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(anna.getId().toString()))
                 .andExpect(jsonPath("$[0].firstName").value("Anna"))
-                .andExpect(jsonPath("$[0].coordinator").value(true))
-                .andExpect(jsonPath("$[1].coordinator").value(false))
                 .andExpect(jsonPath("$[0].joinedAt").exists())
+                .andExpect(jsonPath("$[0].coordinator").value(true))
                 .andExpect(jsonPath("$[1].id").value(piotr.getId().toString()))
                 .andExpect(jsonPath("$[1].firstName").doesNotExist())
-                .andExpect(jsonPath("$[1].lastName").doesNotExist());
+                .andExpect(jsonPath("$[1].lastName").doesNotExist())
+                .andExpect(jsonPath("$[1].coordinator").value(false));
+    }
+
+    @Test
+    void onlyMembersGetTheLinkToTheDiscordChannel() throws Exception {
+        jdbcTemplate.update("DELETE FROM discord_settings");
+        jdbcTemplate.update("INSERT INTO discord_settings (guild_id) VALUES (?)", "111");
+        group.setDiscordChannelId("222");
+        topicGroupRepository.save(group);
+
+        listAs(anna)
+                .andExpect(jsonPath("$.content[0].discordChannelUrl").value("https://discord.com/channels/111/222"));
+        listAs(piotr).andExpect(jsonPath("$.content[0].discordChannelUrl").doesNotExist());
     }
 
     @Test
@@ -207,6 +232,10 @@ class TopicGroupMembershipEndpointTest {
     private ResultActions listAs(User caller) throws Exception {
         return mockMvc.perform(get(GROUPS).with(JwtTestSupport.asVerifiedAlumn(caller.getKeycloakId())))
                 .andExpect(status().isOk());
+    }
+
+    private List<TopicGroupMembershipChangedEvent> membershipChanges() {
+        return events.stream(TopicGroupMembershipChangedEvent.class).toList();
     }
 
     private ResultActions join(User caller) throws Exception {

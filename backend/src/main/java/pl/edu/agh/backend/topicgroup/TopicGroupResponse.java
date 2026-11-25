@@ -15,9 +15,15 @@ public record TopicGroupResponse(
         boolean member,
 
         @Schema(description = "Whether the caller coordinates the group", requiredMode = RequiredMode.REQUIRED)
-        boolean coordinator) {
+        boolean coordinator,
 
-    static TopicGroupResponse from(TopicGroup group, long memberCount, boolean member, UUID callerId) {
+        @Schema(
+                description =
+                        "Link to the group's Discord channel; null unless the caller is a member and the channel exists")
+        String discordChannelUrl) {
+
+    static TopicGroupResponse from(
+            TopicGroup group, long memberCount, boolean member, boolean coordinator, String discordChannelUrl) {
         return new TopicGroupResponse(
                 group.getId(),
                 group.getSlug(),
@@ -25,8 +31,7 @@ public record TopicGroupResponse(
                 group.getDescription(),
                 memberCount,
                 member,
-                callerId != null
-                        && group.getCoordinator() != null
-                        && callerId.equals(group.getCoordinator().getId()));
+                coordinator,
+                discordChannelUrl);
     }
 }
