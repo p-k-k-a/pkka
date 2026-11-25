@@ -1,4 +1,4 @@
-import { Pill } from "@/components/topic-groups/group-visuals";
+import { CoordinatorPill } from "@/components/topic-groups/group-visuals";
 import { GroupPopover, type CardRect } from "@/components/topic-groups/group-popover";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
@@ -55,10 +55,8 @@ function GroupCard({
           {topicGroupMemberCountLabel(group.memberCount)}
         </Text>
         {group.coordinator ? (
-          <Pill label="Koordynujesz" amber />
-        ) : group.member ? (
-          <Pill label="Należysz" />
-        ) : (
+          <CoordinatorPill label="Koordynujesz" />
+        ) : group.member ? null : (
           <Button size="sm" onPress={toggle} disabled={isPending} className="h-9 gap-1.5 px-3.5">
             <Plus size={16} color={theme.primaryForeground} />
             <Text className="text-[13px] font-semibold">Dołącz</Text>
