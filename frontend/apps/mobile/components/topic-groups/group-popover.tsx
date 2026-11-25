@@ -320,7 +320,6 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   >
                     <DiscordIcon size={18} color={theme.foreground} />
                     <Text className="font-semibold">Otwórz kanał na Discordzie</Text>
-                    <ArrowUpRight size={16} color={theme.mutedForeground} />
                   </Button>
                 ) : (
                   <DiscordBanner />
