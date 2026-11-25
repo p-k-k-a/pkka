@@ -45,7 +45,7 @@ const userItems: SidebarItem[] = [
   },
   {
     href: "/dashboard/groups",
-    label: "Grupy",
+    label: "Grupy tematyczne",
     icon: MessagesSquare,
     match: (pathname) => pathname.startsWith("/dashboard/groups"),
   },
@@ -96,7 +96,7 @@ const adminItems: SidebarItem[] = [
   },
   {
     href: "/dashboard/admin/groups",
-    label: "Grupy",
+    label: "Grupy tematyczne",
     icon: MessagesSquare,
     match: (pathname) => pathname.startsWith("/dashboard/admin/groups"),
   },
