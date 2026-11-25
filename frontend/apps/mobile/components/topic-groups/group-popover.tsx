@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronRight,
+  LogOut,
   MessageCircle,
   Users,
   X,
@@ -314,14 +315,10 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   Aby odejść, przekaż grupę innemu członkowi na stronie klubu
                 </Text>
               ) : group.member ? (
-                <Pressable
-                  role="button"
-                  onPress={toggle}
-                  disabled={isPending}
-                  className="h-8 items-center justify-center self-center active:opacity-70"
-                >
-                  <Text className="text-muted-foreground text-[13px] font-medium">Opuść grupę</Text>
-                </Pressable>
+                <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
+                  <LogOut size={16} color={theme.destructive} />
+                  <Text className="font-semibold">Opuść grupę</Text>
+                </Button>
               ) : null}
             </View>
           </ScrollView>
