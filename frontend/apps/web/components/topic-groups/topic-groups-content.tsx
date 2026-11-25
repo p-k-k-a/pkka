@@ -30,8 +30,9 @@ export function TopicGroupsContent() {
         title="Zaproponuj grupę"
         description="Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
         as="section"
+        align="center"
       >
-        <div className="max-w-2xl">
+        <div className="mx-auto max-w-2xl">
           {isLoading ? (
             <Skeleton className="h-72 w-full rounded-2xl" />
           ) : isError && !data ? (
