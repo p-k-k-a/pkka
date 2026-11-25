@@ -22,7 +22,14 @@ import {
   topicGroupMemberShortName,
 } from "@pkka/domain";
 import { router } from "expo-router";
-import { ArrowUpRight, ChevronDown, MessageCircle, Users, X } from "lucide-react-native";
+import {
+  ArrowUpRight,
+  ChevronDown,
+  ChevronRight,
+  MessageCircle,
+  Users,
+  X,
+} from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
   Linking,
@@ -185,11 +192,6 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   <Text role="heading" className="text-foreground text-[17px] font-semibold">
                     {group.name}
                   </Text>
-                  {coordinatorLabel ? (
-                    <Text className="text-muted-foreground text-xs">
-                      Koordynator: {coordinatorLabel}
-                    </Text>
-                  ) : null}
                 </View>
                 <Pressable
                   role="button"
@@ -201,6 +203,21 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   <X size={18} color={theme.mutedForeground} />
                 </Pressable>
               </View>
+
+              {coordinator ? (
+                <Pressable
+                  role="link"
+                  onPress={() => openProfile(coordinator.id)}
+                  className="flex-row items-center gap-3 active:opacity-70"
+                >
+                  <InitialsAvatar name={topicGroupMemberName(coordinator)} size="xs" />
+                  <View className="flex-1">
+                    <Text className="text-muted-foreground text-xs">Koordynator</Text>
+                    <Text className="text-foreground text-sm font-medium">{coordinatorLabel}</Text>
+                  </View>
+                  <ChevronRight size={18} color={theme.mutedForeground} />
+                </Pressable>
+              ) : null}
 
               {group.description ? (
                 <Animated.View entering={stagger(0)}>
