@@ -23,7 +23,7 @@ import {
 } from "@pkka/domain";
 import { DiscordIcon } from "@pkka/icons/native";
 import { router } from "expo-router";
-import { ArrowUpRight, ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native";
+import { ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
   Linking,
