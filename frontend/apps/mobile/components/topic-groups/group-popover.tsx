@@ -3,7 +3,6 @@ import { DiscordBanner } from "@/components/topic-groups/discord-banner";
 import { GroupTile, Pill } from "@/components/topic-groups/group-visuals";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
-import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { Text } from "@/components/ui/text";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
@@ -15,12 +14,7 @@ import {
   useMe,
   type TopicGroupResponse,
 } from "@pkka/api";
-import {
-  isAdmin,
-  topicGroupMemberCountLabel,
-  topicGroupMemberName,
-  topicGroupMemberShortName,
-} from "@pkka/domain";
+import { isAdmin, topicGroupMemberCountLabel, topicGroupMemberShortName } from "@pkka/domain";
 import { router } from "expo-router";
 import { ArrowUpRight, ChevronDown, MessageCircle, Users, X } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -243,7 +237,6 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                           onPress={() => openProfile(member.id)}
                           className="h-11 flex-row items-center gap-3 active:opacity-70"
                         >
-                          <InitialsAvatar name={topicGroupMemberName(member)} size="xs" />
                           <Text className="text-foreground flex-1 text-sm font-medium">
                             {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
                           </Text>
