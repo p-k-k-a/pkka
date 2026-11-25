@@ -1,37 +1,24 @@
+import { CtaCard } from "@/components/home/cta-card";
 import { GroupList } from "@/components/topic-groups/group-list";
 import { RequestCard } from "@/components/topic-groups/request-card";
 import { Text } from "@/components/ui/text";
-import { useThemeColors } from "@/lib/theme";
 import {
   TopicGroupRequestStatus,
   useListMyTopicGroupRequests,
   useListTopicGroups,
 } from "@pkka/api";
 import { router } from "expo-router";
-import { Plus } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
-
-function openRequestForm() {
-  router.push("/topic-groups/request");
-}
+import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 function ProposeGroupCard() {
-  const theme = useThemeColors();
   return (
-    <Pressable
-      role="button"
-      onPress={openRequestForm}
-      className="border-muted-foreground/25 dark:border-border flex-row items-center gap-3 rounded-2xl border-[1.5px] border-dashed p-4 active:opacity-70"
-    >
-      <View className="border-primary size-11 items-center justify-center rounded-xl border-[1.5px] border-dashed">
-        <Plus size={20} color={theme.primary} />
-      </View>
-      <View className="flex-1 gap-0.5">
-        <Text className="text-foreground text-[15px] font-semibold">Brakuje grupy dla Ciebie?</Text>
-        <Text className="text-muted-foreground text-[13px]">Zaproponuj własną</Text>
-      </View>
-    </Pressable>
+    <CtaCard
+      title="Brakuje grupy dla Ciebie?"
+      subtitle="Zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
+      primaryLabel="Zaproponuj grupę"
+      onPrimary={() => router.push("/topic-groups/request")}
+    />
   );
 }
 

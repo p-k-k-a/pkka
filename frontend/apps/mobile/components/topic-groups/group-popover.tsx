@@ -304,7 +304,11 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                 )}
               </Animated.View>
 
-              {group.member && !group.coordinator ? (
+              {group.coordinator ? (
+                <Text className="text-muted-foreground text-center text-[13px]">
+                  Aby odejść, przekaż grupę innemu członkowi na stronie klubu
+                </Text>
+              ) : group.member ? (
                 <Pressable
                   role="button"
                   onPress={toggle}

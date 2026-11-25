@@ -82,7 +82,7 @@ function Section({
   return (
     <View className="gap-3">
       <View className="flex-row items-baseline justify-between">
-        <Text role="heading" className="font-heading text-foreground text-xl font-semibold">
+        <Text role="heading" className="font-heading text-foreground flex-1 text-xl font-semibold">
           {title}
         </Text>
         <Text className="text-muted-foreground text-[13px]">
