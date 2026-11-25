@@ -48,7 +48,7 @@ export function RequestCard({ request }: RequestCardProps) {
       : `Rozpatrzony ${formatEventDateLong(request.reviewedAt)}`;
 
   return (
-    <View className="border-muted-foreground/25 dark:border-border bg-card gap-3 rounded-2xl border p-5">
+    <View className="bg-muted gap-3 rounded-2xl p-5">
       <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
         Twój wniosek
       </Text>
@@ -92,7 +92,7 @@ export function RequestCard({ request }: RequestCardProps) {
       ) : null}
 
       {status === TopicGroupRequestStatus.REJECTED && request.rejectionReason ? (
-        <View className="bg-muted dark:bg-background gap-1.5 rounded-md p-3">
+        <View className="bg-background gap-1.5 rounded-md p-3">
           <Text className="text-foreground text-xs font-bold uppercase tracking-wider">
             Powód odrzucenia
           </Text>

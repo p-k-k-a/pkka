@@ -36,7 +36,7 @@ function GroupCard({
           }),
         )
       }
-      className="border-muted-foreground/25 dark:border-border bg-card gap-3 rounded-[20px] border p-3.5 active:opacity-80"
+      className="bg-muted gap-3 rounded-2xl p-4 active:opacity-80"
     >
       <View className="flex-row items-center gap-3">
         <GroupTile name={group.name} />
