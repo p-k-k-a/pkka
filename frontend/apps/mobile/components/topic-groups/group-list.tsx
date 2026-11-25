@@ -1,24 +1,19 @@
+import { GroupSheet } from "@/components/topic-groups/group-sheet";
 import { MembershipButton } from "@/components/topic-groups/membership-button";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import { type TopicGroupResponse } from "@pkka/api";
 import { topicGroupMemberCountLabel } from "@pkka/domain";
-import { router } from "expo-router";
 import { ChevronRight, Users } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, View } from "react-native";
 
-function GroupRow({ group }: { group: TopicGroupResponse }) {
+function GroupRow({ group, onOpen }: { group: TopicGroupResponse; onOpen: () => void }) {
   const theme = useThemeColors();
 
   return (
     <View className="border-muted-foreground/25 dark:border-border bg-card gap-3 rounded-2xl border p-5">
-      <Pressable
-        role="link"
-        onPress={() =>
-          router.push({ pathname: "/topic-groups/[slug]", params: { slug: group.slug } })
-        }
-        className="gap-2 active:opacity-70"
-      >
+      <Pressable role="link" onPress={onOpen} className="gap-2 active:opacity-70">
         <View className="flex-row items-center gap-2">
           <Text className="font-heading text-foreground flex-1 text-lg font-semibold leading-snug">
             {group.name}
@@ -55,6 +50,9 @@ type GroupListProps = {
 };
 
 export function GroupList({ groups, isLoading, isError }: GroupListProps) {
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const openGroup = groups?.find((group) => group.slug === openSlug) ?? null;
+
   return (
     <View className="gap-3">
       <Text
@@ -73,8 +71,11 @@ export function GroupList({ groups, isLoading, isError }: GroupListProps) {
           Nie ma jeszcze żadnej grupy. Zaproponuj pierwszą.
         </Text>
       ) : (
-        groups.map((group) => <GroupRow key={group.id} group={group} />)
+        groups.map((group) => (
+          <GroupRow key={group.id} group={group} onOpen={() => setOpenSlug(group.slug)} />
+        ))
       )}
+      <GroupSheet group={openGroup} onClose={() => setOpenSlug(null)} />
     </View>
   );
 }

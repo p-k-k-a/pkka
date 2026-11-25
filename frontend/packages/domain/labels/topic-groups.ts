@@ -50,6 +50,12 @@ export function topicGroupMemberName(member: TopicGroupMemberResponse) {
   return name || "Alumn";
 }
 
+export function topicGroupMemberShortName(member: TopicGroupMemberResponse) {
+  if (!member.firstName) return "Alumn";
+  const initial = member.lastName?.trim().charAt(0);
+  return initial ? `${member.firstName} ${initial}.` : member.firstName;
+}
+
 export function topicGroupMembershipErrorMessage(status: number | undefined, joining: boolean) {
   if (status === 409) return "Najpierw przekaż grupę innemu członkowi.";
   if (status === 404) return "Ta grupa już nie istnieje.";
