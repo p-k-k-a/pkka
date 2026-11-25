@@ -110,7 +110,7 @@ public class TopicGroupService {
                 && userId.equals(group.getCoordinator().getId());
     }
 
-    private static String discordChannelUrl(TopicGroup group, Optional<String> guildId) {
+    static String discordChannelUrl(TopicGroup group, Optional<String> guildId) {
         if (group.getDiscordChannelId() == null) {
             return null;
         }

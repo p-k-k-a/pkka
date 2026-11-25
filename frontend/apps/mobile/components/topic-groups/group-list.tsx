@@ -124,7 +124,7 @@ export function GroupList({ groups, isError }: GroupListProps) {
         onOpen={openPopover}
       />
       <Section
-        title="Odkryj"
+        title="Pozostałe grupy"
         groups={groups?.filter((group) => !group.member) ?? []}
         onOpen={openPopover}
       />

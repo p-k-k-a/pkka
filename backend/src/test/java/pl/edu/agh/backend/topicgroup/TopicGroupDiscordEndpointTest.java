@@ -102,6 +102,18 @@ class TopicGroupDiscordEndpointTest {
     }
 
     @Test
+    void theAdminListLinksToTheGroupsChannel() throws Exception {
+        jdbcTemplate.update("DELETE FROM discord_settings");
+        jdbcTemplate.update("INSERT INTO discord_settings (guild_id) VALUES (?)", "111");
+        approve(submittedId(user("Anna", "Nowak", COORDINATOR_DISCORD_ID), "Grupa AI"));
+
+        verify(discordGroupChannels, timeout(TIMEOUT_MS)).allowManageMessages(CHANNEL_ID, COORDINATOR_DISCORD_ID);
+        listGroups()
+                .andExpect(jsonPath("$.content[0].discordChannelUrl")
+                        .value("https://discord.com/channels/111/" + CHANNEL_ID));
+    }
+
+    @Test
     void aCoordinatorWithoutDiscordGetsNoPermissionOnTheChannel() throws Exception {
         approve(submittedId(user("Piotr", "Zieliński", null), "Grupa AI"));
 

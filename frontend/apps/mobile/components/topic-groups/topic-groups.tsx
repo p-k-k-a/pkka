@@ -36,6 +36,7 @@ export function TopicGroups() {
   const groups = useListTopicGroups({ size: 100 });
   const [refreshing, setRefreshing] = useState(false);
   const latest = data?.data[0];
+  const request = latest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latest;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -70,8 +71,8 @@ export function TopicGroups() {
       ) : (
         <>
           <GroupList groups={groups.data?.data.content} isError={groups.isError} />
-          {latest ? <RequestCard request={latest} /> : null}
-          {latest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : <ProposeGroupCard />}
+          {request ? <RequestCard request={request} /> : null}
+          {request?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : <ProposeGroupCard />}
         </>
       )}
     </ScrollView>

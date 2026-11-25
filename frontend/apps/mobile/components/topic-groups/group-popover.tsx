@@ -26,6 +26,7 @@ import {
   ArrowUpRight,
   ChevronDown,
   ChevronRight,
+  LogOut,
   MessageCircle,
   Users,
   X,
@@ -185,7 +186,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
           className="bg-card overflow-hidden rounded-[20px]"
           style={[{ height: frame?.height }, contentStyle]}
         >
-          <ScrollView bounces={false} nestedScrollEnabled>
+          <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
             <View onLayout={onContentLayout} className="gap-3 p-4">
               <View className="flex-row items-center gap-3">
                 <View className="flex-1 gap-0.5">
@@ -251,7 +252,12 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                 </Pressable>
                 {expanded && memberList ? (
                   <Animated.View entering={FadeIn.delay(80).duration(200)}>
-                    <ScrollView nestedScrollEnabled style={{ maxHeight: 188 }} className="pb-1.5">
+                    <ScrollView
+                      nestedScrollEnabled
+                      showsVerticalScrollIndicator={false}
+                      style={{ maxHeight: 188 }}
+                      className="pb-1.5"
+                    >
                       {memberList.map((member) => (
                         <Pressable
                           key={member.id}
@@ -309,14 +315,10 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   Aby odejść, przekaż grupę innemu członkowi na stronie klubu
                 </Text>
               ) : group.member ? (
-                <Pressable
-                  role="button"
-                  onPress={toggle}
-                  disabled={isPending}
-                  className="h-8 items-center justify-center self-center active:opacity-70"
-                >
-                  <Text className="text-muted-foreground text-[13px] font-medium">Opuść grupę</Text>
-                </Pressable>
+                <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
+                  <LogOut size={16} color={theme.destructive} />
+                  <Text className="font-semibold">Opuść grupę</Text>
+                </Button>
               ) : null}
             </View>
           </ScrollView>
