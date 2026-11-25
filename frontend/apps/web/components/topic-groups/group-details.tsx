@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import {
   useGetTopicGroup,
   useListTopicGroupMembers,
@@ -10,7 +10,7 @@ import {
 import { isAdmin, topicGroupMemberCountLabel, topicGroupMemberName } from "@pkka/domain";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DetailBackLink } from "@/components/content/detail-back-link";
+import { Button } from "@/components/ui/button";
 import { DiscordBanner } from "@/components/topic-groups/discord-banner";
 import { MembershipButton } from "@/components/topic-groups/membership-button";
 import { useAuth } from "@/lib/auth-context";
@@ -64,7 +64,12 @@ export function TopicGroupDetails({ slug }: { slug: string }) {
   return (
     <div className="bg-background px-4 py-10 md:px-10 md:py-20">
       <div className="mx-auto max-w-[1280px] space-y-10">
-        <DetailBackLink href={BACK_HREF} label={BACK_LABEL} />
+        <Button asChild variant="ghost" size="sm" className="-ml-2">
+          <Link href={BACK_HREF}>
+            <ArrowLeft data-icon="inline-start" />
+            {BACK_LABEL}
+          </Link>
+        </Button>
         {isLoading ? (
           <Skeleton className="h-60 w-full max-w-3xl" />
         ) : isError || !group ? (
