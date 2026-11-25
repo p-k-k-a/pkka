@@ -8,7 +8,7 @@ import { type TopicGroupResponse } from "@pkka/api";
 import { pluralPl, topicGroupMemberCountLabel } from "@pkka/domain";
 import { ChevronRight, Plus, Users } from "lucide-react-native";
 import { useRef, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Platform, Pressable, StatusBar, View } from "react-native";
 
 function GroupCard({
   group,
@@ -27,7 +27,14 @@ function GroupCard({
       role="button"
       accessibilityLabel={`Szczegóły grupy ${group.name}`}
       onPress={() =>
-        ref.current?.measureInWindow((x, y, width, height) => onOpen({ x, y, width, height }))
+        ref.current?.measureInWindow((x, y, width, height) =>
+          onOpen({
+            x,
+            y: y + (Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0),
+            width,
+            height,
+          }),
+        )
       }
       className="border-muted-foreground/25 dark:border-border bg-card gap-3 rounded-[20px] border p-3.5 active:opacity-80"
     >
