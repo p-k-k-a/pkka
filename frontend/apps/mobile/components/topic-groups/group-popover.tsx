@@ -1,6 +1,6 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { DiscordBanner } from "@/components/topic-groups/discord-banner";
-import { Pill } from "@/components/topic-groups/group-visuals";
+import { CoordinatorPill, Pill } from "@/components/topic-groups/group-visuals";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
@@ -270,7 +270,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                             {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
                           </Text>
                           {member.coordinator ? (
-                            <Pill label="Koordynator" amber />
+                            <CoordinatorPill label="Koordynator" />
                           ) : member.id === myId ? (
                             <Pill label="Ty" />
                           ) : null}
