@@ -174,7 +174,10 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
           clipStyle,
         ]}
       >
-        <Animated.View className="bg-card" style={[{ height: frame?.height }, contentStyle]}>
+        <Animated.View
+          className="bg-card overflow-hidden rounded-[20px]"
+          style={[{ height: frame?.height }, contentStyle]}
+        >
           <ScrollView bounces={false} nestedScrollEnabled>
             <View onLayout={onContentLayout} className="gap-3 p-4">
               <View className="flex-row items-center gap-3">
