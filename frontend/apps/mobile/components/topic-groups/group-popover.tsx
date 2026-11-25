@@ -45,6 +45,7 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
+  FadeOut,
   LinearTransition,
   useAnimatedStyle,
   useSharedValue,
@@ -251,7 +252,10 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   ) : null}
                 </Pressable>
                 {expanded && memberList ? (
-                  <Animated.View entering={FadeIn.delay(80).duration(200)}>
+                  <Animated.View
+                    entering={FadeIn.delay(80).duration(200)}
+                    exiting={FadeOut.duration(160)}
+                  >
                     <ScrollView
                       nestedScrollEnabled
                       showsVerticalScrollIndicator={false}
