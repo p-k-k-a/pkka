@@ -22,7 +22,7 @@ function ProposeGroupCard() {
     <Pressable
       role="button"
       onPress={openRequestForm}
-      className="border-muted-foreground/25 dark:border-border flex-row items-center gap-3 rounded-[20px] border-[1.5px] border-dashed p-3.5 active:opacity-70"
+      className="border-muted-foreground/25 dark:border-border flex-row items-center gap-3 rounded-2xl border-[1.5px] border-dashed p-4 active:opacity-70"
     >
       <View className="border-primary size-11 items-center justify-center rounded-xl border-[1.5px] border-dashed">
         <Plus size={20} color={theme.primary} />
