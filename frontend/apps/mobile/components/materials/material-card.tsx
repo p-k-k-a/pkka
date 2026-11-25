@@ -2,11 +2,17 @@ import { Text } from "@/components/ui/text";
 import { openWithFallback } from "@/lib/contact";
 import { useThemeColors } from "@/lib/theme";
 import { MaterialType, type MaterialResponse } from "@pkka/api";
-import { materialLinkHost, materialTypeLabelUpper, youtubeThumbnailUrl } from "@pkka/domain";
+import {
+  materialLinkHost,
+  materialTypeLabelUpper,
+  uploadedMaterialExtension,
+  youtubeThumbnailUrl,
+} from "@pkka/domain";
 import { Image } from "expo-image";
 import {
   ArrowUpRight,
   Calendar,
+  Download,
   FileText,
   Link2,
   Play,
@@ -30,14 +36,22 @@ export function MaterialCard({ material, showEvent = true }: MaterialCardProps) 
   const theme = useThemeColors();
   const { title, description, type, url, eventTitle } = material;
   const thumbnail = youtubeThumbnailUrl(url);
-  const host = materialLinkHost(url);
-  const TypeIcon = TYPE_ICONS[type];
+  const extension = uploadedMaterialExtension(url)?.toUpperCase();
+  const host = extension ? null : materialLinkHost(url);
+  const TypeIcon = extension && type === MaterialType.OTHER ? FileText : TYPE_ICONS[type];
+  const actionLabel = extension
+    ? `Pobierz plik ${extension}`
+    : host
+      ? `Otwórz w ${host}`
+      : "Otwórz";
 
   return (
     <Pressable
       role="link"
       accessibilityLabel={title}
-      accessibilityHint={host ? `Otwiera ${host}` : "Otwiera link"}
+      accessibilityHint={
+        extension ? `Pobiera plik ${extension}` : host ? `Otwiera ${host}` : "Otwiera link"
+      }
       onPress={() => void openWithFallback(url, url)}
       className="bg-muted overflow-hidden rounded-2xl active:opacity-90"
     >
@@ -86,10 +100,12 @@ export function MaterialCard({ material, showEvent = true }: MaterialCardProps) 
         ) : null}
 
         <View className="bg-background flex-row items-center gap-1.5 self-end rounded-lg px-3 py-2">
-          <Text className="text-accent text-sm font-medium">
-            {host ? `Otwórz w ${host}` : "Otwórz"}
-          </Text>
-          <ArrowUpRight size={14} color={theme.accent} />
+          <Text className="text-accent text-sm font-medium">{actionLabel}</Text>
+          {extension ? (
+            <Download size={14} color={theme.accent} />
+          ) : (
+            <ArrowUpRight size={14} color={theme.accent} />
+          )}
         </View>
       </View>
     </Pressable>

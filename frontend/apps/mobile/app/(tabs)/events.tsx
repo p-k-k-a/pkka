@@ -86,7 +86,7 @@ function ListHeader({
       )}
       <View className="flex-row gap-3 px-5">
         <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
-        {isAlumni ? <MaterialsButton /> : null}
+        {user ? <MaterialsButton /> : null}
       </View>
     </View>
   );

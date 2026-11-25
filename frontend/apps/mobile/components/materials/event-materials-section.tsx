@@ -1,6 +1,6 @@
-import { useIsAlumni } from "@/components/auth/require-alumni";
 import { MaterialCard } from "@/components/materials/material-card";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
 import { useListMaterials } from "@pkka/api";
 import { Link } from "expo-router";
@@ -16,14 +16,14 @@ type EventMaterialsSectionProps = {
 
 export function EventMaterialsSection({ eventId, eventTitle }: EventMaterialsSectionProps) {
   const theme = useThemeColors();
-  const isAlumni = useIsAlumni();
+  const { user } = useAuth();
   const { data } = useListMaterials(
     { eventId, size: PREVIEW_SIZE },
-    { query: { enabled: isAlumni } },
+    { query: { enabled: !!user } },
   );
   const materials = data?.data.content ?? [];
 
-  if (!isAlumni || materials.length === 0) return null;
+  if (!user || materials.length === 0) return null;
 
   const total = data?.data.totalElements ?? materials.length;
 

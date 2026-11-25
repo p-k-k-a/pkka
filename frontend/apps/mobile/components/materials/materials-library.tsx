@@ -1,3 +1,4 @@
+import { useSeesAllMaterials } from "@/components/auth/require-alumni";
 import { MaterialCard } from "@/components/materials/material-card";
 import { MaterialTypeFilter } from "@/components/materials/material-type-filter";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { useMaterials } from "@/lib/materials";
 import { END_REACHED_THRESHOLD } from "@/lib/pagination";
 import { useThemeColors } from "@/lib/theme";
 import type { MaterialType } from "@pkka/api";
+import { router } from "expo-router";
 import { Calendar, Search, X } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from "react-native";
@@ -35,12 +37,33 @@ function EventFilterChip({ title, onClear }: { title?: string; onClear: () => vo
   );
 }
 
+function VerificationHint() {
+  return (
+    <View className="border-border mx-5 mt-8 gap-3 border-t pt-6">
+      <Text className="text-muted-foreground text-sm leading-relaxed">
+        Część materiałów jest dostępna tylko dla zweryfikowanych alumnów. Zweryfikuj się, żeby
+        zobaczyć wszystkie.
+      </Text>
+      <Button
+        variant="outline"
+        className="active:bg-muted self-start"
+        onPress={() => router.push("/application")}
+      >
+        <Text className="group-active:text-foreground text-sm font-semibold uppercase tracking-wider">
+          Zweryfikuj się
+        </Text>
+      </Button>
+    </View>
+  );
+}
+
 export function MaterialsLibrary({ initialEvent }: { initialEvent?: EventFilter }) {
   const theme = useThemeColors();
   const [query, setQuery] = useState("");
   const [type, setType] = useState<MaterialType | null>(null);
   const [event, setEvent] = useState<EventFilter | null>(initialEvent ?? null);
   const [refreshing, setRefreshing] = useState(false);
+  const { isLoading: isRoleLoading, seesAll } = useSeesAllMaterials();
 
   const {
     materials,
@@ -119,7 +142,12 @@ export function MaterialsLibrary({ initialEvent }: { initialEvent?: EventFilter 
             </Text>
           ) : null
         }
-        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator className="py-6" /> : null}
+        ListFooterComponent={
+          <>
+            {isFetchingNextPage ? <ActivityIndicator className="py-6" /> : null}
+            {!isRoleLoading && !seesAll && !isLoading && !hasNextPage ? <VerificationHint /> : null}
+          </>
+        }
         ListEmptyComponent={
           <View className="items-center gap-4 px-5 py-16">
             {isLoading ? (
