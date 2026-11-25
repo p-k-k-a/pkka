@@ -180,7 +180,7 @@ export function GroupSheet({ group, onClose }: GroupSheetProps) {
       onRequestClose={onClose}
     >
       <View
-        className="flex-1 justify-end bg-black/40 px-4"
+        className="flex-1 justify-center bg-black/40 px-4"
         style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}
       >
         <Pressable accessibilityLabel="Zamknij" onPress={onClose} className="absolute inset-0" />
