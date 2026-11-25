@@ -1,25 +1,6 @@
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { avatarInitials } from "@pkka/domain";
 import { View } from "react-native";
-
-const TILES = [
-  { bg: "bg-primary/15", text: "text-secondary-foreground" },
-  { bg: "bg-accent/15", text: "text-accent" },
-  { bg: "bg-muted-foreground/10", text: "text-muted-foreground" },
-  { bg: "bg-band", text: "text-band-foreground" },
-];
-
-export function GroupTile({ name }: { name: string }) {
-  const tile = TILES[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % TILES.length]!;
-  return (
-    <View className={cn("size-11 items-center justify-center rounded-xl", tile.bg)}>
-      <Text className={cn("font-heading text-base font-semibold", tile.text)}>
-        {avatarInitials(name)}
-      </Text>
-    </View>
-  );
-}
 
 export function Pill({ label, amber }: { label: string; amber?: boolean }) {
   return (

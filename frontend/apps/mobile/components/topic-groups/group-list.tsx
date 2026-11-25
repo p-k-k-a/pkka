@@ -1,4 +1,4 @@
-import { GroupTile, Pill } from "@/components/topic-groups/group-visuals";
+import { Pill } from "@/components/topic-groups/group-visuals";
 import { GroupPopover, type CardRect } from "@/components/topic-groups/group-popover";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,6 @@ function GroupCard({
       className="bg-muted gap-3 rounded-2xl p-4 active:opacity-80"
     >
       <View className="flex-row items-center gap-3">
-        <GroupTile name={group.name} />
         <View className="flex-1 gap-0.5">
           <Text className="text-foreground text-base font-semibold">{group.name}</Text>
           {group.description ? (
