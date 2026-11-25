@@ -28,7 +28,7 @@ export function AvatarStack({
   size,
 }: {
   members: TopicGroupMemberResponse[];
-  size: "2xs" | "xs";
+  size: "xs";
 }) {
   return (
     <View className="flex-row pl-2">

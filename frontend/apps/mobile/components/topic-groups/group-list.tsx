@@ -1,10 +1,10 @@
-import { AvatarStack, GroupTile, Pill } from "@/components/topic-groups/group-visuals";
+import { GroupTile, Pill } from "@/components/topic-groups/group-visuals";
 import { GroupPopover, type CardRect } from "@/components/topic-groups/group-popover";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-import { useListTopicGroupMembers, type TopicGroupResponse } from "@pkka/api";
+import { type TopicGroupResponse } from "@pkka/api";
 import { pluralPl, topicGroupMemberCountLabel } from "@pkka/domain";
 import { ChevronRight, Plus, Users } from "lucide-react-native";
 import { useRef, useState } from "react";
@@ -19,9 +19,6 @@ function GroupCard({
 }) {
   const theme = useThemeColors();
   const ref = useRef<View>(null);
-  const { data: members } = useListTopicGroupMembers(group.id, {
-    query: { enabled: group.member },
-  });
   const { toggle, isPending } = useToggleMembership(group);
 
   return (
@@ -47,11 +44,7 @@ function GroupCard({
         <ChevronRight size={20} color={theme.mutedForeground} />
       </View>
       <View className="flex-row items-center gap-2">
-        {members?.status === 200 ? (
-          <AvatarStack members={members.data} size="2xs" />
-        ) : (
-          <Users size={16} color={theme.mutedForeground} />
-        )}
+        <Users size={16} color={theme.mutedForeground} />
         <Text className="text-muted-foreground flex-1 text-[13px]">
           {topicGroupMemberCountLabel(group.memberCount)}
         </Text>

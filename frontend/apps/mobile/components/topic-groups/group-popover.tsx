@@ -97,10 +97,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
 
   const onContentLayout = (event: LayoutChangeEvent) => {
     const contentHeight = event.nativeEvent.layout.height;
-    const finalTop = Math.max(
-      insets.top + 12,
-      Math.min(opened.current ? top.value : cardTop, maxBottom - contentHeight),
-    );
+    const finalTop = Math.max(insets.top + 12, Math.min(cardTop, maxBottom - contentHeight));
     top.value = withTiming(finalTop, OPEN);
     height.value = withTiming(Math.min(contentHeight, maxBottom - finalTop), OPEN);
     if (opened.current) return;
