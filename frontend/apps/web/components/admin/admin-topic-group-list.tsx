@@ -40,22 +40,22 @@ function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
   }
 
   return (
-    <ul className="border-border grid gap-1 border-t pt-3 sm:grid-cols-2">
+    <ul className="border-border grid grid-cols-2 gap-x-2 gap-y-0.5 border-t pt-3 sm:grid-cols-3">
       {data.data.map((member) => {
         const name = topicGroupMemberName(member);
         return (
-          <li key={member.id}>
+          <li key={member.id} className="min-w-0">
             <Link
               href={`/dashboard/admin/alumni/${member.id}`}
-              className="hover:bg-muted focus-visible:ring-ring flex items-center gap-3 rounded-lg p-2 focus-visible:ring-2 focus-visible:outline-none"
+              className="hover:bg-muted focus-visible:ring-ring flex items-center gap-2 rounded-md px-1.5 py-1 focus-visible:ring-2 focus-visible:outline-none"
             >
               <Avatar fallback={name} alt="" size="sm" />
-              <span className="min-w-0">
-                <span className="text-foreground block text-sm font-semibold">{name}</span>
-                {member.coordinator ? (
-                  <span className="text-muted-foreground block text-xs">Koordynator</span>
-                ) : null}
-              </span>
+              <span className="text-foreground truncate text-sm font-medium">{name}</span>
+              {member.coordinator ? (
+                <span className="bg-primary/15 text-secondary-foreground shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold">
+                  Koordynator
+                </span>
+              ) : null}
             </Link>
           </li>
         );
