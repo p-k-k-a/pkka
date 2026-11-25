@@ -1,36 +1,33 @@
 import { GroupList } from "@/components/topic-groups/group-list";
 import { RequestCard } from "@/components/topic-groups/request-card";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
-import { useThemeColors } from "@/lib/theme";
 import {
   TopicGroupRequestStatus,
   useListMyTopicGroupRequests,
   useListTopicGroups,
 } from "@pkka/api";
 import { router } from "expo-router";
-import { ChevronRight, Plus } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
+import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 function ProposeGroupCard() {
-  const theme = useThemeColors();
   return (
-    <Pressable
-      role="button"
-      onPress={() => router.push("/topic-groups/request")}
-      className="bg-secondary dark:bg-muted dark:border-primary/40 flex-row items-center gap-3.5 rounded-2xl p-4 active:opacity-80 dark:border"
-    >
-      <View className="bg-primary size-11 items-center justify-center rounded-full">
-        <Plus size={22} color={theme.primaryForeground} />
-      </View>
-      <View className="flex-1 gap-0.5">
-        <Text className="text-foreground text-base font-semibold">Brakuje grupy dla Ciebie?</Text>
-        <Text className="text-muted-foreground text-[13px] leading-snug">
-          Zaproponuj własną. Po akceptacji zostaniesz jej koordynatorem.
-        </Text>
-      </View>
-      <ChevronRight size={20} color={theme.secondaryForeground} />
-    </Pressable>
+    <View className="bg-band dark:border-border dark:bg-card gap-1.5 rounded-2xl p-5 dark:border">
+      <Text
+        role="heading"
+        aria-level="2"
+        className="font-heading text-band-foreground text-xl font-semibold leading-tight"
+      >
+        Brakuje grupy dla Ciebie?
+      </Text>
+      <Text className="text-band-foreground/80 text-sm leading-relaxed">
+        Zaproponuj własną. Po akceptacji zostaniesz jej koordynatorem.
+      </Text>
+      <Button className="mt-3 w-full" onPress={() => router.push("/topic-groups/request")}>
+        <Text className="font-semibold">Zaproponuj grupę</Text>
+      </Button>
+    </View>
   );
 }
 
