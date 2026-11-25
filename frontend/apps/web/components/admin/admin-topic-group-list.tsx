@@ -52,7 +52,7 @@ function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
               <Avatar fallback={name} alt="" size="sm" />
               <span className="text-foreground truncate text-sm font-medium">{name}</span>
               {member.coordinator ? (
-                <span className="bg-primary/15 text-secondary-foreground shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold">
+                <span className="bg-primary/15 text-secondary-foreground dark:text-primary shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold">
                   Koordynator
                 </span>
               ) : null}
