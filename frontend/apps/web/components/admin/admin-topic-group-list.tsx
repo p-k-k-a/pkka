@@ -1,16 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, ArrowUpRight, MessageCircle, Users } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, Users } from "lucide-react";
 import {
   TopicGroupDiscordStatus,
+  useListAdminTopicGroupMembers,
   useListAdminTopicGroups,
   type AdminTopicGroupResponse,
 } from "@pkka/api";
-import { formatEventDateLong, topicGroupMemberCountLabel } from "@pkka/domain";
+import { DiscordIcon } from "@pkka/icons/web";
+import {
+  formatEventDateLong,
+  topicGroupMemberCountLabel,
+  topicGroupMemberName,
+} from "@pkka/domain";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
@@ -20,7 +29,43 @@ const MISSING_CHANNEL_LABELS: Record<TopicGroupDiscordStatus, string> = {
   [TopicGroupDiscordStatus.NOT_CONFIGURED]: "Discord nie jest skonfigurowany",
 };
 
+function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
+  const { data, isLoading, isError } = useListAdminTopicGroupMembers(groupId);
+
+  if (isLoading) return <Skeleton className="h-24 w-full" />;
+  if (isError || data?.status !== 200) {
+    return (
+      <p className="text-destructive text-sm font-medium">Nie udało się załadować członków.</p>
+    );
+  }
+
+  return (
+    <ul className="border-border grid gap-1 border-t pt-3 sm:grid-cols-2">
+      {data.data.map((member) => {
+        const name = topicGroupMemberName(member);
+        return (
+          <li key={member.id}>
+            <Link
+              href={`/dashboard/admin/alumni/${member.id}`}
+              className="hover:bg-muted focus-visible:ring-ring flex items-center gap-3 rounded-lg p-2 focus-visible:ring-2 focus-visible:outline-none"
+            >
+              <Avatar fallback={name} alt="" size="sm" />
+              <span className="min-w-0">
+                <span className="text-foreground block text-sm font-semibold">{name}</span>
+                {member.coordinator ? (
+                  <span className="text-muted-foreground block text-xs">Koordynator</span>
+                ) : null}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
+  const [expanded, setExpanded] = useState(false);
   const coordinator = group.coordinator
     ? `${group.coordinator.firstName} ${group.coordinator.lastName}`
     : "Brak koordynatora";
@@ -36,14 +81,23 @@ function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+        <button
+          type="button"
+          disabled={group.memberCount === 0}
+          aria-expanded={expanded}
+          onClick={() => setExpanded(!expanded)}
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -mx-2 flex items-center gap-2 rounded-md px-2 py-1 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:pointer-events-none"
+        >
           <Users className="size-4" />
           {topicGroupMemberCountLabel(group.memberCount)}
-        </p>
+          {group.memberCount > 0 ? (
+            <ChevronDown className={cn("size-4 transition-transform", expanded && "rotate-180")} />
+          ) : null}
+        </button>
         {group.discordChannelUrl ? (
           <Button asChild variant="outline" size="sm">
             <a href={group.discordChannelUrl} target="_blank" rel="noreferrer">
-              <MessageCircle data-icon="inline-start" />
+              <DiscordIcon data-icon="inline-start" className="size-4" />
               Otwórz kanał na Discordzie
               <ArrowUpRight data-icon="inline-end" />
             </a>
@@ -52,6 +106,7 @@ function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
           <p className="text-muted-foreground text-sm">{MISSING_CHANNEL_LABELS[group.discord]}</p>
         )}
       </div>
+      {expanded ? <AdminTopicGroupMembers groupId={group.id} /> : null}
     </Card>
   );
 }
