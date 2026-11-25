@@ -29,6 +29,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteAccount } from "@/components/profile/delete-account";
+import { ManageAccount } from "@/components/profile/manage-account";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -443,7 +444,10 @@ function EditFormFields({ profile, catalog, tagsError }: EditFormFieldsProps) {
               </Card>
             ) : null}
 
-            <DeleteAccount accountEmail={profile.email} />
+            <div className="flex flex-col gap-3">
+              <ManageAccount />
+              <DeleteAccount accountEmail={profile.email} />
+            </div>
           </div>
         </div>
       </div>
