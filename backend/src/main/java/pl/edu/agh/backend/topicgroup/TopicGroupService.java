@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ public class TopicGroupService {
     private final TopicGroupRepository topicGroupRepository;
     private final TopicGroupMembershipRepository membershipRepository;
     private final CallerUserService callerUserService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<TopicGroupResponse> list(Caller caller, Pageable pageable) {
         Page<TopicGroup> groups = topicGroupRepository.findAllByOrderByCreatedAtDesc(pageable);
@@ -44,6 +46,7 @@ public class TopicGroupService {
         User user = callerUserService.getOrCreate(caller);
         if (!membershipRepository.existsByGroupIdAndUserId(groupId, user.getId())) {
             membershipRepository.save(new TopicGroupMembership(group, user));
+            eventPublisher.publishEvent(new TopicGroupMembershipChangedEvent(user.getId()));
         }
     }
 
@@ -55,7 +58,9 @@ public class TopicGroupService {
                     && userId.equals(group.getCoordinator().getId())) {
                 throw new TopicGroupCoordinatorCannotLeaveException();
             }
-            membershipRepository.deleteByGroupIdAndUserId(groupId, userId);
+            if (membershipRepository.deleteByGroupIdAndUserId(groupId, userId) > 0) {
+                eventPublisher.publishEvent(new TopicGroupMembershipChangedEvent(userId));
+            }
         });
     }
 
