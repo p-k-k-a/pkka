@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -54,6 +55,9 @@ class TopicGroupMembershipEndpointTest {
     @Autowired
     private TopicGroupMembershipRepository membershipRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private User anna;
     private User piotr;
     private TopicGroup group;
@@ -84,10 +88,12 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$.content[0].name").value("Grupa chmurowa"))
                 .andExpect(jsonPath("$.content[0].memberCount").value(0))
                 .andExpect(jsonPath("$.content[0].member").value(false))
+                .andExpect(jsonPath("$.content[0].coordinator").value(false))
                 .andExpect(jsonPath("$.content[1].name").value("Grupa AI"))
                 .andExpect(jsonPath("$.content[1].description").value("Wymiana doświadczeń z wdrożeń AI."))
                 .andExpect(jsonPath("$.content[1].memberCount").value(1))
-                .andExpect(jsonPath("$.content[1].member").value(true));
+                .andExpect(jsonPath("$.content[1].member").value(true))
+                .andExpect(jsonPath("$.content[1].coordinator").value(true));
     }
 
     @Test
@@ -97,7 +103,8 @@ class TopicGroupMembershipEndpointTest {
 
         listAs(piotr)
                 .andExpect(jsonPath("$.content[0].memberCount").value(2))
-                .andExpect(jsonPath("$.content[0].member").value(true));
+                .andExpect(jsonPath("$.content[0].member").value(true))
+                .andExpect(jsonPath("$.content[0].coordinator").value(false));
     }
 
     @Test
@@ -132,9 +139,23 @@ class TopicGroupMembershipEndpointTest {
                 .andExpect(jsonPath("$[0].id").value(anna.getId().toString()))
                 .andExpect(jsonPath("$[0].firstName").value("Anna"))
                 .andExpect(jsonPath("$[0].joinedAt").exists())
+                .andExpect(jsonPath("$[0].coordinator").value(true))
                 .andExpect(jsonPath("$[1].id").value(piotr.getId().toString()))
                 .andExpect(jsonPath("$[1].firstName").doesNotExist())
-                .andExpect(jsonPath("$[1].lastName").doesNotExist());
+                .andExpect(jsonPath("$[1].lastName").doesNotExist())
+                .andExpect(jsonPath("$[1].coordinator").value(false));
+    }
+
+    @Test
+    void onlyMembersGetTheLinkToTheDiscordChannel() throws Exception {
+        jdbcTemplate.update("DELETE FROM discord_settings");
+        jdbcTemplate.update("INSERT INTO discord_settings (guild_id) VALUES (?)", "111");
+        group.setDiscordChannelId("222");
+        topicGroupRepository.save(group);
+
+        listAs(anna)
+                .andExpect(jsonPath("$.content[0].discordChannelUrl").value("https://discord.com/channels/111/222"));
+        listAs(piotr).andExpect(jsonPath("$.content[0].discordChannelUrl").doesNotExist());
     }
 
     @Test

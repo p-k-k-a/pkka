@@ -12,10 +12,26 @@ public record TopicGroupResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) long memberCount,
 
         @Schema(description = "Whether the caller is a member", requiredMode = RequiredMode.REQUIRED)
-        boolean member) {
+        boolean member,
 
-    static TopicGroupResponse from(TopicGroup group, long memberCount, boolean member) {
+        @Schema(description = "Whether the caller coordinates the group", requiredMode = RequiredMode.REQUIRED)
+        boolean coordinator,
+
+        @Schema(
+                description =
+                        "Link to the group's Discord channel; null unless the caller is a member and the channel exists")
+        String discordChannelUrl) {
+
+    static TopicGroupResponse from(
+            TopicGroup group, long memberCount, boolean member, boolean coordinator, String discordChannelUrl) {
         return new TopicGroupResponse(
-                group.getId(), group.getSlug(), group.getName(), group.getDescription(), memberCount, member);
+                group.getId(),
+                group.getSlug(),
+                group.getName(),
+                group.getDescription(),
+                memberCount,
+                member,
+                coordinator,
+                discordChannelUrl);
     }
 }

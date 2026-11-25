@@ -11,15 +11,19 @@ public record TopicGroupMemberResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
         String lastName,
-        @Schema(requiredMode = RequiredMode.REQUIRED) Instant joinedAt) {
+        @Schema(requiredMode = RequiredMode.REQUIRED) Instant joinedAt,
 
-    static TopicGroupMemberResponse from(TopicGroupMembership membership) {
+        @Schema(description = "Whether this member coordinates the group", requiredMode = RequiredMode.REQUIRED)
+        boolean coordinator) {
+
+    static TopicGroupMemberResponse from(TopicGroupMembership membership, boolean coordinator) {
         User user = membership.getUser();
         boolean showName = user.isShowName();
         return new TopicGroupMemberResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
                 showName ? user.getLastName() : null,
-                membership.getJoinedAt());
+                membership.getJoinedAt(),
+                coordinator);
     }
 }
