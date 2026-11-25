@@ -12,9 +12,12 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import { TopicGroupRequestStatus, useListAdminTopicGroupRequests } from "@pkka/api";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const ADMIN_GROUPS_HREF = "/dashboard/admin/groups";
 
 type SidebarItem = {
   href: string;
@@ -95,16 +98,25 @@ const adminItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/admin/alumni"),
   },
   {
-    href: "/dashboard/admin/groups",
+    href: ADMIN_GROUPS_HREF,
     label: "Grupy tematyczne",
     icon: MessagesSquare,
     match: (pathname) => pathname.startsWith("/dashboard/admin/groups"),
   },
 ];
 
+function usePendingTopicGroupRequests(admin: boolean) {
+  const { data } = useListAdminTopicGroupRequests(
+    { status: TopicGroupRequestStatus.UNDER_REVIEW, size: 1 },
+    { query: { enabled: admin } },
+  );
+  return data?.data.totalElements ?? 0;
+}
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
+  const pendingGroupRequests = usePendingTopicGroupRequests(admin);
 
   // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
@@ -146,7 +158,17 @@ export function DashboardSidebar() {
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >
-                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                <span className="relative shrink-0">
+                  <Icon className="size-4" aria-hidden="true" />
+                  {href === ADMIN_GROUPS_HREF && pendingGroupRequests > 0 ? (
+                    <span
+                      aria-label={`Wnioski oczekujące na decyzję: ${pendingGroupRequests}`}
+                      className="bg-primary text-primary-foreground ring-muted absolute -top-2 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2"
+                    >
+                      {pendingGroupRequests}
+                    </span>
+                  ) : null}
+                </span>
                 {label}
               </Link>
             );
