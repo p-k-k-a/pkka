@@ -45,7 +45,6 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
-  FadeOut,
   LinearTransition,
   useAnimatedStyle,
   useSharedValue,
@@ -95,11 +94,15 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   const cardTop = rect.y - 4;
   const cardHeight = rect.height + 8;
   const shifted = !!frame && frame.top < cardTop;
+  // The window wraps its content, so it resizes in the same layout pass as the content.
+  const maxHeight = maxBottom - (frame?.top ?? cardTop);
   const reveal = useSharedValue(0);
   const scale = useSharedValue(0.96);
   const opacity = useSharedValue(0);
   const backdrop = useSharedValue(0);
   const chevron = useSharedValue(0);
+  const listOpacity = useSharedValue(1);
+  const collapsing = useRef(false);
 
   const clipStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -108,6 +111,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -reveal.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
   const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${chevron.value}deg` }] }));
+  const listStyle = useAnimatedStyle(() => ({ opacity: listOpacity.value }));
 
   const hiddenOffset = (next: { top: number; height: number }) =>
     (next.top < cardTop ? 1 : -1) * Math.max(0, next.height - cardHeight);
@@ -145,8 +149,24 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   };
 
   const toggleMembers = () => {
-    chevron.value = withTiming(expanded ? 0 : 180, { duration: 260 });
-    setExpanded(!expanded);
+    if (collapsing.current) return;
+    if (!expanded) {
+      listOpacity.value = 1;
+      chevron.value = withTiming(180, { duration: 260 });
+      setExpanded(true);
+      return;
+    }
+    // Fade the list out in place first, so the resize below starts in one layout pass.
+    collapsing.current = true;
+    chevron.value = withTiming(0, { duration: 260 });
+    listOpacity.value = withTiming(0, { duration: 140 }, (finished) => {
+      if (finished) scheduleOnRN(finishCollapse);
+    });
+  };
+
+  const finishCollapse = () => {
+    collapsing.current = false;
+    setExpanded(false);
   };
 
   const memberList = members?.status === 200 ? members.data : undefined;
@@ -163,6 +183,8 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
     router.push({ pathname: "/alumni/[id]", params: { id } });
   };
 
+  const resize = settled ? RESIZE : undefined;
+
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={close}>
       <Animated.View style={[{ position: "absolute", inset: 0 }, backdropStyle]}>
@@ -170,12 +192,12 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
       </Animated.View>
       <Animated.View
         role="dialog"
-        layout={settled ? RESIZE : undefined}
+        layout={resize}
         className="absolute overflow-hidden rounded-[20px]"
         style={[
           {
             top: frame?.top ?? cardTop,
-            height: frame?.height,
+            maxHeight,
             left: rect.x - 4,
             width: rect.width + 8,
             transformOrigin: shifted ? "bottom" : "top",
@@ -184,10 +206,16 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
         ]}
       >
         <Animated.View
+          layout={resize}
           className="bg-card overflow-hidden rounded-[20px]"
-          style={[{ height: frame?.height }, contentStyle]}
+          style={[{ maxHeight }, contentStyle]}
         >
-          <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+          <Animated.ScrollView
+            layout={resize}
+            bounces={false}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
             <View onLayout={onContentLayout} className="gap-3 p-4">
               <View className="flex-row items-center gap-3">
                 <View className="flex-1 gap-0.5">
@@ -229,7 +257,11 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                 </Animated.View>
               ) : null}
 
-              <Animated.View entering={stagger(1)} className="border-border -mx-4 border-y px-4">
+              <Animated.View
+                entering={stagger(1)}
+                layout={resize}
+                className="border-border -mx-4 overflow-hidden border-y px-4"
+              >
                 <Pressable
                   role="button"
                   disabled={!memberList}
@@ -252,10 +284,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                   ) : null}
                 </Pressable>
                 {expanded && memberList ? (
-                  <Animated.View
-                    entering={FadeIn.delay(80).duration(200)}
-                    exiting={FadeOut.duration(160)}
-                  >
+                  <Animated.View entering={FadeIn.delay(80).duration(200)} style={listStyle}>
                     <ScrollView
                       nestedScrollEnabled
                       showsVerticalScrollIndicator={false}
@@ -285,7 +314,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                 ) : null}
               </Animated.View>
 
-              <Animated.View entering={stagger(2)}>
+              <Animated.View entering={stagger(2)} layout={resize}>
                 {!group.member ? (
                   <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
                     <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
@@ -314,18 +343,22 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
                 )}
               </Animated.View>
 
-              {group.coordinator ? (
-                <Text className="text-muted-foreground text-center text-[13px]">
-                  Aby odejść, przekaż grupę innemu członkowi na stronie klubu
-                </Text>
-              ) : group.member ? (
-                <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
-                  <LogOut size={16} color={theme.destructive} />
-                  <Text className="font-semibold">Opuść grupę</Text>
-                </Button>
+              {group.member ? (
+                <Animated.View layout={resize}>
+                  {group.coordinator ? (
+                    <Text className="text-muted-foreground text-center text-[13px]">
+                      Aby odejść, przekaż grupę innemu członkowi na stronie klubu
+                    </Text>
+                  ) : (
+                    <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
+                      <LogOut size={16} color={theme.destructive} />
+                      <Text className="font-semibold">Opuść grupę</Text>
+                    </Button>
+                  )}
+                </Animated.View>
               ) : null}
             </View>
-          </ScrollView>
+          </Animated.ScrollView>
         </Animated.View>
       </Animated.View>
     </Modal>
