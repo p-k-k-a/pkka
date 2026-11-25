@@ -157,7 +157,7 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={close}>
       <Animated.View style={[{ position: "absolute", inset: 0 }, backdropStyle]}>
-        <Pressable accessibilityLabel="Zamknij" onPress={close} className="bg-band/30 flex-1" />
+        <Pressable accessibilityLabel="Zamknij" onPress={close} className="flex-1 bg-black/40" />
       </Animated.View>
       <Animated.View
         role="dialog"
