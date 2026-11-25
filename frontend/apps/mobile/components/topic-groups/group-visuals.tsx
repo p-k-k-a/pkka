@@ -1,8 +1,6 @@
-import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
-import { type TopicGroupMemberResponse } from "@pkka/api";
-import { avatarInitials, topicGroupMemberName } from "@pkka/domain";
+import { avatarInitials } from "@pkka/domain";
 import { View } from "react-native";
 
 const TILES = [
@@ -19,27 +17,6 @@ export function GroupTile({ name }: { name: string }) {
       <Text className={cn("font-heading text-base font-semibold", tile.text)}>
         {avatarInitials(name)}
       </Text>
-    </View>
-  );
-}
-
-export function AvatarStack({
-  members,
-  size,
-}: {
-  members: TopicGroupMemberResponse[];
-  size: "xs";
-}) {
-  return (
-    <View className="flex-row pl-2">
-      {members.slice(0, 3).map((member) => (
-        <InitialsAvatar
-          key={member.id}
-          name={topicGroupMemberName(member)}
-          size={size}
-          className="border-card -ml-2 border-2"
-        />
-      ))}
     </View>
   );
 }

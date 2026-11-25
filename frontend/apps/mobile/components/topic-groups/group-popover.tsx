@@ -1,6 +1,6 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { DiscordBanner } from "@/components/topic-groups/discord-banner";
-import { AvatarStack, GroupTile, Pill } from "@/components/topic-groups/group-visuals";
+import { GroupTile, Pill } from "@/components/topic-groups/group-visuals";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
@@ -22,7 +22,7 @@ import {
   topicGroupMemberShortName,
 } from "@pkka/domain";
 import { router } from "expo-router";
-import { ArrowUpRight, ChevronDown, ChevronUp, MessageCircle, X } from "lucide-react-native";
+import { ArrowUpRight, ChevronDown, MessageCircle, Users, X } from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
   Linking,
@@ -37,9 +37,11 @@ import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
+  LinearTransition,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -52,6 +54,7 @@ const OPEN = { duration: 300, easing: Easing.bezier(0.2, 0.9, 0.25, 1) };
 const CLOSE = { duration: 200, easing: Easing.bezier(0.4, 0, 0.6, 1) };
 const TAB_BAR_HEIGHT = 76;
 
+const RESIZE = LinearTransition.duration(300).easing(OPEN.easing);
 const stagger = (index: number) => FadeInDown.delay(90 + index * 50).duration(220);
 
 type GroupPopoverProps = {
@@ -75,42 +78,53 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   const { data: discord } = useGetMyDiscordStatus({ query: { enabled: group.member } });
   const { toggle, isPending } = useToggleMembership(group);
   const [expanded, setExpanded] = useState(false);
-  const [shifted, setShifted] = useState(false);
-  const opened = useRef(false);
+  const [frame, setFrame] = useState<{ top: number; height: number } | null>(null);
+  const [settled, setSettled] = useState(false);
+  const closing = useRef(false);
 
   const maxBottom = windowHeight - insets.bottom - TAB_BAR_HEIGHT - 12;
   const cardTop = rect.y - 4;
   const cardHeight = rect.height + 8;
-  const top = useSharedValue(cardTop);
-  const height = useSharedValue(cardHeight);
+  const shifted = !!frame && frame.top < cardTop;
+  const reveal = useSharedValue(0);
   const scale = useSharedValue(0.96);
   const opacity = useSharedValue(0);
   const backdrop = useSharedValue(0);
+  const chevron = useSharedValue(0);
 
-  const popoverStyle = useAnimatedStyle(() => ({
-    top: top.value,
-    height: height.value,
+  const clipStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    transform: [{ translateY: reveal.value }, { scale: scale.value }],
   }));
+  const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -reveal.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
+  const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${chevron.value}deg` }] }));
+
+  const hiddenOffset = (next: { top: number; height: number }) =>
+    (next.top < cardTop ? 1 : -1) * Math.max(0, next.height - cardHeight);
 
   const onContentLayout = (event: LayoutChangeEvent) => {
     const contentHeight = event.nativeEvent.layout.height;
-    const finalTop = Math.max(insets.top + 12, Math.min(cardTop, maxBottom - contentHeight));
-    top.value = withTiming(finalTop, OPEN);
-    height.value = withTiming(Math.min(contentHeight, maxBottom - finalTop), OPEN);
-    if (opened.current) return;
-    opened.current = true;
-    setShifted(finalTop < cardTop);
+    const top = Math.max(insets.top + 12, Math.min(cardTop, maxBottom - contentHeight));
+    const next = { top, height: Math.min(contentHeight, maxBottom - top) };
+    setFrame(next);
+    if (frame) return;
+    reveal.value = withSequence(
+      withTiming(hiddenOffset(next), { duration: 0 }),
+      withTiming(0, OPEN, (finished) => {
+        if (finished) scheduleOnRN(setSettled, true);
+      }),
+    );
     scale.value = withSpring(1, { damping: 14, stiffness: 260, mass: 0.8 });
     opacity.value = withTiming(1, { duration: 90 });
     backdrop.value = withTiming(1, { duration: 200 });
   };
 
   const close = () => {
-    top.value = withTiming(cardTop, CLOSE);
-    height.value = withTiming(cardHeight, CLOSE);
+    if (closing.current) return;
+    closing.current = true;
+    if (!frame) return onClose();
+    reveal.value = withTiming(hiddenOffset(frame), CLOSE);
     scale.value = withTiming(0.96, CLOSE);
     backdrop.value = withTiming(0, { duration: 200 });
     opacity.value = withDelay(
@@ -119,6 +133,11 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
         if (finished) scheduleOnRN(onClose);
       }),
     );
+  };
+
+  const toggleMembers = () => {
+    chevron.value = withTiming(expanded ? 0 : 180, { duration: 260 });
+    setExpanded(!expanded);
   };
 
   const memberList = members?.status === 200 ? members.data : undefined;
@@ -142,136 +161,143 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
       </Animated.View>
       <Animated.View
         role="dialog"
-        className="bg-card absolute overflow-hidden rounded-[20px]"
+        layout={settled ? RESIZE : undefined}
+        className="absolute overflow-hidden rounded-[20px]"
         style={[
-          { left: rect.x - 4, width: rect.width + 8, transformOrigin: shifted ? "bottom" : "top" },
-          popoverStyle,
+          {
+            top: frame?.top ?? cardTop,
+            height: frame?.height,
+            left: rect.x - 4,
+            width: rect.width + 8,
+            transformOrigin: shifted ? "bottom" : "top",
+          },
+          clipStyle,
         ]}
       >
-        <ScrollView bounces={false} nestedScrollEnabled>
-          <View onLayout={onContentLayout} className="gap-3 p-4">
-            <View className="flex-row items-center gap-3">
-              <GroupTile name={group.name} />
-              <View className="flex-1 gap-0.5">
-                <Text role="heading" className="text-foreground text-[17px] font-semibold">
-                  {group.name}
-                </Text>
-                {coordinatorLabel ? (
-                  <Text className="text-muted-foreground text-xs">
-                    Koordynator: {coordinatorLabel}
+        <Animated.View className="bg-card" style={[{ height: frame?.height }, contentStyle]}>
+          <ScrollView bounces={false} nestedScrollEnabled>
+            <View onLayout={onContentLayout} className="gap-3 p-4">
+              <View className="flex-row items-center gap-3">
+                <GroupTile name={group.name} />
+                <View className="flex-1 gap-0.5">
+                  <Text role="heading" className="text-foreground text-[17px] font-semibold">
+                    {group.name}
                   </Text>
-                ) : null}
-              </View>
-              <Pressable
-                role="button"
-                accessibilityLabel="Zamknij"
-                onPress={close}
-                hitSlop={8}
-                className="bg-muted dark:bg-input size-9 items-center justify-center rounded-full active:opacity-70"
-              >
-                <X size={18} color={theme.mutedForeground} />
-              </Pressable>
-            </View>
-
-            {group.description ? (
-              <Animated.View entering={stagger(0)}>
-                <Text className="text-muted-foreground text-sm leading-[22px]">
-                  {group.description}
-                </Text>
-              </Animated.View>
-            ) : null}
-
-            <Animated.View entering={stagger(1)} className="border-border -mx-4 border-y px-4">
-              <Pressable
-                role="button"
-                disabled={!memberList}
-                onPress={() => setExpanded((open) => !open)}
-                className="h-[52px] flex-row items-center gap-2.5"
-              >
-                {memberList ? <AvatarStack members={memberList} size="xs" /> : null}
-                <Text className="text-foreground flex-1 text-sm font-semibold">
-                  {topicGroupMemberCountLabel(group.memberCount)}
-                </Text>
-                {memberList ? (
-                  <View className="flex-row items-center gap-0.5">
-                    <Text className="text-accent text-[13px] font-medium">
-                      {expanded ? "Zwiń" : "Pokaż"}
+                  {coordinatorLabel ? (
+                    <Text className="text-muted-foreground text-xs">
+                      Koordynator: {coordinatorLabel}
                     </Text>
-                    {expanded ? (
-                      <ChevronUp size={16} color={theme.accent} />
-                    ) : (
-                      <ChevronDown size={16} color={theme.accent} />
-                    )}
-                  </View>
-                ) : null}
-              </Pressable>
-              {expanded && memberList ? (
-                <Animated.View entering={FadeIn.delay(80).duration(200)}>
-                  <ScrollView nestedScrollEnabled style={{ maxHeight: 188 }} className="pb-1.5">
-                    {memberList.map((member) => (
-                      <Pressable
-                        key={member.id}
-                        role="link"
-                        onPress={() => openProfile(member.id)}
-                        className="h-11 flex-row items-center gap-3 active:opacity-70"
-                      >
-                        <InitialsAvatar name={topicGroupMemberName(member)} size="xs" />
-                        <Text className="text-foreground flex-1 text-sm font-medium">
-                          {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
-                        </Text>
-                        {member.coordinator ? (
-                          <Pill label="Koordynator" amber />
-                        ) : member.id === myId ? (
-                          <Pill label="Ty" />
-                        ) : null}
-                      </Pressable>
-                    ))}
-                  </ScrollView>
+                  ) : null}
+                </View>
+                <Pressable
+                  role="button"
+                  accessibilityLabel="Zamknij"
+                  onPress={close}
+                  hitSlop={8}
+                  className="bg-muted dark:bg-input size-9 items-center justify-center rounded-full active:opacity-70"
+                >
+                  <X size={18} color={theme.mutedForeground} />
+                </Pressable>
+              </View>
+
+              {group.description ? (
+                <Animated.View entering={stagger(0)}>
+                  <Text className="text-muted-foreground text-sm leading-[22px]">
+                    {group.description}
+                  </Text>
                 </Animated.View>
               ) : null}
-            </Animated.View>
 
-            <Animated.View entering={stagger(2)}>
-              {!group.member ? (
-                <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
-                  <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
-                </Button>
-              ) : discordUrl ? (
+              <Animated.View entering={stagger(1)} className="border-border -mx-4 border-y px-4">
                 <Pressable
-                  role="link"
-                  onPress={() => void Linking.openURL(discordUrl)}
-                  className="bg-band flex-row items-center gap-3 rounded-[14px] py-2.5 pl-3 pr-2.5 active:opacity-80"
+                  role="button"
+                  disabled={!memberList}
+                  onPress={toggleMembers}
+                  className="h-[52px] flex-row items-center gap-2.5"
                 >
-                  <View className="size-9 items-center justify-center rounded-[10px] bg-white/10">
-                    <MessageCircle size={18} color={theme.bandForeground} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-band-foreground text-sm font-semibold">
-                      Serwer Discord
-                    </Text>
-                    <Text className="text-band-foreground/70 text-xs">Otwórz kanał grupy</Text>
-                  </View>
-                  <View className="bg-primary size-11 items-center justify-center rounded-full">
-                    <ArrowUpRight size={20} color={theme.primaryForeground} />
-                  </View>
+                  <Users size={18} color={theme.mutedForeground} />
+                  <Text className="text-foreground flex-1 text-sm font-semibold">
+                    {topicGroupMemberCountLabel(group.memberCount)}
+                  </Text>
+                  {memberList ? (
+                    <View className="flex-row items-center gap-0.5">
+                      <Text className="text-accent text-[13px] font-medium">
+                        {expanded ? "Zwiń" : "Pokaż"}
+                      </Text>
+                      <Animated.View style={chevronStyle}>
+                        <ChevronDown size={16} color={theme.accent} />
+                      </Animated.View>
+                    </View>
+                  ) : null}
                 </Pressable>
-              ) : (
-                <DiscordBanner />
-              )}
-            </Animated.View>
+                {expanded && memberList ? (
+                  <Animated.View entering={FadeIn.delay(80).duration(200)}>
+                    <ScrollView nestedScrollEnabled style={{ maxHeight: 188 }} className="pb-1.5">
+                      {memberList.map((member) => (
+                        <Pressable
+                          key={member.id}
+                          role="link"
+                          onPress={() => openProfile(member.id)}
+                          className="h-11 flex-row items-center gap-3 active:opacity-70"
+                        >
+                          <InitialsAvatar name={topicGroupMemberName(member)} size="xs" />
+                          <Text className="text-foreground flex-1 text-sm font-medium">
+                            {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
+                          </Text>
+                          {member.coordinator ? (
+                            <Pill label="Koordynator" amber />
+                          ) : member.id === myId ? (
+                            <Pill label="Ty" />
+                          ) : null}
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </Animated.View>
+                ) : null}
+              </Animated.View>
 
-            {group.member && !group.coordinator ? (
-              <Pressable
-                role="button"
-                onPress={toggle}
-                disabled={isPending}
-                className="h-8 items-center justify-center self-center active:opacity-70"
-              >
-                <Text className="text-muted-foreground text-[13px] font-medium">Opuść grupę</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        </ScrollView>
+              <Animated.View entering={stagger(2)}>
+                {!group.member ? (
+                  <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
+                    <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
+                  </Button>
+                ) : discordUrl ? (
+                  <Pressable
+                    role="link"
+                    onPress={() => void Linking.openURL(discordUrl)}
+                    className="bg-band flex-row items-center gap-3 rounded-[14px] py-2.5 pl-3 pr-2.5 active:opacity-80"
+                  >
+                    <View className="size-9 items-center justify-center rounded-[10px] bg-white/10">
+                      <MessageCircle size={18} color={theme.bandForeground} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-band-foreground text-sm font-semibold">
+                        Serwer Discord
+                      </Text>
+                      <Text className="text-band-foreground/70 text-xs">Otwórz kanał grupy</Text>
+                    </View>
+                    <View className="bg-primary size-11 items-center justify-center rounded-full">
+                      <ArrowUpRight size={20} color={theme.primaryForeground} />
+                    </View>
+                  </Pressable>
+                ) : (
+                  <DiscordBanner />
+                )}
+              </Animated.View>
+
+              {group.member && !group.coordinator ? (
+                <Pressable
+                  role="button"
+                  onPress={toggle}
+                  disabled={isPending}
+                  className="h-8 items-center justify-center self-center active:opacity-70"
+                >
+                  <Text className="text-muted-foreground text-[13px] font-medium">Opuść grupę</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </ScrollView>
+        </Animated.View>
       </Animated.View>
     </Modal>
   );
