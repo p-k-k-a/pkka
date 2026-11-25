@@ -62,7 +62,7 @@ export function TopicGroupDetails({ slug }: { slug: string }) {
   const group = data?.status === 200 ? data.data : undefined;
 
   return (
-    <div className="bg-background px-4 py-10 md:px-10 md:py-20">
+    <div className="bg-background px-4 pt-6 pb-10 md:px-10 md:pt-8 md:pb-20">
       <div className="mx-auto max-w-[1280px] space-y-10">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href={BACK_HREF}>
