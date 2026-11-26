@@ -151,5 +151,5 @@ class Diagram:
             "appState": {"viewBackgroundColor": "#ffffff", "gridSize": 20},
             "files": {},
         }
-        path.write_text(json.dumps(doc, ensure_ascii=False, indent=1))
+        path.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
         return path

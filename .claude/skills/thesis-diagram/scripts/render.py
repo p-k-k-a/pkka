@@ -37,7 +37,7 @@ def main() -> None:
     ap.add_argument("--scale", type=float, default=2)
     args = ap.parse_args()
 
-    doc = json.loads(args.file.read_text())
+    doc = json.loads(args.file.read_text(encoding="utf-8"))
     out = args.output or args.file.with_suffix(".png")
 
     from playwright.sync_api import sync_playwright

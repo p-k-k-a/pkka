@@ -192,8 +192,8 @@
     <p>System oparty jest na <strong>rozdzieleniu odpowiedzialności</strong> między dwa komponenty:</p>
     <table>
       <tr><th>Komponent</th><th>Odpowiedzialność</th></tr>
-      <tr><td><strong>Keycloak</strong></td><td>Wyłącznie tożsamość — autentykacja, zarządzanie kontami, federacja przez Discord OIDC, przechowywanie tokenów brokera</td></tr>
-      <tr><td><strong>Spring Boot</strong></td><td>Logika biznesowa — weryfikacja przynależności do serwera Discord, nadawanie ról przez Keycloak Admin API</td></tr>
+      <tr><td><strong>Keycloak</strong></td><td>Wyłącznie tożsamość — autentykacja, zarządzanie kontami, federacja przez Discord OIDC, powiązanie konta z kontem Discord (federated identity)</td></tr>
+      <tr><td><strong>Spring Boot</strong></td><td>Logika biznesowa — sprawdzenie roli alumna na serwerze Discord (tokenem bota), nadawanie ról przez Keycloak Admin API</td></tr>
     </table>
 
     <p>Zrezygnowano z customowych wtyczek Keycloaka (np. <code>keycloak-discord</code>) na rzecz natywnego OIDC:</p>
@@ -205,34 +205,33 @@
     </table>
 
     <div class="callout info"><div class="callout-icon"></div><div>
-      <strong>Precyzyjny zakres ochrony OIDC:</strong> Discord AT i RT to opaque tokeny — Discord API przy callach do <code>/users/@me/guilds</code> nie weryfikuje <code>client_id</code>, bearer token wystarczy. Korzyść OIDC jest wyłącznie w warstwie brokera:
-      <table style="margin-top:10px">
-        <tr><th>Etap</th><th>Token</th><th>Weryfikacja aud</th><th>Korzyść OIDC nad OAuth2</th></tr>
-        <tr><td>Broker handshake (Keycloak ↔ Discord)</td><td>ID token (JWT)</td><td>✅ Keycloak weryfikuje</td><td>Tak — blokuje Confused Deputy</td></tr>
-        <tr><td>Runtime API calls (Spring ↔ Discord API)</td><td>Access token (opaque)</td><td>❌ Discord nie weryfikuje</td><td>Nie — identyczne jak OAuth2</td></tr>
-      </table>
+      <strong>Precyzyjny zakres ochrony OIDC:</strong> korzyść OIDC nad OAuth2 dotyczy wyłącznie warstwy brokera — przy logowaniu (Keycloak ↔ Discord) Keycloak weryfikuje podpis, wystawcę i <code>aud</code> ID tokenu Discorda. Backend nie używa tokenów Discorda użytkownika do wywołań API (patrz niżej).
     </div></div>
 
-    <h3>Przepływ — Guild Verification</h3>
-    <div class="flow"><span class="box">Użytkownik</span> klika "Zaloguj przez Discord"
+    <h3>Przepływ — weryfikacja alumna przez Discord</h3>
+    <div class="flow"><span class="box">Użytkownik</span> loguje się przez Discord (kc_idp_hint=discord)
     │
     ▼
 <span class="box">Keycloak</span> (OIDC broker)
-├── zapisuje Access Token Discorda (Store Tokens = ON)
+├── tworzy konto albo łączy je z istniejącym (First Broker Login)
+├── zapisuje powiązanie z kontem Discord (federated identity)
 └── wydaje własny token JWT użytkownikowi
     │
     ▼
-<span class="box">Spring Boot</span> odbiera token Keycloaka
+<span class="box">Spring Boot</span> BffAuthenticationSuccessHandler
+├── syncIdentityFromClaims → brak discordId?   <span class="label">Admin API: GET /users/{id}/federated-identity</span>
+├── approveIfDiscordVouched
+│   └── DiscordGuildMembership.holdsAlumnRole   <span class="label">GET /guilds/{guild}/members/{discordId} (token bota)</span>
+└── jeśli członek ma rolę alumna na serwerze → wniosek APPROVED
+    └── ApplicationApprovedListener nadaje rolę `verified-alumn`   <span class="label">Keycloak Admin API</span>
     │
     ▼
-POST /verify-guild
-├── pobiera Discord AT z Keycloaka  <span class="label">GET /broker/discord/token</span>
-├── odpytuje Discord API            <span class="label">GET /users/@me/guilds</span>
-├── sprawdza presence na serwerze
-└── nadaje rolę `verified-alumn`    <span class="label">Keycloak Admin API</span>
-    │
-    ▼
-<span class="box">Frontend</span> odświeża token → nowy JWT zawiera rolę</div>
+<span class="box">ApprovedAlumnRoleFilter</span> dokłada ROLE_VERIFIED_ALUMN do czasu odświeżenia tokenu</div>
+    <p>To samo sprawdzenie działa przy składaniu wniosku (<code>ApplicationController</code> → <code>DiscordAlumnVouch.vouchesFor</code>). Serwer i rolę alumna ustawia się komendą <code>/setup</code> bota.</p>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Wycofane:</strong> pierwsza wersja odczytywała token Discorda użytkownika z Keycloaka (<em>Store tokens</em> + <em>Stored tokens readable</em> → rola <code>broker.read-token</code>, <code>GET /realms/pkka/broker/discord/token</code>) i sprawdzała <code>GET /users/@me/guilds</code> (scope <code>guilds</code>). Wraz z rozwojem aplikacji zastąpiło ją sprawdzenie roli tokenem bota, które nie wymaga przechowywania tokenów Discorda. Keycloak nadal pozwala na ten wariant, gdyby był potrzebny; opisy w sekcjach 6, 8 i 10 dotyczące odczytu tokenu są zachowane tylko jako referencja.
+    </div></div>
   </section>
 
   <!-- INFRASTRUKTURA -->
@@ -511,12 +510,11 @@ networks:
     <p>Zakładka <strong>Service account roles</strong> → <strong>Assign role</strong> → <strong>Filter by clients</strong>:</p>
     <table>
       <tr><th>Klient</th><th>Rola</th><th>Po co</th></tr>
-      <tr><td><code>realm-management</code></td><td><code>manage-users</code></td><td>Szukanie użytkowników, nadawanie i odbieranie ról realmowych przez Admin API</td></tr>
+      <tr><td><code>realm-management</code></td><td><code>manage-users</code></td><td>Nadawanie ról realmowych, odczyt powiązania z Discordem (federated identity), usuwanie konta przy usunięciu konta w aplikacji</td></tr>
+      <tr><td><code>realm-management</code></td><td><code>view-realm</code></td><td>Odczyt definicji ról realmu (potrzebny do nadania <code>verified-alumn</code>)</td></tr>
     </table>
     <div class="callout info"><div class="callout-icon"></div><div>
-      <strong>Dlaczego nie <code>broker / read-token</code> dla service account?</strong><br>
-      Opcja <strong>Stored tokens readable = ON</strong> na IDP Discorda automatycznie przyznaje rolę <code>broker.read-token</code> <em>samemu użytkownikowi</em> przy pierwszym logowaniu. Spring Boot wywołuje <code>GET /broker/discord/token</code> <strong>tokenem użytkownika</strong> — nie potrzebuje do tego service account.<br><br>
-      Service account jest używany <strong>tylko</strong> do Admin API (nadawanie roli <code>verified-alumn</code>).
+      Service account jest używany <strong>tylko</strong> do Admin API: <code>KeycloakRoleService</code> (nadanie <code>verified-alumn</code>) i <code>KeycloakUserService</code> (identyfikator Discorda, usunięcie konta). Rola <code>broker.read-token</code> nie jest potrzebna — patrz callout „Wycofane” w sekcji 1.
     </div></div>
   </section>
 
@@ -574,7 +572,7 @@ networks:
 ▼
 <span class="box">Mobilka</span>
 │  8. System przechwytuje deep link, przekazuje do aplikacji
-│  9. Aplikacja zapisuje AT + RT w Keychain / EncryptedSharedPreferences
+│  9. Aplikacja zapisuje AT + RT w expo-secure-store (Keychain / Android Keystore)
 │
 ▼
 <span class="box">Każde żądanie API</span>
@@ -633,7 +631,7 @@ networks:
       <tr><td>client-authentication-method</td><td><code>client_secret_basic</code></td><td><code>client_secret_basic</code></td></tr>
       <tr><td>Redirect URI</td><td><code>/login/oauth2/code/keycloak-web</code></td><td><code>/login/oauth2/code/keycloak-mobile</code></td></tr>
       <tr><td>Service Account</td><td>✓ (Admin API, manage-users)</td><td>✗</td></tr>
-      <tr><td>Tokeny po zakończeniu flow</td><td>W sesji Spring (JSESSIONID)</td><td>Przekazane przez deep link (Keychain)</td></tr>
+      <tr><td>Tokeny po zakończeniu flow</td><td>W sesji Spring (JSESSIONID)</td><td>Przekazane przez deep link (expo-secure-store)</td></tr>
       <tr><td>Identyfikacja kolejnych żądań</td><td>Cookie <code>JSESSIONID</code></td><td>Header <code>Authorization: Bearer</code></td></tr>
       <tr><td>Punkt wejścia mobilki</td><td><em>nie dotyczy</em></td><td><code>/oauth2/authorization/keycloak-mobile</code></td></tr>
     </table>
@@ -655,15 +653,15 @@ networks:
       <tr><td>Display name</td><td><code>Discord</code></td></tr>
       <tr><td>Enabled</td><td><span class="tag on">ON</span></td></tr>
       <tr><td>Hide on login page</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— Spring wysyła <code>kc_idp_hint=discord</code>, przycisk niepotrzebny</span></td></tr>
-      <tr><td>Store tokens</td><td><span class="tag on">ON</span></td></tr>
-      <tr><td>Stored tokens readable</td><td><span class="tag on">ON</span></td></tr>
+      <tr><td>Store tokens</td><td><span class="tag off">OFF</span> <span style="color:var(--text-muted);font-size:12px">— wycofane, patrz niżej</span></td></tr>
+      <tr><td>Stored tokens readable</td><td><span class="tag off">OFF</span> <span style="color:var(--text-muted);font-size:12px">— wycofane, patrz niżej</span></td></tr>
       <tr><td>Discovery endpoint</td><td><code>https://discord.com/.well-known/openid-configuration</code> → kliknij <strong>Import</strong></td></tr>
       <tr><td>Client ID</td><td>Discord Client ID</td></tr>
       <tr><td>Client Secret</td><td>Discord Client Secret</td></tr>
       <tr><td>Client authentication</td><td><code>client_secret_basic</code></td></tr>
       <tr><td>PKCE</td><td><span class="tag on">ON</span> — metoda <code>S256</code></td></tr>
       <tr><td>Pass login_hint</td><td><span class="tag on">ON</span> <span style="color:var(--text-muted);font-size:12px">— umożliwia prefill loginu na stronie Discorda</span></td></tr>
-      <tr><td>Default Scopes</td><td><code>openid email identify guilds</code></td></tr>
+      <tr><td>Default Scopes</td><td><code>openid email identify</code></td></tr>
     </table>
 
     <div class="callout info"><div class="callout-icon"></div><div>
@@ -671,7 +669,7 @@ networks:
       Discord wspiera obie metody. <code>client_secret_basic</code> to standard RFC 6749 — credentials lecą w nagłówku <code>Authorization: Basic base64(id:secret)</code>, nie w body requestu. Zgodne z PKCE i lepiej wspierane przez walidatory OAuth2.
     </div></div>
 
-    <div class="callout warn"><div class="callout-icon"></div><div><strong>Store tokens</strong> i <strong>Stored tokens readable</strong> muszą być ON — bez tego nie będzie można pobrać Access Tokena Discorda z Keycloaka.</div></div>
+    <div class="callout warn"><div class="callout-icon"></div><div><strong>Wycofane wraz z rozwojem aplikacji:</strong> <strong>Store tokens</strong>, <strong>Stored tokens readable</strong> i scope <code>guilds</code> były potrzebne, gdy backend pobierał token Discorda użytkownika z Keycloaka i sprawdzał <code>/users/@me/guilds</code>. Obecnie rolę alumna sprawdza bot (sekcja 1), więc wszystkie trzy są wyłączone. Poniższe zrzuty zostawiono jako referencję, gdyby ten wariant był jeszcze potrzebny.</div></div>
 
     <figure class="screenshot screenshot-sm">
       <img src="imgs/store-tokens-off-default.png" alt="Store tokens OFF - stan przed konfiguracją">
@@ -682,9 +680,9 @@ networks:
       <figcaption>Tooltip wyjaśniający działanie Stored tokens readable — przypisuje rolę <code>broker.read-token</code></figcaption>
     </figure>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Scope <code>identify</code> zwraca username i avatar Discorda. Scope <code>guilds</code> zwraca listę serwerów. Oba są wymagane dla weryfikacji alumni.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Scope <code>identify</code> zwraca username, avatar i identyfikator (snowflake) Discorda — ten ostatni Keycloak zapisuje jako powiązanie konta, a backend używa go do sprawdzenia roli na serwerze. Scope <code>guilds</code> (lista serwerów użytkownika) nie jest już potrzebny.</div></div>
 
-    <h4>Efekt — zgoda Discord po dodaniu scope guilds</h4>
+    <h4>Referencja (wycofane) — zgoda Discord ze scope guilds</h4>
     <div class="screenshot-row">
       <figure class="screenshot">
         <img src="imgs/discord-consent-without-guilds-scope.png" alt="Discord consent - bez guilds">
@@ -700,7 +698,7 @@ networks:
     <div class="callout warn"><div class="callout-icon"></div><div>Sekcja <strong>Advanced settings</strong> pojawia się dopiero po zapisaniu IDP. Zapisz → wróć do edycji → przewiń na dół.</div></div>
     <table>
       <tr><th>Pole</th><th>Wartość</th><th>Dlaczego</th></tr>
-      <tr><td>Trust email</td><td><span class="tag on">ON</span></td><td>Discord weryfikuje maile — nie pytamy użytkownika ponownie</td></tr>
+      <tr><td>Trust email</td><td><span class="tag off">OFF</span></td><td>Adres z Discorda nie jest uznawany za potwierdzony — użytkownik weryfikuje go linkiem tak jak przy rejestracji formularzem (<em>Verify email</em> w realmie). Chroni też przed przejęciem istniejącego konta przez łączenie po adresie e-mail.</td></tr>
       <tr><td>Account linking policy</td><td><code>DEFAULT</code></td><td>Tworzy nowe konta LUB linkuje z istniejącym gdy email się zgadza</td></tr>
     </table>
     <div class="callout danger"><div class="callout-icon"></div><div>Nie ustawiaj <code>LINK_ONLY</code> — blokuje tworzenie nowych kont. Użytkownicy logujący się Discordem po raz pierwszy dostaną błąd.</div></div>
@@ -743,7 +741,7 @@ networks:
     </div></div>
 
     <h3>Konfiguracja IDP — Hide on login page</h3>
-    <p>Ustaw <code>Hide on login page: OFF</code> — przeglądarka webowa powinna widzieć przycisk Discord na stronie Keycloaka. Mobilka i tak dostaje <code>kc_idp_hint</code> i pomija ten ekran.</p>
+    <p>Ustaw <code>Hide on login page: ON</code> (tak jest na produkcji). Przycisk „Zaloguj przez Discord” jest w aplikacji webowej i mobilnej, które wywołują <code>/oauth2/authorization/keycloak-*?idp=discord</code>, więc Keycloak od razu przekierowuje do Discorda. Wcześniejsza wersja zostawiała przycisk na stronie Keycloaka (<code>OFF</code>).</p>
 
     <h3>Implementacja — <code>DiscordBypassRequestResolver</code></h3>
     <p>PKCE S256 dla obu rejestracji. <code>kc_idp_hint=discord</code> jest wstrzykiwany gdy żądanie zawiera parametr URL <code>?idp=discord</code> — mobilka i web mogą go użyć jawnie, by ominąć stronę logowania Keycloaka i trafiać prosto do Discorda:</p>
@@ -820,6 +818,7 @@ GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
       <tr><td>Review Profile</td><td><code>DISABLED</code></td><td>Pomijamy formularz uzupełniania danych — Keycloak pobiera je z mapperów Discorda</td></tr>
       <tr><td>Handle Existing Account</td><td><code>ALTERNATIVE</code></td><td>Wykonuje się gdy email z Discorda już istnieje w bazie</td></tr>
       <tr><td>Verify Existing Account by Email</td><td><code>ALTERNATIVE</code></td><td>Wysyła mail weryfikacyjny przy linkowaniu kont — zabezpieczenie przed przejęciem konta</td></tr>
+      <tr><td>Verify Existing Account by Re-authentication</td><td><code>ALTERNATIVE</code></td><td>Druga możliwość potwierdzenia: ponowne zalogowanie hasłem do istniejącego konta</td></tr>
     </table>
     <div class="callout info"><div class="callout-icon"></div><div><code>ALTERNATIVE</code> = krok wykona się jeśli zajdzie potrzeba, nie blokuje flow gdy nie jest potrzebny.</div></div>
   </section>
@@ -834,18 +833,11 @@ GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
     <h3>Utwórz rolę verified-alumn</h3>
     <p>Sidebar → <strong>Realm roles</strong> → <strong>Create role</strong> → <strong>Role name:</strong> <code>verified-alumn</code> → Save.</p>
 
-    <h3>Rola broker.read-token dla użytkownika</h3>
-    <p>Endpoint <code>/broker/discord/token</code> wymaga tokenu <strong>samego użytkownika</strong> z rolą <code>broker.read-token</code>. Rola ta jest nadawana automatycznie gdy <code>Stored tokens readable = ON</code> — użytkownik otrzymuje ją przy pierwszym logowaniu przez Discord. <strong>Service account nie jest do tego potrzebny.</strong></p>
-
-    <div class="callout success"><div class="callout-icon"></div><div>
-      <strong>Przepływ odczytu Discord AT:</strong><br>
-      Frontend wysyła <strong>Keycloak AT użytkownika</strong> do Spring Boota → Spring Boot przekazuje go jako <code>Bearer</code> do <code>GET /realms/pkka/broker/discord/token</code> → Keycloak sprawdza czy użytkownik ma rolę <code>broker.read-token</code> → zwraca jego Discord AT.<br><br>
-      Service account jest używany <strong>tylko</strong> do Admin API (nadawanie roli <code>verified-alumn</code>).
+    <h3>Rola broker.read-token (wycofane)</h3>
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      Rola <code>broker.read-token</code> pozwalała użytkownikowi odczytać jego token Discorda (<code>GET /realms/pkka/broker/discord/token</code>). Nadawała ją automatycznie opcja <code>Stored tokens readable = ON</code>. Od kiedy rolę alumna sprawdza bot, rola nie jest potrzebna, a opcja jest wyłączona. Konta utworzone wcześniej mogą ją jeszcze mieć (Users → [konto] → Role mapping) — nie daje dostępu do niczego poza własnym, zapisanym tokenem Discorda.
     </div></div>
-
-    <p>Jeśli chcesz nadać ją ręcznie do testów:</p>
-    <p><strong>Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token → Assign</strong></p>
-    <div class="callout warn"><div class="callout-icon"></div><div>Po ręcznym nadaniu roli zdobądź <strong>nowy AT</strong> — stary token nie będzie zawierał nowej roli w claims.</div></div>
+    <div class="callout warn"><div class="callout-icon"></div><div>Po zmianie ról użytkownik potrzebuje <strong>nowego AT</strong> — stary token zawiera role z chwili wystawienia. Dla <code>verified-alumn</code> backend łagodzi to filtrem <code>ApprovedAlumnRoleFilter</code> (sekcja 1).</div></div>
   </section>
 
   <!-- EVENTS -->
@@ -976,7 +968,9 @@ GET /realms/pkka/.../auth?client_id=pkka-*&amp;code_challenge=...
       <figcaption>Postman — okno Manage Access Tokens z Keycloak access_token, refresh_token i id_token</figcaption>
     </figure>
 
-    <h3>Krok 3 — Pobierz Discord Access Token z Keycloaka</h3>
+    <div class="callout warn"><div class="callout-icon"></div><div><strong>Kroki 3–4 są wycofane</strong> (wymagają <code>Store tokens</code>, <code>Stored tokens readable</code> i scope <code>guilds</code>, obecnie wyłączonych). Zostały jako referencja wariantu z odczytem tokenu Discorda — patrz callout „Wycofane” w sekcji 1.</div></div>
+
+    <h3>Krok 3 — Pobierz Discord Access Token z Keycloaka (wycofane)</h3>
     <pre><code>GET http://localhost:8081/realms/pkka/broker/discord/token
 Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
 
@@ -996,7 +990,7 @@ Authorization: Bearer &lt;KEYCLOAK_ACCESS_TOKEN&gt;</code></pre>
       <figcaption>Scope w odpowiedzi: <code>guilds email identify</code> — potwierdzenie poprawnej konfiguracji</figcaption>
     </figure>
 
-    <h3>Krok 4 — Weryfikacja listy serwerów Discord</h3>
+    <h3>Krok 4 — Weryfikacja listy serwerów Discord (wycofane)</h3>
     <pre><code>GET https://discord.com/api/users/@me/guilds
 Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
 
@@ -1005,7 +999,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <figcaption>✅ 200 OK — lista serwerów użytkownika z Discord API. Pole <code>id</code> to wartość do sprawdzenia w logice autoryzacji.</figcaption>
     </figure>
 
-    <div class="callout success"><div class="callout-icon"></div><div>Cały przepływ działa poprawnie. Keycloak przechowuje Discord AT, Spring Boot może go pobrać i użyć do weryfikacji przynależności do serwera.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Ten przepływ działał w pierwszej wersji integracji. Obecnie przynależność sprawdza bot: <code>GET https://discord.com/api/v10/guilds/{guildId}/members/{discordId}</code> z nagłówkiem <code>Authorization: Bot &lt;DISCORD_BOT_TOKEN&gt;</code> — 200 z listą ról członka albo 404, gdy nie ma go na serwerze.</div></div>
   </section>
 
   <!-- SPRING -->
@@ -1038,15 +1032,18 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><strong><code>SecurityConfig</code></strong></td><td>Dwie <code>SecurityFilterChain</code>: Chain 1 (<code>/api/**</code>), Chain 2 (login/logout). Konwertery ról dla Web (<code>OidcUserService</code> + AT) i Mobile (JWT). → sekcja 20</td></tr>
       <tr><td><code>DiscordBypassRequestResolver</code></td><td>PKCE S256 + <code>kc_idp_hint=discord</code> dla obu logowań/rejestracji — bezpośredni bypass do Discord IDP. → sekcja 6b</td></tr>
       <tr><td><code>KeycloakAdminConfig</code></td><td>Bean Keycloak Admin Client (client credentials) do Admin API</td></tr>
-      <tr><td><code>BffAuthenticationSuccessHandler</code></td><td>Po <code>oauth2Login</code>: Web → redirect z JSESSIONID, Mobile → deep link z AT+RT, sesja invalidowana. → sekcja 21</td></tr>
-      <tr><td><code>DiscordGuildService</code></td><td>Pobieranie Discord AT z Keycloaka, weryfikacja serwera, nadawanie roli</td></tr>
-      <tr><td><code>GuildVerificationController</code></td><td>Endpoint <code>POST /api/verify-guild</code> — działa z obu ścieżek</td></tr>
+      <tr><td><code>BffAuthenticationSuccessHandler</code></td><td>Po <code>oauth2Login</code>: synchronizacja danych z claimów, automatyczna akceptacja alumna z Discorda, potem Web → redirect z JSESSIONID, Mobile → deep link z AT+RT, sesja invalidowana. → sekcja 21</td></tr>
+      <tr><td><code>AuthRefreshController</code></td><td><code>POST /api/public/auth/refresh</code> i <code>/logout</code> dla mobilki — backend dokłada sekret klienta <code>pkka-mobile</code></td></tr>
+      <tr><td><code>KeycloakRoleService</code>, <code>KeycloakUserService</code></td><td>Admin API: nadanie roli realmu (idempotentne), odczyt identyfikatora Discorda z federated identity, usunięcie konta</td></tr>
+      <tr><td><code>DiscordGuildMembership</code>, <code>DiscordAlumnVouch</code></td><td>Sprawdzenie tokenem bota, czy członek serwera ma rolę alumna (ustawianą przez <code>/setup</code>)</td></tr>
+      <tr><td><code>ApplicationApprovedListener</code></td><td>Po akceptacji wniosku nadaje rolę <code>verified-alumn</code> w Keycloaku</td></tr>
+      <tr><td><code>ApprovedAlumnRoleFilter</code></td><td>Dokłada <code>ROLE_VERIFIED_ALUMN</code>, gdy wniosek jest zaakceptowany, a token jeszcze nie ma roli</td></tr>
       <tr><td><code>ProfileController</code></td><td>Dane zalogowanego użytkownika, obsługa <code>OidcUser</code> i <code>Jwt</code></td></tr>
     </table>
 
     <div class="callout success"><div class="callout-icon"></div><div>
       <strong>@PreAuthorize działa identycznie dla obu ścieżek.</strong><br>
-      <code>SecurityConfig</code> mapuje <code>realm_access.roles</code> na <code>ROLE_*</code> zarówno dla sesji Web (przez <code>GrantedAuthoritiesMapper</code>) jak i dla JWT Mobile (przez <code>KeycloakJwtRoleConverter</code>). Adnotacja <code>@PreAuthorize("hasRole('VERIFIED_ALUMN')")</code> na kontrolerze nie wymaga żadnej modyfikacji dla obsługi obu klientów.
+      <code>SecurityConfig</code> mapuje <code>realm_access.roles</code> na <code>ROLE_*</code> zarówno dla sesji Web (przez niestandardowy <code>OidcUserService</code> czytający Access Token) jak i dla JWT Mobile (przez <code>KeycloakJwtRoleConverter</code>). Adnotacja <code>@PreAuthorize("hasRole('VERIFIED_ALUMN')")</code> na kontrolerze nie wymaga żadnej modyfikacji dla obsługi obu klientów.
     </div></div>
   </section>
 
@@ -1059,14 +1056,14 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
     <table>
       <tr><th>Błąd</th><th>Przyczyna</th><th>Rozwiązanie</th></tr>
       <tr><td><code>redirect_uri mismatch</code> na Discordzie</td><td>Zły URI w Discord Dev Portal</td><td>Sprawdź: <code>http://localhost:8081/realms/pkka/broker/discord/endpoint</code></td></tr>
-      <tr><td>Brak przycisku Discord</td><td><code>Hide on login page = ON</code></td><td>Zmień na OFF w ustawieniach IDP</td></tr>
+      <tr><td>Brak przycisku Discord na stronie Keycloaka</td><td><code>Hide on login page = ON</code></td><td>To zamierzone — przycisk jest w aplikacjach (<code>?idp=discord</code>). Do testów bez aplikacji zmień tymczasowo na OFF</td></tr>
       <tr><td>Błąd przy pierwszym logowaniu Discordem</td><td><code>Account linking policy = LINK_ONLY</code></td><td>Zmień na <code>DEFAULT</code></td></tr>
       <tr><td>Email weryfikacyjny nie dochodzi</td><td>Brak SMTP</td><td>Uruchom Mailpit lub wyłącz tymczasowo Verify email</td></tr>
-      <tr><td><code>403 Client not authorized to retrieve tokens</code></td><td>Brak roli <code>broker.read-token</code> na koncie użytkownika</td><td>Ustaw <code>Stored tokens readable = ON</code> w IDP Discord LUB ręcznie: Users → [konto] → Role mapping → Assign role → Filter by clients → broker / read-token</td></tr>
-      <tr><td><code>403</code> z tokenem użytkownika na <code>/broker/discord/token</code></td><td>Brak roli <code>broker.read-token</code> na koncie</td><td><code>Stored tokens readable = ON</code> LUB ręczne nadanie roli w User → Role mapping</td></tr>
+      <tr><td>Alumn z Discorda nie jest akceptowany automatycznie</td><td>Brak tokenu bota, serwera lub roli alumna ustawionej przez <code>/setup</code>, albo konto nie ma jeszcze powiązania z Discordem</td><td>Sprawdź <code>DISCORD_BOT_TOKEN</code>, wykonaj <code>/setup</code> na serwerze, zaloguj się raz przez Discord (backend pobiera wtedy identyfikator)</td></tr>
+      <tr><td><code>Rola verified-alumn</code> nie zostaje nadana po akceptacji</td><td>Konto serwisowe <code>pkka-web</code> bez <code>manage-users</code> / <code>view-realm</code></td><td>Clients → pkka-web → Service account roles; błąd widać w logu backendu (<code>ApplicationApprovedListener</code>)</td></tr>
       <tr><td>Auth failed w Postmanie z YubiKey</td><td>Webview Postmana nie obsługuje WebAuthn/FIDO2</td><td>Użyj testowego konta bez 2FA</td></tr>
       <tr><td>Discord: "verified email or phone"</td><td>Testowe konto Discord bez weryfikacji</td><td>Użyj konta z zweryfikowanym emailem</td></tr>
-      <tr><td>Rola <code>verified-alumn</code> nie pojawia się w JWT</td><td>Stary token po nadaniu roli</td><td>Użytkownik musi uzyskać nowy token (ponowne logowanie)</td></tr>
+      <tr><td>Rola <code>verified-alumn</code> nie pojawia się w JWT</td><td>Stary token po nadaniu roli</td><td>Pojawi się po odświeżeniu tokenu. Do tego czasu backend dokłada <code>ROLE_VERIFIED_ALUMN</code> na podstawie zaakceptowanego wniosku (<code>ApprovedAlumnRoleFilter</code>)</td></tr>
       <tr><td><code>invalid_client</code> w logach Spring</td><td>Zły Client Secret</td><td>Sprawdź <code>application.yml</code> vs zakładka Credentials w Keycloak</td></tr>
       <tr><td>Brak przekierowania do Discorda (pojawia się Keycloak login)</td><td>Brak parametru <code>kc_idp_hint</code> w URL</td><td>Sprawdź czy <code>discordBypassResolver</code> bean jest poprawnie podłączony w Chain 2</td></tr>
       <tr><td><code>redirect_uri mismatch</code> przy logowaniu Spring→Keycloak</td><td>Keycloak ma inny URI niż Spring generuje</td><td>Sprawdź: Valid redirect URI w Keycloak = <code>/login/oauth2/code/keycloak-web</code> i <code>/login/oauth2/code/keycloak-mobile</code></td></tr>
@@ -1089,19 +1086,19 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>user</code></td><td>Zalogowany użytkownik</td><td>Składanie wniosku o dołączenie, przeglądanie statusu, linkowanie konta Discord</td></tr>
       <tr><td><code>verified-alumn</code></td><td>Zweryfikowany alumn</td><td>Lista alumnów, materiały, wydarzenia, edycja profilu, grupy tematyczne</td></tr>
       <tr><td><code>admin</code></td><td>Administrator</td><td>Panel administracyjny, weryfikacja wniosków, tworzenie wydarzeń, ankiety, statystyki</td></tr>
-      <tr><td><code>bot</code></td><td>Bot Discord</td><td>Service account — synchronizacja ról, powiadamianie o wydarzeniach</td></tr>
+      <tr><td><code>bot</code> <span class="tag off">wycofane</span></td><td>Bot Discord</td><td>Nieużywana — bot działa jako moduł backendu (token bota w <code>.env</code>), nie ma konta w Keycloaku</td></tr>
     </table>
 
-    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>.</div></div>
+    <div class="callout info"><div class="callout-icon"></div><div>Rola <code>user</code> jest rolą bazową — każdy zarejestrowany użytkownik ją posiada. <code>verified-alumn</code> i <code>admin</code> są rolami addytywnymi — stackują się z <code>user</code>, ale nie łączy się ich na jednym koncie: konto admina służy tylko do zarządzania.</div></div>
 
     <h3>Grupy (Groups)</h3>
     <p>Grupy upraszczają zarządzanie — zamiast przypisywać role każdemu użytkownikowi osobno, dodajesz go do grupy.</p>
     <table>
       <tr><th>Grupa</th><th>Role przypisane do grupy</th><th>Kto trafia do grupy</th></tr>
       <tr><td><code>users</code></td><td><code>user</code></td><td>Domyślna grupa — każdy nowo zarejestrowany użytkownik (ustaw jako Default Group)</td></tr>
-      <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Alumn po pozytywnym rozpatrzeniu wniosku przez admina</td></tr>
-      <tr><td><code>administrators</code></td><td><code>user</code>, <code>verified-alumn</code>, <code>admin</code></td><td>Pracownicy wydziału / zarząd klubu</td></tr>
-      <tr><td><code>bots</code></td><td><code>bot</code></td><td>Service account bota Discord</td></tr>
+      <tr><td><code>alumni</code></td><td><code>user</code>, <code>verified-alumn</code></td><td>Obecnie nieużywana przez backend — po akceptacji wniosku <code>KeycloakRoleService</code> nadaje rolę <code>verified-alumn</code> bezpośrednio do konta (role mapping), użytkownik zostaje tylko w <code>users</code>. Grupę można użyć przy ręcznym nadawaniu statusu w konsoli</td></tr>
+      <tr><td><code>administrators</code></td><td><code>user</code>, <code>admin</code></td><td>Administratorzy, dodawani ręcznie w konsoli. Konto admina nie jest kontem alumna: admin, który chce korzystać z platformy jako członek Klubu, zakłada osobne konto</td></tr>
+      <tr><td><code>bots</code> <span class="tag off">wycofane</span></td><td><code>bot</code></td><td>Pusta, pozostałość po planie osobnego konta bota</td></tr>
     </table>
 
     <h3>Jak utworzyć role w Keycloak</h3>
@@ -1111,7 +1108,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td><code>user</code></td><td>Registered platform user</td></tr>
       <tr><td><code>verified-alumn</code></td><td>Verified AGH alumn</td></tr>
       <tr><td><code>admin</code></td><td>App admin</td></tr>
-      <tr><td><code>bot</code></td><td>Discord bot service account</td></tr>
+      <tr><td><code>bot</code> <span class="tag off">wycofane</span></td><td>Nie twórz — patrz wyżej</td></tr>
     </table>
 
     <h3>Jak utworzyć grupy w Keycloak</h3>
@@ -1137,7 +1134,7 @@ Authorization: Bearer &lt;DISCORD_ACCESS_TOKEN&gt;</code></pre>
       <tr><td>Grupy tematyczne</td><td><code>verified-alumn</code></td></tr>
       <tr><td>Panel administracyjny, weryfikacja wniosków</td><td><code>admin</code></td></tr>
       <tr><td>Tworzenie wydarzeń, ankiety, statystyki</td><td><code>admin</code></td></tr>
-      <tr><td>Synchronizacja Discord, powiadomienia</td><td><code>bot</code></td></tr>
+      <tr><td>Interakcje Discorda (<code>/api/public/discord/interactions</code>)</td><td>Brak (publiczne, weryfikowane podpisem Ed25519 Discorda)</td></tr>
     </table>
 
     <h3>Jak odczytać rolę w Spring Boot</h3>
@@ -1712,7 +1709,7 @@ grant_type=authorization_code
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>Metoda uwierzytelniania klienta (<code>client-authentication-method</code>):</strong><br>
-      Spring Security domyślnie używa <code>client_secret_basic</code> — wysyła credentials w nagłówku <code>Authorization: Basic base64(id:secret)</code>. Alternatywnie <code>client_secret_post</code> (credentials w body requestu). W dokumentacji IDP Discorda ustawiono <code>client_secret_post</code> dla brokera — to <strong>osobny klient Keycloak–Discord</strong>, nie mylić z <code>pkka-web → Keycloak</code>.
+      Spring Security domyślnie używa <code>client_secret_basic</code> — wysyła credentials w nagłówku <code>Authorization: Basic base64(id:secret)</code>. Alternatywnie <code>client_secret_post</code> (credentials w body requestu). Broker Keycloak–Discord (sekcja 6) też używa <code>client_secret_basic</code> — to <strong>osobny klient Keycloak–Discord</strong>, nie mylić z <code>pkka-web → Keycloak</code>.
     </div></div>
 
     <h4>Response Keycloaka (200 OK):</h4>
@@ -1744,7 +1741,7 @@ grant_type=authorization_code
     <p>Gdy użytkownik klika przycisk Discord na stronie logowania Keycloaka, między krokiem 2 a 3 wchodzi dodatkowy sub-flow:</p>
     <div class="flow"><span class="label">Krok 2a.</span> Keycloak → 302 → Discord OAuth2 auth endpoint
           ?response_type=code&amp;client_id={DISCORD_CLIENT_ID}
-          &amp;scope=openid+email+identify+guilds
+          &amp;scope=openid+email+identify
           &amp;state={keycloak_state}&amp;nonce={nonce}
 
 <span class="label">Krok 2b.</span> Użytkownik zatwierdza zgodę na Discordzie
@@ -1753,7 +1750,7 @@ grant_type=authorization_code
           GET /realms/pkka/broker/discord/endpoint?code=DISCORD_CODE
 
 <span class="label">Krok 2d.</span> Keycloak backend: POST discord.com/api/oauth2/token
-          → odbiera Discord AT + RT (zapisuje, bo Store tokens = ON)
+          → odbiera Discord AT + RT (nie zapisuje — Store tokens = OFF)
           → odpytuje Discord Userinfo → mapuje atrybuty
           → uruchamia First Broker Login flow (tworzy/linkuje konto)
 
@@ -1900,7 +1897,7 @@ errorSocialLoginMessage=Logowanie przez Discord nie powiod\u0142o si\u0119.</cod
        Usuń OAuth2AuthorizedClient z serwisu
        Invaliduj sesję HTTP (była tymczasowa dla state/nonce)
        Redirect → myapp:///login#at=&lt;AT&gt;&amp;rt=&lt;RT&gt;
-       Mobilka: zapisz w Keychain / EncryptedSharedPreferences</div>
+       Mobilka: zapisz w expo-secure-store (Keychain / Android Keystore)</div>
 
     <h3>Kolejne żądania API (/api/**)</h3>
     <div class="flow"><span class="box">Żądanie HTTP → /api/cokolwiek</span>
@@ -1935,7 +1932,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
       <tr><td>Callback URI</td><td><code>/login/oauth2/code/keycloak-web</code></td><td><code>/login/oauth2/code/keycloak-mobile</code></td></tr>
       <tr><td>PKCE</td><td>S256 (wymagany przez Keycloak)</td><td>S256 (wymagany przez Keycloak)</td></tr>
       <tr><td>client-authentication-method</td><td><code>client_secret_basic</code></td><td><code>client_secret_basic</code></td></tr>
-      <tr><td>Tokeny po flow</td><td>Sesja Spring (serwer)</td><td>Deep link (mobilka → Keychain)</td></tr>
+      <tr><td>Tokeny po flow</td><td>Sesja Spring (serwer)</td><td>Deep link (mobilka → expo-secure-store)</td></tr>
       <tr><td>Identyfikacja żądań API</td><td>Cookie <code>JSESSIONID</code></td><td>Header <code>Authorization: Bearer</code></td></tr>
       <tr><td>Typ principal</td><td><code>OidcUser</code></td><td><code>Jwt</code></td></tr>
       <tr><td>CSRF wymagany</td><td>Tak (<code>XSRF-TOKEN</code>)</td><td>Nie (Bearer jest CSRF-safe)</td></tr>
@@ -1977,12 +1974,16 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .csrfTokenRequestHandler(<span class="kw">new</span> SpaCsrfTokenRequestHandler())
             .ignoringRequestMatchers(SecurityConfig::hasBearerToken)  <span class="cm">// Bearer jest CSRF-safe z natury</span>
-            .ignoringRequestMatchers(<span class="str">"/api/public/auth/refresh"</span>, <span class="str">"/api/public/auth/logout"</span>))
+            .ignoringRequestMatchers(<span class="str">"/api/public/auth/refresh"</span>, <span class="str">"/api/public/auth/logout"</span>)
+            .ignoringRequestMatchers(<span class="str">"/api/public/discord/interactions"</span>))  <span class="cm">// Discord podpisuje żądania Ed25519</span>
         .addFilterAfter(<span class="kw">new</span> CsrfCookieFilter(), CsrfFilter.<span class="kw">class</span>)
+        .addFilterAfter(<span class="kw">new</span> ApprovedAlumnRoleFilter(applicationRepository),
+            BearerTokenAuthenticationFilter.<span class="kw">class</span>)  <span class="cm">// ROLE_VERIFIED_ALUMN przed odświeżeniem tokenu</span>
         .authorizeHttpRequests(auth -&gt; auth
             .requestMatchers(<span class="str">"/api/public/**"</span>).permitAll()
-            .requestMatchers(<span class="str">"/api/me"</span>).authenticated()
+            .requestMatchers(<span class="str">"/api/me"</span>, <span class="str">"/api/tags"</span>).authenticated()
             .requestMatchers(<span class="str">"/api/alumni/**"</span>).hasRole(<span class="str">"VERIFIED_ALUMN"</span>)
+            .requestMatchers(<span class="str">"/api/events/**"</span>).hasRole(<span class="str">"USER"</span>)
             .requestMatchers(<span class="str">"/api/admin/**"</span>).hasRole(<span class="str">"ADMIN"</span>)
             .anyRequest().hasRole(<span class="str">"USER"</span>))
         .oauth2ResourceServer(rs -&gt; rs
@@ -2063,7 +2064,7 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
             .logoutRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, <span class="str">"/logout"</span>))
             .logoutSuccessHandler(oidcLogout)
             .invalidateHttpSession(<span class="kw">true</span>)
-            .deleteCookies(<span class="str">"JSESSIONID"</span>, <span class="str">"XSRF-TOKEN"</span>));
+            .deleteCookies(<span class="str">"JSESSIONID"</span>));
     <span class="kw">return</span> http.build();
 }</code></pre>
 
@@ -2176,6 +2177,8 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
         <span class="kw">if</span> (auth.getPrincipal() <span class="kw">instanceof</span> OidcUser oidc) {
             userProvisioningService.syncIdentityFromClaims(
                 oidc.getSubject(), oidc.getGivenName(), oidc.getFamilyName(), oidc.getEmail());
+            <span class="cm">// alumn z rolą na serwerze Discord → wniosek akceptowany od razu (błąd nie blokuje logowania)</span>
+            approveIfDiscordVouched(oidc.getSubject());
         }
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) auth;
@@ -2240,7 +2243,11 @@ BRAK obu → 401 Unauthorized (JSON, nie redirect)</div>
 
     <div class="callout info"><div class="callout-icon"></div><div>
       <strong>AT w URL deep linka — implikacje bezpieczeństwa:</strong><br>
-      JWT pojawia się w <code>response.sendRedirect()</code>, co loguje go w access logach Tomcata (zależy od konfiguracji). Zalecane mitygacje: (1) ustaw krótki czas życia AT w Keycloaku (300 s = domyślnie); (2) wyłącz logowanie query string w prodzie; (3) rozważ App Links (Android) / Universal Links (iOS) z weryfikacją domeny — eliminuje intent hijacking.
+      JWT pojawia się w <code>response.sendRedirect()</code>, co loguje go w access logach Tomcata (zależy od konfiguracji). Zalecane mitygacje: (1) krótki czas życia AT w Keycloaku (na produkcji 600 s); (2) wyłącz logowanie query string w prodzie; (3) rozważ App Links (Android) / Universal Links (iOS) z weryfikacją domeny — eliminuje intent hijacking.
+    </div></div>
+
+    <div class="callout warn"><div class="callout-icon"></div><div>
+      <strong>Znane ograniczenie (świadomie odłożone):</strong> PKCE chroni tylko wymianę kodu, którą robi backend. Ostatni krok backend → aplikacja przekazuje gotowe AT i RT w URL-u <code>pkka:///login#…</code>, więc inna aplikacja z zarejestrowanym schematem <code>pkka</code> mogłaby je przechwycić. Docelowo, zgodnie z RFC 8252: <code>pkka-mobile</code> jako klient publiczny z PKCE S256 i redirect URI <code>pkka://…</code>, aplikacja sama wymienia kod (np. <code>expo-auth-session</code>) oraz odświeża i wylogowuje bezpośrednio w Keycloaku; gałąź mobilna w <code>BffAuthenticationSuccessHandler</code> i <code>AuthRefreshController</code> przestają być potrzebne. Osobne zadanie, na razie nieplanowane.
     </div></div>
 
     <h3>Odmiana z jednorazowym kodem zamiast tokena w URL</h3>
