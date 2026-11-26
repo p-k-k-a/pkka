@@ -73,8 +73,8 @@ export function TopicGroupRequestCard({ request }: TopicGroupRequestCardProps) {
       {status === TopicGroupRequestStatus.UNDER_REVIEW ? (
         <View className="border-border gap-1 border-t pt-3">
           <Text className="text-muted-foreground text-[13px] leading-relaxed">
-            Decyzja administracji pojawi się w tym miejscu. Kolejny wniosek złożysz po rozpatrzeniu
-            lub wycofaniu tego.
+            Po zatwierdzeniu grupa pojawi się na liście, a Ty zostaniesz jej koordynatorem. Kolejny
+            wniosek złożysz po rozpatrzeniu lub wycofaniu tego.
           </Text>
           <Button
             variant="outline"
