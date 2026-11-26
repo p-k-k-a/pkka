@@ -38,7 +38,7 @@ export function AlumniProfileView({ profile, onEdit }: AlumniProfileViewProps) {
         </Pressable>
       ) : null}
 
-      <ProfileHero profile={profile} />
+      <ProfileHero profile={profile} own={onEdit !== undefined} />
       <ContactActions profile={profile} />
 
       {profile.bio ? (

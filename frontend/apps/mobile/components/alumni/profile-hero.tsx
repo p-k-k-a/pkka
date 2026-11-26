@@ -3,14 +3,16 @@ import { Badge } from "@/components/ui/badge";
 import { Text } from "@/components/ui/text";
 import type { AlumnProfile } from "@/components/alumni/alumni-profile-view";
 import { useThemeColors } from "@/lib/theme";
-import { HeartHandshake } from "lucide-react-native";
+import { EyeOff, HeartHandshake } from "lucide-react-native";
 import { View } from "react-native";
 
 type ProfileHeroProps = {
   profile: AlumnProfile;
+  /** The viewer's own profile: shown in full, even what the owner hides from others. */
+  own?: boolean;
 };
 
-export function ProfileHero({ profile }: ProfileHeroProps) {
+export function ProfileHero({ profile, own = false }: ProfileHeroProps) {
   const theme = useThemeColors();
   const name = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
   const alumnSinceDate = profile.alumnSince?.split("-").reverse().join(".");
@@ -18,7 +20,7 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
   return (
     <View className="gap-6">
       <View className="gap-1">
-        {profile.visibility.name && name ? (
+        {(own || profile.visibility.name) && name ? (
           <View className="flex-row items-center gap-4">
             {/* Only the viewer's own profile carries a picture; the public one has none. */}
             <UserAvatar
@@ -32,6 +34,14 @@ export function ProfileHero({ profile }: ProfileHeroProps) {
               className="font-heading text-foreground flex-1 text-[33px] font-semibold leading-tight tracking-tight"
             >
               {name}
+            </Text>
+          </View>
+        ) : null}
+        {own && !profile.visibility.name ? (
+          <View className="flex-row items-center gap-1.5">
+            <EyeOff size={13} color={theme.mutedForeground} />
+            <Text className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Imię i nazwisko ukryte przed innymi
             </Text>
           </View>
         ) : null}

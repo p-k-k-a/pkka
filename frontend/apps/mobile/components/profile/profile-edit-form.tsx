@@ -14,7 +14,6 @@ import {
   linkedinUrlError,
   phoneNumberError,
   uploadErrorMessage,
-  uploadLimitLabel,
   uploadProgressLabel,
 } from "@pkka/domain";
 import { pickAvatar } from "@/lib/pick-avatar";
@@ -337,7 +336,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           </Text>
         ) : (
           <Text className="text-muted-foreground text-center text-[13px]">
-            Zdjęcie do {uploadLimitLabel(AVATAR_UPLOAD)}. Bez niego pokazujemy Twoje inicjały.
+            Bez zdjęcia pokazujemy Twoje inicjały.
           </Text>
         )}
       </View>
