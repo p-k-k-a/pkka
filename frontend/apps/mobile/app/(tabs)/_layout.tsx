@@ -42,12 +42,17 @@ function TabIcon({
   );
 }
 
+/** Asking for the Discord status makes the backend align the user's Discord roles, so do it on launch. */
+function useSyncDiscordRolesOnLaunch(signedIn: boolean) {
+  useGetMyDiscordStatus({ query: { enabled: signedIn } });
+}
+
 export default function TabsLayout() {
   const theme = useThemeColors();
   const scheme = useAppColorScheme();
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
-  useGetMyDiscordStatus({ query: { enabled: !!user } });
+  useSyncDiscordRolesOnLaunch(!!user);
 
   return (
     <Tabs

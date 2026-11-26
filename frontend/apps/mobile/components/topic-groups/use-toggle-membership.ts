@@ -1,50 +1,12 @@
-import {
-  ApiError,
-  getGetTopicGroupQueryKey,
-  getListTopicGroupMembersQueryKey,
-  getListTopicGroupMembersQueryOptions,
-  getListTopicGroupsQueryKey,
-  useJoinTopicGroup,
-  useLeaveTopicGroup,
-  type TopicGroupResponse,
-} from "@pkka/api";
+import { useToggleTopicGroupMembership, type TopicGroupResponse } from "@pkka/api";
 import { topicGroupMembershipErrorMessage } from "@pkka/domain";
-import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { Alert } from "react-native";
 
 export function useToggleMembership(group: TopicGroupResponse) {
-  const queryClient = useQueryClient();
-  const join = useJoinTopicGroup();
-  const leave = useLeaveTopicGroup();
-
-  const [isPending, setIsPending] = useState(false);
-
-  const toggle = async () => {
-    if (isPending) return;
-    setIsPending(true);
-    const joining = !group.member;
-    try {
-      await (joining ? join : leave).mutateAsync({ id: group.id });
-    } catch (error) {
-      Alert.alert(
-        joining ? "Nie dołączono do grupy" : "Nie opuszczono grupy",
-        topicGroupMembershipErrorMessage(
-          error instanceof ApiError ? error.status : undefined,
-          joining,
-        ),
-      );
-    }
-    if (joining) {
-      await queryClient.fetchQuery(getListTopicGroupMembersQueryOptions(group.id)).catch(() => {});
-    }
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: getListTopicGroupsQueryKey() }),
-      queryClient.invalidateQueries({ queryKey: getGetTopicGroupQueryKey(group.slug) }),
-      queryClient.invalidateQueries({ queryKey: getListTopicGroupMembersQueryKey(group.id) }),
-    ]);
-    setIsPending(false);
-  };
-
-  return { toggle, isPending };
+  return useToggleTopicGroupMembership(group, (joining, status) =>
+    Alert.alert(
+      joining ? "Nie dołączono do grupy" : "Nie opuszczono grupy",
+      topicGroupMembershipErrorMessage(status, joining),
+    ),
+  );
 }

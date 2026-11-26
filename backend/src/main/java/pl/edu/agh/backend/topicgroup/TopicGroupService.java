@@ -41,16 +41,13 @@ public class TopicGroupService {
                 .flatMap(userId -> membershipRepository.findByUserId(userId).stream())
                 .map(membership -> membership.getGroup().getId())
                 .collect(Collectors.toSet());
-        Optional<String> guildId = guildSettings.findFirstBy().map(DiscordGuildSettings::getGuildId);
-        return groups.map(group -> {
-            boolean member = joined.contains(group.getId());
-            return TopicGroupResponse.from(
-                    group,
-                    memberCounts.getOrDefault(group.getId(), 0L),
-                    member,
-                    callerId.filter(userId -> coordinates(group, userId)).isPresent(),
-                    member ? discordChannelUrl(group, guildId) : null);
-        });
+        Optional<String> guildId = guildId();
+        return groups.map(group -> toResponse(
+                group,
+                memberCounts.getOrDefault(group.getId(), 0L),
+                callerId,
+                joined.contains(group.getId()),
+                guildId));
     }
 
     public TopicGroupResponse get(Caller caller, String slug) {
@@ -58,13 +55,7 @@ public class TopicGroupService {
         Optional<UUID> callerId = callerUserService.findId(caller);
         boolean member = callerId.map(userId -> membershipRepository.existsByGroupIdAndUserId(group.getId(), userId))
                 .orElse(false);
-        Optional<String> guildId = guildSettings.findFirstBy().map(DiscordGuildSettings::getGuildId);
-        return TopicGroupResponse.from(
-                group,
-                membershipRepository.countByGroupId(group.getId()),
-                member,
-                callerId.filter(userId -> coordinates(group, userId)).isPresent(),
-                member ? discordChannelUrl(group, guildId) : null);
+        return toResponse(group, membershipRepository.countByGroupId(group.getId()), callerId, member, guildId());
     }
 
     @Transactional
@@ -81,7 +72,7 @@ public class TopicGroupService {
     public void leave(Caller caller, UUID groupId) {
         TopicGroup group = topicGroupRepository.findById(groupId).orElseThrow(TopicGroupNotFoundException::new);
         callerUserService.findId(caller).ifPresent(userId -> {
-            if (coordinates(group, userId)) {
+            if (group.isCoordinatedBy(userId)) {
                 throw new TopicGroupCoordinatorCannotLeaveException();
             }
             if (membershipRepository.deleteByGroupIdAndUserId(groupId, userId) > 0) {
@@ -101,20 +92,22 @@ public class TopicGroupService {
         }
         return membershipRepository.findByGroupIdOrderByJoinedAtAsc(groupId).stream()
                 .map(membership -> TopicGroupMemberResponse.from(
-                        membership, coordinates(group, membership.getUser().getId())))
+                        membership, group.isCoordinatedBy(membership.getUser().getId())))
                 .toList();
     }
 
-    static boolean coordinates(TopicGroup group, UUID userId) {
-        return group.getCoordinator() != null
-                && userId.equals(group.getCoordinator().getId());
+    /** Only members get the channel link: the channel is private to the group. */
+    private static TopicGroupResponse toResponse(
+            TopicGroup group, long memberCount, Optional<UUID> callerId, boolean member, Optional<String> guildId) {
+        return TopicGroupResponse.from(
+                group,
+                memberCount,
+                member,
+                callerId.filter(group::isCoordinatedBy).isPresent(),
+                member ? group.discordChannelUrl(guildId) : null);
     }
 
-    static String discordChannelUrl(TopicGroup group, Optional<String> guildId) {
-        if (group.getDiscordChannelId() == null) {
-            return null;
-        }
-        return guildId.map(id -> "https://discord.com/channels/%s/%s".formatted(id, group.getDiscordChannelId()))
-                .orElse(null);
+    private Optional<String> guildId() {
+        return guildSettings.findFirstBy().map(DiscordGuildSettings::getGuildId);
     }
 }

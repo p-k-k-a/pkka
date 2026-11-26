@@ -13,7 +13,7 @@ export function CoordinatorPill({ label }: { label: string }) {
   );
 }
 
-export function Pill({ label }: { label: string }) {
+export function MutedPill({ label }: { label: string }) {
   return (
     <View className="bg-card overflow-hidden rounded-md">
       <View className="bg-muted-foreground/10 px-2 py-1">
