@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { useListTopicGroups, type TopicGroupResponse } from "@pkka/api";
-import { topicGroupMemberCountLabel } from "@pkka/domain";
+import { pluralPl, topicGroupMemberCountLabel } from "@pkka/domain";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MembershipButton } from "@/components/topic-groups/membership-button";
@@ -34,7 +34,7 @@ function GroupCard({ group }: { group: TopicGroupResponse }) {
         </span>
         {group.coordinator ? (
           <CoordinatorBadge label="Koordynujesz" />
-        ) : (
+        ) : group.member ? null : (
           <MembershipButton group={group} className="relative z-10" />
         )}
       </div>
@@ -70,10 +70,28 @@ export function GroupList() {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {groups.map((group) => (
-        <GroupCard key={group.id} group={group} />
-      ))}
+    <div className="space-y-12">
+      <Section title="Twoje grupy" groups={groups.filter((group) => group.member)} />
+      <Section title="Pozostałe grupy" groups={groups.filter((group) => !group.member)} />
     </div>
+  );
+}
+
+function Section({ title, groups }: { title: string; groups: TopicGroupResponse[] }) {
+  if (!groups.length) return null;
+  return (
+    <section className="space-y-6">
+      <div className="flex items-baseline justify-between gap-4">
+        <h2 className="font-heading text-foreground text-[23px] font-semibold">{title}</h2>
+        <span className="text-muted-foreground text-sm">
+          {groups.length} {pluralPl(groups.length, "grupa", "grupy", "grup")}
+        </span>
+      </div>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {groups.map((group) => (
+          <GroupCard key={group.id} group={group} />
+        ))}
+      </div>
+    </section>
   );
 }

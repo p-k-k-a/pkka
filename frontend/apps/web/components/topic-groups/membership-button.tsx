@@ -63,11 +63,7 @@ export function MembershipButton({ group, prominent, className }: MembershipButt
       variant={group.member ? "outline" : "default"}
       disabled={isPending}
       onClick={toggle}
-      className={cn(
-        "font-semibold",
-        group.member && !prominent && "bg-background dark:bg-background border-transparent",
-        className,
-      )}
+      className={cn("font-semibold", className)}
     >
       {group.member ? (isPending ? "Opuszczanie…" : "Opuść") : isPending ? "Dołączanie…" : "Dołącz"}
     </Button>
