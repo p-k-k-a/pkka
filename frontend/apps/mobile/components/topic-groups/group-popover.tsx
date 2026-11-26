@@ -212,7 +212,9 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
               <Animated.View entering={stagger(2)}>
                 {!group.member ? (
                   <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
-                    <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
+                    <Text className="font-semibold">
+                      {isPending ? "Dołączanie..." : "Dołącz, żeby zobaczyć Discorda"}
+                    </Text>
                   </Button>
                 ) : discordUrl ? (
                   <Button
@@ -237,7 +239,9 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                   ) : (
                     <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
                       <LogOut size={16} color={theme.destructive} />
-                      <Text className="font-semibold">Opuść grupę</Text>
+                      <Text className="font-semibold">
+                        {isPending ? "Opuszczanie..." : "Opuść grupę"}
+                      </Text>
                     </Button>
                   )}
                 </View>

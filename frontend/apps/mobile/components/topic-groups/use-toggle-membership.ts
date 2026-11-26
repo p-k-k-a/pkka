@@ -10,6 +10,7 @@ import {
 } from "@pkka/api";
 import { topicGroupMembershipErrorMessage } from "@pkka/domain";
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Alert } from "react-native";
 
 export function useToggleMembership(group: TopicGroupResponse) {
@@ -17,7 +18,11 @@ export function useToggleMembership(group: TopicGroupResponse) {
   const join = useJoinTopicGroup();
   const leave = useLeaveTopicGroup();
 
+  const [isPending, setIsPending] = useState(false);
+
   const toggle = async () => {
+    if (isPending) return;
+    setIsPending(true);
     const joining = !group.member;
     try {
       await (joining ? join : leave).mutateAsync({ id: group.id });
@@ -38,7 +43,8 @@ export function useToggleMembership(group: TopicGroupResponse) {
       queryClient.invalidateQueries({ queryKey: getGetTopicGroupQueryKey(group.slug) }),
       queryClient.invalidateQueries({ queryKey: getListTopicGroupMembersQueryKey(group.id) }),
     ]);
+    setIsPending(false);
   };
 
-  return { toggle, isPending: join.isPending || leave.isPending };
+  return { toggle, isPending };
 }

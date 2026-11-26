@@ -42,7 +42,9 @@ function GroupCard({ group, onOpen }: { group: TopicGroupResponse; onOpen: () =>
         ) : group.member ? null : (
           <Button size="sm" onPress={toggle} disabled={isPending} className="h-9 gap-1.5 px-3.5">
             <Plus size={16} color={theme.primaryForeground} />
-            <Text className="text-[13px] font-semibold">Dołącz</Text>
+            <Text className="text-[13px] font-semibold">
+              {isPending ? "Dołączanie..." : "Dołącz"}
+            </Text>
           </Button>
         )}
       </View>
