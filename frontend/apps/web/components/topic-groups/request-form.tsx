@@ -23,9 +23,9 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const { mutate, isPending } = useSubmitTopicGroupRequest<ApiError>({
+  const { mutate: submitRequest, isPending } = useSubmitTopicGroupRequest<ApiError>({
     mutation: {
-      onSuccess: () => onSubmitted(),
+      onSuccess: onSubmitted,
       onError: (error) => {
         setFormError(topicGroupRequestSubmitErrorMessage(error.status, error.body));
         if (error.status === 409) void onConflict();
@@ -42,7 +42,7 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
         event.preventDefault();
         if (!canSubmit) return;
         setFormError(null);
-        mutate({ data: { name: name.trim(), description: description.trim() } });
+        submitRequest({ data: { name: name.trim(), description: description.trim() } });
       }}
     >
       <Card className="gap-6 rounded-2xl p-6 md:p-8">
