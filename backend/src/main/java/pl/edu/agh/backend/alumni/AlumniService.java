@@ -18,6 +18,7 @@ import pl.edu.agh.backend.application.Application;
 import pl.edu.agh.backend.application.ApplicationRepository;
 import pl.edu.agh.backend.application.ApplicationStatus;
 import pl.edu.agh.backend.security.Caller;
+import pl.edu.agh.backend.storage.StorageService;
 import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 import pl.edu.agh.backend.user.UserSpecifications;
@@ -48,6 +49,7 @@ public class AlumniService {
     private final UserRepository userRepository;
     private final ApplicationRepository applicationRepository;
     private final ContactService contactService;
+    private final StorageService storageService;
 
     public Page<AlumniListItemResponse> search(
             String query,
@@ -57,7 +59,7 @@ public class AlumniService {
             Integer graduationYearTo,
             Pageable pageable) {
         return findAlumni(query, tagIds, mentor, graduationYearFrom, graduationYearTo, false, pageable)
-                .map(AlumniListItemResponse::from);
+                .map(user -> AlumniListItemResponse.from(user, avatarUrl(user)));
     }
 
     /** Like {@link #search}, but also finds alumni who hide their name. */
@@ -73,7 +75,9 @@ public class AlumniService {
     }
 
     public AlumniProfileResponse getProfile(UUID id, Caller caller) {
-        return AlumniProfileResponse.from(findAlumnus(id), educationOf(id), contactService.isContact(caller, id));
+        User alumnus = findAlumnus(id);
+        return AlumniProfileResponse.from(
+                alumnus, educationOf(id), contactService.isContact(caller, id), avatarUrl(alumnus));
     }
 
     public AdminAlumniProfileResponse getProfileForAdmin(UUID id) {
@@ -101,6 +105,10 @@ public class AlumniService {
                 AlumniSpecifications.isApprovedAlumnus(),
                 AlumniSpecifications.hasVisibleName(includeHiddenNames));
         return userRepository.findAll(spec, sanitizePageable(pageable));
+    }
+
+    private String avatarUrl(User user) {
+        return storageService.resolveUrl(user.getAvatarKey());
     }
 
     private User findAlumnus(UUID id) {
