@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
@@ -9,7 +11,11 @@ import {
   useWithdrawTopicGroupRequest,
   type TopicGroupRequestResponse,
 } from "@pkka/api";
-import { formatEventDateLong, topicGroupRequestWithdrawErrorMessage } from "@pkka/domain";
+import {
+  formatEventDateLong,
+  topicGroupRequestStatusLabel,
+  topicGroupRequestWithdrawErrorMessage,
+} from "@pkka/domain";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RequestStatusBadge } from "@/components/topic-groups/request-status-badge";
+import { StatusBadge } from "@/components/applications/status-badge";
 
 type RequestCardProps = {
   request: TopicGroupRequestResponse;
@@ -31,12 +37,12 @@ type RequestCardProps = {
 
 export function RequestCard({ request, onPropose }: RequestCardProps) {
   const { status } = request;
-  const underReview = status === TopicGroupRequestStatus.UNDER_REVIEW;
+  const isUnderReview = status === TopicGroupRequestStatus.UNDER_REVIEW;
   const queryClient = useQueryClient();
   const { mutateAsync: withdrawRequest, isPending: isWithdrawing } = useWithdrawTopicGroupRequest();
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
 
-  const withdraw = async () => {
+  const withdrawAndRefresh = async () => {
     try {
       await withdrawRequest({ id: request.id });
     } catch (error) {
@@ -48,7 +54,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
     setConfirmingWithdraw(false);
   };
   const dateLabel =
-    underReview || !request.reviewedAt
+    isUnderReview || !request.reviewedAt
       ? `Złożony ${formatEventDateLong(request.createdAt)}`
       : `Rozpatrzony ${formatEventDateLong(request.reviewedAt)}`;
 
@@ -58,7 +64,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
         <p className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
           Twój wniosek
         </p>
-        <RequestStatusBadge status={status} />
+        <StatusBadge status={status} label={topicGroupRequestStatusLabel(status)} />
       </div>
 
       <div className="space-y-1">
@@ -68,7 +74,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
         <p className="text-muted-foreground text-xs font-medium">{dateLabel}</p>
       </div>
 
-      {underReview ? (
+      {isUnderReview ? (
         <>
           <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
             {request.description}
@@ -107,7 +113,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
                   disabled={isWithdrawing}
                   onClick={(clickEvent) => {
                     clickEvent.preventDefault();
-                    void withdraw();
+                    void withdrawAndRefresh();
                   }}
                 >
                   {isWithdrawing ? "Wycofywanie…" : "Wycofaj"}
