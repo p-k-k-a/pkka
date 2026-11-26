@@ -85,7 +85,10 @@ class AdminMaterialEndpointTest {
         mockMvc.perform(get("/api/admin/materials/{id}", id).with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Nagranie"))
-                .andExpect(jsonPath("$.type").value("RECORDING"));
+                .andExpect(jsonPath("$.type").value("RECORDING"))
+                // a link is no file
+                .andExpect(jsonPath("$.fileExtension").doesNotExist())
+                .andExpect(jsonPath("$.fileKey").doesNotExist());
 
         mockMvc.perform(put("/api/admin/materials/{id}", id)
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))

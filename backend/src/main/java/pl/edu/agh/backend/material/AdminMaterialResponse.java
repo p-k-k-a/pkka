@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import java.time.Instant;
 import java.util.UUID;
 import pl.edu.agh.backend.event.Audience;
+import pl.edu.agh.backend.storage.StorageService;
 
 public record AdminMaterialResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
@@ -17,6 +18,16 @@ public record AdminMaterialResponse(
                 description = "Signed, short-lived download URL when the material is an uploaded file, "
                         + "otherwise the external URL; sending it back unchanged on update is fine")
         String url,
+
+        @Schema(
+                description = "Extension of the uploaded file (e.g. `pdf`); null when the material is a link, "
+                        + "so clients never have to tell the two apart from the URL")
+        String fileExtension,
+
+        @Schema(
+                description = "Object key of the uploaded file, to send back as `url` when the file stays; null "
+                        + "for a link")
+        String fileKey,
 
         UUID eventId,
         String eventTitle,
@@ -36,6 +47,8 @@ public record AdminMaterialResponse(
                 material.getDescription(),
                 material.getType(),
                 url,
+                MaterialResponse.fileExtension(material.getUrl()),
+                StorageService.uploadedMaterialKey(material.getUrl()),
                 material.getEvent() != null ? material.getEvent().getId() : null,
                 material.getEvent() != null ? material.getEvent().getTitle() : null,
                 material.getAudience(),
