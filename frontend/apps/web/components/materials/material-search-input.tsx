@@ -28,10 +28,12 @@ export function MaterialSearchInput({ id, value, onCommit }: MaterialSearchInput
   }, [debounced, value, onCommit]);
 
   // Follows outside changes (e.g. the sidebar link) without clobbering text being typed.
+  // Our own commit comes back as `value` only once the URL has updated, and by then the
+  // user may have typed more, so the settled text we committed never resets the draft.
   const [seenValue, setSeenValue] = useState(value);
   if (value !== seenValue) {
     setSeenValue(value);
-    if (draft.trim() !== value) setDraft(value);
+    if (value !== debounced.trim() && draft.trim() !== value) setDraft(value);
   }
 
   return (

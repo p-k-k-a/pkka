@@ -62,10 +62,7 @@ export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailP
 
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <span className="bg-band text-band-foreground inline-flex rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-              Aktualność
-            </span>
-            <h1 className="font-heading text-foreground mt-6 text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
+            <h1 className="font-heading text-foreground text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
               {post.title}
             </h1>
 

@@ -1,0 +1,11 @@
+Nowe wydarzenie
+
+Pojawiło się nowe wydarzenie Klubu Alumnów. Zapisy są na stronie wydarzenia.
+
+Wydarzenie: [(${title})]
+Termin: [(${startsAt})]
+[# th:if="${location != null and !#strings.isEmpty(location)}"]Miejsce: [(${location})]
+[/]
+Zobacz i zapisz się: [(${webBaseUrl})]/events/[(${slug})]?ref=email
+
+[# th:insert="~{footer.txt}" /]

@@ -11,9 +11,9 @@ type DetailBackLinkProps = {
 
 export function DetailBackLink({ href, label, className }: DetailBackLinkProps) {
   return (
-    <Button asChild variant="outline" className={cn("rounded-xl font-semibold", className)}>
+    <Button asChild variant="ghost" size="sm" className={cn("-ml-2", className)}>
       <Link href={href}>
-        <ArrowLeft className="mr-2 size-4" />
+        <ArrowLeft data-icon="inline-start" />
         {label}
       </Link>
     </Button>
