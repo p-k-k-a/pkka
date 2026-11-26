@@ -20,8 +20,8 @@ export function DiscordBanner() {
         <Text className="text-foreground text-base font-semibold">
           Podepnij Discorda, żeby wejść na kanał grupy
         </Text>
-        <Button variant="outline" onPress={loginDiscord} className="w-full">
-          <DiscordIcon size={18} color={theme.foreground} />
+        <Button onPress={loginDiscord} className="w-full">
+          <DiscordIcon size={18} color={theme.primaryForeground} />
           <Text className="font-semibold">Połącz z Discordem</Text>
         </Button>
       </View>
@@ -39,14 +39,10 @@ export function DiscordBanner() {
             Dołącz do serwera, a kanał grupy pojawi się u Ciebie na Discordzie.
           </Text>
         </View>
-        <Button
-          variant="outline"
-          onPress={() => void Linking.openURL(inviteUrl)}
-          className="w-full"
-        >
-          <DiscordIcon size={18} color={theme.foreground} />
+        <Button onPress={() => void Linking.openURL(inviteUrl)} className="w-full">
+          <DiscordIcon size={18} color={theme.primaryForeground} />
           <Text className="font-semibold">Dołącz do serwera</Text>
-          <ArrowUpRight size={16} color={theme.foreground} />
+          <ArrowUpRight size={16} color={theme.primaryForeground} />
         </Button>
       </View>
     );
