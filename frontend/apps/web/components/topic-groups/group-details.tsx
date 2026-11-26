@@ -99,7 +99,7 @@ export function TopicGroupDetails({ slug }: { slug: string }) {
 
             {group.coordinator ? null : <MembershipButton group={group} prominent />}
 
-            {group.member ? <DiscordBanner /> : null}
+            {group.member ? <DiscordBanner channelUrl={group.discordChannelUrl} /> : null}
 
             {group.member || isAdmin(user?.roles) ? (
               <Members groupId={group.id} count={group.memberCount} />

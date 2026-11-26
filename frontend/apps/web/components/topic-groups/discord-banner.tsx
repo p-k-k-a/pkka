@@ -15,11 +15,28 @@ function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-export function DiscordBanner() {
+type DiscordBannerProps = {
+  /** The group's channel; the backend sends it to members only. */
+  channelUrl?: string;
+};
+
+export function DiscordBanner({ channelUrl }: DiscordBannerProps) {
   const { reloginWithDiscord } = useAuth();
   const { data } = useGetMyDiscordStatus();
   const status = data?.data.status;
   const inviteUrl = data?.data.inviteUrl;
+
+  if (status === DiscordStatus.ON_SERVER && channelUrl) {
+    return (
+      <Button asChild variant="outline">
+        <a href={channelUrl} target="_blank" rel="noopener noreferrer">
+          <DiscordIcon data-icon="inline-start" className="size-4" />
+          Otwórz kanał na Discordzie
+          <ArrowUpRight data-icon="inline-end" />
+        </a>
+      </Button>
+    );
+  }
 
   if (status === DiscordStatus.NOT_LINKED) {
     return (
