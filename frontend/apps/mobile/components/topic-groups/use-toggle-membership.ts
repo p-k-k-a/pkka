@@ -2,6 +2,7 @@ import {
   ApiError,
   getGetTopicGroupQueryKey,
   getListTopicGroupMembersQueryKey,
+  getListTopicGroupMembersQueryOptions,
   getListTopicGroupsQueryKey,
   useJoinTopicGroup,
   useLeaveTopicGroup,
@@ -28,6 +29,9 @@ export function useToggleMembership(group: TopicGroupResponse) {
           joining,
         ),
       );
+    }
+    if (joining) {
+      await queryClient.fetchQuery(getListTopicGroupMembersQueryOptions(group.id)).catch(() => {});
     }
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: getListTopicGroupsQueryKey() }),

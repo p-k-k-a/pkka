@@ -27,10 +27,8 @@ import { ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native
 import { useEffect, useState } from "react";
 import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
 import Animated, {
-  Easing,
   FadeIn,
   FadeInDown,
-  LinearTransition,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -38,7 +36,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const RESIZE = LinearTransition.duration(300).easing(Easing.bezier(0.2, 0.9, 0.25, 1));
 const stagger = (index: number) => FadeInDown.delay(60 + index * 50).duration(220);
 
 type GroupPopoverProps = {
@@ -81,7 +78,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
     chevron.value = withTiming(expanded ? 0 : 180, { duration: 260 });
     setExpanded(!expanded);
   };
-  const memberList = members?.status === 200 ? members.data : undefined;
+  const memberList = canSeeMembers && members?.status === 200 ? members.data : undefined;
   const myId = profile?.status === 200 ? profile.data.id : undefined;
   const coordinator = memberList?.find((member) => member.coordinator);
   const coordinatorLabel = group.coordinator
@@ -107,12 +104,15 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
       >
         <Animated.View
           role="dialog"
-          layout={RESIZE}
           style={popoverStyle}
           className="bg-card max-h-full overflow-hidden rounded-[20px]"
         >
           <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
-            <View className="gap-3 p-4">
+            <Animated.View
+              key={String(group.member)}
+              entering={FadeIn.duration(180)}
+              className="gap-3 p-4"
+            >
               <View className="flex-row items-center gap-3">
                 <View className="flex-1 gap-0.5">
                   <Text role="heading" className="text-foreground text-[17px] font-semibold">
@@ -242,7 +242,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                   )}
                 </View>
               ) : null}
-            </View>
+            </Animated.View>
           </ScrollView>
         </Animated.View>
       </View>
