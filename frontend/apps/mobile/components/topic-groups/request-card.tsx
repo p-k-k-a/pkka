@@ -104,7 +104,7 @@ export function TopicGroupRequestCard({ request }: TopicGroupRequestCardProps) {
 
       {status === TopicGroupRequestStatus.APPROVED ? (
         <Text className="text-muted-foreground text-sm leading-relaxed">
-          Grupa została utworzona, a Ty jesteś jej właścicielem.
+          Grupa została utworzona, a Ty jesteś jej koordynatorem.
         </Text>
       ) : null}
     </View>
