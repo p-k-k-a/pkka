@@ -16,9 +16,6 @@ import { MembershipButton } from "@/components/topic-groups/membership-button";
 import { useAuth } from "@/lib/auth-context";
 import { CoordinatorBadge } from "@/components/topic-groups/coordinator-badge";
 
-const BACK_HREF = "/dashboard/groups";
-const BACK_LABEL = "Wróć do grup";
-
 function MemberItem({ member }: { member: TopicGroupMemberResponse }) {
   const name = topicGroupMemberName(member);
   return (
@@ -36,7 +33,7 @@ function MemberItem({ member }: { member: TopicGroupMemberResponse }) {
 }
 
 function Members({ groupId, count }: { groupId: string; count: number }) {
-  const { data, isLoading, isError } = useListTopicGroupMembers(groupId);
+  const { data: membersResponse, isLoading, isError } = useListTopicGroupMembers(groupId);
 
   return (
     <section className="space-y-4">
@@ -46,11 +43,11 @@ function Members({ groupId, count }: { groupId: string; count: number }) {
       </h2>
       {isLoading ? (
         <Skeleton className="h-32 w-full" />
-      ) : isError || data?.status !== 200 ? (
+      ) : isError || membersResponse?.status !== 200 ? (
         <p className="text-destructive font-medium">Nie udało się załadować członków.</p>
       ) : (
         <ul className="grid gap-1 sm:grid-cols-2">
-          {data.data.map((member) => (
+          {membersResponse.data.map((member) => (
             <MemberItem key={member.id} member={member} />
           ))}
         </ul>
@@ -61,16 +58,16 @@ function Members({ groupId, count }: { groupId: string; count: number }) {
 
 export function TopicGroupDetails({ slug }: { slug: string }) {
   const { user } = useAuth();
-  const { data, isLoading, isError } = useGetTopicGroup(slug);
-  const group = data?.status === 200 ? data.data : undefined;
+  const { data: groupResponse, isLoading, isError } = useGetTopicGroup(slug);
+  const group = groupResponse?.status === 200 ? groupResponse.data : undefined;
 
   return (
     <div className="bg-background px-4 pt-6 pb-10 md:px-10 md:pt-8 md:pb-20">
       <div className="mx-auto max-w-[1280px] space-y-10">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
-          <Link href={BACK_HREF}>
+          <Link href="/dashboard/groups">
             <ArrowLeft data-icon="inline-start" />
-            {BACK_LABEL}
+            Wróć do grup
           </Link>
         </Button>
         {isLoading ? (

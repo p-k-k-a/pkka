@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { getListMyTopicGroupRequestsQueryKey, TopicGroupRequestStatus } from "@pkka/api";
+import { TopicGroupRequestStatus } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequestCard } from "@/components/topic-groups/request-card";
@@ -15,8 +14,7 @@ const GROUPS_HREF = "/dashboard/groups";
 
 export function NewGroupContent() {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const { request, isLoading, refetch } = useOpenRequest();
+  const { openRequest, isLoading } = useOpenRequest();
 
   return (
     <div className="bg-background px-4 pt-6 pb-10 md:px-10 md:pt-8 md:pb-20">
@@ -39,20 +37,10 @@ export function NewGroupContent() {
           </div>
           {isLoading ? (
             <Skeleton className="h-72 w-full rounded-2xl" />
-          ) : request?.status === TopicGroupRequestStatus.UNDER_REVIEW ? (
-            <RequestCard request={request} onPropose={() => {}} />
+          ) : openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? (
+            <RequestCard request={openRequest} />
           ) : (
-            <RequestForm
-              onSubmitted={async () => {
-                await queryClient.invalidateQueries({
-                  queryKey: getListMyTopicGroupRequestsQueryKey(),
-                });
-                router.push(GROUPS_HREF);
-              }}
-              onConflict={async () => {
-                await refetch();
-              }}
-            />
+            <RequestForm onSubmitted={() => router.push(GROUPS_HREF)} />
           )}
         </div>
       </div>

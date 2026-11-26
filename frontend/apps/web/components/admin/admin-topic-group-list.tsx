@@ -31,10 +31,10 @@ const MISSING_CHANNEL_LABELS: Record<TopicGroupDiscordStatus, string> = {
 };
 
 function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
-  const { data, isLoading, isError } = useListAdminTopicGroupMembers(groupId);
+  const { data: membersResponse, isLoading, isError } = useListAdminTopicGroupMembers(groupId);
 
   if (isLoading) return <Skeleton className="h-24 w-full" />;
-  if (isError || data?.status !== 200) {
+  if (isError || membersResponse?.status !== 200) {
     return (
       <p className="text-destructive text-sm font-medium">Nie udało się załadować członków.</p>
     );
@@ -42,7 +42,7 @@ function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
 
   return (
     <ul className="border-border flex flex-wrap gap-x-3 gap-y-1 border-t pt-3">
-      {data.data.map((member) => {
+      {membersResponse.data.map((member) => {
         const name = topicGroupMemberName(member);
         return (
           <li key={member.id}>
@@ -63,7 +63,7 @@ function AdminTopicGroupMembers({ groupId }: { groupId: string }) {
 
 function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
   const [expanded, setExpanded] = useState(false);
-  const coordinator = group.coordinator
+  const coordinatorName = group.coordinator
     ? `${group.coordinator.firstName} ${group.coordinator.lastName}`
     : "Brak koordynatora";
 
@@ -74,7 +74,7 @@ function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
           {group.name}
         </h3>
         <p className="text-muted-foreground text-sm">
-          Koordynator: {coordinator} · Utworzona {formatEventDateLong(group.createdAt)}
+          Koordynator: {coordinatorName} · Utworzona {formatEventDateLong(group.createdAt)}
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -93,7 +93,7 @@ function AdminTopicGroupItem({ group }: { group: AdminTopicGroupResponse }) {
         </button>
         {group.discordChannelUrl ? (
           <Button asChild variant="outline" size="sm">
-            <a href={group.discordChannelUrl} target="_blank" rel="noreferrer">
+            <a href={group.discordChannelUrl} target="_blank" rel="noopener noreferrer">
               <DiscordIcon data-icon="inline-start" className="size-4" />
               Otwórz kanał na Discordzie
               <ArrowUpRight data-icon="inline-end" />

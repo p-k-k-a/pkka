@@ -32,7 +32,8 @@ import { StatusBadge } from "@/components/applications/status-badge";
 
 type RequestCardProps = {
   request: TopicGroupRequestResponse;
-  onPropose: () => void;
+  /** Only needed for decided requests, which offer proposing another group. */
+  onPropose?: () => void;
 };
 
 export function RequestCard({ request, onPropose }: RequestCardProps) {

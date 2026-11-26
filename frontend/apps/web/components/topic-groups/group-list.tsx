@@ -32,19 +32,16 @@ function GroupCard({ group }: { group: TopicGroupResponse }) {
           <Users className="size-4" aria-hidden="true" />
           {topicGroupMemberCountLabel(group.memberCount)}
         </span>
-        {group.coordinator ? (
-          <CoordinatorBadge label="Koordynujesz" />
-        ) : group.member ? null : (
-          <MembershipButton group={group} className="relative z-10" />
-        )}
+        {group.coordinator ? <CoordinatorBadge label="Koordynujesz" /> : null}
+        {group.member ? null : <MembershipButton group={group} className="relative z-10" />}
       </div>
     </Card>
   );
 }
 
 export function GroupList() {
-  const { data, isLoading, isError } = useListTopicGroups({ size: 100 });
-  const groups = data?.data.content;
+  const { data: groupsResponse, isLoading, isError } = useListTopicGroups({ size: 100 });
+  const groups = groupsResponse?.data.content;
 
   if (isLoading) {
     return (

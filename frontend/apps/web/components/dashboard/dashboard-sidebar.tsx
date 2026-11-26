@@ -112,14 +112,14 @@ const adminItems: SidebarItem[] = [
 ];
 
 function usePendingCounts(admin: boolean): Record<string, number> {
-  const query = { query: { enabled: admin } };
+  const adminOnly = { query: { enabled: admin } };
   const { data: applications } = useListAdminApplications(
     { status: ApplicationStatus.UNDER_REVIEW, size: 1 },
-    query,
+    adminOnly,
   );
   const { data: groupRequests } = useListAdminTopicGroupRequests(
     { status: TopicGroupRequestStatus.UNDER_REVIEW, size: 1 },
-    query,
+    adminOnly,
   );
   return {
     [APPLICATIONS_HREF]: applications?.data.totalElements ?? 0,
@@ -159,7 +159,7 @@ export function DashboardSidebar() {
         ) : (
           items.map(({ href, label, icon: Icon, match }) => {
             const isActive = match(pathname);
-            const pending = admin ? (pendingCounts[href] ?? 0) : 0;
+            const pendingCount = pendingCounts[href] ?? 0;
 
             return (
               <Link
@@ -175,12 +175,12 @@ export function DashboardSidebar() {
               >
                 <span className="relative shrink-0">
                   <Icon className="size-4" aria-hidden="true" />
-                  {pending > 0 ? (
+                  {pendingCount > 0 ? (
                     <span
-                      aria-label={`Oczekujące na decyzję: ${pending}`}
+                      aria-label={`Oczekujące na decyzję: ${pendingCount}`}
                       className="bg-primary text-primary-foreground ring-muted absolute -top-2 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2"
                     >
-                      {pending > 99 ? "99+" : pending}
+                      {pendingCount > 99 ? "99+" : pendingCount}
                     </span>
                   ) : null}
                 </span>

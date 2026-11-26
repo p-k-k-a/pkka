@@ -1,21 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
-  ApiError,
-  getGetTopicGroupQueryKey,
-  getListTopicGroupMembersQueryKey,
-  getListTopicGroupMembersQueryOptions,
-  getListTopicGroupsQueryKey,
-  useJoinTopicGroup,
-  useLeaveTopicGroup,
-  type TopicGroupResponse,
-} from "@pkka/api";
+import { useToggleTopicGroupMembership, type TopicGroupResponse } from "@pkka/api";
 import { topicGroupMembershipErrorMessage } from "@pkka/domain";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+const LABEL = { join: "Dołącz", leave: "Opuść" };
+const PENDING_LABEL = { join: "Dołączanie…", leave: "Opuszczanie…" };
 
 type MembershipButtonProps = {
   group: TopicGroupResponse;
@@ -23,38 +15,12 @@ type MembershipButtonProps = {
   className?: string;
 };
 
+/** Callers don't render it for the coordinator, who can't leave the group. */
 export function MembershipButton({ group, prominent, className }: MembershipButtonProps) {
-  const queryClient = useQueryClient();
-  const join = useJoinTopicGroup();
-  const leave = useLeaveTopicGroup();
-  const [isPending, setIsPending] = useState(false);
-
-  const toggle = async () => {
-    if (isPending) return;
-    setIsPending(true);
-    const joining = !group.member;
-    try {
-      await (joining ? join : leave).mutateAsync({ id: group.id });
-    } catch (error) {
-      toast.error(
-        topicGroupMembershipErrorMessage(
-          error instanceof ApiError ? error.status : undefined,
-          joining,
-        ),
-      );
-    }
-    if (joining) {
-      await queryClient.fetchQuery(getListTopicGroupMembersQueryOptions(group.id)).catch(() => {});
-    }
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: getListTopicGroupsQueryKey() }),
-      queryClient.invalidateQueries({ queryKey: getGetTopicGroupQueryKey(group.slug) }),
-      queryClient.invalidateQueries({ queryKey: getListTopicGroupMembersQueryKey(group.id) }),
-    ]);
-    setIsPending(false);
-  };
-
-  if (group.coordinator) return null;
+  const { toggleMembership, isPending } = useToggleTopicGroupMembership(group, (joining, status) =>
+    toast.error(topicGroupMembershipErrorMessage(status, joining)),
+  );
+  const action = group.member ? "leave" : "join";
 
   return (
     <Button
@@ -62,10 +28,10 @@ export function MembershipButton({ group, prominent, className }: MembershipButt
       size={prominent ? "xl" : "sm"}
       variant={group.member ? "outline" : "default"}
       disabled={isPending}
-      onClick={toggle}
+      onClick={toggleMembership}
       className={cn("font-semibold", className)}
     >
-      {group.member ? (isPending ? "Opuszczanie…" : "Opuść") : isPending ? "Dołączanie…" : "Dołącz"}
+      {isPending ? PENDING_LABEL[action] : LABEL[action]}
     </Button>
   );
 }

@@ -11,17 +11,19 @@ import { RequestCard } from "@/components/topic-groups/request-card";
 
 export const NEW_GROUP_HREF = "/dashboard/groups/new";
 
+/** The caller's latest request, unless it was approved: then there is nothing left to follow. */
 export function useOpenRequest() {
-  const { data, ...query } = useListMyTopicGroupRequests();
-  const latest = data?.data[0];
-  const request = latest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latest;
-  return { request, ...query };
+  const { data: requestsResponse, ...query } = useListMyTopicGroupRequests();
+  const latestRequest = requestsResponse?.data[0];
+  const openRequest =
+    latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
+  return { openRequest, ...query };
 }
 
 export function TopicGroupsContent() {
   const router = useRouter();
-  const { request } = useOpenRequest();
-  const underReview = request?.status === TopicGroupRequestStatus.UNDER_REVIEW;
+  const { openRequest } = useOpenRequest();
+  const isUnderReview = openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
 
   return (
     <SectionShell
@@ -29,7 +31,7 @@ export function TopicGroupsContent() {
       description="Miejsce dla alumnów o podobnych zainteresowaniach. Dołącz do grupy, a dostaniesz dostęp do jej kanału na Discordzie."
       as="section"
       action={
-        underReview ? null : (
+        isUnderReview ? null : (
           <Button asChild size="xl">
             <Link href={NEW_GROUP_HREF}>
               <Plus data-icon="inline-start" />
@@ -40,9 +42,9 @@ export function TopicGroupsContent() {
       }
     >
       <div className="space-y-12">
-        {request ? (
+        {openRequest ? (
           <div className="max-w-2xl">
-            <RequestCard request={request} onPropose={() => router.push(NEW_GROUP_HREF)} />
+            <RequestCard request={openRequest} onPropose={() => router.push(NEW_GROUP_HREF)} />
           </div>
         ) : null}
         <GroupList />

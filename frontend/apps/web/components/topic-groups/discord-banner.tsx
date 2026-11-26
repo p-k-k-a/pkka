@@ -45,7 +45,7 @@ export function DiscordBanner() {
           </p>
         </div>
         <Button asChild className="shrink-0">
-          <a href={inviteUrl} target="_blank" rel="noreferrer">
+          <a href={inviteUrl} target="_blank" rel="noopener noreferrer">
             <DiscordIcon data-icon="inline-start" className="size-4" />
             Dołącz do serwera
             <ArrowUpRight data-icon="inline-end" />

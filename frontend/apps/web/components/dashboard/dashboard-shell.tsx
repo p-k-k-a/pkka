@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
+  // Asking for the Discord status makes the backend align the user's Discord roles.
   useGetMyDiscordStatus({ query: { enabled: isAuthenticated } });
 
   useEffect(() => {
