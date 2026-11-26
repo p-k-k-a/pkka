@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 public enum NotificationType {
     EVENT_ANNOUNCEMENT("events"),
     EVENT_REMINDER("reminders"),
-    REGISTRATION_PROMOTED("registrations");
+    REGISTRATION_PROMOTED("registrations"),
+    EVENT_CHANGED("registrations"),
+    EVENT_CANCELLED("registrations"),
+    EVENT_MESSAGE("registrations");
 
     /** Android drops a notification whose channel does not exist on the device. */
     private final String channelId;

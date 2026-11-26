@@ -44,14 +44,17 @@ export async function setPushEnabled(enabled: boolean): Promise<void> {
 async function ensureChannels(): Promise<void> {
   await Notifications.setNotificationChannelAsync("events", {
     name: "Nowe wydarzenia",
+    description: "Gdy klub ogłosi nowe wydarzenie",
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   await Notifications.setNotificationChannelAsync("registrations", {
-    name: "Twoje zapisy",
+    name: "Twoje wydarzenia",
+    description: "Zmiany, odwołania, wiadomości od organizatora i miejsce z listy rezerwowej",
     importance: Notifications.AndroidImportance.HIGH,
   });
   await Notifications.setNotificationChannelAsync("reminders", {
     name: "Przypomnienia",
+    description: "Przed wydarzeniami, na które jesteś zapisany",
     importance: Notifications.AndroidImportance.HIGH,
   });
 }

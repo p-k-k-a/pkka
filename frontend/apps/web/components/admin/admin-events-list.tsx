@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChartColumn, Pencil, Plus, Send, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import {
   getListAdminEventsQueryKey,
   getListEventOccupancyQueryKey,
   getListEventsQueryKey,
+  useCountEventMessageRecipients,
   useDeleteAdminEvent,
   useListAdminEvents,
   useListEventOccupancy,
@@ -33,10 +34,11 @@ import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { audienceLabel, isAdmin, pluralPl } from "@pkka/domain";
+import { audienceLabel, isAdmin, pluralPl, sumSignUpSources } from "@pkka/domain";
 import { OccupancyLabel } from "@/components/admin/statistics/occupancy-label";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
-import { SignupSources } from "@/components/admin/statistics/signup-sources";
+import { SignUpSources } from "@/components/admin/statistics/signup-sources";
+import { EventMessageDialog } from "@/components/admin/event-message/event-message-dialog";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 
 const PAGE_SIZE = 20;
@@ -76,7 +78,10 @@ function OccupancySummary({ rows }: { rows: EventOccupancyResponse[] }) {
           info="Rezygnacje osób z miejscem. Bez zejść z listy rezerwowej."
         />
       </div>
-      <SignupSources signUps={registered} layout="row" />
+      <SignUpSources
+        sources={sumSignUpSources(rows.map((row) => row.signUpsBySource))}
+        layout="row"
+      />
     </section>
   );
 }
@@ -104,6 +109,28 @@ function CardOccupancy({ row }: { row: EventOccupancyResponse }) {
         <span className="text-foreground font-medium tabular-nums">{row.waitlisted}</span>
       </p>
     </div>
+  );
+}
+
+function CancellationNotice({ event }: { event: AdminEventSummaryResponse }) {
+  const isUpcoming = parseISO(event.startsAt) > new Date();
+  const recipients = useCountEventMessageRecipients(event.id, {
+    query: { enabled: isUpcoming, staleTime: 0 },
+  });
+  const count = recipients.data?.status === 200 ? recipients.data.data.recipients : undefined;
+  if (!isUpcoming || !count) return null;
+  return (
+    <p className="bg-accent/10 text-foreground rounded-lg px-3 py-2.5 text-sm">
+      {count}{" "}
+      {pluralPl(
+        count,
+        "zapisana osoba dostanie",
+        "zapisane osoby dostaną",
+        "zapisanych osób dostanie",
+      )}{" "}
+      maila o odwołaniu. Osoby z włączonymi powiadomieniami w aplikacji dostaną też powiadomienie
+      push.
+    </p>
   );
 }
 
@@ -268,32 +295,42 @@ export function AdminEventsList() {
                       footer={
                         <div className="mt-auto flex flex-col gap-4 pt-2">
                           {row ? <CardOccupancy row={row} /> : null}
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground w-full text-xs font-semibold tracking-widest uppercase">
+                          <div className="flex flex-col gap-2">
+                            <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
                               {audienceLabel(item.audience)}
                             </span>
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
-                                <ChartColumn data-icon="inline-start" />
-                                Statystyki
-                              </Link>
-                            </Button>
-                            <Button asChild variant="outline" size="sm">
-                              <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}/edit`}>
-                                <Pencil data-icon="inline-start" />
-                                Edytuj
-                              </Link>
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => setEventToDelete(item)}
-                            >
-                              <Trash2 data-icon="inline-start" />
-                              Usuń
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}`}>
+                                  <ChartColumn data-icon="inline-start" />
+                                  Statystyki
+                                </Link>
+                              </Button>
+                              <EventMessageDialog event={item}>
+                                <Button type="button" variant="outline" size="sm">
+                                  <Send data-icon="inline-start" />
+                                  Wiadomość
+                                </Button>
+                              </EventMessageDialog>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link href={`${ADMIN_EVENTS_PATH}/${item.slug}/edit`}>
+                                  <Pencil data-icon="inline-start" />
+                                  Edytuj
+                                </Link>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => setEventToDelete(item)}
+                              >
+                                <Trash2 data-icon="inline-start" />
+                                Usuń
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       }
@@ -342,6 +379,7 @@ export function AdminEventsList() {
               „{eventToDelete?.title}” zostanie trwale usunięte. Tej operacji nie można cofnąć.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {eventToDelete ? <CancellationNotice event={eventToDelete} /> : null}
           {deleteEvent.isError ? (
             <p className="text-destructive text-sm font-medium">Nie udało się usunąć wydarzenia.</p>
           ) : null}
