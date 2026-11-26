@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -70,6 +71,19 @@ public class TopicGroup {
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
+
+    public boolean isCoordinatedBy(UUID userId) {
+        return coordinator != null && coordinator.getId().equals(userId);
+    }
+
+    /** Link to the group's Discord channel; null until the channel exists and the server is set up. */
+    public String discordChannelUrl(Optional<String> guildId) {
+        if (discordChannelId == null) {
+            return null;
+        }
+        return guildId.map(id -> "https://discord.com/channels/%s/%s".formatted(id, discordChannelId))
+                .orElse(null);
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -8,7 +8,7 @@ export default function TopicGroupRequestScreen() {
   return (
     <RequireAlumni>
       <View className="bg-background flex-1">
-        <DetailHeader title="Nowa grupa" onBack={() => router.back()} />
+        <DetailHeader title="Nowa grupa tematyczna" onBack={() => router.back()} />
         <TopicGroupRequestForm />
       </View>
     </RequireAlumni>

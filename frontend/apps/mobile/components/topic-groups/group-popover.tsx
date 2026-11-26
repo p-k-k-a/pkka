@@ -1,6 +1,5 @@
-import { useIsAlumni } from "@/components/auth/require-alumni";
 import { DiscordBanner } from "@/components/topic-groups/discord-banner";
-import { CoordinatorPill, Pill } from "@/components/topic-groups/group-visuals";
+import { CoordinatorPill, MutedPill } from "@/components/topic-groups/pills";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
@@ -47,45 +46,51 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
   const theme = useThemeColors();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const isAlumni = useIsAlumni();
   const { data: me } = useMe({ query: { enabled: !!user } });
   const canSeeMembers = group.member || isAdmin(me?.data.roles);
-  const { data: members } = useListTopicGroupMembers(group.id, {
-    query: { enabled: isAlumni && canSeeMembers },
+  const { data: membersResponse } = useListTopicGroupMembers(group.id, {
+    query: { enabled: canSeeMembers },
   });
-  const { data: profile } = useGetMyProfile({ query: { enabled: canSeeMembers } });
-  const { data: discord } = useGetMyDiscordStatus({ query: { enabled: group.member } });
-  const { toggle, isPending } = useToggleMembership(group);
+  const { data: profileResponse } = useGetMyProfile({ query: { enabled: canSeeMembers } });
+  const { data: discordStatusResponse } = useGetMyDiscordStatus({
+    query: { enabled: group.member },
+  });
+  const { toggleMembership, isPending } = useToggleMembership(group);
   const [expanded, setExpanded] = useState(false);
-  const scale = useSharedValue(0.96);
-  const opacity = useSharedValue(0);
-  const backdrop = useSharedValue(0);
-  const chevron = useSharedValue(0);
+  const popoverScale = useSharedValue(0.96);
+  const popoverOpacity = useSharedValue(0);
+  const backdropOpacity = useSharedValue(0);
+  const chevronRotation = useSharedValue(0);
   const popoverStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    opacity: popoverOpacity.value,
+    transform: [{ scale: popoverScale.value }],
   }));
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
-  const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${chevron.value}deg` }] }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }));
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronRotation.value}deg` }],
+  }));
 
   useEffect(() => {
-    scale.value = withSpring(1, { damping: 14, stiffness: 260, mass: 0.8 });
-    opacity.value = withTiming(1, { duration: 120 });
-    backdrop.value = withTiming(1, { duration: 200 });
-  }, [scale, opacity, backdrop]);
+    popoverScale.value = withSpring(1, { damping: 14, stiffness: 260, mass: 0.8 });
+    popoverOpacity.value = withTiming(1, { duration: 120 });
+    backdropOpacity.value = withTiming(1, { duration: 200 });
+  }, [popoverScale, popoverOpacity, backdropOpacity]);
 
   const toggleMembers = () => {
-    chevron.value = withTiming(expanded ? 0 : 180, { duration: 260 });
+    chevronRotation.value = withTiming(expanded ? 0 : 180, { duration: 260 });
     setExpanded(!expanded);
   };
-  const memberList = canSeeMembers && members?.status === 200 ? members.data : undefined;
-  const myId = profile?.status === 200 ? profile.data.id : undefined;
+  const memberList =
+    canSeeMembers && membersResponse?.status === 200 ? membersResponse.data : undefined;
+  const myId = profileResponse?.status === 200 ? profileResponse.data.id : undefined;
   const coordinator = memberList?.find((member) => member.coordinator);
   const coordinatorLabel = group.coordinator
     ? "Ty"
     : coordinator && topicGroupMemberShortName(coordinator);
   const discordUrl =
-    discord?.data.status === DiscordStatus.ON_SERVER ? group.discordChannelUrl : undefined;
+    discordStatusResponse?.data.status === DiscordStatus.ON_SERVER
+      ? group.discordChannelUrl
+      : undefined;
 
   const openProfile = (id: string) => {
     onClose();
@@ -108,6 +113,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
           className="bg-card max-h-full overflow-hidden rounded-[20px]"
         >
           <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+            {/* Remounts on join/leave so the content fades in again with the new membership. */}
             <Animated.View
               key={String(group.member)}
               entering={FadeIn.duration(180)}
@@ -200,7 +206,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                           {member.coordinator ? (
                             <CoordinatorPill label="Koordynator" />
                           ) : member.id === myId ? (
-                            <Pill label="Ty" />
+                            <MutedPill label="Ty" />
                           ) : null}
                         </Pressable>
                       ))}
@@ -211,7 +217,12 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
 
               <Animated.View entering={stagger(2)}>
                 {!group.member ? (
-                  <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
+                  <Button
+                    size="lg"
+                    onPress={toggleMembership}
+                    disabled={isPending}
+                    className="h-12"
+                  >
                     <Text className="font-semibold">
                       {isPending ? "Dołączanie..." : "Dołącz, żeby zobaczyć Discorda"}
                     </Text>
@@ -237,7 +248,12 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                       Aby odejść, przekaż grupę innemu członkowi na stronie klubu
                     </Text>
                   ) : (
-                    <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onPress={toggleMembership}
+                      disabled={isPending}
+                    >
                       <LogOut size={16} color={theme.destructive} />
                       <Text className="font-semibold">
                         {isPending ? "Opuszczanie..." : "Opuść grupę"}

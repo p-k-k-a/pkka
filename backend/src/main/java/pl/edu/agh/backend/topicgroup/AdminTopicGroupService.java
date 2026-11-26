@@ -34,7 +34,7 @@ public class AdminTopicGroupService {
                 group,
                 memberCounts.getOrDefault(group.getId(), 0L),
                 discordConfigured,
-                TopicGroupService.discordChannelUrl(group, guildId)));
+                group.discordChannelUrl(guildId)));
     }
 
     public AdminTopicGroupResponse linkDiscord(UUID groupId) {
@@ -45,7 +45,7 @@ public class AdminTopicGroupService {
                         group,
                         membershipRepository.countByGroupId(groupId),
                         discordGroupChannels.isConfigured(),
-                        TopicGroupService.discordChannelUrl(group, guildId())))
+                        group.discordChannelUrl(guildId())))
                 .orElseThrow(TopicGroupNotFoundException::new);
     }
 
@@ -55,9 +55,7 @@ public class AdminTopicGroupService {
                 topicGroupRepository.findWithCoordinatorById(groupId).orElseThrow(TopicGroupNotFoundException::new);
         return membershipRepository.findByGroupIdOrderByJoinedAtAsc(groupId).stream()
                 .map(membership -> TopicGroupMemberResponse.withName(
-                        membership,
-                        TopicGroupService.coordinates(
-                                group, membership.getUser().getId())))
+                        membership, group.isCoordinatedBy(membership.getUser().getId())))
                 .toList();
     }
 

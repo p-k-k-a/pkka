@@ -1,4 +1,4 @@
-import { RequestStatusBadge } from "@/components/topic-groups/request-status-badge";
+import { TopicGroupRequestStatusBadge } from "@/components/topic-groups/request-status-badge";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
@@ -14,17 +14,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react-native";
 import { Alert, View } from "react-native";
 
-type RequestCardProps = {
+type TopicGroupRequestCardProps = {
   request: TopicGroupRequestResponse;
 };
 
-export function RequestCard({ request }: RequestCardProps) {
+export function TopicGroupRequestCard({ request }: TopicGroupRequestCardProps) {
   const { status } = request;
   const theme = useThemeColors();
   const queryClient = useQueryClient();
   const { mutateAsync: withdrawRequest, isPending: isWithdrawing } = useWithdrawTopicGroupRequest();
 
-  const withdraw = async () => {
+  const withdrawAndRefresh = async () => {
     try {
       await withdrawRequest({ id: request.id });
     } catch (error) {
@@ -39,7 +39,7 @@ export function RequestCard({ request }: RequestCardProps) {
   const confirmWithdraw = () => {
     Alert.alert("Wycofać wniosek?", `Wniosek o grupę „${request.name}” zostanie usunięty.`, [
       { text: "Anuluj", style: "cancel" },
-      { text: "Wycofaj", style: "destructive", onPress: () => void withdraw() },
+      { text: "Wycofaj", style: "destructive", onPress: () => void withdrawAndRefresh() },
     ]);
   };
   const dateLabel =
@@ -53,7 +53,7 @@ export function RequestCard({ request }: RequestCardProps) {
         Twój wniosek
       </Text>
       <View className="self-start">
-        <RequestStatusBadge status={status} />
+        <TopicGroupRequestStatusBadge status={status} />
       </View>
 
       <Text

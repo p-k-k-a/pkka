@@ -1,4 +1,4 @@
-import { CoordinatorPill } from "@/components/topic-groups/group-visuals";
+import { CoordinatorPill } from "@/components/topic-groups/pills";
 import { GroupPopover } from "@/components/topic-groups/group-popover";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { Pressable, View } from "react-native";
 
 function GroupCard({ group, onOpen }: { group: TopicGroupResponse; onOpen: () => void }) {
   const theme = useThemeColors();
-  const { toggle, isPending } = useToggleMembership(group);
+  const { toggleMembership, isPending } = useToggleMembership(group);
 
   return (
     <Pressable
@@ -37,10 +37,14 @@ function GroupCard({ group, onOpen }: { group: TopicGroupResponse; onOpen: () =>
         <Text className="text-muted-foreground flex-1 text-[13px]">
           {topicGroupMemberCountLabel(group.memberCount)}
         </Text>
-        {group.coordinator ? (
-          <CoordinatorPill label="Koordynujesz" />
-        ) : group.member ? null : (
-          <Button size="sm" onPress={toggle} disabled={isPending} className="h-9 gap-1.5 px-3.5">
+        {group.coordinator ? <CoordinatorPill label="Koordynujesz" /> : null}
+        {group.member ? null : (
+          <Button
+            size="sm"
+            onPress={toggleMembership}
+            disabled={isPending}
+            className="h-9 gap-1.5 px-3.5"
+          >
             <Plus size={16} color={theme.primaryForeground} />
             <Text className="text-[13px] font-semibold">
               {isPending ? "Dołączanie..." : "Dołącz"}
