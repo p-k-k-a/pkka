@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import {
   useGetTopicGroup,
   useListTopicGroupMembers,
   type TopicGroupMemberResponse,
 } from "@pkka/api";
-import { isAdmin, topicGroupMemberCountLabel, topicGroupMemberName } from "@pkka/domain";
+import { isAdmin, topicGroupMemberName } from "@pkka/domain";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -35,12 +35,15 @@ function MemberItem({ member }: { member: TopicGroupMemberResponse }) {
   );
 }
 
-function Members({ groupId }: { groupId: string }) {
+function Members({ groupId, count }: { groupId: string; count: number }) {
   const { data, isLoading, isError } = useListTopicGroupMembers(groupId);
 
   return (
     <section className="space-y-4">
-      <h2 className="font-heading text-foreground text-[23px] font-semibold">Członkowie</h2>
+      <h2 className="font-heading text-foreground flex items-baseline gap-2 text-[23px] font-semibold">
+        Członkowie
+        <span className="text-muted-foreground text-base font-medium">{count}</span>
+      </h2>
       {isLoading ? (
         <Skeleton className="h-32 w-full" />
       ) : isError || data?.status !== 200 ? (
@@ -82,10 +85,14 @@ export function TopicGroupDetails({ slug }: { slug: string }) {
               <h1 className="font-heading text-foreground text-[28px] font-semibold tracking-tight md:text-[33px]">
                 {group.name}
               </h1>
-              <p className="text-muted-foreground inline-flex items-center gap-1.5 text-sm font-medium">
-                <Users className="size-4" aria-hidden="true" />
-                {topicGroupMemberCountLabel(group.memberCount)}
-              </p>
+              {group.coordinator ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                  <CoordinatorBadge label="Koordynujesz" />
+                  <span className="text-muted-foreground">
+                    Żeby odejść, najpierw przekaż grupę innemu członkowi.
+                  </span>
+                </div>
+              ) : null}
               {group.description ? (
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                   {group.description}
@@ -93,21 +100,12 @@ export function TopicGroupDetails({ slug }: { slug: string }) {
               ) : null}
             </div>
 
-            {group.coordinator ? (
-              <div className="bg-muted space-y-1 p-6">
-                <p className="text-foreground font-semibold">Koordynujesz tę grupę</p>
-                <p className="text-muted-foreground text-sm">
-                  Najpierw przekaż grupę innemu członkowi, a potem możesz z niej odejść.
-                </p>
-              </div>
-            ) : (
-              <MembershipButton group={group} prominent />
-            )}
+            {group.coordinator ? null : <MembershipButton group={group} prominent />}
 
             {group.member ? <DiscordBanner /> : null}
 
             {group.member || isAdmin(user?.roles) ? (
-              <Members groupId={group.id} />
+              <Members groupId={group.id} count={group.memberCount} />
             ) : (
               <p className="text-muted-foreground">Dołącz do grupy, żeby zobaczyć jej członków.</p>
             )}

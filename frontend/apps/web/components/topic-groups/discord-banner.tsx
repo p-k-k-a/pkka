@@ -1,10 +1,22 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { DiscordIcon } from "@pkka/icons/web";
 import { DiscordStatus, useGetMyDiscordStatus } from "@pkka/api";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <div className="border-border flex flex-col gap-4 rounded-xl border p-5 sm:flex-row sm:items-center">
+      <span className="bg-accent/10 text-accent flex size-11 shrink-0 items-center justify-center rounded-lg">
+        <DiscordIcon className="size-5" />
+      </span>
+      {children}
+    </div>
+  );
+}
 
 export function DiscordBanner() {
   const { reloginWithDiscord } = useAuth();
@@ -14,35 +26,33 @@ export function DiscordBanner() {
 
   if (status === DiscordStatus.NOT_LINKED) {
     return (
-      <div className="bg-muted flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-foreground font-semibold">
+      <Shell>
+        <p className="text-foreground flex-1 font-semibold">
           Podepnij Discorda, żeby wejść na kanał grupy
         </p>
-        <Button type="button" variant="outline" className="shrink-0" onClick={reloginWithDiscord}>
-          <DiscordIcon data-icon="inline-start" className="size-4" />
+        <Button type="button" className="shrink-0" onClick={reloginWithDiscord}>
           Połącz z Discordem
         </Button>
-      </div>
+      </Shell>
     );
   }
 
   if (status === DiscordStatus.NOT_ON_SERVER && inviteUrl) {
     return (
-      <div className="bg-muted flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
+      <Shell>
+        <div className="flex-1 space-y-1">
           <p className="text-foreground font-semibold">Nie ma Cię na serwerze klubu</p>
           <p className="text-muted-foreground text-sm">
             Dołącz do serwera, a kanał grupy pojawi się u Ciebie na Discordzie.
           </p>
         </div>
-        <Button asChild variant="outline" className="shrink-0">
+        <Button asChild className="shrink-0">
           <a href={inviteUrl} target="_blank" rel="noreferrer">
-            <DiscordIcon data-icon="inline-start" className="size-4" />
             Dołącz do serwera
             <ArrowUpRight data-icon="inline-end" />
           </a>
         </Button>
-      </div>
+      </Shell>
     );
   }
 

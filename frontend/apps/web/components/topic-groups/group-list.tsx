@@ -11,12 +11,12 @@ import { CoordinatorBadge } from "@/components/topic-groups/coordinator-badge";
 
 function GroupCard({ group }: { group: TopicGroupResponse }) {
   return (
-    <Card className="bg-muted flex h-full flex-col gap-4 rounded-none p-6 shadow-none ring-0">
+    <Card className="bg-muted relative flex h-full flex-col gap-4 rounded-none p-6 shadow-none ring-0 transition-opacity has-[a:hover]:opacity-90">
       <div className="space-y-2">
         <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
           <Link
             href={`/dashboard/groups/${group.slug}`}
-            className="hover:text-accent focus-visible:ring-ring rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+            className="focus-visible:ring-ring after:absolute after:inset-0 focus-visible:ring-2 focus-visible:outline-none"
           >
             {group.name}
           </Link>
@@ -35,7 +35,7 @@ function GroupCard({ group }: { group: TopicGroupResponse }) {
         {group.coordinator ? (
           <CoordinatorBadge label="Koordynujesz" />
         ) : (
-          <MembershipButton group={group} />
+          <MembershipButton group={group} className="relative z-10" />
         )}
       </div>
     </Card>
