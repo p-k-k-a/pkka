@@ -24,10 +24,22 @@ import {
 import { DiscordIcon } from "@pkka/icons/native";
 import { router } from "expo-router";
 import { ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Linking, Modal, Pressable, ScrollView, View } from "react-native";
-import Animated, { FadeIn } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const RESIZE = LinearTransition.duration(300).easing(Easing.bezier(0.2, 0.9, 0.25, 1));
+const stagger = (index: number) => FadeInDown.delay(60 + index * 50).duration(220);
 
 type GroupPopoverProps = {
   group: TopicGroupResponse;
@@ -48,6 +60,27 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
   const { data: discord } = useGetMyDiscordStatus({ query: { enabled: group.member } });
   const { toggle, isPending } = useToggleMembership(group);
   const [expanded, setExpanded] = useState(false);
+  const scale = useSharedValue(0.96);
+  const opacity = useSharedValue(0);
+  const backdrop = useSharedValue(0);
+  const chevron = useSharedValue(0);
+  const popoverStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
+  const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${chevron.value}deg` }] }));
+
+  useEffect(() => {
+    scale.value = withSpring(1, { damping: 14, stiffness: 260, mass: 0.8 });
+    opacity.value = withTiming(1, { duration: 120 });
+    backdrop.value = withTiming(1, { duration: 200 });
+  }, [scale, opacity, backdrop]);
+
+  const toggleMembers = () => {
+    chevron.value = withTiming(expanded ? 0 : 180, { duration: 260 });
+    setExpanded(!expanded);
+  };
   const memberList = members?.status === 200 ? members.data : undefined;
   const myId = profile?.status === 200 ? profile.data.id : undefined;
   const coordinator = memberList?.find((member) => member.coordinator);
@@ -64,7 +97,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
 
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
-      <Animated.View entering={FadeIn.duration(150)} style={{ position: "absolute", inset: 0 }}>
+      <Animated.View style={[{ position: "absolute", inset: 0 }, backdropStyle]}>
         <Pressable accessibilityLabel="Zamknij" onPress={onClose} className="flex-1 bg-black/40" />
       </Animated.View>
       <View
@@ -74,7 +107,8 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
       >
         <Animated.View
           role="dialog"
-          entering={FadeIn.duration(120)}
+          layout={RESIZE}
+          style={popoverStyle}
           className="bg-card max-h-full overflow-hidden rounded-[20px]"
         >
           <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
@@ -112,18 +146,21 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
               ) : null}
 
               {group.description ? (
-                <View>
+                <Animated.View entering={stagger(0)}>
                   <Text className="text-muted-foreground text-sm leading-[22px]">
                     {group.description}
                   </Text>
-                </View>
+                </Animated.View>
               ) : null}
 
-              <View className="border-border -mx-4 overflow-hidden border-y px-4">
+              <Animated.View
+                entering={stagger(1)}
+                className="border-border -mx-4 overflow-hidden border-y px-4"
+              >
                 <Pressable
                   role="button"
                   disabled={!memberList}
-                  onPress={() => setExpanded(!expanded)}
+                  onPress={toggleMembers}
                   className="h-[52px] flex-row items-center gap-2.5"
                 >
                   <Users size={18} color={theme.mutedForeground} />
@@ -135,14 +172,14 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                       <Text className="text-accent text-[13px] font-medium">
                         {expanded ? "Zwiń" : "Pokaż"}
                       </Text>
-                      <View style={{ transform: [{ rotate: expanded ? "180deg" : "0deg" }] }}>
+                      <Animated.View style={chevronStyle}>
                         <ChevronDown size={16} color={theme.accent} />
-                      </View>
+                      </Animated.View>
                     </View>
                   ) : null}
                 </Pressable>
                 {expanded && memberList ? (
-                  <View>
+                  <Animated.View entering={FadeIn.delay(80).duration(200)}>
                     <ScrollView
                       nestedScrollEnabled
                       showsVerticalScrollIndicator={false}
@@ -168,11 +205,11 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                         </Pressable>
                       ))}
                     </ScrollView>
-                  </View>
+                  </Animated.View>
                 ) : null}
-              </View>
+              </Animated.View>
 
-              <View>
+              <Animated.View entering={stagger(2)}>
                 {!group.member ? (
                   <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
                     <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
@@ -189,7 +226,7 @@ export function GroupPopover({ group, onClose }: GroupPopoverProps) {
                 ) : (
                   <DiscordBanner />
                 )}
-              </View>
+              </Animated.View>
 
               {group.member ? (
                 <View>
