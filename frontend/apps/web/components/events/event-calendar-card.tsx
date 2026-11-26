@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Calendar, CircleCheck, Clock, Hourglass, MapPin, UserRound } from "lucide-react";
+import { Calendar, Check, Clock, MapPin, UserRound } from "lucide-react";
 import { Audience, EventRegistrationStatus } from "@pkka/api";
 import { LabeledDetails } from "@/components/labeled-details";
 import { CardLinkFooter } from "@/components/content/card-link-footer";
@@ -69,18 +69,11 @@ export function EventCalendarCard({
           </span>
         ) : null}
         {event.registrationStatus ? (
-          <span
-            className={cn(
-              "inline-flex w-fit items-center gap-1 rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase",
-              event.registrationStatus === EventRegistrationStatus.WAITLISTED
-                ? "bg-accent/10 text-accent"
-                : "bg-primary text-primary-foreground",
-            )}
-          >
+          <span className="border-primary bg-primary/15 text-foreground inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
             {event.registrationStatus === EventRegistrationStatus.WAITLISTED ? (
-              <Hourglass className="size-3.5" aria-hidden="true" />
+              <Clock className="size-3" aria-hidden="true" />
             ) : (
-              <CircleCheck className="size-3.5" aria-hidden="true" />
+              <Check className="size-3" aria-hidden="true" />
             )}
             {registrationStatusLabelUpper(event.registrationStatus)}
           </span>
