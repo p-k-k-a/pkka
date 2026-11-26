@@ -2,12 +2,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import { ArrowUpRight, CalendarDays, Download, FileText, Link2, PlayCircle } from "lucide-react";
 import { MaterialType } from "@pkka/api";
-import {
-  materialLinkHost,
-  materialTypeLabelUpper,
-  uploadedMaterialExtension,
-  youtubeThumbnailUrl,
-} from "@pkka/domain";
+import { materialLinkHost, materialTypeLabelUpper, youtubeThumbnailUrl } from "@pkka/domain";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +11,8 @@ export type MaterialCardData = {
   description?: string;
   type: MaterialType;
   url: string;
+  /** Set for an uploaded file, as the API reports it; a link has none. */
+  fileExtension?: string | null;
   eventTitle?: string;
 };
 
@@ -58,7 +55,7 @@ type MaterialCardProps = {
 
 export function MaterialCard({ material, footer, className }: MaterialCardProps) {
   // An uploaded file comes with a signed URL on the storage host, which is no name to show.
-  const uploadedExtension = uploadedMaterialExtension(material.url);
+  const uploadedExtension = material.fileExtension ?? null;
   const host = uploadedExtension ? null : materialLinkHost(material.url);
 
   const inner = (

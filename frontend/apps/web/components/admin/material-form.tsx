@@ -32,7 +32,6 @@ import {
   isMaterialAudience,
   isMaterialType,
   isValidMaterialUrl,
-  materialUrlToSave,
   uploadLimitLabel,
   uploadedMaterialExtension,
 } from "@pkka/domain";
@@ -66,7 +65,8 @@ export function MaterialForm({ material }: MaterialFormProps) {
   const [title, setTitle] = useState(material?.title ?? "");
   const [description, setDescription] = useState(material?.description ?? "");
   const [type, setType] = useState<MaterialType>(material?.type ?? MaterialType.RECORDING);
-  const [url, setUrl] = useState(material?.url ?? "");
+  // A stored file is edited as its object key, so saving it unchanged sends the key back.
+  const [url, setUrl] = useState(material?.fileKey ?? material?.url ?? "");
   const [eventId, setEventId] = useState(material?.eventId ?? "");
   const [audience, setAudience] = useState<Audience>(material?.audience ?? Audience.ALL_ALUMNI);
   // Known only for a file picked in this session; a stored one is named after the material.
@@ -116,7 +116,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
       title: title.trim(),
       description: trimmedDescription || undefined,
       type,
-      url: materialUrlToSave(url),
+      url: url.trim(),
       eventId: eventId || undefined,
       audience,
     };
@@ -336,6 +336,7 @@ export function MaterialForm({ material }: MaterialFormProps) {
                   description: description.trim() || undefined,
                   type,
                   url,
+                  fileExtension: uploadedExtension,
                   eventTitle: selectedEventTitle,
                 }}
                 footer={<span />}
