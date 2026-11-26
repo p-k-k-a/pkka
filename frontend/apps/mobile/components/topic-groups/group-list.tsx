@@ -1,5 +1,5 @@
 import { CoordinatorPill } from "@/components/topic-groups/group-visuals";
-import { GroupPopover, type CardRect } from "@/components/topic-groups/group-popover";
+import { GroupPopover } from "@/components/topic-groups/group-popover";
 import { useToggleMembership } from "@/components/topic-groups/use-toggle-membership";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -7,35 +7,18 @@ import { useThemeColors } from "@/lib/theme";
 import { type TopicGroupResponse } from "@pkka/api";
 import { pluralPl, topicGroupMemberCountLabel } from "@pkka/domain";
 import { ChevronRight, Plus, Users } from "lucide-react-native";
-import { useRef, useState } from "react";
-import { Platform, Pressable, StatusBar, View } from "react-native";
+import { useState } from "react";
+import { Pressable, View } from "react-native";
 
-function GroupCard({
-  group,
-  onOpen,
-}: {
-  group: TopicGroupResponse;
-  onOpen: (rect: CardRect) => void;
-}) {
+function GroupCard({ group, onOpen }: { group: TopicGroupResponse; onOpen: () => void }) {
   const theme = useThemeColors();
-  const ref = useRef<View>(null);
   const { toggle, isPending } = useToggleMembership(group);
 
   return (
     <Pressable
-      ref={ref}
       role="button"
       accessibilityLabel={`Szczegóły grupy ${group.name}`}
-      onPress={() =>
-        ref.current?.measureInWindow((x, y, width, height) =>
-          onOpen({
-            x,
-            y: y + (Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) : 0),
-            width,
-            height,
-          }),
-        )
-      }
+      onPress={onOpen}
       className="bg-muted gap-3 rounded-2xl p-4 active:opacity-80"
     >
       <View className="flex-row items-center gap-3">
@@ -59,7 +42,9 @@ function GroupCard({
         ) : group.member ? null : (
           <Button size="sm" onPress={toggle} disabled={isPending} className="h-9 gap-1.5 px-3.5">
             <Plus size={16} color={theme.primaryForeground} />
-            <Text className="text-[13px] font-semibold">Dołącz</Text>
+            <Text className="text-[13px] font-semibold">
+              {isPending ? "Dołączanie..." : "Dołącz"}
+            </Text>
           </Button>
         )}
       </View>
@@ -74,7 +59,7 @@ function Section({
 }: {
   title: string;
   groups: TopicGroupResponse[];
-  onOpen: (group: TopicGroupResponse, rect: CardRect) => void;
+  onOpen: (group: TopicGroupResponse) => void;
 }) {
   if (!groups.length) return null;
   return (
@@ -88,7 +73,7 @@ function Section({
         </Text>
       </View>
       {groups.map((group) => (
-        <GroupCard key={group.id} group={group} onOpen={(rect) => onOpen(group, rect)} />
+        <GroupCard key={group.id} group={group} onOpen={() => onOpen(group)} />
       ))}
     </View>
   );
@@ -100,8 +85,8 @@ type GroupListProps = {
 };
 
 export function GroupList({ groups, isError }: GroupListProps) {
-  const [open, setOpen] = useState<{ slug: string; rect: CardRect } | null>(null);
-  const openGroup = open && groups?.find((group) => group.slug === open.slug);
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const openGroup = groups?.find((group) => group.slug === openSlug);
 
   if (isError && !groups) {
     return (
@@ -111,8 +96,7 @@ export function GroupList({ groups, isError }: GroupListProps) {
     );
   }
 
-  const openPopover = (group: TopicGroupResponse, rect: CardRect) =>
-    setOpen({ slug: group.slug, rect });
+  const openPopover = (group: TopicGroupResponse) => setOpenSlug(group.slug);
 
   return (
     <>
@@ -126,9 +110,7 @@ export function GroupList({ groups, isError }: GroupListProps) {
         groups={groups?.filter((group) => !group.member) ?? []}
         onOpen={openPopover}
       />
-      {open && openGroup ? (
-        <GroupPopover group={openGroup} rect={open.rect} onClose={() => setOpen(null)} />
-      ) : null}
+      {openGroup ? <GroupPopover group={openGroup} onClose={() => setOpenSlug(null)} /> : null}
     </>
   );
 }
