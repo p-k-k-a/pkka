@@ -419,7 +419,7 @@ class EventNotificationTest {
         assertThat(message.channelId()).isEqualTo("registrations");
         assertThat(message.title()).isEqualTo("Zwolniło się miejsce");
         assertThat(message.body())
-                .isEqualTo("Zostałeś automatycznie zapisany na wydarzenie „Warsztaty”, %s".formatted(startsAt));
+                .isEqualTo("Zwolniło się miejsce i masz zapis na wydarzenie „Warsztaty”, %s".formatted(startsAt));
         assertThat(message.data())
                 .containsEntry("type", "REGISTRATION_PROMOTED")
                 .containsEntry("target", event.getSlug());

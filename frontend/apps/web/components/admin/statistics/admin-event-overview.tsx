@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseISO } from "date-fns";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Send } from "lucide-react";
 import { type ApiError, useGetAdminEventBySlug, useGetEventStatistics } from "@pkka/api";
 import {
   audienceLabel,
@@ -20,9 +20,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth-context";
 import { DailyRegistrationsChart } from "@/components/admin/statistics/daily-registrations-chart";
 import { OccupancyMeter } from "@/components/admin/statistics/occupancy-meter";
-import { SignupSources } from "@/components/admin/statistics/signup-sources";
+import { SignUpSources } from "@/components/admin/statistics/signup-sources";
 import { StatTile } from "@/components/admin/statistics/stat-tile";
 import { EventRegistrants } from "@/components/admin/registrants/event-registrants";
+import { EventMessageDialog } from "@/components/admin/event-message/event-message-dialog";
 
 const ADMIN_EVENTS_PATH = "/dashboard/admin/events";
 
@@ -116,12 +117,20 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                 <h1 className="font-heading text-foreground min-w-0 text-[28px] font-semibold tracking-tight break-words md:text-[33px]">
                   {event.title}
                 </h1>
-                <Button asChild variant="outline" className="shrink-0">
-                  <Link href={`${ADMIN_EVENTS_PATH}/${event.slug}/edit`}>
-                    <Pencil data-icon="inline-start" />
-                    Edytuj wydarzenie
-                  </Link>
-                </Button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <EventMessageDialog event={event}>
+                    <Button type="button" variant="outline">
+                      <Send data-icon="inline-start" />
+                      Wyślij wiadomość
+                    </Button>
+                  </EventMessageDialog>
+                  <Button asChild variant="outline">
+                    <Link href={`${ADMIN_EVENTS_PATH}/${event.slug}/edit`}>
+                      <Pencil data-icon="inline-start" />
+                      Edytuj wydarzenie
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -214,7 +223,7 @@ export function AdminEventOverview({ slug }: { slug: string }) {
                     <EventDetail label="Autor">{event.authorDisplayName ?? "nieznany"}</EventDetail>
                   </dl>
                 </Card>
-                <SignupSources signUps={stats.signUps} />
+                <SignUpSources sources={stats.signUpsBySource} />
               </div>
             </div>
           </>
