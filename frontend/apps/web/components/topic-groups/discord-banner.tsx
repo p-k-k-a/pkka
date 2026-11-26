@@ -10,9 +10,6 @@ import { useAuth } from "@/lib/auth-context";
 function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="border-border flex flex-col gap-4 rounded-xl border p-5 sm:flex-row sm:items-center">
-      <span className="bg-accent/10 text-accent flex size-11 shrink-0 items-center justify-center rounded-lg">
-        <DiscordIcon className="size-5" />
-      </span>
       {children}
     </div>
   );
@@ -31,6 +28,7 @@ export function DiscordBanner() {
           Podepnij Discorda, żeby wejść na kanał grupy
         </p>
         <Button type="button" className="shrink-0" onClick={reloginWithDiscord}>
+          <DiscordIcon data-icon="inline-start" className="size-4" />
           Połącz z Discordem
         </Button>
       </Shell>
@@ -48,6 +46,7 @@ export function DiscordBanner() {
         </div>
         <Button asChild className="shrink-0">
           <a href={inviteUrl} target="_blank" rel="noreferrer">
+            <DiscordIcon data-icon="inline-start" className="size-4" />
             Dołącz do serwera
             <ArrowUpRight data-icon="inline-end" />
           </a>
