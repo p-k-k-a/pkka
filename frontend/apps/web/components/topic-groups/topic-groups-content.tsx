@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SectionShell } from "@/components/content/section-shell";
 import { GroupList } from "@/components/topic-groups/group-list";
@@ -23,6 +25,14 @@ export function TopicGroupsContent() {
         title="Grupy tematyczne"
         description="Miejsce dla alumnów o podobnych zainteresowaniach. Dołącz do grupy, a dostaniesz dostęp do jej kanału na Discordzie."
         as="section"
+        action={
+          <Button asChild size="xl">
+            <a href="#zaproponuj-grupe">
+              <Plus data-icon="inline-start" />
+              Stwórz nową grupę
+            </a>
+          </Button>
+        }
       >
         <GroupList />
       </SectionShell>
@@ -31,6 +41,7 @@ export function TopicGroupsContent() {
         description="Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
         as="section"
         align="center"
+        id="zaproponuj-grupe"
       >
         <div className="mx-auto max-w-2xl">
           {isLoading ? (
