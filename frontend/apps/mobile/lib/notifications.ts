@@ -22,6 +22,11 @@ const projectId =
   Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId || "";
 
 const NOTIFICATION_TYPES: readonly string[] = Object.values(NotificationType);
+const TOPIC_GROUP_TYPES: readonly NotificationType[] = [
+  NotificationType.TOPIC_GROUP_CREATED,
+  NotificationType.TOPIC_GROUP_REQUEST_REJECTED,
+  NotificationType.TOPIC_GROUP_NEW_MEMBERS,
+];
 
 function parseNotificationPayload(data: unknown): NotificationPayload | null {
   if (typeof data !== "object" || data === null) return null;
@@ -56,6 +61,11 @@ async function ensureChannels(): Promise<void> {
     name: "Przypomnienia",
     description: "Przed wydarzeniami, na które jesteś zapisany",
     importance: Notifications.AndroidImportance.HIGH,
+  });
+  await Notifications.setNotificationChannelAsync("groups", {
+    name: "Grupy tematyczne",
+    description: "Decyzje o Twoich wnioskach i nowe osoby w grupach, które koordynujesz",
+    importance: Notifications.AndroidImportance.DEFAULT,
   });
 }
 
@@ -181,7 +191,11 @@ export function useNotificationRouting() {
     const payload = parseNotificationPayload(response?.notification.request.content.data);
     if (!payload) return;
 
-    router.push({ pathname: "/events/[slug]", params: { slug: payload.target } });
+    if (TOPIC_GROUP_TYPES.includes(payload.type)) {
+      router.navigate({ pathname: "/alumni", params: { section: "groups" } });
+    } else {
+      router.push({ pathname: "/events/[slug]", params: { slug: payload.target } });
+    }
     Notifications.clearLastNotificationResponse();
   }, [response]);
 }
