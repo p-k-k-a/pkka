@@ -1,5 +1,6 @@
 import { InitialsAvatar } from "@/components/ui/initials-avatar";
 import { CheckboxCard } from "@/components/application/checkbox-card";
+import { FieldError } from "@/components/application/field-error";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
 import { TagPicker } from "@/components/profile/tag-picker";
@@ -54,15 +55,6 @@ function validationMessage(error: unknown): string | null {
     .map((field) => FIELD_LABELS[field] ?? field)
     .join(", ");
   return fields ? `Popraw pola: ${fields}.` : null;
-}
-
-function FieldError({ field }: { field: AnyFieldApi }) {
-  if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
-  return (
-    <Text className="text-destructive text-xs font-semibold">
-      {field.state.meta.errors.join(". ")}
-    </Text>
-  );
 }
 
 // Read-only account-derived field (Keycloak identity / Discord federated link) with a

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { FieldError } from "@/components/application/field-error";
 import {
   graduationYearError,
   hasRequiredConsents,
@@ -32,7 +33,7 @@ import {
 } from "@pkka/api";
 import { useAppColorScheme, useThemeColors } from "@/lib/theme";
 import { useTheme } from "@react-navigation/native";
-import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -41,15 +42,6 @@ import { useRef, useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import PhoneInput from "react-native-phone-input";
-
-function FieldError({ field }: { field: AnyFieldApi }) {
-  if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
-  return (
-    <Text className="text-destructive text-xs font-semibold">
-      {field.state.meta.errors.join(". ")}
-    </Text>
-  );
-}
 
 function ApplicationForm() {
   const { colors } = useTheme();

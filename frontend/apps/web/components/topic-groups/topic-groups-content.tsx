@@ -8,12 +8,12 @@ import { RequestCard } from "@/components/topic-groups/request-card";
 import { RequestForm } from "@/components/topic-groups/request-form";
 
 export function TopicGroupsContent() {
-  const { data, isLoading, isError, refetch } = useListMyTopicGroupRequests();
+  const { data: requestsResponse, isLoading, isError, refetch } = useListMyTopicGroupRequests();
   const [isProposing, setIsProposing] = useState(false);
 
-  const latest = data?.data[0];
-  const underReview = latest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
-  const showForm = !latest || (isProposing && !underReview);
+  const latestRequest = requestsResponse?.data[0];
+  const isUnderReview = latestRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
+  const showForm = !latestRequest || (isProposing && !isUnderReview);
 
   return (
     <SectionShell
@@ -24,14 +24,14 @@ export function TopicGroupsContent() {
       <div className="max-w-2xl">
         {isLoading ? (
           <Skeleton className="h-72 w-full rounded-2xl" />
-        ) : isError && !data ? (
+        ) : isError && !requestsResponse ? (
           <p className="text-destructive font-medium">
             Nie udało się załadować Twojego wniosku. Odśwież stronę i spróbuj ponownie.
           </p>
         ) : (
           <div className="space-y-6">
-            {latest ? (
-              <RequestCard request={latest} onPropose={() => setIsProposing(true)} />
+            {latestRequest ? (
+              <RequestCard request={latestRequest} onPropose={() => setIsProposing(true)} />
             ) : null}
             {showForm ? (
               <RequestForm
@@ -40,8 +40,8 @@ export function TopicGroupsContent() {
                   setIsProposing(false);
                 }}
                 onConflict={async () => {
-                  const { data: fresh } = await refetch();
-                  if (fresh?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
+                  const { data: refreshedResponse } = await refetch();
+                  if (refreshedResponse?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
                     setIsProposing(false);
                   }
                 }}

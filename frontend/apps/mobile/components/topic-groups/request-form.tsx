@@ -3,6 +3,7 @@ import { FormSection } from "@/components/application/form-section";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
+import { FieldError } from "@/components/application/field-error";
 import { useAppColorScheme, useThemeColors } from "@/lib/theme";
 import {
   ApiError,
@@ -14,21 +15,12 @@ import {
   TOPIC_GROUP_NAME_MAX_LENGTH,
   topicGroupRequestSubmitErrorMessage,
 } from "@pkka/domain";
-import { useForm, type AnyFieldApi } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
-
-function FieldError({ field }: { field: AnyFieldApi }) {
-  if (!field.state.meta.isTouched || field.state.meta.errors.length === 0) return null;
-  return (
-    <Text className="text-destructive text-xs font-semibold">
-      {field.state.meta.errors.join(". ")}
-    </Text>
-  );
-}
 
 export function TopicGroupRequestForm() {
   const theme = useThemeColors();
@@ -139,11 +131,11 @@ export function TopicGroupRequestForm() {
           ] as const
         }
       >
-        {([filled, isSubmitting]) => (
+        {([hasRequiredFields, isSubmitting]) => (
           <Button
             size="lg"
             className="w-full"
-            disabled={!filled || isSubmitting}
+            disabled={!hasRequiredFields || isSubmitting}
             onPress={() => form.handleSubmit()}
           >
             <Text className="text-sm font-bold uppercase tracking-widest">

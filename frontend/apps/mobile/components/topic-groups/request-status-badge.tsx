@@ -15,7 +15,7 @@ const STATUS_STYLE: Record<
   REJECTED: { icon: CircleX, className: "bg-destructive/15", color: "destructive" },
 };
 
-export function RequestStatusBadge({ status }: { status: TopicGroupRequestStatus }) {
+export function TopicGroupRequestStatusBadge({ status }: { status: TopicGroupRequestStatus }) {
   const theme = useThemeColors();
   const { icon: Icon, className, color } = STATUS_STYLE[status];
 

@@ -1,5 +1,5 @@
 import { GroupList } from "@/components/topic-groups/group-list";
-import { RequestCard } from "@/components/topic-groups/request-card";
+import { TopicGroupRequestCard } from "@/components/topic-groups/request-card";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
 import {
@@ -8,22 +8,23 @@ import {
   useListTopicGroups,
 } from "@pkka/api";
 import { useThemeColors } from "@/lib/theme";
-import { router } from "expo-router";
+import { Link } from "expo-router";
 import { Plus } from "lucide-react-native";
 import { useState } from "react";
 import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 export function TopicGroups() {
   const theme = useThemeColors();
-  const { data, isLoading, refetch } = useListMyTopicGroupRequests();
-  const groups = useListTopicGroups({ size: 100 });
+  const requestsQuery = useListMyTopicGroupRequests();
+  const groupsQuery = useListTopicGroups({ size: 100 });
   const [refreshing, setRefreshing] = useState(false);
-  const latest = data?.data[0];
-  const request = latest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latest;
+  const latestRequest = requestsQuery.data?.data[0];
+  const openRequest =
+    latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([refetch(), groups.refetch()]);
+    await Promise.all([requestsQuery.refetch(), groupsQuery.refetch()]);
     setRefreshing(false);
   };
 
@@ -45,22 +46,24 @@ export function TopicGroups() {
         <Text className="text-muted-foreground text-sm leading-relaxed">
           Dołącz do dyskusji na interesujące Cię tematy z innymi alumnami!
         </Text>
-        {request?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
-          <Button className="mt-2" onPress={() => router.push("/topic-groups/request")}>
-            <Plus size={18} color={theme.primaryForeground} />
-            <Text className="font-semibold">Stwórz nową grupę</Text>
-          </Button>
+        {openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
+          <Link href="/topic-groups/request" asChild>
+            <Button className="mt-2">
+              <Plus size={18} color={theme.primaryForeground} />
+              <Text className="font-semibold">Stwórz nową grupę</Text>
+            </Button>
+          </Link>
         )}
       </View>
 
-      {isLoading || groups.isLoading ? (
+      {requestsQuery.isLoading || groupsQuery.isLoading ? (
         <View className="py-16">
           <ActivityIndicator />
         </View>
       ) : (
         <>
-          {request ? <RequestCard request={request} /> : null}
-          <GroupList groups={groups.data?.data.content} isError={groups.isError} />
+          {openRequest ? <TopicGroupRequestCard request={openRequest} /> : null}
+          <GroupList groups={groupsQuery.data?.data.content} isError={groupsQuery.isError} />
         </>
       )}
     </ScrollView>

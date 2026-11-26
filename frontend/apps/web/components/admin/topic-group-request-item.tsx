@@ -10,7 +10,7 @@ import {
 } from "@pkka/api";
 import {
   formatEventDateLong,
-  isTopicGroupNameTaken,
+  isTopicGroupRequestAlreadyReviewed,
   TOPIC_GROUP_REJECTION_REASON_MAX_LENGTH,
   topicGroupRequestReviewErrorMessage,
 } from "@pkka/domain";
@@ -29,26 +29,26 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
   const [reason, setReason] = useState("");
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const mutation = {
+  const reviewMutationOptions = {
     onSuccess: onReviewed,
     onError: (error: ApiError) => {
-      const reviewedElsewhere =
-        error.status === 404 ||
-        (error.status === 409 && !isTopicGroupNameTaken(error.status, error.body));
-      if (reviewedElsewhere) {
+      if (isTopicGroupRequestAlreadyReviewed(error.status, error.body)) {
         onReviewed();
         return;
       }
       setActionError(topicGroupRequestReviewErrorMessage(error.status, error.body));
     },
   };
-  const approveMutation = useApproveTopicGroupRequest<ApiError>({ mutation });
-  const rejectMutation = useRejectTopicGroupRequest<ApiError>({ mutation });
+  const approveMutation = useApproveTopicGroupRequest<ApiError>({
+    mutation: reviewMutationOptions,
+  });
+  const rejectMutation = useRejectTopicGroupRequest<ApiError>({ mutation: reviewMutationOptions });
   const isMutating = approveMutation.isPending || rejectMutation.isPending;
 
   const { requester } = request;
   const requesterName = [requester.firstName, requester.lastName].filter(Boolean).join(" ");
   const reasonId = `rejection-reason-${request.id}`;
+  const trimmedReason = reason.trim();
 
   return (
     <Card className="gap-4 p-5 md:p-6">
@@ -105,9 +105,9 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
           className="border-border space-y-3 border-t pt-4"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!reason.trim()) return;
+            if (!trimmedReason) return;
             setActionError(null);
-            rejectMutation.mutate({ id: request.id, data: { reason: reason.trim() } });
+            rejectMutation.mutate({ id: request.id, data: { reason: trimmedReason } });
           }}
         >
           <div className="space-y-2">
@@ -123,7 +123,7 @@ export function TopicGroupRequestItem({ request, onReviewed }: TopicGroupRequest
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" variant="destructive" disabled={isMutating || !reason.trim()}>
+            <Button type="submit" variant="destructive" disabled={isMutating || !trimmedReason}>
               {rejectMutation.isPending ? "Odrzucanie…" : "Potwierdź odrzucenie"}
             </Button>
             <Button
