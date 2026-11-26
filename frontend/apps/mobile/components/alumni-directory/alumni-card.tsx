@@ -1,4 +1,4 @@
-import { InitialsAvatar } from "@/components/ui/initials-avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { SkillChips } from "@/components/alumni/skill-chips";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
@@ -19,7 +19,7 @@ export function AlumniCard({ alumn }: AlumniCardProps) {
   return (
     <View className="bg-muted gap-5 rounded-2xl p-6">
       <View className="flex-row gap-4">
-        <InitialsAvatar name={name} />
+        <UserAvatar imageUrl={alumn.avatarUrl} name={name} />
         <View className="flex-1 gap-1.5">
           <View className="gap-0.5">
             <Text className="font-heading text-foreground text-lg font-semibold leading-tight">
