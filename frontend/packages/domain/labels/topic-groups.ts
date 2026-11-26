@@ -16,9 +16,13 @@ export function topicGroupRequestStatusLabel(status: TopicGroupRequestStatus): s
   return REQUEST_STATUS_LABELS[status];
 }
 
+export function isTopicGroupNameTaken(status: number | undefined, body: unknown) {
+  return status === 409 && (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE;
+}
+
 export function topicGroupRequestSubmitErrorMessage(status: number | undefined, body: unknown) {
   if (status !== 409) return "Nie udało się wysłać wniosku. Spróbuj ponownie.";
-  return (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE
+  return isTopicGroupNameTaken(status, body)
     ? "Grupa o tej nazwie już istnieje. Wybierz inną nazwę."
     : "Masz już wniosek w trakcie rozpatrywania. Kolejny złożysz po decyzji administracji.";
 }
@@ -30,8 +34,9 @@ export function topicGroupRequestWithdrawErrorMessage(status: number | undefined
   return "Nie udało się wycofać wniosku. Spróbuj ponownie.";
 }
 
-export function isTopicGroupNameTaken(status: number | undefined, body: unknown) {
-  return status === 409 && (body as { title?: string } | null)?.title === NAME_TAKEN_TITLE;
+/** The request was withdrawn (404) or another admin already decided it (409 other than a name clash). */
+export function isTopicGroupRequestAlreadyReviewed(status: number | undefined, body: unknown) {
+  return status === 404 || (status === 409 && !isTopicGroupNameTaken(status, body));
 }
 
 export function topicGroupRequestReviewErrorMessage(status: number | undefined, body: unknown) {
