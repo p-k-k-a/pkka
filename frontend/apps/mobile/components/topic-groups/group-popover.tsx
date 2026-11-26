@@ -24,7 +24,7 @@ import {
 import { DiscordIcon } from "@pkka/icons/native";
 import { router } from "expo-router";
 import { ChevronDown, ChevronRight, LogOut, Users, X } from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   Linking,
   Modal,
@@ -34,29 +34,12 @@ import {
   useWindowDimensions,
   type LayoutChangeEvent,
 } from "react-native";
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  LinearTransition,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { scheduleOnRN } from "react-native-worklets";
 
 export type CardRect = { x: number; y: number; width: number; height: number };
 
-const OPEN = { duration: 300, easing: Easing.bezier(0.2, 0.9, 0.25, 1) };
-const CLOSE = { duration: 200, easing: Easing.bezier(0.4, 0, 0.6, 1) };
 const TAB_BAR_HEIGHT = 76;
-
-const RESIZE = LinearTransition.duration(300).easing(OPEN.easing);
-const stagger = (index: number) => FadeInDown.delay(90 + index * 50).duration(220);
 
 type GroupPopoverProps = {
   group: TopicGroupResponse;
@@ -79,87 +62,15 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
   const { data: discord } = useGetMyDiscordStatus({ query: { enabled: group.member } });
   const { toggle, isPending } = useToggleMembership(group);
   const [expanded, setExpanded] = useState(false);
-  const [frame, setFrame] = useState<{ top: number; height: number } | null>(null);
-  const [settled, setSettled] = useState(false);
-  const closing = useRef(false);
+  const [top, setTop] = useState<number | null>(null);
 
   const maxBottom = windowHeight - insets.bottom - TAB_BAR_HEIGHT - 12;
   const cardTop = rect.y - 4;
-  const cardHeight = rect.height + 8;
-  const shifted = !!frame && frame.top < cardTop;
-  // The window wraps its content, so it resizes in the same layout pass as the content.
-  const maxHeight = maxBottom - (frame?.top ?? cardTop);
-  const reveal = useSharedValue(0);
-  const scale = useSharedValue(0.96);
-  const opacity = useSharedValue(0);
-  const backdrop = useSharedValue(0);
-  const chevron = useSharedValue(0);
-  const listOpacity = useSharedValue(1);
-  const collapsing = useRef(false);
-
-  const clipStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: reveal.value }, { scale: scale.value }],
-  }));
-  const contentStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -reveal.value }] }));
-  const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }));
-  const chevronStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${chevron.value}deg` }] }));
-  const listStyle = useAnimatedStyle(() => ({ opacity: listOpacity.value }));
-
-  const hiddenOffset = (next: { top: number; height: number }) =>
-    (next.top < cardTop ? 1 : -1) * Math.max(0, next.height - cardHeight);
+  const maxHeight = maxBottom - (top ?? cardTop);
 
   const onContentLayout = (event: LayoutChangeEvent) => {
     const contentHeight = event.nativeEvent.layout.height;
-    const top = Math.max(insets.top + 12, Math.min(cardTop, maxBottom - contentHeight));
-    const next = { top, height: Math.min(contentHeight, maxBottom - top) };
-    setFrame(next);
-    if (frame) return;
-    reveal.value = withSequence(
-      withTiming(hiddenOffset(next), { duration: 0 }),
-      withTiming(0, OPEN, (finished) => {
-        if (finished) scheduleOnRN(setSettled, true);
-      }),
-    );
-    scale.value = withSpring(1, { damping: 14, stiffness: 260, mass: 0.8 });
-    opacity.value = withTiming(1, { duration: 90 });
-    backdrop.value = withTiming(1, { duration: 200 });
-  };
-
-  const close = () => {
-    if (closing.current) return;
-    closing.current = true;
-    if (!frame) return onClose();
-    reveal.value = withTiming(hiddenOffset(frame), CLOSE);
-    scale.value = withTiming(0.96, CLOSE);
-    backdrop.value = withTiming(0, { duration: 200 });
-    opacity.value = withDelay(
-      60,
-      withTiming(0, { duration: 160 }, (finished) => {
-        if (finished) scheduleOnRN(onClose);
-      }),
-    );
-  };
-
-  const toggleMembers = () => {
-    if (collapsing.current) return;
-    if (!expanded) {
-      listOpacity.value = 1;
-      chevron.value = withTiming(180, { duration: 260 });
-      setExpanded(true);
-      return;
-    }
-    // Fade the list out in place first, so the resize below starts in one layout pass.
-    collapsing.current = true;
-    chevron.value = withTiming(0, { duration: 260 });
-    listOpacity.value = withTiming(0, { duration: 140 }, (finished) => {
-      if (finished) scheduleOnRN(finishCollapse);
-    });
-  };
-
-  const finishCollapse = () => {
-    collapsing.current = false;
-    setExpanded(false);
+    setTop(Math.max(insets.top + 12, Math.min(cardTop, maxBottom - contentHeight)));
   };
 
   const memberList = members?.status === 200 ? members.data : undefined;
@@ -176,173 +87,154 @@ export function GroupPopover({ group, rect, onClose }: GroupPopoverProps) {
     router.push({ pathname: "/alumni/[id]", params: { id } });
   };
 
-  const resize = settled ? RESIZE : undefined;
-
   return (
-    <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={close}>
-      <Animated.View style={[{ position: "absolute", inset: 0 }, backdropStyle]}>
-        <Pressable accessibilityLabel="Zamknij" onPress={close} className="flex-1 bg-black/40" />
+    <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
+      <Animated.View entering={FadeIn.duration(150)} style={{ position: "absolute", inset: 0 }}>
+        <Pressable accessibilityLabel="Zamknij" onPress={onClose} className="flex-1 bg-black/40" />
       </Animated.View>
       <Animated.View
+        key={top === null ? "measuring" : "shown"}
         role="dialog"
-        layout={resize}
-        className="absolute overflow-hidden rounded-[20px]"
-        style={[
-          {
-            top: frame?.top ?? cardTop,
-            maxHeight,
-            left: rect.x - 4,
-            width: rect.width + 8,
-            transformOrigin: shifted ? "bottom" : "top",
-          },
-          clipStyle,
-        ]}
+        entering={top === null ? undefined : FadeIn.duration(120)}
+        className="bg-card absolute overflow-hidden rounded-[20px]"
+        style={{
+          top: top ?? cardTop,
+          maxHeight,
+          left: rect.x - 4,
+          width: rect.width + 8,
+          opacity: top === null ? 0 : 1,
+        }}
       >
-        <Animated.View
-          layout={resize}
-          className="bg-card overflow-hidden rounded-[20px]"
-          style={[{ maxHeight }, contentStyle]}
-        >
-          <Animated.ScrollView
-            layout={resize}
-            bounces={false}
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-          >
-            <View onLayout={onContentLayout} className="gap-3 p-4">
-              <View className="flex-row items-center gap-3">
-                <View className="flex-1 gap-0.5">
-                  <Text role="heading" className="text-foreground text-[17px] font-semibold">
-                    {group.name}
-                  </Text>
-                </View>
-                <Pressable
-                  role="button"
-                  accessibilityLabel="Zamknij"
-                  onPress={close}
-                  hitSlop={8}
-                  className="active:bg-muted dark:active:bg-input size-10 items-center justify-center rounded-full"
-                >
-                  <X size={22} color={theme.foreground} />
-                </Pressable>
+        <ScrollView bounces={false} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+          <View onLayout={onContentLayout} className="gap-3 p-4">
+            <View className="flex-row items-center gap-3">
+              <View className="flex-1 gap-0.5">
+                <Text role="heading" className="text-foreground text-[17px] font-semibold">
+                  {group.name}
+                </Text>
               </View>
-
-              {coordinator ? (
-                <Pressable
-                  role="link"
-                  onPress={() => openProfile(coordinator.id)}
-                  className="flex-row items-center gap-3 active:opacity-70"
-                >
-                  <InitialsAvatar name={topicGroupMemberName(coordinator)} size="xs" />
-                  <View className="flex-1">
-                    <Text className="text-muted-foreground text-xs">Koordynator</Text>
-                    <Text className="text-foreground text-sm font-medium">{coordinatorLabel}</Text>
-                  </View>
-                  <ChevronRight size={18} color={theme.mutedForeground} />
-                </Pressable>
-              ) : null}
-
-              {group.description ? (
-                <Animated.View entering={stagger(0)}>
-                  <Text className="text-muted-foreground text-sm leading-[22px]">
-                    {group.description}
-                  </Text>
-                </Animated.View>
-              ) : null}
-
-              <Animated.View
-                entering={stagger(1)}
-                layout={resize}
-                className="border-border -mx-4 overflow-hidden border-y px-4"
+              <Pressable
+                role="button"
+                accessibilityLabel="Zamknij"
+                onPress={onClose}
+                hitSlop={8}
+                className="active:bg-muted dark:active:bg-input size-10 items-center justify-center rounded-full"
               >
-                <Pressable
-                  role="button"
-                  disabled={!memberList}
-                  onPress={toggleMembers}
-                  className="h-[52px] flex-row items-center gap-2.5"
-                >
-                  <Users size={18} color={theme.mutedForeground} />
-                  <Text className="text-foreground flex-1 text-sm font-semibold">
-                    {topicGroupMemberCountLabel(group.memberCount)}
-                  </Text>
-                  {memberList ? (
-                    <View className="flex-row items-center gap-0.5">
-                      <Text className="text-accent text-[13px] font-medium">
-                        {expanded ? "Zwiń" : "Pokaż"}
-                      </Text>
-                      <Animated.View style={chevronStyle}>
-                        <ChevronDown size={16} color={theme.accent} />
-                      </Animated.View>
-                    </View>
-                  ) : null}
-                </Pressable>
-                {expanded && memberList ? (
-                  <Animated.View entering={FadeIn.delay(80).duration(200)} style={listStyle}>
-                    <ScrollView
-                      nestedScrollEnabled
-                      showsVerticalScrollIndicator={false}
-                      style={{ maxHeight: 188 }}
-                      className="pb-1.5"
-                    >
-                      {memberList.map((member) => (
-                        <Pressable
-                          key={member.id}
-                          role="link"
-                          onPress={() => openProfile(member.id)}
-                          className="h-11 flex-row items-center gap-3 active:opacity-70"
-                        >
-                          <InitialsAvatar name={topicGroupMemberName(member)} size="xs" />
-                          <Text className="text-foreground flex-1 text-sm font-medium">
-                            {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
-                          </Text>
-                          {member.coordinator ? (
-                            <CoordinatorPill label="Koordynator" />
-                          ) : member.id === myId ? (
-                            <Pill label="Ty" />
-                          ) : null}
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  </Animated.View>
-                ) : null}
-              </Animated.View>
+                <X size={22} color={theme.foreground} />
+              </Pressable>
+            </View>
 
-              <Animated.View entering={stagger(2)} layout={resize}>
-                {!group.member ? (
-                  <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
-                    <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
-                  </Button>
-                ) : discordUrl ? (
-                  <Button
-                    variant="outline"
-                    onPress={() => void Linking.openURL(discordUrl)}
-                    className="w-full"
-                  >
-                    <DiscordIcon size={18} color={theme.foreground} />
-                    <Text className="font-semibold">Otwórz kanał na Discordzie</Text>
-                  </Button>
-                ) : (
-                  <DiscordBanner />
-                )}
-              </Animated.View>
+            {coordinator ? (
+              <Pressable
+                role="link"
+                onPress={() => openProfile(coordinator.id)}
+                className="flex-row items-center gap-3 active:opacity-70"
+              >
+                <InitialsAvatar name={topicGroupMemberName(coordinator)} size="xs" />
+                <View className="flex-1">
+                  <Text className="text-muted-foreground text-xs">Koordynator</Text>
+                  <Text className="text-foreground text-sm font-medium">{coordinatorLabel}</Text>
+                </View>
+                <ChevronRight size={18} color={theme.mutedForeground} />
+              </Pressable>
+            ) : null}
 
-              {group.member ? (
-                <Animated.View layout={resize}>
-                  {group.coordinator ? (
-                    <Text className="text-muted-foreground text-center text-[13px]">
-                      Aby odejść, przekaż grupę innemu członkowi na stronie klubu
+            {group.description ? (
+              <View>
+                <Text className="text-muted-foreground text-sm leading-[22px]">
+                  {group.description}
+                </Text>
+              </View>
+            ) : null}
+
+            <View className="border-border -mx-4 overflow-hidden border-y px-4">
+              <Pressable
+                role="button"
+                disabled={!memberList}
+                onPress={() => setExpanded(!expanded)}
+                className="h-[52px] flex-row items-center gap-2.5"
+              >
+                <Users size={18} color={theme.mutedForeground} />
+                <Text className="text-foreground flex-1 text-sm font-semibold">
+                  {topicGroupMemberCountLabel(group.memberCount)}
+                </Text>
+                {memberList ? (
+                  <View className="flex-row items-center gap-0.5">
+                    <Text className="text-accent text-[13px] font-medium">
+                      {expanded ? "Zwiń" : "Pokaż"}
                     </Text>
-                  ) : (
-                    <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
-                      <LogOut size={16} color={theme.destructive} />
-                      <Text className="font-semibold">Opuść grupę</Text>
-                    </Button>
-                  )}
-                </Animated.View>
+                    <View style={{ transform: [{ rotate: expanded ? "180deg" : "0deg" }] }}>
+                      <ChevronDown size={16} color={theme.accent} />
+                    </View>
+                  </View>
+                ) : null}
+              </Pressable>
+              {expanded && memberList ? (
+                <View>
+                  <ScrollView
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={false}
+                    style={{ maxHeight: 188 }}
+                    className="pb-1.5"
+                  >
+                    {memberList.map((member) => (
+                      <Pressable
+                        key={member.id}
+                        role="link"
+                        onPress={() => openProfile(member.id)}
+                        className="h-11 flex-row items-center gap-3 active:opacity-70"
+                      >
+                        <InitialsAvatar name={topicGroupMemberName(member)} size="xs" />
+                        <Text className="text-foreground flex-1 text-sm font-medium">
+                          {member.id === myId ? "Ty" : topicGroupMemberShortName(member)}
+                        </Text>
+                        {member.coordinator ? (
+                          <CoordinatorPill label="Koordynator" />
+                        ) : member.id === myId ? (
+                          <Pill label="Ty" />
+                        ) : null}
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                </View>
               ) : null}
             </View>
-          </Animated.ScrollView>
-        </Animated.View>
+
+            <View>
+              {!group.member ? (
+                <Button size="lg" onPress={toggle} disabled={isPending} className="h-12">
+                  <Text className="font-semibold">Dołącz, żeby zobaczyć Discorda</Text>
+                </Button>
+              ) : discordUrl ? (
+                <Button
+                  variant="outline"
+                  onPress={() => void Linking.openURL(discordUrl)}
+                  className="w-full"
+                >
+                  <DiscordIcon size={18} color={theme.foreground} />
+                  <Text className="font-semibold">Otwórz kanał na Discordzie</Text>
+                </Button>
+              ) : (
+                <DiscordBanner />
+              )}
+            </View>
+
+            {group.member ? (
+              <View>
+                {group.coordinator ? (
+                  <Text className="text-muted-foreground text-center text-[13px]">
+                    Aby odejść, przekaż grupę innemu członkowi na stronie klubu
+                  </Text>
+                ) : (
+                  <Button variant="outline" size="sm" onPress={toggle} disabled={isPending}>
+                    <LogOut size={16} color={theme.destructive} />
+                    <Text className="font-semibold">Opuść grupę</Text>
+                  </Button>
+                )}
+              </View>
+            ) : null}
+          </View>
+        </ScrollView>
       </Animated.View>
     </Modal>
   );
