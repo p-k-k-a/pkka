@@ -45,17 +45,7 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
         mutate({ data: { name: name.trim(), description: description.trim() } });
       }}
     >
-      <Card className="gap-6 rounded-2xl p-6 md:p-8">
-        <div className="space-y-1">
-          <h3 className="font-heading text-foreground text-[23px] leading-tight font-semibold tracking-tight">
-            Zaproponuj grupę
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            Napisz, czym grupa będzie się zajmować i dla kogo jest. Na tej podstawie administracja
-            zdecyduje o jej utworzeniu.
-          </p>
-        </div>
-
+      <Card className="bg-muted gap-6 rounded-2xl p-6 shadow-none ring-0 md:p-8">
         <div className="space-y-2">
           <Label htmlFor="topicGroupName" className="text-xs font-bold tracking-wider uppercase">
             Nazwa grupy<span className="text-destructive">*</span>

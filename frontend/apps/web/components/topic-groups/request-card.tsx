@@ -53,7 +53,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
       : `Rozpatrzony ${formatEventDateLong(request.reviewedAt)}`;
 
   return (
-    <Card className="gap-4 p-6 md:p-8">
+    <Card className="bg-muted gap-4 p-6 shadow-none ring-0 md:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
           Twój wniosek
