@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
+<body>
+<main>
+    <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;" th:text="${subject}">Twoja grupa została utworzona</h1>
+    <p style="margin:0 0 16px;" th:each="line : ${lines}" th:text="${line}">Treść wiadomości</p>
+    <a th:href="${webBaseUrl + linkPath}" th:text="${linkLabel}"
+       style="display:inline-block;margin-top:8px;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
+        Przejdź do grupy
+    </a>
+</main>
+</body>
+</html>

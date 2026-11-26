@@ -1,0 +1,7 @@
+[(${subject})]
+
+[# th:each="line : ${lines}"][(${line})]
+
+[/][(${linkLabel})]: [(${webBaseUrl})][(${linkPath})]
+
+[# th:insert="~{footer.txt}" /]

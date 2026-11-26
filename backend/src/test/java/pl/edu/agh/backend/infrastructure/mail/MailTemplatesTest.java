@@ -118,4 +118,20 @@ class MailTemplatesTest {
 
         assertThat(text).startsWith("Cześć!");
     }
+
+    @Test
+    void topicGroup_escapesTheAdminsReasonAndLinksToTheGroups() {
+        Map<String, Object> variables = Map.of(
+                "lines", List.of("Powód odrzucenia:", "<b>Za wąski</b> temat"),
+                "linkPath", "/dashboard/groups",
+                "linkLabel", "Przejdź do grup");
+
+        String html = mail.render("topic-group.html", "Wniosek o grupę „AI” odrzucony", variables);
+        String text = mail.render("topic-group.txt", "Wniosek o grupę „AI” odrzucony", variables);
+
+        assertThat(html)
+                .contains("&lt;b&gt;Za wąski&lt;/b&gt; temat", "href=\"https://pkka.me/dashboard/groups\"")
+                .doesNotContain("<b>Za");
+        assertThat(text).contains("<b>Za wąski</b> temat", "Przejdź do grup: https://pkka.me/dashboard/groups");
+    }
 }
