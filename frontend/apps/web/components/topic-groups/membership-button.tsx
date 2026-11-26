@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ApiError,
   getGetTopicGroupQueryKey,
   getListTopicGroupMembersQueryKey,
+  getListTopicGroupMembersQueryOptions,
   getListTopicGroupsQueryKey,
   useJoinTopicGroup,
   useLeaveTopicGroup,
@@ -25,9 +27,11 @@ export function MembershipButton({ group, prominent, className }: MembershipButt
   const queryClient = useQueryClient();
   const join = useJoinTopicGroup();
   const leave = useLeaveTopicGroup();
-  const isPending = join.isPending || leave.isPending;
+  const [isPending, setIsPending] = useState(false);
 
   const toggle = async () => {
+    if (isPending) return;
+    setIsPending(true);
     const joining = !group.member;
     try {
       await (joining ? join : leave).mutateAsync({ id: group.id });
@@ -39,11 +43,15 @@ export function MembershipButton({ group, prominent, className }: MembershipButt
         ),
       );
     }
+    if (joining) {
+      await queryClient.fetchQuery(getListTopicGroupMembersQueryOptions(group.id)).catch(() => {});
+    }
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: getListTopicGroupsQueryKey() }),
       queryClient.invalidateQueries({ queryKey: getGetTopicGroupQueryKey(group.slug) }),
       queryClient.invalidateQueries({ queryKey: getListTopicGroupMembersQueryKey(group.id) }),
     ]);
+    setIsPending(false);
   };
 
   if (group.coordinator) return null;
