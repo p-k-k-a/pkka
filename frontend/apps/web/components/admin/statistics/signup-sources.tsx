@@ -1,28 +1,16 @@
+import type { SignUpSourceResponse } from "@pkka/api";
+import { signUpSourceLabel } from "@pkka/domain";
 import { InfoTip } from "@/components/admin/statistics/info-tip";
 import { Card } from "@/components/ui/card";
 
-// TODO: replace with real per-channel counts once sign-ups record where they came from.
-const MOCK_SHARES = [
-  { label: "Discord", share: 0.45 },
-  { label: "E-mail", share: 0.3 },
-  { label: "Strona WWW", share: 0.17 },
-  { label: "Aplikacja mobilna", share: 0.08 },
-];
-
-function splitByShares(total: number) {
-  const counts = MOCK_SHARES.map((source) => Math.floor(source.share * total));
-  counts[0] += total - counts.reduce((sum, count) => sum + count, 0);
-  return counts;
-}
-
-export function SignupSources({
-  signUps,
+export function SignUpSources({
+  sources,
   layout = "stack",
 }: {
-  signUps: number;
+  sources: SignUpSourceResponse[];
   layout?: "stack" | "row";
 }) {
-  const counts = splitByShares(signUps);
+  const total = sources.reduce((sum, source) => sum + source.signUps, 0);
 
   return (
     <Card className="gap-4 px-6 py-6">
@@ -32,12 +20,10 @@ export function SignupSources({
             Źródła zapisów
           </h2>
           <InfoTip label="Źródła zapisów">
-            Kanał, z którego przyszedł zapis. Na razie dane przykładowe.
+            Kanał, z którego przyszedł zapis: link z Discorda lub e-maila, strona WWW albo aplikacja
+            mobilna. Liczy każdy zapis, także na listę rezerwową.
           </InfoTip>
         </div>
-        <span className="bg-accent/10 text-accent shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold tracking-widest uppercase">
-          Przykładowe dane
-        </span>
       </div>
       <ul
         className={
@@ -46,15 +32,14 @@ export function SignupSources({
             : "space-y-4"
         }
       >
-        {MOCK_SHARES.map((source, index) => {
-          const percent = signUps === 0 ? 0 : Math.round((counts[index] / signUps) * 100);
+        {sources.map(({ source, signUps }) => {
+          const percent = total === 0 ? 0 : Math.round((signUps / total) * 100);
           return (
-            <li key={source.label} className="space-y-2">
+            <li key={source} className="space-y-2">
               <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="text-foreground">{source.label}</span>
+                <span className="text-foreground">{signUpSourceLabel(source)}</span>
                 <span className="text-foreground font-semibold tabular-nums">
-                  {counts[index]}{" "}
-                  <span className="text-muted-foreground font-normal">({percent}%)</span>
+                  {signUps} <span className="text-muted-foreground font-normal">({percent}%)</span>
                 </span>
               </div>
               <div className="bg-chart-1/15 h-2 w-full overflow-hidden rounded-full" aria-hidden>

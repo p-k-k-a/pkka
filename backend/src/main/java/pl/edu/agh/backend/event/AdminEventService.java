@@ -93,6 +93,7 @@ public class AdminEventService {
     @Transactional
     public AdminEventResponse update(UUID id, EventRequest request) {
         Event event = eventRepository.findForUpdateById(id).orElseThrow(() -> new EventNotFoundException(id));
+        EventScheduleChangedEvent before = EventScheduleChangedEvent.before(event);
         event.setTitle(request.title());
         event.setFullDescription(request.fullDescription());
         event.setType(request.type());
@@ -115,13 +116,29 @@ public class AdminEventService {
         Event saved = eventRepository.saveAndFlush(event);
         eventRegistrationService.fillFreeSeats(saved);
         eventPublisher.publishEvent(new EventUpdatedEvent(saved.getId()));
+        if (before.anyChange(saved) && isUpcoming(saved.getStartsAt())) {
+            eventPublisher.publishEvent(before);
+        }
         return respond(saved);
     }
 
     @Transactional
     public void delete(UUID id) {
-        eventRepository.delete(findOrThrow(id));
+        Event event = findOrThrow(id);
+        eventRepository.delete(event);
         eventPublisher.publishEvent(new EventDeletedEvent(id));
+        if (isUpcoming(event.getStartsAt())) {
+            eventPublisher.publishEvent(
+                    new EventCancelledEvent(id, event.getTitle(), event.getSlug(), event.getStartsAt()));
+        }
+    }
+
+    /**
+     * Only an event still ahead is worth telling people about. An edit that leaves it in the past is a fix of the
+     * record (or a typo in the date), and a mail about it would only confuse.
+     */
+    private static boolean isUpcoming(Instant startsAt) {
+        return startsAt.isAfter(Instant.now());
     }
 
     private AdminEventResponse respond(Event event) {

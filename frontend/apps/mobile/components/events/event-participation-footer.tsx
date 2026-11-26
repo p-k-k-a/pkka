@@ -4,6 +4,7 @@ import { Text } from "@/components/ui/text";
 import { Icon } from "@/components/ui/icon";
 import { useAuth } from "@/lib/auth-context";
 import { openWithFallback } from "@/lib/contact";
+import { forgetSignUpSource, savedSignUpSource } from "@/lib/signup-source";
 import {
   getGetEventBySlugQueryKey,
   getListEventsQueryKey,
@@ -73,7 +74,11 @@ export function EventParticipationFooter({ event }: { event: EventDetailsRespons
   const onJoin = async () => {
     setError(null);
     try {
-      await register.mutateAsync({ eventId: event.id });
+      await register.mutateAsync({
+        eventId: event.id,
+        params: { source: savedSignUpSource(event.slug) },
+      });
+      forgetSignUpSource(event.slug);
     } catch (e) {
       setError(eventRegistrationErrorMessage(e, "join"));
     }
