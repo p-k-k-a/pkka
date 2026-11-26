@@ -37,7 +37,14 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** Covers the {@code /api/admin/posts} CRUD endpoints: creation with auto-slug, listing drafts, editing, one-way publication and deletion. */
-@SpringBootTest
+// No storage, even when a local backend/.env sets R2_*: the tests below depend on it.
+@SpringBootTest(
+        properties = {
+            "app.storage.endpoint=",
+            "app.storage.bucket=",
+            "app.storage.access-key-id=",
+            "app.storage.secret-access-key="
+        })
 @AutoConfigureMockMvc
 @Testcontainers
 @Import(AdminPostEndpointTest.TestSecurityBeans.class)
