@@ -62,7 +62,7 @@ export function TopicGroupRequestsList() {
   return (
     <SectionShell
       title="Grupy tematyczne"
-      description="Wnioski alumnów o nowe grupy. Po zatwierdzeniu powstaje grupa, a wnioskodawca zostaje jej właścicielem."
+      description="Wnioski alumnów o nowe grupy. Po zatwierdzeniu powstaje grupa, a wnioskodawca zostaje jej koordynatorem."
       as="section"
     >
       <div className="max-w-3xl space-y-4">

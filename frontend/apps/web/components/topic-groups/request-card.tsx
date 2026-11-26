@@ -143,7 +143,7 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
       {status === TopicGroupRequestStatus.APPROVED ? (
         <>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Grupa została utworzona, a Ty jesteś jej właścicielem.
+            Grupa została utworzona, a Ty jesteś jej koordynatorem.
           </p>
           <Button
             type="button"

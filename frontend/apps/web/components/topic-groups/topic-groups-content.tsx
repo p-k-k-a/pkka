@@ -18,7 +18,7 @@ export function TopicGroupsContent() {
   return (
     <SectionShell
       title="Grupy tematyczne"
-      description="Miejsce dla alumnów o podobnych zainteresowaniach. Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz właścicielem grupy."
+      description="Miejsce dla alumnów o podobnych zainteresowaniach. Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
       as="section"
     >
       <div className="max-w-2xl">
