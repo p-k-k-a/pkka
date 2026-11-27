@@ -94,6 +94,12 @@ const adminItems: SidebarItem[] = [
     icon: Users,
     match: (pathname) => pathname.startsWith("/dashboard/admin/alumni"),
   },
+  {
+    href: "/dashboard/admin/groups",
+    label: "Grupy",
+    icon: MessagesSquare,
+    match: (pathname) => pathname.startsWith("/dashboard/admin/groups"),
+  },
 ];
 
 export function DashboardSidebar() {
