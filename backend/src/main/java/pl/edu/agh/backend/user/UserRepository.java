@@ -25,6 +25,8 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     Optional<User> findByKeycloakId(String keycloakId);
 
+    List<User> findByDiscordIdIsNotNull();
+
     @EntityGraph(attributePaths = "tags")
     Optional<User> findWithTagsByKeycloakId(String keycloakId);
 

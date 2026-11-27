@@ -3,6 +3,10 @@ spring:
     name: pkka-backend
   profiles:
     default: dev
+  task:
+    scheduling:
+      pool:
+        size: 2
 
   config:
     import:
@@ -94,6 +98,8 @@ app:
     password: ${MAIL_PASSWORD:}
     starttls: ${MAIL_STARTTLS:false}
     from: ${MAIL_FROM:Klub Alumnów WI AGH <kontakt@pkka.me>}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}
@@ -225,6 +231,8 @@ app:
     password: ${MAIL_PASSWORD:}
     starttls: ${MAIL_STARTTLS:true}
     from: ${MAIL_FROM:}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}

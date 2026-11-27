@@ -18,13 +18,13 @@ wpisany w produkcyjną zepsułby komendę na prodzie.
 3. *Bot* → *Reset Token*: skopiuj token.
 4. Bot prywatny: *Installation* → *Install Link* = **None**, potem *Bot* → **Public Bot** wyłączone.
 5. Załóż własny serwer testowy z kanałem `#ogloszenia`, rolą `@Absolwent` i kategorią `Grupy`.
-6. Zaproś bota (uprawnienia: wyświetlanie kanału, wysyłanie wiadomości, osadzanie linków, zarządzanie kanałami,
-   rolami i wiadomościami):
-   `https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=268463120`
+6. Zaproś bota (uprawnienia: tworzenie zaproszeń, wyświetlanie kanału, wysyłanie wiadomości, osadzanie linków,
+   zarządzanie kanałami, rolami i wiadomościami):
+   `https://discord.com/oauth2/authorize?client_id=<APPLICATION_ID>&scope=bot+applications.commands&permissions=268463121`
 
-   Bot zaproszony wcześniej z `permissions=19456` nie ma uprawnień do grup tematycznych. Otwórz nowy link jeszcze raz,
-   a Discord dopisze brakujące uprawnienia do roli bota. Bot potrzebuje zarządzania wiadomościami, bo może nadać
-   koordynatorowi grupy tylko to uprawnienie, które sam ma.
+   Bot zaproszony wcześniej z `permissions=19456` albo `268463120` nie ma wszystkich uprawnień. Otwórz nowy link
+   jeszcze raz, a Discord dopisze brakujące uprawnienia do roli bota. Bot potrzebuje zarządzania wiadomościami, bo może
+   nadać koordynatorowi grupy tylko to uprawnienie, które sam ma, a tworzenia zaproszeń do linku na serwer (sekcja 9).
 
 ## 2. Zmienne w `backend/.env`
 
@@ -112,14 +112,35 @@ Zatwierdź wniosek o grupę (`POST /api/admin/topic-group-requests/{id}/approve`
 - koordynator grupy z podpiętym Discordem ma na kanale zarządzanie wiadomościami (*Edytuj kanał* → *Uprawnienia*),
 - rola ląduje pod rolą bota, więc bot może ją potem nadawać.
 
-Zarządzanie rolami działa na każdą rolę leżącą pod rolą bota, nie tylko na role grup. Rola bota powinna więc leżeć
-pod rolami adminów i `@Absolwent`.
+Zarządzanie rolami działa na każdą rolę leżącą pod rolą bota, nie tylko na role grup. Rola bota musi leżeć nad
+`@Absolwent`, bo bot ją nadaje (sekcja 9), ale pod rolami adminów.
 
 Bez kategorii, bez tokenu bota albo przy błędzie Discorda grupa powstaje bez roli i kanału, a powód widać w logu.
 `GET /api/admin/topic-groups` pokazuje stan powiązania w polu `discord`: `LINKED`, `MISSING` albo `NOT_CONFIGURED`.
 `POST /api/admin/topic-groups/{id}/discord` tworzy brakującą rolę lub kanał i niczego nie dubluje.
 
 Baza: `SELECT name, discord_role_id, discord_channel_id FROM topic_groups;`
+
+## 9. Role i zaproszenie na serwer
+
+Backend sam pilnuje dwóch rodzajów ról: `@Absolwent` (z `/setup`) i ról grup. Innych ról nie rusza.
+
+- Użytkownik z zatwierdzonym wnioskiem dostaje `@Absolwent`. Backend tej roli nigdy nie zdejmuje z powodu braku
+  wniosku, bo bez niej alumn straciłby weryfikację przez Discorda (sekcja 7).
+- Członek grupy dostaje jej rolę, a role grup, do których nie należy, są mu zdejmowane.
+- Koordynator dostaje zarządzanie wiadomościami na kanale swojej grupy także wtedy, gdy podpiął Discorda później.
+- Usunięcie konta zdejmuje oba rodzaje ról.
+
+Synchronizacja idzie od razu po dołączeniu do koła i wyjściu z niego, przy `GET /api/me/discord` (najwyżej raz na
+minutę na użytkownika) i co 15 minut dla wszystkich z podpiętym Discordem. Żeby nie czekać na zadanie cykliczne, ustaw
+w `backend/.env` `DISCORD_ROLE_SYNC_CRON=0 * * * * *` (co minutę).
+
+`GET /api/me/discord` zwraca `status`: `NOT_LINKED`, `NOT_ON_SERVER`, `ON_SERVER` albo `UNKNOWN`, gdy Discord nie
+odpowiada lub bot nie jest skonfigurowany. Przy `NOT_ON_SERVER` dochodzi `inviteUrl`: bot tworzy stałe zaproszenie
+na kanał ogłoszeń przy pierwszej potrzebie i trzyma je w bazie, a `/setup channel:` je kasuje, więc następne powstaje
+na nowym kanale. Kanał ogłoszeń musi być widoczny dla `@everyone`, bo na nim ląduje osoba z zaproszenia.
+
+Baza: `SELECT invite_code FROM discord_settings;`
 
 ## Sprzątanie
 

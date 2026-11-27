@@ -1,6 +1,8 @@
 package pl.edu.agh.backend.topicgroup;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +25,11 @@ public interface TopicGroupRepository extends JpaRepository<TopicGroup, UUID> {
 
     @EntityGraph(attributePaths = "coordinator")
     Page<TopicGroup> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    List<TopicGroup> findByCoordinatorIdAndDiscordChannelIdNotNull(UUID coordinatorId);
+
+    @Query("select g.discordRoleId from TopicGroup g where g.discordRoleId is not null")
+    Set<String> findDiscordRoleIds();
 
     @Transactional
     @Modifying
