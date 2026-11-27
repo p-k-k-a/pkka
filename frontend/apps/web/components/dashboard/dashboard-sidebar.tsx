@@ -148,13 +148,13 @@ export function DashboardSidebar() {
       });
 
   return (
-    <aside className="bg-muted border-background sticky top-0 flex h-full w-56 shrink-0 flex-col self-stretch overflow-y-auto border-r">
-      <nav className="font-heading flex flex-col gap-1 p-4">
+    <aside className="bg-muted border-background flex shrink-0 overflow-x-auto border-b md:sticky md:top-0 md:h-full md:w-56 md:flex-col md:self-stretch md:overflow-y-auto md:border-r md:border-b-0">
+      <nav className="font-heading flex gap-1 px-4 py-2 md:flex-col md:p-4">
         {isAuthLoading ? (
           <>
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
-            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-28 rounded-lg md:w-full" />
+            <Skeleton className="h-10 w-28 rounded-lg md:w-full" />
+            <Skeleton className="h-10 w-28 rounded-lg md:w-full" />
           </>
         ) : (
           items.map(({ href, label, icon: Icon, match }) => {
@@ -167,7 +167,7 @@ export function DashboardSidebar() {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
                   isActive
                     ? "bg-background text-foreground"
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",

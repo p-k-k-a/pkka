@@ -8,7 +8,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-screen flex-col">
       <header className="bg-muted sticky top-0 z-50 px-4 py-4 md:px-10">
-        <nav className="mx-auto flex max-w-[1280px] items-center">
+        <nav className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-y-3">
           <div className="flex flex-1 justify-start">
             <Link
               href="/"
@@ -18,7 +18,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </Link>
           </div>
 
-          <div className="font-heading flex gap-6 text-base md:gap-8">
+          <div className="font-heading order-last flex w-full justify-center gap-6 text-base whitespace-nowrap md:order-none md:w-auto md:gap-8">
             <NavLink href="/" activePaths={["/", "/announcements"]}>
               Aktualności
             </NavLink>
