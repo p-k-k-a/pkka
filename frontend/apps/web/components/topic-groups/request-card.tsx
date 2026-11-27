@@ -83,7 +83,6 @@ export function RequestCard({ request, onPropose }: RequestCardProps) {
           <div className="border-border flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-start sm:justify-between">
             <p className="text-muted-foreground text-sm leading-relaxed">
               Po zatwierdzeniu grupa pojawi się na liście, a Ty zostaniesz jej koordynatorem.
-              Kolejny wniosek złożysz po rozpatrzeniu lub wycofaniu tego.
             </p>
             <Button
               type="button"
