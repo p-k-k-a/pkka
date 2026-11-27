@@ -28,7 +28,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-background flex h-dvh flex-col overflow-hidden">
       <DashboardHeader />
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <DashboardSidebar />
         <main className="relative min-w-0 flex-1 overflow-y-auto">{children}</main>
       </div>
