@@ -19,6 +19,7 @@ public class AdminTopicGroupRequestService {
 
     private final TopicGroupRequestRepository topicGroupRequestRepository;
     private final TopicGroupRepository topicGroupRepository;
+    private final TopicGroupMembershipRepository membershipRepository;
     private final CallerUserService callerUserService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -50,6 +51,7 @@ public class AdminTopicGroupRequestService {
         } catch (DataIntegrityViolationException ex) {
             throw new TopicGroupNameTakenException(request.getProposedName());
         }
+        membershipRepository.save(new TopicGroupMembership(group, request.getRequester()));
         request.approve(reviewer, group);
         eventPublisher.publishEvent(new TopicGroupCreatedEvent(group.getId()));
         return TopicGroupRequestResponse.from(topicGroupRequestRepository.saveAndFlush(request));

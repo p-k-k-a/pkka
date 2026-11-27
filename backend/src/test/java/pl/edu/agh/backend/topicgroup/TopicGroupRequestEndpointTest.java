@@ -123,6 +123,15 @@ class TopicGroupRequestEndpointTest {
     }
 
     @Test
+    void approvingMakesTheRequesterAMember() throws Exception {
+        approve(submittedId(anna, "Grupa AI")).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/alumni/topic-groups").with(JwtTestSupport.asVerifiedAlumn(anna.getKeycloakId())))
+                .andExpect(jsonPath("$.content[0].memberCount").value(1))
+                .andExpect(jsonPath("$.content[0].member").value(true));
+    }
+
+    @Test
     void approvingCreatesTheGroupSoItsNameIsTaken() throws Exception {
         approve(submittedId(anna, "Grupa AI")).andExpect(status().isOk());
 

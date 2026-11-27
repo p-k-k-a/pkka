@@ -15,15 +15,17 @@ public record AdminTopicGroupResponse(
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED)
         Coordinator coordinator,
 
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long memberCount,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) TopicGroupDiscordStatus discord,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt) {
 
-    static AdminTopicGroupResponse from(TopicGroup group, boolean discordConfigured) {
+    static AdminTopicGroupResponse from(TopicGroup group, long memberCount, boolean discordConfigured) {
         return new AdminTopicGroupResponse(
                 group.getId(),
                 group.getSlug(),
                 group.getName(),
                 group.getCoordinator() == null ? null : Coordinator.from(group.getCoordinator()),
+                memberCount,
                 discordStatus(group, discordConfigured),
                 group.getCreatedAt());
     }
