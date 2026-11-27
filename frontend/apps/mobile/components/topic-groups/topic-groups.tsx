@@ -32,6 +32,8 @@ export function TopicGroups() {
   const { data: requestsResponse, isLoading, isError, refetch } = useListMyTopicGroupRequests();
   const [refreshing, setRefreshing] = useState(false);
   const latestRequest = requestsResponse?.data[0];
+  const openRequest =
+    latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -69,10 +71,10 @@ export function TopicGroups() {
         </Text>
       ) : (
         <View className="gap-4">
-          {latestRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
+          {openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
             <ProposeGroupRow />
           )}
-          {latestRequest ? <TopicGroupRequestCard request={latestRequest} /> : null}
+          {openRequest ? <TopicGroupRequestCard request={openRequest} /> : null}
         </View>
       )}
     </ScrollView>
