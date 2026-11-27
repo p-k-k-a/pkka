@@ -134,4 +134,19 @@ class MailTemplatesTest {
                 .doesNotContain("<b>Za");
         assertThat(text).contains("<b>Za wąski</b> temat", "Przejdź do grup: https://pkka.me/dashboard/groups");
     }
+
+    @Test
+    void topicGroup_keepsTheLineBreaksOfAReason() {
+        Map<String, Object> variables = Map.of(
+                "lines", List.of("Spróbuj opisać:\n- czym się różni,\r\n\n<i>jak często</i>"),
+                "linkPath", "/dashboard/groups",
+                "linkLabel", "Przejdź do grup");
+
+        String html = mail.render("topic-group.html", "Temat", variables);
+
+        assertThat(html)
+                .containsPattern(
+                        "Spróbuj opisać:<br\\s*/?>- czym się różni,<br\\s*/?><br\\s*/?>&lt;i&gt;jak często&lt;/i&gt;")
+                .doesNotContain("<i>");
+    }
 }
