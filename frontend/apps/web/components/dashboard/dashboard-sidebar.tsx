@@ -7,6 +7,7 @@ import {
   Inbox,
   Library,
   Megaphone,
+  MessagesSquare,
   Newspaper,
   ShieldCheck,
   Users,
@@ -41,6 +42,12 @@ const userItems: SidebarItem[] = [
     label: "Alumni",
     icon: Users,
     match: (pathname) => pathname.startsWith("/dashboard/alumni"),
+  },
+  {
+    href: "/dashboard/groups",
+    label: "Grupy",
+    icon: MessagesSquare,
+    match: (pathname) => pathname.startsWith("/dashboard/groups"),
   },
   {
     href: "/dashboard/materials",
@@ -98,7 +105,11 @@ export function DashboardSidebar() {
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
+        if (
+          item.href === "/dashboard/alumni" ||
+          item.href === "/dashboard/groups" ||
+          item.href === "/dashboard/materials"
+        ) {
           return isVerified;
         }
         return true;
