@@ -30,20 +30,20 @@ public class DiscordRoleSync {
         if (discordId == null) {
             return DiscordStatus.NOT_LINKED;
         }
-        Optional<List<String>> held = guildMembership.roles(discordId);
-        if (held.isEmpty()) {
+        Optional<List<String>> heldRoleIds = guildMembership.roles(discordId);
+        if (heldRoleIds.isEmpty()) {
             return DiscordStatus.NOT_ON_SERVER;
         }
-        Set<String> wanted = wantedRoles(user);
-        Set<String> groupRoles = topicGroupRepository.findDiscordRoleIds();
-        for (String role : held.get()) {
-            if (groupRoles.contains(role) && !wanted.contains(role)) {
-                guildMembership.removeRole(discordId, role);
+        Set<String> wantedRoleIds = wantedRoleIds(user);
+        Set<String> groupRoleIds = topicGroupRepository.findDiscordRoleIds();
+        for (String roleId : heldRoleIds.get()) {
+            if (groupRoleIds.contains(roleId) && !wantedRoleIds.contains(roleId)) {
+                guildMembership.removeRole(discordId, roleId);
             }
         }
-        for (String role : wanted) {
-            if (!held.get().contains(role)) {
-                guildMembership.addRole(discordId, role);
+        for (String roleId : wantedRoleIds) {
+            if (!heldRoleIds.get().contains(roleId)) {
+                guildMembership.addRole(discordId, roleId);
             }
         }
         for (TopicGroup group : topicGroupRepository.findByCoordinatorIdAndDiscordChannelIdNotNull(user.getId())) {
@@ -56,25 +56,25 @@ public class DiscordRoleSync {
         if (discordId == null || !guildMembership.isConfigured()) {
             return;
         }
-        Optional<List<String>> held = guildMembership.roles(discordId);
-        if (held.isEmpty()) {
+        Optional<List<String>> heldRoleIds = guildMembership.roles(discordId);
+        if (heldRoleIds.isEmpty()) {
             return;
         }
-        Set<String> managed = new HashSet<>(topicGroupRepository.findDiscordRoleIds());
-        guildMembership.alumnRoleId().ifPresent(managed::add);
-        for (String role : held.get()) {
-            if (managed.contains(role)) {
-                guildMembership.removeRole(discordId, role);
+        Set<String> managedRoleIds = new HashSet<>(topicGroupRepository.findDiscordRoleIds());
+        guildMembership.alumnRoleId().ifPresent(managedRoleIds::add);
+        for (String roleId : heldRoleIds.get()) {
+            if (managedRoleIds.contains(roleId)) {
+                guildMembership.removeRole(discordId, roleId);
             }
         }
     }
 
-    private Set<String> wantedRoles(User user) {
-        Set<String> wanted = new HashSet<>(membershipRepository.findDiscordRoleIdsByUserId(user.getId()));
+    private Set<String> wantedRoleIds(User user) {
+        Set<String> wantedRoleIds = new HashSet<>(membershipRepository.findDiscordRoleIdsByUserId(user.getId()));
         if (applicationRepository.existsByApplicantKeycloakIdAndStatus(
                 user.getKeycloakId(), ApplicationStatus.APPROVED)) {
-            guildMembership.alumnRoleId().ifPresent(wanted::add);
+            guildMembership.alumnRoleId().ifPresent(wantedRoleIds::add);
         }
-        return wanted;
+        return wantedRoleIds;
     }
 }
