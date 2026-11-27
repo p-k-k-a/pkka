@@ -92,8 +92,6 @@ app:
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
     # Daily "new members" digest for topic group coordinators, Europe/Warsaw time.
     group-digest-cron: ${NOTIFICATIONS_GROUP_DIGEST_CRON:0 0 18 * * *}
-  discord:
-    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Outgoing mail (MailConfig). Locally Mailpit from docker-compose: SMTP on 1025, inbox on http://localhost:8025.
   mail:
     host: ${MAIL_HOST:localhost}
@@ -102,6 +100,8 @@ app:
     password: ${MAIL_PASSWORD:}
     starttls: ${MAIL_STARTTLS:false}
     from: ${MAIL_FROM:Klub Alumnów WI AGH <kontakt@pkka.me>}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}
@@ -227,8 +227,6 @@ app:
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
     # Daily "new members" digest for topic group coordinators, Europe/Warsaw time.
     group-digest-cron: ${NOTIFICATIONS_GROUP_DIGEST_CRON:0 0 18 * * *}
-  discord:
-    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Outgoing mail (MailConfig) through Brevo SMTP. MAIL_HOST unset = mails skipped.
   mail:
     host: ${MAIL_HOST:}
@@ -237,6 +235,8 @@ app:
     password: ${MAIL_PASSWORD:}
     starttls: ${MAIL_STARTTLS:true}
     from: ${MAIL_FROM:}
+  discord:
+    role-sync-cron: ${DISCORD_ROLE_SYNC_CRON:0 */15 * * * *}
   # Cloudflare R2 (S3 API). All unset = uploads disabled (503); partially set = startup fails.
   storage:
     endpoint: ${R2_ENDPOINT:}
