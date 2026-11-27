@@ -14,10 +14,11 @@ type MaterialTypeTabsProps = {
 export function MaterialTypeTabs({ value, onChange }: MaterialTypeTabsProps) {
   return (
     <Tabs
+      className="max-w-full"
       value={value ?? ALL}
       onValueChange={(next) => onChange(isMaterialType(next) ? next : null)}
     >
-      <TabsList>
+      <TabsList className="max-w-full justify-start overflow-x-auto">
         <TabsTrigger value={ALL}>Wszystkie</TabsTrigger>
         {MATERIAL_TYPE_OPTIONS.map((option) => (
           <TabsTrigger key={option.value} value={option.value}>
