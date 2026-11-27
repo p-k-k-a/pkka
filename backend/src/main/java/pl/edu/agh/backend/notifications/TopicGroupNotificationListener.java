@@ -42,7 +42,7 @@ public class TopicGroupNotificationListener {
                         group.getCoordinator().getId(),
                         NotificationType.TOPIC_GROUP_CREATED,
                         createdTitle(group),
-                        "Jesteś jej koordynatorem. Kanał grupy na Discordzie pojawi się za chwilę.",
+                        "Jesteś jej koordynatorem.",
                         group.getSlug()));
     }
 
@@ -57,8 +57,7 @@ public class TopicGroupNotificationListener {
                         createdTitle(group),
                         List.of(
                                 "Administrator zatwierdził Twój wniosek. Grupa „%s” już działa, a Ty jesteś jej koordynatorem."
-                                        .formatted(group.getName()),
-                                "Prywatny kanał grupy na Discordzie pojawi się za chwilę, link znajdziesz na stronie grupy."),
+                                        .formatted(group.getName())),
                         "/dashboard/groups/" + group.getSlug(),
                         "Przejdź do grupy"));
     }

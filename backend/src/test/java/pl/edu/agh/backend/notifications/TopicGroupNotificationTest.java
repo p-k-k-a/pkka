@@ -127,9 +127,7 @@ class TopicGroupNotificationTest {
                         eq("topic-group"),
                         variables.capture());
         assertThat(variables.getValue()).containsEntry("linkPath", "/dashboard/groups/" + slug);
-        assertThat((List<String>) variables.getValue().get("lines"))
-                .anyMatch(line -> line.contains("koordynatorem"))
-                .anyMatch(line -> line.contains("Discord"));
+        assertThat((List<String>) variables.getValue().get("lines")).anyMatch(line -> line.contains("koordynatorem"));
     }
 
     @Test
