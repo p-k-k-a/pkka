@@ -29,8 +29,8 @@ public class TopicGroupService {
     private final TopicGroupRepository topicGroupRepository;
     private final TopicGroupMembershipRepository membershipRepository;
     private final CallerUserService callerUserService;
-    private final ApplicationEventPublisher eventPublisher;
     private final DiscordGuildSettingsRepository guildSettings;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<TopicGroupResponse> list(Caller caller, Pageable pageable) {
         Page<TopicGroup> groups = topicGroupRepository.findAllByOrderByCreatedAtDesc(pageable);
