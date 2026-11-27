@@ -12,8 +12,10 @@ export function TopicGroupsContent() {
   const [isProposing, setIsProposing] = useState(false);
 
   const latestRequest = requestsResponse?.data[0];
-  const isUnderReview = latestRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
-  const showForm = !latestRequest || (isProposing && !isUnderReview);
+  const openRequest =
+    latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
+  const isUnderReview = openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
+  const showForm = !openRequest || (isProposing && !isUnderReview);
 
   return (
     <SectionShell
@@ -30,8 +32,8 @@ export function TopicGroupsContent() {
           </p>
         ) : (
           <div className="space-y-6">
-            {latestRequest ? (
-              <RequestCard request={latestRequest} onPropose={() => setIsProposing(true)} />
+            {openRequest ? (
+              <RequestCard request={openRequest} onPropose={() => setIsProposing(true)} />
             ) : null}
             {showForm ? (
               <RequestForm
