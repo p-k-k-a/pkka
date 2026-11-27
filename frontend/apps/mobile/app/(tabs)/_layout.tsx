@@ -1,6 +1,7 @@
 import { useIsAlumni } from "@/components/auth/require-alumni";
 import { useAuth } from "@/lib/auth-context";
 import { useAppColorScheme, useThemeColors } from "@/lib/theme";
+import { useGetMyDiscordStatus } from "@pkka/api";
 import { Tabs } from "expo-router";
 import { Calendar, Home, LogIn, User, Users, type LucideIcon } from "lucide-react-native";
 import { Text, View } from "react-native";
@@ -41,11 +42,17 @@ function TabIcon({
   );
 }
 
+/** Asking for the Discord status makes the backend align the user's Discord roles, so do it on launch. */
+function useSyncDiscordRolesOnLaunch(signedIn: boolean) {
+  useGetMyDiscordStatus({ query: { enabled: signedIn } });
+}
+
 export default function TabsLayout() {
   const theme = useThemeColors();
   const scheme = useAppColorScheme();
   const { user } = useAuth();
   const isAlumni = useIsAlumni();
+  useSyncDiscordRolesOnLaunch(!!user);
 
   return (
     <Tabs

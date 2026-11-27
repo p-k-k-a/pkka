@@ -17,9 +17,16 @@ public record AdminTopicGroupResponse(
 
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long memberCount,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) TopicGroupDiscordStatus discord,
+
+        @Schema(
+                description = "Link to the group's Discord channel, absent until the group has one",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+        String discordChannelUrl,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant createdAt) {
 
-    static AdminTopicGroupResponse from(TopicGroup group, long memberCount, boolean discordConfigured) {
+    static AdminTopicGroupResponse from(
+            TopicGroup group, long memberCount, boolean discordConfigured, String discordChannelUrl) {
         return new AdminTopicGroupResponse(
                 group.getId(),
                 group.getSlug(),
@@ -27,6 +34,7 @@ public record AdminTopicGroupResponse(
                 group.getCoordinator() == null ? null : Coordinator.from(group.getCoordinator()),
                 memberCount,
                 discordStatus(group, discordConfigured),
+                discordChannelUrl,
                 group.getCreatedAt());
     }
 

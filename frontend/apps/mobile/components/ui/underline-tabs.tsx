@@ -16,7 +16,7 @@ function UnderlineTabs<T extends string>({
   className,
 }: UnderlineTabsProps<T>) {
   return (
-    <View role="tablist" className={cn("border-border flex-row gap-6 border-b", className)}>
+    <View role="tablist" className={cn("border-border flex-row border-b", className)}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -27,7 +27,7 @@ function UnderlineTabs<T extends string>({
             hitSlop={8}
             onPress={() => onChange(option.value)}
             className={cn(
-              "-mb-px border-b-2 pb-2 pt-1 active:opacity-70",
+              "-mb-px flex-1 items-center border-b-2 pb-2.5 pt-1 active:opacity-70",
               selected ? "border-primary" : "border-transparent",
             )}
           >

@@ -4,5 +4,12 @@
     "lib": ["ESNext", "DOM"],
     "types": []
   },
-  "include": ["index.ts", "mutator.ts", "query-client.ts", "src/**/*.ts", "orval.config.ts"]
+  "include": [
+    "index.ts",
+    "mutator.ts",
+    "query-client.ts",
+    "topic-group-membership.ts",
+    "src/**/*.ts",
+    "orval.config.ts"
+  ]
 }

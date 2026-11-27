@@ -1,43 +1,30 @@
+import { GroupList } from "@/components/topic-groups/group-list";
 import { TopicGroupRequestCard } from "@/components/topic-groups/request-card";
+import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
+import {
+  TopicGroupRequestStatus,
+  useListMyTopicGroupRequests,
+  useListTopicGroups,
+} from "@pkka/api";
 import { useThemeColors } from "@/lib/theme";
-import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
 import { Link } from "expo-router";
-import { ChevronRight, Plus } from "lucide-react-native";
+import { Plus } from "lucide-react-native";
 import { useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from "react-native";
-
-function ProposeGroupRow() {
-  const theme = useThemeColors();
-  return (
-    <Link href="/topic-groups/request" asChild>
-      <Pressable
-        role="button"
-        className="bg-muted flex-row items-center gap-3 rounded-xl px-4 py-4 active:opacity-70"
-      >
-        <View className="bg-primary h-10 w-10 items-center justify-center rounded-full">
-          <Plus size={20} color={theme.primaryForeground} />
-        </View>
-        <View className="flex-1 gap-0.5">
-          <Text className="text-foreground text-base font-semibold">Brakuje grupy dla Ciebie?</Text>
-          <Text className="text-muted-foreground text-sm">Zaproponuj własną</Text>
-        </View>
-        <ChevronRight size={20} color={theme.foreground} />
-      </Pressable>
-    </Link>
-  );
-}
+import { ActivityIndicator, RefreshControl, ScrollView, View } from "react-native";
 
 export function TopicGroups() {
-  const { data: requestsResponse, isLoading, isError, refetch } = useListMyTopicGroupRequests();
+  const theme = useThemeColors();
+  const requestsQuery = useListMyTopicGroupRequests();
+  const groupsQuery = useListTopicGroups({ size: 100 });
   const [refreshing, setRefreshing] = useState(false);
-  const latestRequest = requestsResponse?.data[0];
+  const latestRequest = requestsQuery.data?.data[0];
   const openRequest =
     latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetch();
+    await Promise.all([requestsQuery.refetch(), groupsQuery.refetch()]);
     setRefreshing(false);
   };
 
@@ -57,25 +44,27 @@ export function TopicGroups() {
           Grupy tematyczne
         </Text>
         <Text className="text-muted-foreground text-sm leading-relaxed">
-          Dołącz do alumnów o podobnych zainteresowaniach.
+          Dołącz do dyskusji na interesujące Cię tematy z innymi alumnami!
         </Text>
+        {openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
+          <Link href="/topic-groups/request" asChild>
+            <Button className="mt-2">
+              <Plus size={18} color={theme.primaryForeground} />
+              <Text className="font-semibold">Stwórz nową grupę</Text>
+            </Button>
+          </Link>
+        )}
       </View>
 
-      {isLoading ? (
+      {requestsQuery.isLoading || groupsQuery.isLoading ? (
         <View className="py-16">
           <ActivityIndicator />
         </View>
-      ) : isError && !latestRequest ? (
-        <Text className="text-muted-foreground py-16 text-center text-sm">
-          Nie udało się załadować Twojego wniosku.
-        </Text>
       ) : (
-        <View className="gap-4">
-          {openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW ? null : (
-            <ProposeGroupRow />
-          )}
+        <>
           {openRequest ? <TopicGroupRequestCard request={openRequest} /> : null}
-        </View>
+          <GroupList groups={groupsQuery.data?.data.content} isError={groupsQuery.isError} />
+        </>
       )}
     </ScrollView>
   );

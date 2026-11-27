@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -29,6 +30,14 @@ public class AdminTopicGroupController {
     public Page<AdminTopicGroupResponse> listAdminTopicGroups(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return adminTopicGroupService.list(pageable);
+    }
+
+    @GetMapping("/{id}/members")
+    @Operation(summary = "List the group's members in the order they joined, with their names")
+    @ApiResponse(responseCode = "200", description = "The members, including names they hide from other alumni")
+    @ApiResponse(responseCode = "404", description = "Group not found", content = @Content)
+    public List<TopicGroupMemberResponse> listAdminTopicGroupMembers(@PathVariable UUID id) {
+        return adminTopicGroupService.members(id);
     }
 
     @PostMapping("/{id}/discord")
