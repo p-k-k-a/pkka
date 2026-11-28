@@ -18,7 +18,7 @@ import { ActivityIndicator, FlatList, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
-const DESCRIPTION = "Spotkania i warsztaty klubu. Zapisz się na te, które Cię interesują.";
+const DESCRIPTION = "Spotkania i warsztaty klubu.";
 const ALUMNI_DESCRIPTION = "Spotkania i warsztaty klubu, także te tylko dla absolwentów.";
 
 function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: () => void }) {
