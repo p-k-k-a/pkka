@@ -61,13 +61,12 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
         icon: "calendar",
         title: "Wydarzenia publiczne",
         description:
-          "Zapisuj się na otwarte spotkania i warsztaty, dodawaj je do kalendarza i dołączaj do spotkań online prosto z aplikacji.",
+          "Zapisuj się na otwarte spotkania i warsztaty, dodawaj je do kalendarza i dołączaj do spotkań online.",
       },
       {
         icon: "bell",
-        title: "Przypomnienia",
-        description:
-          "Powiadomienia w aplikacji mobilnej i e-maile przed wydarzeniami, na które się zapisujesz.",
+        title: "Powiadomienia",
+        description: "Na telefon i e-mail: o wydarzeniach, na które się zapisujesz.",
       },
     ],
   },
