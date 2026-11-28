@@ -32,6 +32,8 @@ class StorageServiceTest {
     private static final UUID USER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final String COVER_KEY = "covers/events/0f3a1c8e-1111-4000-8000-000000000001.png";
     private static final String MATERIAL_KEY = "materials/0f3a1c8e-1111-4000-8000-000000000002.pdf";
+    private static final String POST_COVER_KEY = "covers/posts/0f3a1c8e-1111-4000-8000-000000000003.webp";
+    private static final String POST_IMAGE_KEY = "posts/images/0f3a1c8e-1111-4000-8000-000000000004.jpg";
 
     private S3Presigner presigner;
     private AdjustableClock clock;
@@ -154,6 +156,137 @@ class StorageServiceTest {
 
         assertThat(material.objectKey()).matches("materials/[0-9a-f-]{36}\\.pdf");
         assertThat(cover.objectKey()).matches("covers/events/[0-9a-f-]{36}\\.jpg");
+    }
+
+    @Test
+    void postUploadsAreImagesUnderTheirOwnPrefixes() {
+        PresignedUploadResponse cover = storage.presignAdminUpload(AdminUploadPurpose.POST_COVER, "image/webp", 10);
+        PresignedUploadResponse image = storage.presignAdminUpload(AdminUploadPurpose.POST_IMAGE, "image/png", 10);
+
+        assertThat(cover.objectKey()).matches("covers/posts/[0-9a-f-]{36}\\.webp");
+        assertThat(image.objectKey()).matches("posts/images/[0-9a-f-]{36}\\.png");
+        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, cover.objectKey()))
+                .isEqualTo(cover.objectKey());
+
+        long mb = 1024L * 1024L;
+        for (AdminUploadPurpose purpose :
+                new AdminUploadPurpose[] {AdminUploadPurpose.POST_COVER, AdminUploadPurpose.POST_IMAGE}) {
+            storage.presignAdminUpload(purpose, "image/jpeg", 5 * mb);
+            assertStatus(
+                    () -> storage.presignAdminUpload(purpose, "image/jpeg", 5 * mb + 1), FileTooLargeException.class);
+            assertStatus(
+                    () -> storage.presignAdminUpload(purpose, "application/pdf", 10),
+                    UnsupportedFileTypeException.class);
+        }
+    }
+
+    @Test
+    void aPostCoverIsNotInterchangeableWithOtherUploads() {
+        assertThat(storage.toStoredReference(AdminUploadPurpose.POST_COVER, storage.resolveUrl(POST_COVER_KEY)))
+                .isEqualTo(POST_COVER_KEY);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, COVER_KEY), InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.POST_COVER, POST_IMAGE_KEY),
+                InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, POST_COVER_KEY),
+                InvalidFileException.class);
+    }
+
+    // --- post content ------------------------------------------------------------------------------
+
+    @Test
+    void picturesInPostContentAreServedThroughSignedUrls() {
+        String stored = "Wstęp\n\n![Sala](" + POST_IMAGE_KEY + ")\n\n[regulamin](https://example.com/r.pdf)";
+
+        String resolved = storage.resolveContent(stored);
+
+        String signed = storage.resolveUrl(POST_IMAGE_KEY);
+        assertThat(signed).startsWith(ENDPOINT + "/pkka-files/" + POST_IMAGE_KEY + "?");
+        assertThat(resolved).isEqualTo("Wstęp\n\n![Sala](" + signed + ")\n\n[regulamin](https://example.com/r.pdf)");
+    }
+
+    @Test
+    void savingEditedContentTurnsSignedUrlsBackIntoKeys() {
+        String stored = "![a](" + POST_IMAGE_KEY + ") tekst ![b](" + POST_IMAGE_KEY + " \"podpis\")";
+
+        String echoedBack = storage.resolveContent(stored);
+
+        assertThat(echoedBack).doesNotContain("](" + POST_IMAGE_KEY);
+        assertThat(storage.toStoredContent(echoedBack)).isEqualTo(stored);
+    }
+
+    @Test
+    void aFreshlyUploadedPictureIsStoredByItsKey() {
+        String content = "![nowe](" + POST_IMAGE_KEY + ")";
+
+        assertThat(storage.toStoredContent(content)).isEqualTo(content);
+    }
+
+    @Test
+    void onlyPostPicturesAreSignedInsideContent() {
+        String content = "![x](" + MATERIAL_KEY + ") ![y](" + POST_COVER_KEY + ") " + POST_IMAGE_KEY
+                + " ![z](https://example.com/z.png)";
+
+        assertThat(storage.resolveContent(content)).isEqualTo(content);
+    }
+
+    @Test
+    void linksToOtherSitesAreLeftAloneWhenStoringContent() {
+        String foreign = "https://elsewhere.example.com/pkka-files/" + POST_IMAGE_KEY + "?X-Amz-Signature=abc";
+        String content = "[strona](https://example.com/a_(b)) ![f](" + foreign + ")";
+
+        assertThat(storage.toStoredContent(content)).isEqualTo(content);
+    }
+
+    @Test
+    void aSignedUrlOfAnotherStoredFileIsRejectedInContent() {
+        // it would be saved verbatim and stop working within the hour
+        assertStatus(
+                () -> storage.toStoredContent("[slajdy](" + storage.resolveUrl(MATERIAL_KEY) + ")"),
+                InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredContent("![okładka](" + storage.resolveUrl(COVER_KEY) + ")"),
+                InvalidFileException.class);
+    }
+
+    @Test
+    void aSignedPostPictureIsReducedToItsKeyEvenInsideAPlainLink() {
+        String signed = storage.resolveUrl(POST_IMAGE_KEY);
+
+        assertThat(storage.toStoredContent("[zobacz zdjęcie](" + signed + ")"))
+                .isEqualTo("[zobacz zdjęcie](" + POST_IMAGE_KEY + ")");
+    }
+
+    @Test
+    void aBrowserLocalPreviewIsRejectedInContent() {
+        String content = "![](blob:https://klub.example.com/0f3a1c8e-1111-4000-8000-000000000009)";
+
+        assertStatus(() -> storage.toStoredContent(content), InvalidFileException.class);
+        assertStatus(() -> unconfigured().toStoredContent(content), InvalidFileException.class);
+        assertStatus(() -> storage.toStoredContent(content.replace("blob:", "BLOB:")), InvalidFileException.class);
+    }
+
+    @Test
+    void anEditFormGetsTheKeyBackWhenItCannotBeSigned() {
+        assertThat(storage.resolveForEditing(COVER_KEY)).startsWith(ENDPOINT + "/pkka-files/" + COVER_KEY + "?");
+        assertThat(unconfigured().resolveForEditing(COVER_KEY)).isEqualTo(COVER_KEY);
+        assertThat(unconfigured().resolveForEditing("https://example.com/c.png"))
+                .isEqualTo("https://example.com/c.png");
+        assertThat(unconfigured().resolveForEditing(null)).isNull();
+        assertThat(unconfigured().resolveForEditing(" ")).isNull();
+    }
+
+    @Test
+    void contentIsLeftAsItIsWithoutStorageOrWithoutContent() {
+        String content = "![a](" + POST_IMAGE_KEY + ")";
+
+        assertThat(unconfigured().resolveContent(content)).isEqualTo(content);
+        assertThat(unconfigured().toStoredContent(storage.resolveContent(content)))
+                .isEqualTo(storage.resolveContent(content));
+        assertThat(storage.resolveContent(null)).isNull();
+        assertThat(storage.toStoredContent(null)).isNull();
     }
 
     @Test
@@ -286,6 +419,17 @@ class StorageServiceTest {
 
         assertThat(storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, signed))
                 .isEqualTo(COVER_KEY);
+    }
+
+    @Test
+    void aUrlOfOurBucketIsRecognisedWithoutItsSignature() {
+        // the web app sends an uploaded material back without the query, which can get very long
+        String unsigned = ENDPOINT + "/pkka-files/" + MATERIAL_KEY;
+
+        assertThat(storage.toStoredReference(AdminUploadPurpose.MATERIAL, unsigned))
+                .isEqualTo(MATERIAL_KEY);
+        assertStatus(
+                () -> storage.toStoredReference(AdminUploadPurpose.EVENT_COVER, unsigned), InvalidFileException.class);
     }
 
     @Test

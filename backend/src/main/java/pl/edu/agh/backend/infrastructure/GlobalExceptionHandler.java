@@ -24,6 +24,7 @@ import pl.edu.agh.backend.post.PostAlreadyPublishedException;
 import pl.edu.agh.backend.post.PostNotFoundException;
 import pl.edu.agh.backend.storage.FileTooLargeException;
 import pl.edu.agh.backend.storage.InvalidFileException;
+import pl.edu.agh.backend.storage.InvalidPostContentException;
 import pl.edu.agh.backend.storage.StorageNotConfiguredException;
 import pl.edu.agh.backend.storage.UnsupportedFileTypeException;
 import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
@@ -196,6 +197,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidFile(InvalidFileException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problem.setTitle("Invalid file");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidPostContentException.class)
+    public ProblemDetail handleInvalidPostContent(InvalidPostContentException ex) {
+        ProblemDetail problem = handleInvalidFile(ex);
+        problem.setProperty("reason", ex.reason().name());
         return problem;
     }
 

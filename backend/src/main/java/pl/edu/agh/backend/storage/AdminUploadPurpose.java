@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(enumAsRef = true)
 public enum AdminUploadPurpose {
     MATERIAL(UploadCategory.MATERIAL),
-    EVENT_COVER(UploadCategory.EVENT_COVER);
+    EVENT_COVER(UploadCategory.EVENT_COVER),
+    POST_COVER(UploadCategory.POST_COVER),
+    POST_IMAGE(UploadCategory.POST_IMAGE);
 
     private final UploadCategory category;
 

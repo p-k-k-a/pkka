@@ -145,7 +145,7 @@ public class AdminEventService {
         return AdminEventResponse.from(
                 event,
                 eventRegistrationService.seatsTaken(event.getId()),
-                storageService.resolveUrl(event.getCoverImageUrl()));
+                storageService.resolveForEditing(event.getCoverImageUrl()));
     }
 
     /** External URL as is, or the key of an uploaded cover; a signed URL echoed back from a read is reduced to its key. */

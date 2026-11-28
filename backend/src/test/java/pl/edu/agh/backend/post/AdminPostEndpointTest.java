@@ -37,7 +37,14 @@ import pl.edu.agh.backend.user.User;
 import pl.edu.agh.backend.user.UserRepository;
 
 /** Covers the {@code /api/admin/posts} CRUD endpoints: creation with auto-slug, listing drafts, editing, one-way publication and deletion. */
-@SpringBootTest
+// No storage, even when a local backend/.env sets R2_*: the tests below depend on it.
+@SpringBootTest(
+        properties = {
+            "app.storage.endpoint=",
+            "app.storage.bucket=",
+            "app.storage.access-key-id=",
+            "app.storage.secret-access-key="
+        })
 @AutoConfigureMockMvc
 @Testcontainers
 @Import(AdminPostEndpointTest.TestSecurityBeans.class)
@@ -120,6 +127,118 @@ class AdminPostEndpointTest {
         mockMvc.perform(get("/api/admin/posts").with(admin()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].authorDisplayName").value("Anna Nowak"));
+    }
+
+    @Test
+    void keepsAnExternalCoverAndClearsItWhenLeftOut() throws Exception {
+        String body = createPost("""
+                {"title": "Z okładką", "content": "x", "coverImageUrl": "https://example.com/cover.png"}
+                """);
+        String id = JsonPath.read(body, "$.id");
+        assertEquals("https://example.com/cover.png", JsonPath.read(body, "$.coverImageUrl"));
+
+        mockMvc.perform(get("/api/admin/posts").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].coverImageUrl").value("https://example.com/cover.png"));
+
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Z okładką\", \"content\": \"x\", \"status\": \"DRAFT\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl").doesNotExist());
+        assertNull(postRepository.findById(UUID.fromString(id)).orElseThrow().getCoverImageUrl());
+    }
+
+    @Test
+    void aBlankCoverMeansNoCoverAndSurroundingSpacesAreTrimmed() throws Exception {
+        String blank = createPost("{\"title\": \"Bez okładki\", \"content\": \"x\", \"coverImageUrl\": \"  \"}");
+        Object noCover = JsonPath.read(blank, "$.coverImageUrl");
+        assertNull(noCover);
+
+        String padded = createPost("""
+                {"title": "Ze spacjami", "content": "x", "coverImageUrl": " https://example.com/cover.png "}
+                """);
+        assertEquals("https://example.com/cover.png", JsonPath.read(padded, "$.coverImageUrl"));
+    }
+
+    @Test
+    void rejectsAnExternalCoverTooLongToStore() throws Exception {
+        String cover = "https://example.com/" + "a".repeat(500) + ".png";
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"" + cover + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsContentPointingAtAPictureThatWasNeverUploaded() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"![](blob:http://localhost:3000/" + UUID.randomUUID()
+                                + ")\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT_PICTURE"));
+    }
+
+    @Test
+    void aBadCoverIsNotBlamedOnTheContent() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"okladka.png\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").doesNotExist());
+    }
+
+    @Test
+    void rejectsACoverThatIsNeitherUrlNorUploadedCover() throws Exception {
+        for (String cover : new String[] {"okladka.png", "materials/" + UUID.randomUUID() + ".pdf"}) {
+            mockMvc.perform(post("/api/admin/posts")
+                            .with(admin())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"" + cover + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void anUploadedCoverCannotBeAttachedWhileStorageIsNotConfigured() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"covers/posts/"
+                                + UUID.randomUUID() + ".png\"}"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void anUploadedCoverSurvivesAnEditWhileStorageIsNotConfigured() throws Exception {
+        String coverKey = "covers/posts/" + UUID.randomUUID() + ".png";
+        Post stored = new Post();
+        stored.setTitle("Wpis z wgraną okładką");
+        stored.setContent("x");
+        stored.setCoverImageUrl(coverKey);
+        UUID id = postRepository.saveAndFlush(stored).getId();
+
+        // the key cannot be signed, so the edit form gets it as it is instead of "no cover"
+        mockMvc.perform(get("/api/admin/posts/{id}", id).with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.coverImageUrl").value(coverKey));
+
+        // the form sends it back: the save fails loudly and the cover stays attached
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Poprawiony tytuł\", \"content\": \"x\", \"status\": \"DRAFT\", "
+                                + "\"coverImageUrl\": \"" + coverKey + "\"}"))
+                .andExpect(status().isServiceUnavailable());
+        Post unchanged = postRepository.findById(id).orElseThrow();
+        assertEquals(coverKey, unchanged.getCoverImageUrl());
+        assertEquals("Wpis z wgraną okładką", unchanged.getTitle());
     }
 
     @Test

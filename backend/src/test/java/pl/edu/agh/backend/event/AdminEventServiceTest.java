@@ -150,7 +150,7 @@ class AdminEventServiceTest {
         when(eventRepository.saveAndFlush(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, "covers/events/a.png"))
                 .thenReturn("covers/events/a.png");
-        when(storageService.resolveUrl("covers/events/a.png")).thenReturn("https://r2.example/signed");
+        when(storageService.resolveForEditing("covers/events/a.png")).thenReturn("https://r2.example/signed");
 
         AdminEventResponse response = adminEventService.create(ADMIN, requestWithCover("covers/events/a.png"));
 

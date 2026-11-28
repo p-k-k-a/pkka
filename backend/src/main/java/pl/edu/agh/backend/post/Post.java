@@ -38,6 +38,10 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    /** External http(s) URL or the object key of an uploaded cover; never a signed URL. */
+    @Column(name = "cover_image_url", length = 500)
+    private String coverImageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id")
     private User author;
