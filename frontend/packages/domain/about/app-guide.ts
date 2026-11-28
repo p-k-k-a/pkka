@@ -131,40 +131,41 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
       },
     ],
   },
-  {
-    title: "Dla administratorów",
-    description: "Panel administratora jest dostępny w wersji webowej.",
-    features: [
-      {
-        icon: "shield",
-        title: "Wnioski o weryfikację",
-        description: "Przeglądaj wnioski, akceptuj je albo odrzucaj z podaniem powodu.",
-      },
-      {
-        icon: "megaphone",
-        title: "Aktualności",
-        description: "Pisz i publikuj ogłoszenia ze zdjęciem okładki.",
-      },
-      {
-        icon: "calendar",
-        title: "Wydarzenia",
-        description: "Twórz wydarzenia, sprawdzaj listę zapisanych i wysyłaj im wiadomości.",
-      },
-      {
-        icon: "folder",
-        title: "Materiały",
-        description: "Dodawaj nagrania i prezentacje z wydarzeń.",
-      },
-      {
-        icon: "users",
-        title: "Absolwenci",
-        description: "Przeglądaj profile członków klubu.",
-      },
-      {
-        icon: "groups",
-        title: "Grupy tematyczne",
-        description: "Rozpatruj propozycje nowych grup.",
-      },
-    ],
-  },
 ];
+
+export const APP_GUIDE_ADMIN_SECTION: AppGuideSection = {
+  title: "Dla administratorów",
+  description: "Panel administratora jest dostępny w wersji webowej.",
+  features: [
+    {
+      icon: "shield",
+      title: "Wnioski o weryfikację",
+      description: "Przeglądaj wnioski, akceptuj je albo odrzucaj z podaniem powodu.",
+    },
+    {
+      icon: "megaphone",
+      title: "Aktualności",
+      description: "Pisz i publikuj ogłoszenia ze zdjęciem okładki.",
+    },
+    {
+      icon: "calendar",
+      title: "Wydarzenia",
+      description: "Twórz wydarzenia, sprawdzaj listę zapisanych i wysyłaj im wiadomości.",
+    },
+    {
+      icon: "folder",
+      title: "Materiały",
+      description: "Dodawaj nagrania i prezentacje z wydarzeń.",
+    },
+    {
+      icon: "users",
+      title: "Absolwenci",
+      description: "Przeglądaj profile członków klubu.",
+    },
+    {
+      icon: "groups",
+      title: "Grupy tematyczne",
+      description: "Rozpatruj propozycje nowych grup.",
+    },
+  ],
+};

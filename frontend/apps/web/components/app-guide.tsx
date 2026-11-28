@@ -1,4 +1,5 @@
 import {
+  APP_GUIDE_ADMIN_SECTION,
   APP_GUIDE_INTRO,
   APP_GUIDE_SECTIONS,
   APP_GUIDE_STEPS,
@@ -34,7 +35,11 @@ const ICONS: Record<AppGuideIcon, React.ComponentType<{ className?: string }>> =
   hash: Hash,
 };
 
-export function AppGuide() {
+export function AppGuide({ showAdmin = false }: { showAdmin?: boolean }) {
+  const sections = showAdmin
+    ? [...APP_GUIDE_SECTIONS, APP_GUIDE_ADMIN_SECTION]
+    : APP_GUIDE_SECTIONS;
+
   return (
     <section className="bg-background px-4 py-10 md:px-10 md:py-20">
       <div className="mx-auto max-w-[1280px] space-y-14">
@@ -62,7 +67,7 @@ export function AppGuide() {
           </ol>
         </div>
 
-        {APP_GUIDE_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className="space-y-6">
             <div className="space-y-2">
               <h3 className="font-heading text-foreground text-[23px] font-semibold">

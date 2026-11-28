@@ -1,5 +1,9 @@
-import { InfoPageContent } from "@/components/info-page-content";
+"use client";
+
+import { AppGuide } from "@/components/app-guide";
+import { useVerificationStatus } from "@/lib/use-verification-status";
 
 export default function DashboardInfoPage() {
-  return <InfoPageContent showSignUp={false} />;
+  const { admin } = useVerificationStatus();
+  return <AppGuide showAdmin={admin} />;
 }

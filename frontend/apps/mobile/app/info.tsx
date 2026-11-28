@@ -3,11 +3,15 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import {
+  APP_GUIDE_ADMIN_SECTION,
   APP_GUIDE_INTRO,
   APP_GUIDE_SECTIONS,
   APP_GUIDE_STEPS,
+  isAdmin,
   type AppGuideIcon,
 } from "@pkka/domain";
+import { useMe } from "@pkka/api";
+import { useAuth } from "@/lib/auth-context";
 import { DiscordIcon } from "@pkka/icons/native";
 import { router } from "expo-router";
 import {
@@ -59,6 +63,12 @@ function SectionTitle({ title, description }: { title: string; description?: str
 
 export default function InfoScreen() {
   const colors = useThemeColors();
+  const { user } = useAuth();
+  const { data: me } = useMe({ query: { enabled: !!user } });
+  const sections =
+    user && isAdmin(me?.data.roles)
+      ? [...APP_GUIDE_SECTIONS, APP_GUIDE_ADMIN_SECTION]
+      : APP_GUIDE_SECTIONS;
 
   return (
     <View className="flex-1 bg-background">
@@ -90,7 +100,7 @@ export default function InfoScreen() {
             ))}
           </View>
 
-          {APP_GUIDE_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <View key={section.title} className="gap-4">
               <SectionTitle title={section.title} description={section.description} />
               {section.features.map((feature) => {
