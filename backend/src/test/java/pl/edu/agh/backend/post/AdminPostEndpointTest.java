@@ -180,7 +180,18 @@ class AdminPostEndpointTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\": \"x\", \"content\": \"![](blob:http://localhost:3000/" + UUID.randomUUID()
                                 + ")\"}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT"));
+    }
+
+    @Test
+    void aBadCoverIsNotBlamedOnTheContent() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"x\", \"content\": \"y\", \"coverImageUrl\": \"okladka.png\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").doesNotExist());
     }
 
     @Test
