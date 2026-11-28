@@ -11,7 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { IMAGE_UPLOAD, formatPublishedAt } from "@pkka/domain";
+import {
+  IMAGE_UPLOAD,
+  formatPublishedAt,
+  hasUnsignedPictures,
+  isUnsignedPicture,
+} from "@pkka/domain";
 import {
   AdminUploadPurpose,
   getGetAdminPostQueryKey,
@@ -74,6 +79,10 @@ export function PostForm({ post }: PostFormProps) {
     rule: IMAGE_UPLOAD,
     presign: presignContentImage,
   });
+  // Checked once, on what the API sent: a picture picked since then is shown from the browser.
+  const [picturesUnavailable] = useState(
+    () => isUnsignedPicture(post?.coverImageUrl) || hasUnsignedPictures(post?.content),
+  );
   const [postId, setPostId] = useState(post?.id);
   const [pendingStatus, setPendingStatus] = useState<PostStatus | null>(null);
 
@@ -154,9 +163,16 @@ export function PostForm({ post }: PostFormProps) {
         {isError ? (
           <p className="text-destructive mb-6 font-medium">
             {isStorageUnavailable(saveError)
-              ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać wpisu z wgraną okładką. Spróbuj później albo usuń okładkę i zapisz bez niej."
+              ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać nowej okładki ani nowych zdjęć. Spróbuj później albo zapisz wpis bez nich."
               : (postContentRejectionMessage(saveError) ??
                 "Nie udało się zapisać wpisu. Spróbuj ponownie.")}
+          </p>
+        ) : null}
+
+        {picturesUnavailable ? (
+          <p className="text-destructive mb-6 font-medium" role="status">
+            Zdjęć tego wpisu nie da się teraz pokazać, bo przechowywanie plików jest niedostępne.
+            Możesz zapisać inne zmiany, jeśli nie zmienisz okładki ani zdjęć w treści.
           </p>
         ) : null}
 
