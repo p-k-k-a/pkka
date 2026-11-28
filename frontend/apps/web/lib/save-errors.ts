@@ -9,12 +9,11 @@ export function isStorageUnavailable(error: unknown) {
 }
 
 /**
- * Whether the API refused a post because of something in its content: a link to a stored file
- * that would stop working within the hour, or a picture that was never uploaded. The backend
- * starts the `detail` of exactly these refusals with "content".
+ * Whether the API refused a post because of a picture in its content, e.g. a link to a stored
+ * file that would stop working within the hour. The backend marks exactly these refusals with
+ * `reason: "POST_CONTENT"`.
  */
 export function isPostContentRejected(error: unknown) {
   if (!(error instanceof ApiError) || error.status !== 400) return false;
-  const detail = (error.body as { detail?: unknown } | null)?.detail;
-  return typeof detail === "string" && detail.startsWith("content ");
+  return (error.body as { reason?: unknown } | null)?.reason === "POST_CONTENT";
 }
