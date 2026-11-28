@@ -12,6 +12,8 @@ export type UploadErrorReason =
   | "unsupported-type"
   | "too-large"
   | "empty"
+  /** The user has used up their uploads for the next hours. */
+  | "too-many"
   /** Object storage is not configured on the backend. */
   | "unavailable"
   | "network"
@@ -63,6 +65,7 @@ function presignFailure(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 413) return new UploadError("too-large");
     if (error.status === 415) return new UploadError("unsupported-type");
+    if (error.status === 429) return new UploadError("too-many");
     if (error.status === 503) return new UploadError("unavailable");
     if (error.status === 0) return new UploadError("network");
   }

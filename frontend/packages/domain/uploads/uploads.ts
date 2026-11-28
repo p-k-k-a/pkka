@@ -85,6 +85,8 @@ export function uploadErrorMessage(error: unknown, rule: LabelledUploadRule) {
       return `Plik jest za duży. Maksymalny rozmiar to ${uploadLimitLabel(rule)}.`;
     case "empty":
       return "Ten plik jest pusty. Wybierz inny.";
+    case "too-many":
+      return "Przesłano już za dużo plików. Spróbuj ponownie za kilka godzin.";
     case "unavailable":
       return "Przesyłanie plików jest chwilowo niedostępne. Spróbuj ponownie później.";
     case "network":
@@ -97,4 +99,23 @@ export function uploadErrorMessage(error: unknown, rule: LabelledUploadRule) {
 /** "42%" for the fraction a running upload reports. */
 export function uploadProgressLabel(fraction: number) {
   return `${Math.round(Math.min(Math.max(fraction, 0), 1) * 100)}%`;
+}
+
+// The object keys of pictures uploaded for an event or a post.
+const STORED_PICTURE_KEY = "(?:covers/(?:events|posts)|posts/images)/[0-9a-f-]{36}\\.[a-z0-9]+";
+const STORED_PICTURE = new RegExp(`^${STORED_PICTURE_KEY}$`);
+const STORED_PICTURE_IN_CONTENT = new RegExp(`\\]\\(${STORED_PICTURE_KEY}\\)`);
+
+/**
+ * Whether the API sent an uploaded picture as its bare object key instead of a signed URL: it
+ * can only do that when it cannot sign, i.e. the file storage is not configured. The browser
+ * cannot show such a picture, but sending it back unchanged keeps it attached.
+ */
+export function isUnsignedPicture(value: string | null | undefined) {
+  return value != null && STORED_PICTURE.test(value.trim());
+}
+
+/** Whether Markdown holds an uploaded picture as its bare object key; see `isUnsignedPicture`. */
+export function hasUnsignedPictures(markdown: string | null | undefined) {
+  return markdown != null && STORED_PICTURE_IN_CONTENT.test(markdown);
 }

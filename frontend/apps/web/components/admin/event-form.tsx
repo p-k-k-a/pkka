@@ -40,6 +40,7 @@ import { isStorageUnavailable } from "@/lib/save-errors";
 import {
   AUDIENCE_OPTIONS,
   IMAGE_UPLOAD,
+  isUnsignedPicture,
   EVENT_TYPE_OPTIONS,
   audienceLabel,
   fromDatetimeLocalValue,
@@ -142,6 +143,8 @@ export function EventForm({ event }: EventFormProps) {
   const isPending = createEvent.isPending || updateEvent.isPending;
   const isError = createEvent.isError || updateEvent.isError;
   const storageUnavailable = isStorageUnavailable(createEvent.error ?? updateEvent.error);
+  // Checked once, on what the API sent: a cover picked since then is shown from the browser.
+  const [picturesUnavailable] = useState(() => isUnsignedPicture(event?.coverImageUrl));
   const canSave =
     title.trim().length > 0 &&
     Boolean(startsAtIso) &&
@@ -229,8 +232,15 @@ export function EventForm({ event }: EventFormProps) {
         {isError ? (
           <p className="text-destructive mb-6 font-medium">
             {storageUnavailable
-              ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać wydarzenia z wgraną okładką. Spróbuj później albo usuń okładkę i zapisz bez niej."
+              ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać nowej okładki. Spróbuj później albo zapisz wydarzenie bez niej."
               : "Nie udało się zapisać wydarzenia. Spróbuj ponownie."}
+          </p>
+        ) : null}
+
+        {picturesUnavailable ? (
+          <p className="text-destructive mb-6 font-medium" role="status">
+            Okładki tego wydarzenia nie da się teraz pokazać, bo przechowywanie plików jest
+            niedostępne. Możesz zapisać inne zmiany, jeśli nie zmienisz okładki.
           </p>
         ) : null}
 
