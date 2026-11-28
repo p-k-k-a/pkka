@@ -229,16 +229,24 @@ class AdminPostEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.coverImageUrl").value(coverKey));
 
-        // the form sends it back: the save fails loudly and the cover stays attached
+        // the form sends it back unchanged: the edit is saved and the cover stays attached
         mockMvc.perform(put("/api/admin/posts/{id}", id)
                         .with(admin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\": \"Poprawiony tytuł\", \"content\": \"x\", \"status\": \"DRAFT\", "
                                 + "\"coverImageUrl\": \"" + coverKey + "\"}"))
+                .andExpect(status().isOk());
+        Post edited = postRepository.findById(id).orElseThrow();
+        assertEquals(coverKey, edited.getCoverImageUrl());
+        assertEquals("Poprawiony tytuł", edited.getTitle());
+
+        // a new cover still needs storage
+        mockMvc.perform(put("/api/admin/posts/{id}", id)
+                        .with(admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\": \"Poprawiony tytuł\", \"content\": \"x\", \"status\": \"DRAFT\", "
+                                + "\"coverImageUrl\": \"covers/posts/" + UUID.randomUUID() + ".png\"}"))
                 .andExpect(status().isServiceUnavailable());
-        Post unchanged = postRepository.findById(id).orElseThrow();
-        assertEquals(coverKey, unchanged.getCoverImageUrl());
-        assertEquals("Wpis z wgraną okładką", unchanged.getTitle());
     }
 
     @Test

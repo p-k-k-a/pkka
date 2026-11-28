@@ -157,24 +157,26 @@ public class StorageService implements AutoCloseable {
      * otherwise the trimmed key, which must be an avatar this service issued for {@code userId}.
      *
      * @param current what the record holds now ({@code null} for a new one); a file it already points at is
-     *     not looked up again, so an unchanged record can be saved while storage is down
+     *     kept without asking storage, so an unchanged record can be saved while storage is down or not
+     *     configured
      * @throws InvalidFileException when the key is not the user's own avatar upload, or nothing was uploaded
      * @throws StorageUnavailableException when storage does not answer
-     * @throws StorageNotConfiguredException for a key while storage is not configured
+     * @throws StorageNotConfiguredException for a new key while storage is not configured
      */
     public String toStoredAvatarKey(UUID userId, String input, String current) {
         if (input == null || input.isBlank()) {
             return null;
         }
-        requireConfigured();
         String key = input.trim();
+        if (key.equals(current)) {
+            return key;
+        }
+        requireConfigured();
         if (!isAvatarKeyOwnedBy(userId, key)) {
             throw new InvalidFileException(
                     "avatarKey must be the objectKey of an avatar uploaded through the avatar presign endpoint");
         }
-        if (!key.equals(current)) {
-            requireUploaded(key);
-        }
+        requireUploaded(key);
         return key;
     }
 
@@ -185,9 +187,10 @@ public class StorageService implements AutoCloseable {
      * its key, so an expiring link never lands in the database.
      *
      * @param current what the record holds now ({@code null} for a new one); a file it already points at is
-     *     not looked up again, so an unchanged record can be saved while storage is down
+     *     kept without asking storage, so an unchanged record can be saved while storage is down or not
+     *     configured
      * @throws InvalidFileException for anything else, or a key nothing was uploaded under
-     * @throws StorageNotConfiguredException for a key while storage is not configured
+     * @throws StorageNotConfiguredException for a new key while storage is not configured
      * @throws StorageUnavailableException when storage does not answer
      */
     public String toStoredReference(AdminUploadPurpose purpose, String input, String current) {
@@ -207,10 +210,11 @@ public class StorageService implements AutoCloseable {
             throw new InvalidFileException(
                     "Expected an http(s) URL or the objectKey of a file uploaded for " + purpose);
         }
-        requireConfigured();
-        if (!value.equals(current)) {
-            requireUploaded(value);
+        if (value.equals(current)) {
+            return value;
         }
+        requireConfigured();
+        requireUploaded(value);
         return value;
     }
 

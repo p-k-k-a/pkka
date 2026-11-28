@@ -490,6 +490,18 @@ class StorageServiceTest {
         assertStatus(
                 () -> unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, null),
                 StorageNotConfiguredException.class);
+        assertStatus(
+                () -> unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, "https://youtu.be/a"),
+                StorageNotConfiguredException.class);
+    }
+
+    @Test
+    void aFileTheRecordAlreadyHoldsIsKeptWhileStorageIsNotConfigured() {
+        String avatar = "avatars/" + USER_ID + "/" + UUID.randomUUID() + ".png";
+
+        assertThat(unconfigured().toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, MATERIAL_KEY))
+                .isEqualTo(MATERIAL_KEY);
+        assertThat(unconfigured().toStoredAvatarKey(USER_ID, avatar, avatar)).isEqualTo(avatar);
     }
 
     // --- downloads ---------------------------------------------------------------------------------
