@@ -22,12 +22,7 @@ export function ProfileHero({ profile, own = false }: ProfileHeroProps) {
       <View className="gap-1">
         {(own || profile.visibility.name) && name ? (
           <View className="flex-row items-center gap-4">
-            {/* Only the viewer's own profile carries a picture; the public one has none. */}
-            <UserAvatar
-              imageUrl={"avatarUrl" in profile ? profile.avatarUrl : undefined}
-              name={name}
-              size="lg"
-            />
+            <UserAvatar imageUrl={profile.avatarUrl} name={name} size="lg" />
             <Text
               role="heading"
               aria-level="1"

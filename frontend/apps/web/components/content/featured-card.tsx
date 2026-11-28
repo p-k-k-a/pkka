@@ -5,7 +5,8 @@ import { CardLinkFooter } from "@/components/content/card-link-footer";
 
 type FeaturedCardProps = {
   href: string;
-  imageSrc: string;
+  /** Without one the card has no picture. */
+  imageSrc: string | null;
   imageAlt: string;
   /** Load the image straight from its URL instead of through the image optimizer; see CoverImage. */
   unoptimized?: boolean;
@@ -33,17 +34,19 @@ export function FeaturedCard({
       className={`group focus-visible:ring-ring block rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none ${className ?? ""}`}
     >
       <Card className="bg-muted flex h-full flex-col gap-0 overflow-hidden rounded-none p-0 shadow-none ring-0 md:flex-row">
-        <div className="relative aspect-[4/3] w-full shrink-0 md:aspect-auto md:min-h-80 md:w-1/2">
-          <Image
-            src={imageSrc}
-            alt={imageAlt}
-            fill
-            sizes="(max-width: 768px) 100vw, 640px"
-            className="object-cover"
-            priority
-            unoptimized={unoptimized}
-          />
-        </div>
+        {imageSrc ? (
+          <div className="relative aspect-[4/3] w-full shrink-0 md:aspect-auto md:min-h-80 md:w-1/2">
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-cover"
+              priority
+              unoptimized={unoptimized}
+            />
+          </div>
+        ) : null}
 
         <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
           <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">

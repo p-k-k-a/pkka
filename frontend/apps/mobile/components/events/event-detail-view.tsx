@@ -1,5 +1,6 @@
 import { ProseContent } from "@/components/content/prose-content";
 import { EventTypeBadge } from "@/components/events/event-type-badge";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Text } from "@/components/ui/text";
 import {
   formatEventDateShort,
@@ -10,8 +11,7 @@ import {
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { type EventDetailsResponse } from "@pkka/api";
-import { Image } from "expo-image";
-import { Calendar, ImageIcon, MapPin, Users } from "lucide-react-native";
+import { Calendar, MapPin, Users } from "lucide-react-native";
 import * as React from "react";
 import { ScrollView, View } from "react-native";
 
@@ -65,7 +65,6 @@ export function EventDetailView({ event }: EventDetailViewProps) {
     event;
 
   const closed = isEventRegistrationClosed(event);
-  const hasImage = !!coverImageUrl && coverImageUrl.startsWith("http");
   const seats = formatSeatsRemaining(seatLimit, seatsTaken);
 
   return (
@@ -75,17 +74,10 @@ export function EventDetailView({ event }: EventDetailViewProps) {
       showsVerticalScrollIndicator={false}
     >
       <View className="gap-6 px-5 pt-5">
-        <View className="aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
-          {hasImage ? (
-            <Image
-              source={{ uri: coverImageUrl }}
-              contentFit="cover"
-              style={{ width: "100%", height: "100%" }}
-            />
-          ) : (
-            <ImageIcon size={56} color={theme.mutedForeground} strokeWidth={1.25} />
-          )}
-        </View>
+        <CoverImage
+          imageUrl={coverImageUrl}
+          className="aspect-[4/3] rounded-2xl border border-border"
+        />
 
         <View className="gap-3">
           <EventTypeBadge type={type} className="self-start" />

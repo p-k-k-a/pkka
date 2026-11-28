@@ -99,7 +99,7 @@ export function ProfileView(props: ProfileViewProps) {
 
             <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center">
               <Avatar
-                src={props.variant === "own" ? props.profile.avatarUrl : undefined}
+                src={profile.avatarUrl}
                 fallback={fullName || "Alumn"}
                 alt={fullName}
                 className="size-24 text-2xl font-semibold"

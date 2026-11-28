@@ -39,7 +39,7 @@ export function AlumniCard({ alumn, directoryHref }: AlumniCardProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <Avatar fallback={name} alt="" size="lg" />
+          <Avatar src={alumn.avatarUrl} fallback={name} alt="" size="lg" />
           <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
             {name}
           </h3>

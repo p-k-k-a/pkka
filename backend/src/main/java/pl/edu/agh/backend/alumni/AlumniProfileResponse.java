@@ -26,6 +26,12 @@ public record AlumniProfileResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
         String lastName,
+
+        @Schema(
+                description = "Short-lived signed URL of the profile picture; null without one, or when the "
+                        + "alumn hides their name (a face names them just as well)")
+        String avatarUrl,
+
         String email,
         String currentPosition,
         String company,
@@ -57,7 +63,7 @@ public record AlumniProfileResponse(
                 description = "Whether the caller has this alumn in their contacts")
         boolean isContact) {
 
-    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean isContact) {
+    public static AlumniProfileResponse from(User user, AlumnEducation education, boolean isContact, String avatarUrl) {
         boolean showName = user.isShowName();
         boolean showEmail = user.isShowEmail();
         boolean showDiscord = user.isShowDiscord();
@@ -66,6 +72,7 @@ public record AlumniProfileResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
                 showName ? user.getLastName() : null,
+                showName ? avatarUrl : null,
                 showEmail ? user.getEmail() : null,
                 user.getCurrentPosition(),
                 user.getCompany(),

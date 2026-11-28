@@ -1,4 +1,5 @@
 import { ProseContent } from "@/components/content/prose-content";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Text } from "@/components/ui/text";
 import { formatPublishedAtCompact } from "@pkka/domain";
 import type { PostResponse } from "@pkka/api";
@@ -28,6 +29,8 @@ export function BlogPostView({ post }: BlogPostViewProps) {
             {post.title}
           </Text>
         </View>
+
+        <CoverImage imageUrl={post.coverImageUrl} className="aspect-video rounded-2xl" />
 
         <View className="h-px bg-border" />
 

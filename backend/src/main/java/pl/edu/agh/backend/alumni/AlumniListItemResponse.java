@@ -20,6 +20,12 @@ public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         String firstName,
         String lastName,
+
+        @Schema(
+                description = "Short-lived signed URL of the profile picture; null without one, or when the "
+                        + "alumn hides their name (a face names them just as well)")
+        String avatarUrl,
+
         String currentPosition,
         String company,
         String linkedinUrl,
@@ -31,7 +37,7 @@ public record AlumniListItemResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) boolean willingToMentor,
         @Schema(requiredMode = RequiredMode.REQUIRED) List<AlumniTagResponse> tags) {
 
-    public static AlumniListItemResponse from(User user) {
+    public static AlumniListItemResponse from(User user, String avatarUrl) {
         // Defensive only: the directory query already restricts to show_name = true
         // (AlumniSpecifications.hasVisibleName()), so the null branches below are unreachable for every user
         // that reaches this method today. Kept so the DTO cannot leak a hidden name if it is ever built
@@ -41,6 +47,7 @@ public record AlumniListItemResponse(
                 user.getId(),
                 showName ? user.getFirstName() : null,
                 showName ? user.getLastName() : null,
+                showName ? avatarUrl : null,
                 user.getCurrentPosition(),
                 user.getCompany(),
                 user.getLinkedinUrl(),
