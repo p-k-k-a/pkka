@@ -248,7 +248,8 @@ export function AdminEventsList() {
             <label className="text-muted-foreground flex max-w-full flex-wrap items-center gap-2 text-sm">
               Sortuj według
               <Select
-                className="h-9 w-auto max-w-full"
+                wrapperClassName="w-auto max-w-full"
+                className="h-9"
                 value={sortKey}
                 onChange={(changeEvent) => {
                   setChosenSort(changeEvent.target.value as SortKey);

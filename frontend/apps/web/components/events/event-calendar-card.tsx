@@ -1,3 +1,4 @@
+import { AlumniOnlyBadge } from "@/components/content/alumni-only-badge";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Calendar, Check, Clock, MapPin, UserRound } from "lucide-react";
@@ -63,11 +64,7 @@ export function EventCalendarCard({
         >
           {eventTypeLabelUpper(event.type)}
         </span>
-        {event.audience === Audience.ALL_ALUMNI ? (
-          <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-            Alumni
-          </span>
-        ) : null}
+        {event.audience === Audience.ALL_ALUMNI ? <AlumniOnlyBadge /> : null}
         {event.registrationStatus ? (
           <span className="border-primary bg-primary/15 text-foreground inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
             {event.registrationStatus === EventRegistrationStatus.WAITLISTED ? (

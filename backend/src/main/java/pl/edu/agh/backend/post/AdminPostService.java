@@ -37,6 +37,9 @@ public class AdminPostService {
         post.setSlug(SlugUtils.uniqueSlug(request.title(), postRepository::existsBySlug));
         post.setContent(request.content());
         post.setAuthor(callerUserService.getOrCreate(caller));
+        if (request.audience() != null) {
+            post.setAudience(request.audience());
+        }
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
         }
@@ -51,6 +54,9 @@ public class AdminPostService {
         }
         post.setTitle(request.title());
         post.setContent(request.content());
+        if (request.audience() != null) {
+            post.setAudience(request.audience());
+        }
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
         }

@@ -14,4 +14,6 @@ public record UpdatePostRequest(
         String content,
 
         @Schema(requiredMode = RequiredMode.REQUIRED) @NotNull
-        PostStatus status) {}
+        PostStatus status,
+
+        PostAudience audience) {}

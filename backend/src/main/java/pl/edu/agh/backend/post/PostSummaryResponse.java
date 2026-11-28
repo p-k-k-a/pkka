@@ -16,6 +16,7 @@ public record PostSummaryResponse(
         @Schema(requiredMode = RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = RequiredMode.REQUIRED) String title,
+        @Schema(requiredMode = RequiredMode.REQUIRED) PostAudience audience,
         String authorId,
         @Schema(requiredMode = RequiredMode.REQUIRED) Instant publishedAt) {
 
@@ -24,6 +25,7 @@ public record PostSummaryResponse(
                 post.getId(),
                 post.getSlug(),
                 post.getTitle(),
+                post.getAudience(),
                 post.getAuthor() == null ? null : post.getAuthor().getKeycloakId(),
                 post.getPublishedAt());
     }

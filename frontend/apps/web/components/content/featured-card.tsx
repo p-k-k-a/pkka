@@ -8,6 +8,7 @@ type FeaturedCardProps = {
   imageSrc: string;
   imageAlt: string;
   label: string;
+  badge?: React.ReactNode;
   title: string;
   meta: React.ReactNode;
   cta: string;
@@ -19,6 +20,7 @@ export function FeaturedCard({
   imageSrc,
   imageAlt,
   label,
+  badge,
   title,
   meta,
   cta,
@@ -42,9 +44,12 @@ export function FeaturedCard({
         </div>
 
         <div className="flex flex-1 flex-col gap-6 p-6 md:p-10">
-          <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-            {label}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="bg-band text-band-foreground inline-flex w-fit rounded-lg px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
+              {label}
+            </span>
+            {badge}
+          </div>
           <h3 className="font-heading text-foreground text-[23px] leading-snug font-semibold md:text-[28px]">
             {title}
           </h3>

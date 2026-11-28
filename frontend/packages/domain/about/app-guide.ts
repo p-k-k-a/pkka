@@ -76,8 +76,8 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
     features: [
       {
         icon: "calendar",
-        title: "Wydarzenia dla alumnów",
-        description: "Zamknięte spotkania widoczne tylko dla zweryfikowanych absolwentów.",
+        title: "Wpisy i wydarzenia dla alumnów",
+        description: "Zamknięte wpisy i spotkania widoczne tylko dla zweryfikowanych absolwentów.",
       },
       {
         icon: "users",
@@ -146,7 +146,7 @@ export const APP_GUIDE_ADMIN_SECTION: AppGuideSection = {
     {
       icon: "megaphone",
       title: "Aktualności",
-      description: "Pisz i publikuj ogłoszenia.",
+      description: "Pisz i publikuj ogłoszenia dla wszystkich albo tylko dla alumnów.",
     },
     {
       icon: "calendar",

@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pl.edu.agh.backend.security.Caller;
 
 @RestController
 @RequestMapping("/api/public/posts")
@@ -31,8 +32,8 @@ public class PostController {
     // @ParameterObject breaks down the Pageable into separate query params (page, size, sort)
     // instead of emitting the single required "pageable" object.
     public ResponseEntity<Page<PostSummaryResponse>> listPosts(
-            @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(postService.findAllPublished(pageable));
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable, Caller caller) {
+        return ResponseEntity.ok(postService.findAllPublished(caller, pageable));
     }
 
     @GetMapping("/{slug}")
@@ -41,7 +42,7 @@ public class PostController {
             description = "Available without authentication. Returns 404 if the post does not exist or is a draft.")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = PostResponse.class)))
     @ApiResponse(responseCode = "404", description = "Post does not exist or is not published", content = @Content)
-    public ResponseEntity<PostResponse> getPost(@PathVariable String slug) {
-        return ResponseEntity.ok(postService.findPublishedBySlug(slug));
+    public ResponseEntity<PostResponse> getPost(@PathVariable String slug, Caller caller) {
+        return ResponseEntity.ok(postService.findPublishedBySlug(slug, caller));
     }
 }

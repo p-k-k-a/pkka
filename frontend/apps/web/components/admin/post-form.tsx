@@ -5,16 +5,16 @@ import { SectionTitle } from "@/components/content/section-title";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatPublishedAt } from "@pkka/domain";
+import { formatPublishedAt, POST_AUDIENCE_OPTIONS } from "@pkka/domain";
 import {
   getGetAdminPostQueryKey,
   getListAdminPostsQueryKey,
   useCreateAdminPost,
   useUpdateAdminPost,
+  PostAudience,
   PostStatus,
   type AdminPostResponse,
 } from "@pkka/api";
@@ -24,20 +24,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-
-// TODO: publication channels other than the club platform (Discord #ogłoszenia,
-// newsletter) are not wired up yet
-const PUBLISH_CHANNELS = [
-  { id: "platform", label: "Strona i aplikacja klubu", checked: true, disabled: true },
-  { id: "discord", label: "Discord #ogłoszenia", checked: false, disabled: true },
-  { id: "newsletter", label: "Newsletter", checked: false, disabled: true },
-];
-
-// TODO: notifications are not implemented yet
-const NOTIFICATIONS = [
-  { id: "push-publish", label: "Powiadomienie Push", checked: true, disabled: true },
-  { id: "email", label: "Email", checked: false, disabled: true },
-];
 
 type PostFormProps = {
   post?: AdminPostResponse;
@@ -51,6 +37,7 @@ export function PostForm({ post }: PostFormProps) {
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
+  const [audience, setAudience] = useState<PostAudience>(post?.audience ?? PostAudience.PUBLIC);
   const [postId, setPostId] = useState(post?.id);
   const [pendingStatus, setPendingStatus] = useState<PostStatus | null>(null);
 
@@ -75,7 +62,7 @@ export function PostForm({ post }: PostFormProps) {
   };
 
   const save = (status: PostStatus) => {
-    const data = { title: title.trim(), content, status } as const;
+    const data = { title: title.trim(), content, status, audience } as const;
     setPendingStatus(status);
 
     if (postId !== undefined) {
@@ -173,7 +160,7 @@ export function PostForm({ post }: PostFormProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     Szkic widzą tylko administratorzy. Możesz go zapisywać wiele razy. Publikacja
-                    jest nieodwracalna i widoczna dla wszystkich.
+                    jest nieodwracalna.
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -214,44 +201,20 @@ export function PostForm({ post }: PostFormProps) {
             </Card>
 
             <Card className="gap-5 rounded-lg p-5 shadow-none">
-              <SectionTitle>Gdzie opublikować</SectionTitle>
-              <div className="space-y-3">
-                {PUBLISH_CHANNELS.map((channel) => (
-                  <div key={channel.id} className="flex items-center gap-3">
-                    <Checkbox
-                      id={`channel-${channel.id}`}
-                      checked={channel.checked}
-                      disabled={channel.disabled}
-                    />
-                    <Label
-                      htmlFor={`channel-${channel.id}`}
-                      className="text-muted-foreground text-sm"
-                    >
-                      {channel.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="gap-5 rounded-lg p-5 shadow-none">
-              <SectionTitle>Powiadomienia</SectionTitle>
-              <div className="space-y-3">
-                {NOTIFICATIONS.map((notification) => (
-                  <div key={notification.id} className="flex items-center gap-3">
-                    <Checkbox
-                      id={`notification-${notification.id}`}
-                      checked={notification.checked}
-                      disabled={notification.disabled}
-                    />
-                    <Label
-                      htmlFor={`notification-${notification.id}`}
-                      className="text-muted-foreground text-sm"
-                    >
-                      {notification.label}
-                    </Label>
-                  </div>
-                ))}
+              <SectionTitle>Ustawienia</SectionTitle>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="post-audience">Odbiorcy</FieldLabel>
+                <Select
+                  id="post-audience"
+                  value={audience}
+                  onChange={(changeEvent) => setAudience(changeEvent.target.value as PostAudience)}
+                >
+                  {POST_AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </div>
             </Card>
           </div>
