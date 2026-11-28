@@ -145,7 +145,7 @@ export const APP_GUIDE_ADMIN_SECTION: AppGuideSection = {
     {
       icon: "megaphone",
       title: "Aktualności",
-      description: "Pisz i publikuj ogłoszenia ze zdjęciem okładki.",
+      description: "Pisz i publikuj ogłoszenia.",
     },
     {
       icon: "calendar",
@@ -159,7 +159,7 @@ export const APP_GUIDE_ADMIN_SECTION: AppGuideSection = {
     },
     {
       icon: "users",
-      title: "Absolwenci",
+      title: "Alumni",
       description: "Przeglądaj profile członków klubu.",
     },
     {
