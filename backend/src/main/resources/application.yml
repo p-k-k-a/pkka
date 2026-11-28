@@ -106,6 +106,23 @@ app:
     bucket: ${R2_BUCKET:}
     access-key-id: ${R2_ACCESS_KEY_ID:}
     secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    # Nightly removal of files nothing in the database points at: off, dry-run (only logs what it would
+    # delete) or delete. Turn it on only where this database is the sole owner of the bucket. The first
+    # run in delete mode claims the bucket for this database (.cleanup-owner object) and starts counting
+    # the retention from that night, whatever a dry run noted before. A copy of this database (staging
+    # from a production dump) must always be started with the cleanup off.
+    cleanup:
+      mode: ${R2_CLEANUP_MODE:off}
+      # How long a file must stay unreferenced before it is deleted.
+      retention-days: ${R2_CLEANUP_RETENTION_DAYS:7}
+      # A run that would delete more than this deletes nothing and reports an error.
+      max-deletions-per-run: ${R2_CLEANUP_MAX_DELETIONS:500}
+      # So does a run that finds more than this share of the bucket (20 files or more) newly orphaned;
+      # a dry run only warns and notes them, after which a deleting run goes on.
+      max-orphan-percent: ${R2_CLEANUP_MAX_ORPHAN_PERCENT:50}
+      # Must run at least every two days: after a break of more than 60 hours every file's retention
+      # starts again.
+      cron: ${R2_CLEANUP_CRON:0 30 3 * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME:myapp}
   web:
@@ -239,6 +256,23 @@ app:
     bucket: ${R2_BUCKET:}
     access-key-id: ${R2_ACCESS_KEY_ID:}
     secret-access-key: ${R2_SECRET_ACCESS_KEY:}
+    # Nightly removal of files nothing in the database points at: off, dry-run (only logs what it would
+    # delete) or delete. Turn it on only where this database is the sole owner of the bucket. The first
+    # run in delete mode claims the bucket for this database (.cleanup-owner object) and starts counting
+    # the retention from that night, whatever a dry run noted before. A copy of this database (staging
+    # from a production dump) must always be started with the cleanup off.
+    cleanup:
+      mode: ${R2_CLEANUP_MODE:off}
+      # How long a file must stay unreferenced before it is deleted.
+      retention-days: ${R2_CLEANUP_RETENTION_DAYS:7}
+      # A run that would delete more than this deletes nothing and reports an error.
+      max-deletions-per-run: ${R2_CLEANUP_MAX_DELETIONS:500}
+      # So does a run that finds more than this share of the bucket (20 files or more) newly orphaned;
+      # a dry run only warns and notes them, after which a deleting run goes on.
+      max-orphan-percent: ${R2_CLEANUP_MAX_ORPHAN_PERCENT:50}
+      # Must run at least every two days: after a break of more than 60 hours every file's retention
+      # starts again.
+      cron: ${R2_CLEANUP_CRON:0 30 3 * * *}
   mobile:
     deep-link-scheme: ${MOBILE_DEEP_LINK_SCHEME}
   web:

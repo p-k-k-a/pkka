@@ -12,7 +12,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.checksums.RequestChecksumCalculation;
+import software.amazon.awssdk.core.checksums.ResponseChecksumValidation;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -50,7 +54,7 @@ class StorageConfig {
 
         if (missing.size() == settings.size()) {
             log.warn("File storage is not configured (R2_* variables are unset); upload endpoints will answer 503");
-            return new StorageService(null, "", URI.create("https://unconfigured.invalid"), Clock.systemUTC());
+            return new StorageService(null, null, "", URI.create("https://unconfigured.invalid"), Clock.systemUTC());
         }
         if (!missing.isEmpty()) {
             throw new IllegalStateException("Incomplete file storage configuration, missing: " + missing);
@@ -60,6 +64,7 @@ class StorageConfig {
         }
         return new StorageService(
                 presigner(endpoint.trim(), accessKeyId.trim(), secretAccessKey.trim()),
+                client(endpoint.trim(), accessKeyId.trim(), secretAccessKey.trim()),
                 bucket.trim(),
                 URI.create(endpoint.trim()),
                 Clock.systemUTC());
@@ -74,6 +79,22 @@ class StorageConfig {
                         StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
                 .serviceConfiguration(
                         S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                .build();
+    }
+
+    /** Talks to R2 for what the cleanup needs and a presigned URL cannot do: listing the bucket, its marker. */
+    static S3Client client(String endpoint, String accessKeyId, String secretAccessKey) {
+        return S3Client.builder()
+                .region(R2_REGION)
+                .endpointOverride(URI.create(endpoint))
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                .serviceConfiguration(
+                        S3Configuration.builder().pathStyleAccessEnabled(true).build())
+                // R2 does not take the checksums newer SDK versions add to every request by default.
+                .requestChecksumCalculation(RequestChecksumCalculation.WHEN_REQUIRED)
+                .responseChecksumValidation(ResponseChecksumValidation.WHEN_REQUIRED)
+                .httpClient(UrlConnectionHttpClient.create())
                 .build();
     }
 }

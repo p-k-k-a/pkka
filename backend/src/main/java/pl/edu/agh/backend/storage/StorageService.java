@@ -9,20 +9,29 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriUtils;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.DeleteObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -67,6 +76,9 @@ public class StorageService implements AutoCloseable {
 
     private static final int MAX_DOWNLOAD_NAME_LENGTH = 150;
 
+    /** Names the one database allowed to clean this bucket and its latest run; see {@link StorageCleanup}. */
+    static final String CLEANUP_OWNER_KEY = ".cleanup-owner";
+
     /** The target of a Markdown link or image: what follows {@code ](} up to whitespace or a parenthesis. */
     private static final Pattern MARKDOWN_TARGET = Pattern.compile("(?<=\\]\\()[^\\s()]+");
 
@@ -74,17 +86,26 @@ public class StorageService implements AutoCloseable {
     private static final Set<String> CLIENT_MANAGED_HEADERS = Set.of("host", "content-length");
 
     private final S3Presigner presigner;
+    private final S3Client client;
     private final String bucket;
     private final URI endpoint;
     private final Cache<String, String> downloadUrls;
     private final RestClient restClient;
 
+    /** Without a client: everything works except what the cleanup needs from the bucket. */
+    StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
+        this(presigner, null, bucket, endpoint, clock);
+    }
+
     /**
      * @param presigner {@code null} when storage is not configured
+     * @param client only needed by the cleanup (listing, the owner marker); {@code null} when storage is not
+     *     configured
      * @param endpoint S3 API origin of the bucket, e.g. {@code https://<account>.eu.r2.cloudflarestorage.com}
      */
-    StorageService(S3Presigner presigner, String bucket, URI endpoint, Clock clock) {
+    StorageService(S3Presigner presigner, S3Client client, String bucket, URI endpoint, Clock clock) {
         this.presigner = presigner;
+        this.client = client;
         this.bucket = bucket;
         this.endpoint = endpoint;
         // An entry is dropped MIN_REMAINING_VALIDITY before its URL dies, so a cached URL is always safe to hand out.
@@ -234,6 +255,70 @@ public class StorageService implements AutoCloseable {
             return;
         }
         restClient.delete().uri(URI.create(presignDelete(key))).retrieve().toBodilessEntity();
+    }
+
+    /** Everything in the bucket. Meant for the nightly cleanup, not for request handling. */
+    List<StoredObject> listObjects() {
+        requireClient();
+        List<StoredObject> objects = new ArrayList<>();
+        client.listObjectsV2Paginator(
+                        ListObjectsV2Request.builder().bucket(bucket).build())
+                .contents()
+                .forEach(object -> objects.add(new StoredObject(object.key(), object.lastModified())));
+        return objects;
+    }
+
+    /** The marker of the database that cleans this bucket, empty while no cleanup has claimed it. */
+    Optional<String> readCleanupOwner() {
+        requireClient();
+        try {
+            return Optional.of(client.getObjectAsBytes(GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(CLEANUP_OWNER_KEY)
+                            .build())
+                    .asUtf8String()
+                    .trim());
+        } catch (NoSuchKeyException ex) {
+            return Optional.empty();
+        }
+    }
+
+    /** Overwrites the marker; for the database that already owns the bucket. */
+    void writeCleanupOwner(String marker) {
+        requireClient();
+        client.putObject(cleanupOwnerRequest().build(), RequestBody.fromString(marker));
+    }
+
+    /**
+     * Writes the marker only if the bucket has none yet, so two databases cannot both claim it.
+     *
+     * @throws IllegalStateException when a marker appeared in the meantime
+     */
+    void claimCleanupOwner(String marker) {
+        requireClient();
+        try {
+            client.putObject(cleanupOwnerRequest().ifNoneMatch("*").build(), RequestBody.fromString(marker));
+        } catch (S3Exception ex) {
+            if (ex.statusCode() == HttpStatus.PRECONDITION_FAILED.value()) {
+                throw new IllegalStateException("the bucket was claimed by someone else at the same moment", ex);
+            }
+            throw ex;
+        }
+    }
+
+    private PutObjectRequest.Builder cleanupOwnerRequest() {
+        return PutObjectRequest.builder().bucket(bucket).key(CLEANUP_OWNER_KEY).contentType("text/plain");
+    }
+
+    private void requireClient() {
+        if (client == null) {
+            throw new StorageNotConfiguredException();
+        }
+    }
+
+    /** Whether {@code key} has the shape of a key this service issues for any kind of upload. */
+    static boolean isIssuedKey(String key) {
+        return isKnownKey(key);
     }
 
     String presignDelete(String key) {
@@ -423,6 +508,9 @@ public class StorageService implements AutoCloseable {
     public void close() {
         if (presigner != null) {
             presigner.close();
+        }
+        if (client != null) {
+            client.close();
         }
     }
 }

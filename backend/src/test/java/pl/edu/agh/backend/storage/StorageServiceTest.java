@@ -540,6 +540,28 @@ class StorageServiceTest {
         verify(presigner, times(0)).presignDeleteObject(any(DeleteObjectPresignRequest.class));
     }
 
+    @Test
+    void whatTheCleanupNeedsFromTheBucketNeedsAClient() {
+        assertStatus(() -> storage.listObjects(), StorageNotConfiguredException.class);
+        assertStatus(() -> storage.readCleanupOwner(), StorageNotConfiguredException.class);
+        assertStatus(() -> storage.writeCleanupOwner("id"), StorageNotConfiguredException.class);
+    }
+
+    @Test
+    void theCleanupOwnerMarkerIsNeverTakenForAnUpload() {
+        assertThat(StorageService.isIssuedKey(StorageService.CLEANUP_OWNER_KEY)).isFalse();
+    }
+
+    @Test
+    void onlyKeysOfOurOwnShapeCountAsIssued() {
+        assertThat(StorageService.isIssuedKey(MATERIAL_KEY)).isTrue();
+        assertThat(StorageService.isIssuedKey(POST_IMAGE_KEY)).isTrue();
+        assertThat(StorageService.isIssuedKey("avatars/" + USER_ID + "/0f3a1c8e-1111-4000-8000-000000000005.png"))
+                .isTrue();
+        assertThat(StorageService.isIssuedKey("materials/notes.pdf")).isFalse();
+        assertThat(StorageService.isIssuedKey("backups/" + MATERIAL_KEY)).isFalse();
+    }
+
     // --- helpers -----------------------------------------------------------------------------------
 
     private StorageService unconfigured() {
