@@ -611,7 +611,8 @@ class StorageServiceTest {
         assertStatus(
                 () -> storage.toStoredReference(AdminUploadPurpose.MATERIAL, MATERIAL_KEY, null),
                 InvalidFileException.class);
-        assertStatus(() -> storage.toStoredContent("![a](" + POST_IMAGE_KEY + ")", null), InvalidFileException.class);
+        assertStatus(
+                () -> storage.toStoredContent("![a](" + POST_IMAGE_KEY + ")", null), InvalidPostContentException.class);
         assertStatus(
                 () -> storage.toStoredContent("![a](" + storage.resolveUrl(POST_IMAGE_KEY) + ")", "other content"),
                 InvalidFileException.class);

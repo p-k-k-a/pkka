@@ -245,7 +245,13 @@ public class StorageService implements AutoCloseable {
         });
         // Without storage a bare key stays as it is, like every other target.
         if (isConfigured()) {
-            newPictures.forEach(this::requireUploaded);
+            for (String picture : newPictures) {
+                try {
+                    requireUploaded(picture);
+                } catch (InvalidFileException ex) {
+                    throw new InvalidPostContentException("content: " + ex.getMessage());
+                }
+            }
         }
         return stored;
     }

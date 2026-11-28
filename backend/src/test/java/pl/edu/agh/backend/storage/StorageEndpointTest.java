@@ -249,6 +249,23 @@ class StorageEndpointTest {
     }
 
     @Test
+    void aPictureInAPostThatWasNeverUploadedIsBlamedOnTheContent() throws Exception {
+        String key = presignAdminUpload("POST_IMAGE", "image/png");
+        doThrow(new InvalidFileException("No file was uploaded under " + key))
+                .when(storage)
+                .requireUploaded(key);
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper()
+                                .writeValueAsString(Map.of("title", "X", "content", "![](" + key + ")"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT"));
+    }
+
+    @Test
     void adminUploadedMaterialIsStoredAsKeyAndServedAsSignedUrl() throws Exception {
         String presigned = mockMvc.perform(post("/api/admin/files/presign")
                         .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
