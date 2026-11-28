@@ -3,6 +3,8 @@ package pl.edu.agh.backend.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +41,7 @@ class AdminApplicationServiceTest {
     @Test
     void approvePublishesApplicationApprovedEvent() {
         UUID applicationId = UUID.randomUUID();
-        User applicant = user("applicant-kc");
+        User applicant = applicant();
         User reviewer = user("reviewer-kc");
         Application application = pendingApplication(applicant);
         Caller reviewerCaller = caller(reviewer);
@@ -55,15 +57,18 @@ class AdminApplicationServiceTest {
 
         verify(callerUserService).getOrCreate(reviewerCaller);
 
-        ArgumentCaptor<ApplicationApprovedEvent> eventCaptor = ArgumentCaptor.forClass(ApplicationApprovedEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue().applicantKeycloakId()).isEqualTo("applicant-kc");
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues())
+                .containsExactly(
+                        new ApplicationApprovedEvent("applicant-kc"),
+                        new ApplicationReviewedEvent("ala@example.com", "Ala", ApplicationStatus.APPROVED, null));
     }
 
     @Test
-    void rejectPersistsReasonWithoutPublishingApprovalEvent() {
+    void rejectPersistsReasonAndPublishesOnlyTheReviewEvent() {
         UUID applicationId = UUID.randomUUID();
-        User applicant = user("applicant-kc");
+        User applicant = applicant();
         User reviewer = user("reviewer-kc");
         Application application = pendingApplication(applicant);
         Caller reviewerCaller = caller(reviewer);
@@ -76,7 +81,10 @@ class AdminApplicationServiceTest {
 
         assertThat(response.status()).isEqualTo(ApplicationStatus.REJECTED);
         assertThat(response.rejectionReason()).isEqualTo("Incomplete docs");
-        verify(eventPublisher, org.mockito.Mockito.never()).publishEvent(any());
+        verify(eventPublisher)
+                .publishEvent(new ApplicationReviewedEvent(
+                        "ala@example.com", "Ala", ApplicationStatus.REJECTED, "Incomplete docs"));
+        verify(eventPublisher, never()).publishEvent(any(ApplicationApprovedEvent.class));
     }
 
     @Test
@@ -97,6 +105,13 @@ class AdminApplicationServiceTest {
                 .graduationYear(2020)
                 .phoneNumber("+48123456789")
                 .build();
+    }
+
+    private static User applicant() {
+        User user = user("applicant-kc");
+        user.setEmail("ala@example.com");
+        user.setFirstName("Ala");
+        return user;
     }
 
     private static User user(String keycloakId) {

@@ -1,0 +1,7 @@
+[# th:if="${!#strings.isEmpty(firstName)}"]Cześć [(${firstName})]![/][# th:if="${#strings.isEmpty(firstName)}"]Cześć![/]
+
+Twój wniosek o status alumna został zaakceptowany. Witamy w Klubie! Masz już dostęp do katalogu alumnów, materiałów z wydarzeń i grup tematycznych.
+
+Uzupełnij profil, żeby inni absolwenci mogli Cię znaleźć: [(${webBaseUrl})]/dashboard/profile/edit
+
+[# th:insert="~{footer.txt}" /]
