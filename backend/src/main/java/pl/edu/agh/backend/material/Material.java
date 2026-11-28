@@ -16,6 +16,7 @@ import org.hibernate.annotations.NotFoundAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import pl.edu.agh.backend.event.Audience;
 import pl.edu.agh.backend.event.Event;
 
 @Entity
@@ -56,11 +57,39 @@ public class Material {
      * created; {@link NotFoundAction#IGNORE} makes Hibernate return {@code null} instead of
      * throwing {@link jakarta.persistence.EntityNotFoundException} in that case, since
      * {@code Event} filters soft-deleted rows out of every query via {@code @SQLRestriction}.
+     *
+     * <p>Read-only: {@link #eventId} is what gets written. A link to a deleted event reads as {@code null} here,
+     * and writing the column from this side would store that {@code null} on any edit, quietly unlinking the
+     * material and handing it its own audience.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
+    @JoinColumn(name = "event_id", insertable = false, updatable = false)
     @NotFound(action = NotFoundAction.IGNORE)
+    @Setter(AccessLevel.NONE)
     private Event event;
+
+    /**
+     * The foreign key, and the side that writes it. Unlike {@link #event} it is still set after the event was
+     * soft-deleted, which is how a deleted event is told apart from no event at all.
+     */
+    @Column(name = "event_id")
+    @Setter(AccessLevel.NONE)
+    private UUID eventId;
+
+    /** Links the material to {@code event}, or to none. */
+    public void linkEvent(Event event) {
+        this.event = event;
+        this.eventId = event != null ? event.getId() : null;
+    }
+
+    /**
+     * Who may see the material while it has no linked event. A linked event decides instead: the material is
+     * then exactly as visible as the event, and this value is ignored until an admin removes the link.
+     */
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private Audience audience = Audience.ALL_ALUMNI;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

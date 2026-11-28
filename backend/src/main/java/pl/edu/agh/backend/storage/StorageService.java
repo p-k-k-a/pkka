@@ -276,6 +276,11 @@ public class StorageService implements AutoCloseable {
      * {@code downloadName.<extension of the key>} instead of the random {@code <uuid>.<ext>} it is stored under.
      * Meant for files people download (materials); images shown inline do not need it.
      */
+    /** The object key when {@code stored} is a material file uploaded to our storage, {@code null} for a link. */
+    public static String uploadedMaterialKey(String stored) {
+        return stored != null && UploadCategory.MATERIAL.isValidKey(stored) ? stored : null;
+    }
+
     public String resolveDownloadUrl(String stored, String downloadName) {
         return resolveUrl(stored, downloadName);
     }

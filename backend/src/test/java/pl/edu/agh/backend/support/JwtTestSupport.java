@@ -23,10 +23,12 @@ public final class JwtTestSupport {
         return asVerifiedAlumn(UUID.randomUUID().toString());
     }
 
+    /** A verified alumn is still a regular user: the alumn role comes on top of the user role. */
     public static RequestPostProcessor asVerifiedAlumn(String keycloakId) {
         return SecurityMockMvcRequestPostProcessors.jwt()
                 .jwt(jwt -> jwt.subject(keycloakId))
-                .authorities(new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
+                .authorities(
+                        new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_VERIFIED_ALUMN"));
     }
 
     public static RequestPostProcessor asAdmin(String keycloakId) {

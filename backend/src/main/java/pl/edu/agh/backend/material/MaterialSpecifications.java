@@ -40,20 +40,28 @@ public class MaterialSpecifications {
     }
 
     /**
-     * Materials without a linked event are always visible. Materials linked to an event are only
-     * visible if that event's audience is visible to the caller (mirrors {@link
-     * EventVisibility#isVisibleTo}), so alumni-only or group-restricted events don't leak their
-     * materials to callers who couldn't see the event itself.
+     * A material linked to an event is exactly as visible as that event (mirrors {@link
+     * EventVisibility#isVisibleTo}), so alumni-only or group-restricted events don't leak their materials to
+     * callers who couldn't see the event itself. A material that was never linked, or was unlinked by an
+     * admin, is visible to its own audience.
      *
-     * <p>The join to {@code event} must be explicit and LEFT: a plain {@code root.get("event")}
-     * path expression lets Hibernate pick an INNER join, which would silently drop every
-     * material that has no linked event at all before the OR-condition below is even evaluated.
+     * <p>A material whose event has been soft-deleted is hidden: nothing says any more who was allowed to see
+     * it, and falling back to the material's own audience could hand an alumni-only recording to everyone. It
+     * stays in the admin list, where it can be given another event or none.
+     *
+     * <p>The join to {@code event} must be explicit and LEFT: a plain {@code root.get("event")} path
+     * expression lets Hibernate pick an INNER join, which would silently drop every material that has no
+     * linked event at all before the OR-condition below is even evaluated. A soft-deleted event does not join
+     * (its {@code @SQLRestriction} is part of the join condition), while the material's foreign key is still
+     * set; that difference is what tells "event deleted" from "no event".
      */
     public Specification<Material> visibleTo(Caller caller) {
         Set<Audience> visibleAudiences = EventVisibility.audiencesOf(caller);
         return (root, query, cb) -> {
             Join<Material, Event> event = root.join("event", JoinType.LEFT);
-            return cb.or(cb.isNull(event.get("id")), event.get("audience").in(visibleAudiences));
+            return cb.or(
+                    cb.and(cb.isNull(root.get("eventId")), root.get("audience").in(visibleAudiences)),
+                    cb.and(cb.isNotNull(event.get("id")), event.get("audience").in(visibleAudiences)));
         };
     }
 }

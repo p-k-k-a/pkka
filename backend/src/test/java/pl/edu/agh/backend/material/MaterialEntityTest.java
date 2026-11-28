@@ -67,7 +67,7 @@ class MaterialEntityTest {
         material.setTitle("Slajdy");
         material.setType(MaterialType.PRESENTATION);
         material.setUrl("https://example.com/slides.pdf");
-        material.setEvent(event);
+        material.linkEvent(event);
         var saved = materialRepository.save(material);
         entityManager.flush();
         entityManager.clear();
@@ -102,7 +102,7 @@ class MaterialEntityTest {
         material.setTitle("Nagranie");
         material.setType(MaterialType.RECORDING);
         material.setUrl("https://example.com/recording.mp4");
-        material.setEvent(event);
+        material.linkEvent(event);
         UUID savedId = materialRepository.save(material).getId();
 
         eventRepository.delete(event);
