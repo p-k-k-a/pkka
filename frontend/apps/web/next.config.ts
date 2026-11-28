@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "img.youtube.com",
       },
+      // Deliberately no object storage (Cloudflare R2) host here. The bucket is private and its
+      // files are reached through signed URLs that die after an hour; the image optimizer would
+      // re-serve a copy as public and cacheable for hours. Such images use `unoptimized`.
     ],
   },
 };

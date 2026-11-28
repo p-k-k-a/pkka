@@ -1,8 +1,13 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { ArrowUpRight, CalendarDays, FileText, Link2, PlayCircle } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Download, FileText, Link2, PlayCircle } from "lucide-react";
 import { MaterialType } from "@pkka/api";
-import { materialLinkHost, materialTypeLabelUpper, youtubeThumbnailUrl } from "@pkka/domain";
+import {
+  materialLinkHost,
+  materialTypeLabelUpper,
+  uploadedMaterialExtension,
+  youtubeThumbnailUrl,
+} from "@pkka/domain";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +57,9 @@ type MaterialCardProps = {
 };
 
 export function MaterialCard({ material, footer, className }: MaterialCardProps) {
-  const host = materialLinkHost(material.url);
+  // An uploaded file comes with a signed URL on the storage host, which is no name to show.
+  const uploadedExtension = uploadedMaterialExtension(material.url);
+  const host = uploadedExtension ? null : materialLinkHost(material.url);
 
   const inner = (
     <Card
@@ -83,8 +90,17 @@ export function MaterialCard({ material, footer, className }: MaterialCardProps)
         {footer ?? (
           <div className="mt-auto flex justify-end pt-2">
             <span className="bg-background text-accent inline-flex h-[34px] items-center gap-1.5 rounded-none px-2.5 text-sm font-medium">
-              {host ? `Otwórz w ${host}` : "Otwórz"}
-              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+              {uploadedExtension ? (
+                <>
+                  Pobierz plik {uploadedExtension.toUpperCase()}
+                  <Download className="size-3.5" aria-hidden="true" />
+                </>
+              ) : (
+                <>
+                  {host ? `Otwórz w ${host}` : "Otwórz"}
+                  <ArrowUpRight className="size-3.5" aria-hidden="true" />
+                </>
+              )}
             </span>
           </div>
         )}

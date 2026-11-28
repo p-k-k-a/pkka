@@ -6,8 +6,10 @@ import { DetailBackLink } from "@/components/content/detail-back-link";
 import { EventLocationAside } from "@/components/events/event-location-aside";
 import { EventRegistration } from "@/components/events/event-registration";
 import { EventMaterialsSection } from "@/components/materials/event-materials-section";
+import { CoverImage } from "@/components/content/cover-image";
 import { ProseContent } from "@/components/content/prose-content";
 import { SectionTitle } from "@/components/content/section-title";
+import { remoteCoverImageSrc } from "@/lib/content-images";
 import { eventsListHref, type EventPathVariant } from "@/lib/event-paths";
 import { eventTypeLabelUpper, isEventPast } from "@pkka/domain";
 import { eventTypeBadgeClass } from "@/lib/event-type-badge";
@@ -26,6 +28,7 @@ export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
   const event = response?.data;
   const archived = isEventPast(event?.endsAt);
   const eventsBackHref = eventsListHref(variant, archived);
+  const coverSrc = remoteCoverImageSrc(event?.coverImageUrl);
 
   if (isLoading && !event) {
     return (
@@ -89,6 +92,15 @@ export function EventDetail({ slug, variant = "public" }: EventDetailProps) {
                 <EventRegistration event={event} />
               </div>
             )}
+
+            {coverSrc ? (
+              <CoverImage
+                src={coverSrc}
+                alt=""
+                unoptimized
+                className="mt-10 mb-0 max-w-2xl md:mb-0"
+              />
+            ) : null}
 
             {event.fullDescription || (event.tags && event.tags.length > 0) ? (
               <section className="mt-16 space-y-6">

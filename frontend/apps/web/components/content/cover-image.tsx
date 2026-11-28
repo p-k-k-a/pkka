@@ -8,6 +8,12 @@ type CoverImageProps = {
   alt: string;
   aspect?: "video" | "photo";
   showPlaceholder?: boolean;
+  /**
+   * Load the image straight from its URL instead of through the image optimizer. Needed for
+   * a cover an admin set: it is either a signed URL of a private file, which must not be
+   * re-served from our cache, or a link to a host the optimizer is not configured for.
+   */
+  unoptimized?: boolean;
   className?: string;
 };
 
@@ -16,6 +22,7 @@ export function CoverImage({
   alt,
   aspect = "video",
   showPlaceholder = false,
+  unoptimized = false,
   className,
 }: CoverImageProps) {
   const imageSrc = src ?? (showPlaceholder ? null : DEFAULT_COVER_IMAGE);
@@ -35,6 +42,7 @@ export function CoverImage({
           alt={alt}
           fill
           priority
+          unoptimized={unoptimized}
           sizes="(max-width: 768px) 100vw, 768px"
           className="object-cover"
         />
