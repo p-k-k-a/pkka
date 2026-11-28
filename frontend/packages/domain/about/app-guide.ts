@@ -65,7 +65,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
     ],
   },
   {
-    title: "Dla zweryfikowanych absolwentów",
+    title: "Po zalogowaniu",
     features: [
       {
         icon: "calendar",
@@ -73,6 +73,17 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
         description:
           "Zapisuj się na wydarzenia, dodawaj je do kalendarza i dołączaj do spotkań online prosto z aplikacji.",
       },
+      {
+        icon: "bell",
+        title: "Przypomnienia",
+        description:
+          "Powiadomienia w aplikacji mobilnej i e-maile przed wydarzeniami, na które się zapisujesz.",
+      },
+    ],
+  },
+  {
+    title: "Dla zweryfikowanych absolwentów",
+    features: [
       {
         icon: "users",
         title: "Katalog absolwentów",
@@ -94,12 +105,6 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
         icon: "groups",
         title: "Grupy tematyczne",
         description: "Dołącz do grupy o temacie, który Cię interesuje, albo zaproponuj nową.",
-      },
-      {
-        icon: "bell",
-        title: "Przypomnienia",
-        description:
-          "Powiadomienia w aplikacji mobilnej i e-maile przed wydarzeniami, na które się zapisujesz.",
       },
     ],
   },
