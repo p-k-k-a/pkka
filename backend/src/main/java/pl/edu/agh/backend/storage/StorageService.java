@@ -249,7 +249,8 @@ public class StorageService implements AutoCloseable {
                 try {
                     requireUploaded(picture);
                 } catch (InvalidFileException ex) {
-                    throw new InvalidPostContentException("content: " + ex.getMessage());
+                    throw new InvalidPostContentException(
+                            InvalidPostContentException.Reason.POST_CONTENT_PICTURE, "content: " + ex.getMessage());
                 }
             }
         }

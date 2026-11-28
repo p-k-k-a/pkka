@@ -262,7 +262,7 @@ class StorageEndpointTest {
                         .content(new JsonMapper()
                                 .writeValueAsString(Map.of("title", "X", "content", "![](" + key + ")"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason").value("POST_CONTENT"));
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT_PICTURE"));
     }
 
     @Test
