@@ -2,11 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
 import { AlumniOnlyBadge } from "@/components/events/event-type-badge";
-import {
-  ALUMNI_ONLY_POST_LABEL,
-  formatPublishedAtCompact,
-  placeholderCoverUrl,
-} from "@pkka/domain";
+import { formatPublishedAtCompact, placeholderCoverUrl } from "@pkka/domain";
 import { PostAudience, type PostSummaryResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
@@ -34,9 +30,7 @@ export function PostCard({ post }: PostCardProps) {
           <Text className="text-muted-foreground text-sm font-semibold">
             {formatPublishedAtCompact(publishedAt)}
           </Text>
-          {audience === PostAudience.ALUMNI ? (
-            <AlumniOnlyBadge label={ALUMNI_ONLY_POST_LABEL} />
-          ) : null}
+          {audience === PostAudience.ALUMNI ? <AlumniOnlyBadge /> : null}
         </View>
         <Text
           role="heading"
