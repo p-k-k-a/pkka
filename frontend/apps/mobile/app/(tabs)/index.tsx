@@ -11,7 +11,7 @@ const PAGE_SIZE = 20;
 
 const HERO = {
   title: "Witaj w P.K.K.A",
-  body: "Platforma łącząca inżynierów i specjalistów IT Wydziału Informatyki AGH. Współpracuj, rozwijaj się i buduj przyszłość technologii.",
+  body: "Ogłoszenia i wpisy Klubu Alumnów Wydziału Informatyki AGH.",
 };
 
 function ListHeader() {
