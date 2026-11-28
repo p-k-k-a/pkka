@@ -84,8 +84,17 @@ export function MaterialForm({ material }: MaterialFormProps) {
   // since); keep it selectable so saving doesn't silently unlink it.
   const eventOptions =
     material?.eventId && !events.some((item) => item.id === material.eventId)
-      ? [{ id: material.eventId, title: material.eventTitle ?? "Wydarzenie", startsAt: undefined }]
+      ? [
+          {
+            id: material.eventId,
+            title: material.eventDeleted
+              ? "Usunięte wydarzenie"
+              : (material.eventTitle ?? "Wydarzenie"),
+            startsAt: undefined,
+          },
+        ]
       : [];
+  const keepsDeletedEvent = material?.eventDeleted === true && eventId === material.eventId;
   const selectedEventTitle =
     events.find((item) => item.id === eventId)?.title ??
     (eventId === material?.eventId ? material?.eventTitle : undefined);
@@ -295,6 +304,11 @@ export function MaterialForm({ material }: MaterialFormProps) {
                 {eventsQuery.isError ? (
                   <p className="text-destructive text-xs font-medium">
                     Nie udało się załadować wydarzeń.
+                  </p>
+                ) : keepsDeletedEvent ? (
+                  <p className="text-destructive text-xs font-medium">
+                    To wydarzenie zostało usunięte, więc materiał widzą tylko administratorzy.
+                    Wybierz inne wydarzenie albo „bez wydarzenia”, żeby go pokazać.
                   </p>
                 ) : eventId ? (
                   <p className="text-muted-foreground text-xs">
