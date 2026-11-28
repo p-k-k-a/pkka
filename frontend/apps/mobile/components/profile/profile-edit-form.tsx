@@ -1,4 +1,4 @@
-import { InitialsAvatar } from "@/components/ui/initials-avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { CheckboxCard } from "@/components/application/checkbox-card";
 import { FormField } from "@/components/application/form-field";
 import { FormSection } from "@/components/application/form-section";
@@ -8,11 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import {
+  AVATAR_UPLOAD,
   canonicalizeProfileUrl,
   githubUrlError,
   linkedinUrlError,
   phoneNumberError,
+  uploadErrorMessage,
+  uploadProgressLabel,
 } from "@pkka/domain";
+import { pickAvatar } from "@/lib/pick-avatar";
 import { useThemeColors } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import {
@@ -20,6 +24,8 @@ import {
   getGetMyProfileQueryKey,
   getGetMyTagsQueryKey,
   getListAlumniTagsQueryKey,
+  presignAvatar,
+  useFileUpload,
   useGetMyProfile,
   useGetMyTags,
   useListAlumniTags,
@@ -30,7 +36,7 @@ import {
 import { useForm, type AnyFieldApi } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { Camera, Eye, EyeOff } from "lucide-react-native";
+import { Camera, Eye, EyeOff, Trash2 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { DeleteAccount } from "@/components/profile/delete-account";
@@ -123,6 +129,12 @@ function IdentityRow({
   );
 }
 
+/** What saving the profile should do with the picture. */
+type AvatarChange =
+  | { kind: "unchanged" }
+  | { kind: "replaced"; objectKey: string; previewUri: string }
+  | { kind: "removed" };
+
 function ProfileForm({ profile }: { profile: ProfileResponse }) {
   const theme = useThemeColors();
   const queryClient = useQueryClient();
@@ -140,6 +152,51 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
   // Read at submit time via a ref so the (possibly memoized) onSubmit closure
   // never saves an empty set before the current tags have loaded.
   const seededTagsRef = useRef(false);
+
+  // The picture is uploaded when picked, but the profile only points at it once the form is
+  // saved. Kept in a ref as well, for the same reason as the tags flag above.
+  const [avatarChange, setAvatarChangeState] = useState<AvatarChange>({ kind: "unchanged" });
+  const avatarChangeRef = useRef<AvatarChange>(avatarChange);
+  const setAvatarChange = (change: AvatarChange) => {
+    avatarChangeRef.current = change;
+    setAvatarChangeState(change);
+  };
+  const avatarUpload = useFileUpload({ rule: AVATAR_UPLOAD, presign: presignAvatar });
+  // Covers picking and resizing too, not just the upload itself.
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarUrl =
+    avatarChange.kind === "unchanged"
+      ? profile.avatarUrl
+      : avatarChange.kind === "replaced"
+        ? avatarChange.previewUri
+        : undefined;
+
+  const changeAvatar = async () => {
+    setAvatarError(null);
+    setAvatarBusy(true);
+    try {
+      let picked;
+      try {
+        picked = await pickAvatar();
+      } catch {
+        setAvatarError("Nie udało się wczytać tego zdjęcia. Wybierz inne.");
+        return;
+      }
+      if (!picked) return;
+      try {
+        const objectKey = await avatarUpload.upload({
+          blob: picked.blob,
+          contentType: picked.contentType,
+        });
+        setAvatarChange({ kind: "replaced", objectKey, previewUri: picked.uri });
+      } catch (uploadException) {
+        setAvatarError(uploadErrorMessage(uploadException, AVATAR_UPLOAD));
+      }
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   const form = useForm({
     defaultValues: {
@@ -174,6 +231,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       }
 
       const trimmed = (v: string) => v.trim();
+      const avatar = avatarChangeRef.current;
       try {
         await updateMyProfile.mutateAsync({
           data: {
@@ -190,6 +248,9 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
               discord: value.showDiscord,
               phone: value.showPhone,
             },
+            // Left out when untouched, which keeps the current picture; a blank key removes it.
+            ...(avatar.kind === "replaced" ? { avatarKey: avatar.objectKey } : {}),
+            ...(avatar.kind === "removed" ? { avatarKey: "" } : {}),
           },
         });
         queryClient.invalidateQueries({ queryKey: getGetMyProfileQueryKey() });
@@ -220,18 +281,64 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
       bottomOffset={24}
     >
       <View className="items-center gap-3">
-        <InitialsAvatar
-          name={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
-          size="xl"
-        />
-        {/* Mocked — photo upload isn't implemented; the button intentionally does nothing. */}
-        <Button variant="outline" size="sm" onPress={() => {}} className="active:bg-muted">
-          <Camera size={16} color={theme.foreground} />
-          <Text className="group-active:text-foreground">Zmień zdjęcie</Text>
-        </Button>
-        <Text className="text-muted-foreground text-center text-[13px]">
-          Dodawanie zdjęć jeszcze nie działa. Na razie pokazujemy Twoje inicjały.
-        </Text>
+        <View>
+          <UserAvatar
+            imageUrl={avatarUrl}
+            name={[profile.firstName, profile.lastName].filter(Boolean).join(" ")}
+            size="xl"
+          />
+          {avatarBusy ? (
+            <View className="bg-background/70 absolute inset-0 items-center justify-center rounded-full">
+              <ActivityIndicator />
+            </View>
+          ) : null}
+        </View>
+        <form.Subscribe selector={(state) => state.isSubmitting}>
+          {(isSubmitting) => (
+            <View className="flex-row flex-wrap justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={avatarBusy || isSubmitting}
+                onPress={changeAvatar}
+                className="active:bg-muted"
+              >
+                <Camera size={16} color={theme.foreground} />
+                <Text className="group-active:text-foreground">
+                  {avatarUpload.isUploading
+                    ? `Przesyłanie… ${uploadProgressLabel(avatarUpload.progress)}`
+                    : avatarUrl
+                      ? "Zmień zdjęcie"
+                      : "Dodaj zdjęcie"}
+                </Text>
+              </Button>
+              {avatarUrl && !avatarBusy ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onPress={() => {
+                    setAvatarError(null);
+                    setAvatarChange({ kind: "removed" });
+                  }}
+                  disabled={isSubmitting}
+                  className="active:bg-muted"
+                >
+                  <Trash2 size={16} color={theme.foreground} />
+                  <Text className="group-active:text-foreground">Usuń zdjęcie</Text>
+                </Button>
+              ) : null}
+            </View>
+          )}
+        </form.Subscribe>
+        {avatarError ? (
+          <Text className="text-destructive text-center text-[13px] font-semibold">
+            {avatarError}
+          </Text>
+        ) : (
+          <Text className="text-muted-foreground text-center text-[13px]">
+            Bez zdjęcia pokazujemy Twoje inicjały.
+          </Text>
+        )}
       </View>
 
       <FormSection title="Dane podstawowe">
@@ -400,7 +507,7 @@ function ProfileForm({ profile }: { profile: ProfileResponse }) {
           <Button
             size="lg"
             className="w-full"
-            disabled={!canSubmit || isSubmitting}
+            disabled={!canSubmit || isSubmitting || avatarBusy}
             onPress={() => form.handleSubmit()}
           >
             <Text className="flex-1 text-center text-sm font-bold uppercase tracking-widest">
