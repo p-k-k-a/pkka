@@ -39,7 +39,7 @@ import { eventDetailHref } from "@/lib/event-paths";
 import { isStorageUnavailable } from "@/lib/save-errors";
 import {
   AUDIENCE_OPTIONS,
-  EVENT_COVER_UPLOAD,
+  IMAGE_UPLOAD,
   EVENT_TYPE_OPTIONS,
   audienceLabel,
   fromDatetimeLocalValue,
@@ -106,7 +106,7 @@ export function EventForm({ event }: EventFormProps) {
     reference: event?.coverImageUrl,
     previewUrl: event?.coverImageUrl,
   });
-  const coverUpload = useFileUpload({ rule: EVENT_COVER_UPLOAD, presign: presignCover });
+  const coverUpload = useFileUpload({ rule: IMAGE_UPLOAD, presign: presignCover });
 
   const { data: tagsResponse } = useListTags();
   const catalogTags = tagsResponse?.data ?? [];
@@ -286,7 +286,7 @@ export function EventForm({ event }: EventFormProps) {
                 value={cover}
                 onChange={setCover}
                 upload={coverUpload}
-                rule={EVENT_COVER_UPLOAD}
+                rule={IMAGE_UPLOAD}
               />
             </section>
 

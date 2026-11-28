@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UploadMessage, UploadProgress, useFilePicker } from "@/components/upload/upload-control";
 import { cn } from "@/lib/utils";
 import type { FileUpload } from "@pkka/api";
-import { uploadErrorMessage, uploadProgressLabel, type LabelledUploadRule } from "@pkka/domain";
+import type { LabelledUploadRule } from "@pkka/domain";
 import { Image } from "@tiptap/extension-image";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
@@ -28,7 +29,7 @@ import {
   TextQuote,
   Undo2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 function ToolbarTip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
@@ -58,8 +59,6 @@ export function MarkdownEditor({
   ariaLabel = "Treść wpisu",
   imageUpload,
 }: MarkdownEditorProps) {
-  const imageInput = useRef<HTMLInputElement>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
   // A picture uploaded in this session is shown from a local preview URL, because only the API
   // can sign a URL for the stored file. What leaves the editor names it by its object key.
   const uploadedImages = useRef(new Map<string, string>());
@@ -117,25 +116,20 @@ export function MarkdownEditor({
     }),
   });
 
-  if (!editor) {
-    return <div className={cn("bg-muted/40 min-h-80 animate-pulse rounded-lg", className)} />;
-  }
-
-  async function insertImage(changeEvent: React.ChangeEvent<HTMLInputElement>) {
-    const file = changeEvent.target.files?.[0];
-    // Cleared so that picking the same file again still fires.
-    changeEvent.target.value = "";
-    if (!file || !imageUpload || !editor) return;
-
-    setImageError(null);
-    try {
-      const objectKey = await imageUpload.upload.upload({ blob: file });
+  // The same picking and messages as every other upload button; only the button differs.
+  const imagePicker = useFilePicker({
+    upload: imageUpload?.upload,
+    rule: imageUpload?.rule,
+    onUploaded: (objectKey, file) => {
+      if (!editor) return;
       const previewUrl = URL.createObjectURL(file);
       uploadedImages.current.set(previewUrl, objectKey);
       editor.chain().focus().setImage({ src: previewUrl, alt: "" }).run();
-    } catch (error) {
-      setImageError(uploadErrorMessage(error, imageUpload.rule));
-    }
+    },
+  });
+
+  if (!editor) {
+    return <div className={cn("bg-muted/40 min-h-80 animate-pulse rounded-lg", className)} />;
   }
 
   const marks = [
@@ -237,15 +231,7 @@ export function MarkdownEditor({
         {imageUpload ? (
           <>
             <Separator orientation="vertical" className="mx-1" />
-            <input
-              ref={imageInput}
-              type="file"
-              accept={imageUpload.rule.contentTypes.join(",")}
-              className="sr-only"
-              tabIndex={-1}
-              aria-hidden="true"
-              onChange={insertImage}
-            />
+            {imagePicker.fileInput}
             <ToolbarTip label="Wstaw zdjęcie">
               <Button
                 type="button"
@@ -253,20 +239,13 @@ export function MarkdownEditor({
                 size="icon-sm"
                 aria-label="Wstaw zdjęcie"
                 disabled={imageUpload.upload.isUploading}
-                onClick={() => imageInput.current?.click()}
+                onClick={imagePicker.open}
               >
                 <ImagePlus />
               </Button>
             </ToolbarTip>
             {imageUpload.upload.isUploading ? (
-              <>
-                <span className="text-muted-foreground text-xs tabular-nums" role="status">
-                  Przesyłanie zdjęcia… {uploadProgressLabel(imageUpload.upload.progress)}
-                </span>
-                <Button type="button" variant="ghost" size="xs" onClick={imageUpload.upload.cancel}>
-                  Anuluj
-                </Button>
-              </>
+              <UploadProgress upload={imageUpload.upload} className="h-8 min-w-48" />
             ) : null}
           </>
         ) : null}
@@ -296,13 +275,8 @@ export function MarkdownEditor({
           </Button>
         </ToolbarTip>
       </div>
-      {imageError ? (
-        <p
-          role="alert"
-          className="text-destructive border-border border-b px-4 py-2 text-xs font-medium"
-        >
-          {imageError}
-        </p>
+      {imagePicker.message ? (
+        <UploadMessage message={imagePicker.message} className="border-border border-b px-4 py-2" />
       ) : null}
       <EditorContent editor={editor} className="rich-text space-y-5 leading-8" />
     </div>

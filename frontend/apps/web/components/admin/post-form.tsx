@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { POST_COVER_UPLOAD, POST_IMAGE_UPLOAD, formatPublishedAt } from "@pkka/domain";
+import { IMAGE_UPLOAD, formatPublishedAt } from "@pkka/domain";
 import {
   AdminUploadPurpose,
   getGetAdminPostQueryKey,
@@ -69,9 +69,9 @@ export function PostForm({ post }: PostFormProps) {
     reference: post?.coverImageUrl,
     previewUrl: post?.coverImageUrl,
   });
-  const coverUpload = useFileUpload({ rule: POST_COVER_UPLOAD, presign: presignCover });
+  const coverUpload = useFileUpload({ rule: IMAGE_UPLOAD, presign: presignCover });
   const contentImageUpload = useFileUpload({
-    rule: POST_IMAGE_UPLOAD,
+    rule: IMAGE_UPLOAD,
     presign: presignContentImage,
   });
   const [postId, setPostId] = useState(post?.id);
@@ -192,7 +192,7 @@ export function PostForm({ post }: PostFormProps) {
               <MarkdownEditor
                 initialContent={post?.content ?? ""}
                 onChange={setContent}
-                imageUpload={{ upload: contentImageUpload, rule: POST_IMAGE_UPLOAD }}
+                imageUpload={{ upload: contentImageUpload, rule: IMAGE_UPLOAD }}
               />
             </section>
 
@@ -202,7 +202,7 @@ export function PostForm({ post }: PostFormProps) {
                 value={cover}
                 onChange={setCover}
                 upload={coverUpload}
-                rule={POST_COVER_UPLOAD}
+                rule={IMAGE_UPLOAD}
               />
             </section>
           </div>
