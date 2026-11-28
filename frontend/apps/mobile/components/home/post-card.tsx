@@ -1,8 +1,13 @@
 import { Card } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 import { useThemeColors } from "@/lib/theme";
-import { formatPublishedAtCompact, placeholderCoverUrl } from "@pkka/domain";
-import type { PostSummaryResponse } from "@pkka/api";
+import { AlumniOnlyBadge } from "@/components/events/event-type-badge";
+import {
+  ALUMNI_ONLY_POST_LABEL,
+  formatPublishedAtCompact,
+  placeholderCoverUrl,
+} from "@pkka/domain";
+import { PostAudience, type PostSummaryResponse } from "@pkka/api";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { ArrowRight } from "lucide-react-native";
@@ -14,7 +19,7 @@ type PostCardProps = {
 
 export function PostCard({ post }: PostCardProps) {
   const theme = useThemeColors();
-  const { id, title, slug, publishedAt } = post;
+  const { id, title, slug, publishedAt, audience } = post;
 
   const card = (
     <Card className="bg-muted gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-none">
@@ -25,9 +30,14 @@ export function PostCard({ post }: PostCardProps) {
         style={{ width: "100%", aspectRatio: 16 / 9 }}
       />
       <View className="gap-3 px-6 pt-5">
-        <Text className="text-muted-foreground text-sm font-semibold">
-          {formatPublishedAtCompact(publishedAt)}
-        </Text>
+        <View className="flex-row flex-wrap items-center gap-3">
+          <Text className="text-muted-foreground text-sm font-semibold">
+            {formatPublishedAtCompact(publishedAt)}
+          </Text>
+          {audience === PostAudience.ALUMNI ? (
+            <AlumniOnlyBadge label={ALUMNI_ONLY_POST_LABEL} />
+          ) : null}
+        </View>
         <Text
           role="heading"
           aria-level="3"

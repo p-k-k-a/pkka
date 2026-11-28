@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useListPosts } from "@pkka/api";
+import { PostAudience, useListPosts } from "@pkka/api";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AlumniOnlyBadge } from "@/components/content/alumni-only-badge";
 import { CardLinkFooter } from "@/components/content/card-link-footer";
 import { FeaturedCard } from "@/components/content/featured-card";
 import { PublishedMeta } from "@/components/content/published-meta";
@@ -45,6 +46,7 @@ function AnnouncementsGrid({ basePath }: { basePath: string }) {
     <div className={GRID_CLASS}>
       {announcements.map((post, index) => {
         const href = `${basePath}/${post.slug ?? ""}`;
+        const badge = post.audience === PostAudience.ALUMNI ? <AlumniOnlyBadge /> : null;
 
         if (index === 0) {
           return (
@@ -54,6 +56,7 @@ function AnnouncementsGrid({ basePath }: { basePath: string }) {
               imageSrc={DEFAULT_COVER_IMAGE}
               imageAlt=""
               label="Najnowsze"
+              badge={badge}
               title={post.title ?? ""}
               meta={<PublishedMeta publishedAt={post.publishedAt} />}
               cta="Czytaj dalej"
@@ -69,6 +72,7 @@ function AnnouncementsGrid({ basePath }: { basePath: string }) {
             className="group focus-visible:ring-ring block h-full rounded-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none"
           >
             <Card className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0">
+              {badge}
               <h3 className="font-heading text-foreground text-lg leading-snug font-semibold">
                 {post.title}
               </h3>

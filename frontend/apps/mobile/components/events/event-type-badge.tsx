@@ -20,11 +20,11 @@ export function EventTypeBadge({ type, className }: { type: EventType; className
   );
 }
 
-export function AlumniOnlyBadge() {
+export function AlumniOnlyBadge({ label = "Alumni" }: { label?: string }) {
   return (
-    <View className="bg-band rounded-lg px-3 py-1">
+    <View className="bg-band self-start rounded-lg px-3 py-1">
       <Text className="text-band-foreground text-[11px] font-semibold uppercase tracking-widest">
-        Alumni
+        {label}
       </Text>
     </View>
   );

@@ -1,8 +1,9 @@
 "use client";
 
 import { Calendar, Clock } from "lucide-react";
-import { useGetPost } from "@pkka/api";
+import { PostAudience, useGetPost } from "@pkka/api";
 import { formatPublishedAt } from "@pkka/domain";
+import { AlumniOnlyBadge } from "@/components/content/alumni-only-badge";
 import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProseContent } from "@/components/content/prose-content";
@@ -62,6 +63,11 @@ export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailP
 
         <div className="mt-10 grid grid-cols-1 items-start gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div>
+            {post.audience === PostAudience.ALUMNI ? (
+              <div className="mb-4">
+                <AlumniOnlyBadge />
+              </div>
+            ) : null}
             <h1 className="font-heading text-foreground text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
               {post.title}
             </h1>

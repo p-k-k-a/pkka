@@ -8,13 +8,15 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { formatPublishedAt } from "@pkka/domain";
+import { formatPublishedAt, POST_AUDIENCE_OPTIONS } from "@pkka/domain";
 import {
   getGetAdminPostQueryKey,
   getListAdminPostsQueryKey,
   useCreateAdminPost,
   useUpdateAdminPost,
+  PostAudience,
   PostStatus,
   type AdminPostResponse,
 } from "@pkka/api";
@@ -51,6 +53,7 @@ export function PostForm({ post }: PostFormProps) {
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [content, setContent] = useState(post?.content ?? "");
+  const [audience, setAudience] = useState<PostAudience>(post?.audience ?? PostAudience.PUBLIC);
   const [postId, setPostId] = useState(post?.id);
   const [pendingStatus, setPendingStatus] = useState<PostStatus | null>(null);
 
@@ -75,7 +78,7 @@ export function PostForm({ post }: PostFormProps) {
   };
 
   const save = (status: PostStatus) => {
-    const data = { title: title.trim(), content, status } as const;
+    const data = { title: title.trim(), content, status, audience } as const;
     setPendingStatus(status);
 
     if (postId !== undefined) {
@@ -173,7 +176,7 @@ export function PostForm({ post }: PostFormProps) {
                   </TooltipTrigger>
                   <TooltipContent>
                     Szkic widzą tylko administratorzy. Możesz go zapisywać wiele razy. Publikacja
-                    jest nieodwracalna i widoczna dla wszystkich.
+                    jest nieodwracalna.
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -211,6 +214,22 @@ export function PostForm({ post }: PostFormProps) {
                   Opublikowano: {formatPublishedAt(post.publishedAt).dateLabel}
                 </p>
               ) : null}
+            </Card>
+
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionTitle>Kto zobaczy wpis</SectionTitle>
+              <Select
+                id="post-audience"
+                aria-label="Kto zobaczy wpis"
+                value={audience}
+                onChange={(changeEvent) => setAudience(changeEvent.target.value as PostAudience)}
+              >
+                {POST_AUDIENCE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Card>
 
             <Card className="gap-5 rounded-lg p-5 shadow-none">

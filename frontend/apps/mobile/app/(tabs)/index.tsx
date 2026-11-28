@@ -19,7 +19,7 @@ function ListHeader() {
     <View className="gap-6">
       <PageHeader title={HERO.title} description={HERO.body} />
       <View className="gap-6 px-5">
-        <SectionHeading title="Publiczne Aktualności" />
+        <SectionHeading title="Aktualności" />
       </View>
     </View>
   );

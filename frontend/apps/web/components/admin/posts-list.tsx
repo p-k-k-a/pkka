@@ -1,6 +1,7 @@
 "use client";
 
 import { PostStatusBadge } from "@/components/admin/post-status-badge";
+import { AlumniOnlyBadge } from "@/components/content/alumni-only-badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,7 @@ import {
   getListAdminPostsQueryKey,
   useDeleteAdminPost,
   useListAdminPosts,
+  PostAudience,
   PostStatus,
   type AdminPostListItemResponse,
 } from "@pkka/api";
@@ -164,7 +166,10 @@ export function PostsList() {
                       key={post.id}
                       className="bg-muted flex h-full flex-col gap-6 overflow-visible rounded-none p-6 shadow-none ring-0"
                     >
-                      <PostStatusBadge status={post.status} />
+                      <div className="flex flex-wrap items-center gap-2">
+                        <PostStatusBadge status={post.status} />
+                        {post.audience === PostAudience.ALUMNI ? <AlumniOnlyBadge /> : null}
+                      </div>
                       <h2 className="font-heading text-foreground text-lg leading-snug font-semibold">
                         {post.title}
                       </h2>

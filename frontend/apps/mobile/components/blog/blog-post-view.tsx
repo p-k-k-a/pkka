@@ -1,7 +1,8 @@
 import { ProseContent } from "@/components/content/prose-content";
 import { Text } from "@/components/ui/text";
-import { formatPublishedAtCompact } from "@pkka/domain";
-import type { PostResponse } from "@pkka/api";
+import { AlumniOnlyBadge } from "@/components/events/event-type-badge";
+import { ALUMNI_ONLY_POST_LABEL, formatPublishedAtCompact } from "@pkka/domain";
+import { PostAudience, type PostResponse } from "@pkka/api";
 import { ScrollView, View } from "react-native";
 
 type BlogPostViewProps = {
@@ -17,6 +18,9 @@ export function BlogPostView({ post }: BlogPostViewProps) {
     >
       <View className="gap-6 px-5 pt-5">
         <View className="gap-2">
+          {post.audience === PostAudience.ALUMNI ? (
+            <AlumniOnlyBadge label={ALUMNI_ONLY_POST_LABEL} />
+          ) : null}
           <Text className="text-muted-foreground text-sm font-semibold">
             {formatPublishedAtCompact(post.publishedAt)}
           </Text>
