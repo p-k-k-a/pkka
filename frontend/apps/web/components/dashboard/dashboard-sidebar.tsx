@@ -98,9 +98,7 @@ export function DashboardSidebar() {
     ? adminItems
     : userItems.filter((item) => {
         if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
-          return isVerified;
-        }
+        if (item.href === "/dashboard/alumni") return isVerified;
         return true;
       });
 
