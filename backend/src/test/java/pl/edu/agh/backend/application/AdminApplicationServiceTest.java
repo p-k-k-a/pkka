@@ -62,7 +62,8 @@ class AdminApplicationServiceTest {
         assertThat(eventCaptor.getAllValues())
                 .containsExactly(
                         new ApplicationApprovedEvent("applicant-kc"),
-                        new ApplicationReviewedEvent("ala@example.com", "Ala", ApplicationStatus.APPROVED, null));
+                        new ApplicationReviewedEvent(
+                                applicant.getId(), "ala@example.com", "Ala", ApplicationStatus.APPROVED, null));
     }
 
     @Test
@@ -83,7 +84,7 @@ class AdminApplicationServiceTest {
         assertThat(response.rejectionReason()).isEqualTo("Incomplete docs");
         verify(eventPublisher)
                 .publishEvent(new ApplicationReviewedEvent(
-                        "ala@example.com", "Ala", ApplicationStatus.REJECTED, "Incomplete docs"));
+                        applicant.getId(), "ala@example.com", "Ala", ApplicationStatus.REJECTED, "Incomplete docs"));
         verify(eventPublisher, never()).publishEvent(any(ApplicationApprovedEvent.class));
     }
 
@@ -109,6 +110,7 @@ class AdminApplicationServiceTest {
 
     private static User applicant() {
         User user = user("applicant-kc");
+        user.setId(UUID.randomUUID());
         user.setEmail("ala@example.com");
         user.setFirstName("Ala");
         return user;

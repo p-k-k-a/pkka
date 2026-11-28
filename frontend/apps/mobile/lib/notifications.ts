@@ -23,6 +23,11 @@ const projectId =
 
 const NOTIFICATION_TYPES: readonly string[] = Object.values(NotificationType);
 
+const APPLICATION_TYPES: readonly NotificationType[] = [
+  NotificationType.APPLICATION_APPROVED,
+  NotificationType.APPLICATION_REJECTED,
+];
+
 function parseNotificationPayload(data: unknown): NotificationPayload | null {
   if (typeof data !== "object" || data === null) return null;
 
@@ -55,6 +60,11 @@ async function ensureChannels(): Promise<void> {
   await Notifications.setNotificationChannelAsync("reminders", {
     name: "Przypomnienia",
     description: "Przed wydarzeniami, na które jesteś zapisany",
+    importance: Notifications.AndroidImportance.HIGH,
+  });
+  await Notifications.setNotificationChannelAsync("account", {
+    name: "Twoje konto",
+    description: "Decyzja w sprawie wniosku o weryfikację",
     importance: Notifications.AndroidImportance.HIGH,
   });
 }
@@ -181,7 +191,11 @@ export function useNotificationRouting() {
     const payload = parseNotificationPayload(response?.notification.request.content.data);
     if (!payload) return;
 
-    router.push({ pathname: "/events/[slug]", params: { slug: payload.target } });
+    if (APPLICATION_TYPES.includes(payload.type)) {
+      router.push("/login");
+    } else {
+      router.push({ pathname: "/events/[slug]", params: { slug: payload.target } });
+    }
     Notifications.clearLastNotificationResponse();
   }, [response]);
 }

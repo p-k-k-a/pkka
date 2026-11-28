@@ -62,6 +62,7 @@ public class AdminApplicationService {
     private void publishReviewed(Application application) {
         User applicant = application.getApplicant();
         eventPublisher.publishEvent(new ApplicationReviewedEvent(
+                applicant.getId(),
                 applicant.getEmail(),
                 applicant.getFirstName(),
                 application.getStatus(),

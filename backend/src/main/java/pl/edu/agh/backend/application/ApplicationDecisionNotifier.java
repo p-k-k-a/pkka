@@ -7,16 +7,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.util.StringUtils;
 import pl.edu.agh.backend.infrastructure.mail.MailService;
+import pl.edu.agh.backend.notifications.NotificationService;
 
 @Component
 @RequiredArgsConstructor
-public class ApplicationDecisionMailer {
+public class ApplicationDecisionNotifier {
 
     private final MailService mailService;
+    private final NotificationService notificationService;
 
     @Async
     @TransactionalEventListener
     public void onApplicationReviewed(ApplicationReviewedEvent reviewed) {
+        switch (reviewed.decision()) {
+            case APPROVED -> notificationService.pushApplicationApproved(reviewed.applicantId());
+            case REJECTED -> notificationService.pushApplicationRejected(reviewed.applicantId());
+            default -> {}
+        }
         if (!StringUtils.hasText(reviewed.applicantEmail())) {
             return;
         }

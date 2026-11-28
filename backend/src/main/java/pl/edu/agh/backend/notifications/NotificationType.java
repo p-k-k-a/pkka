@@ -13,7 +13,9 @@ public enum NotificationType {
     REGISTRATION_PROMOTED("registrations"),
     EVENT_CHANGED("registrations"),
     EVENT_CANCELLED("registrations"),
-    EVENT_MESSAGE("registrations");
+    EVENT_MESSAGE("registrations"),
+    APPLICATION_APPROVED("account"),
+    APPLICATION_REJECTED("account");
 
     /** Android drops a notification whose channel does not exist on the device. */
     private final String channelId;

@@ -1,5 +1,11 @@
 package pl.edu.agh.backend.application;
 
-/** An admin approved or rejected an application; carries what the decision mail needs, read before commit. */
+import java.util.UUID;
+
+/** An admin approved or rejected an application; carries what the mail and push need, read before commit. */
 public record ApplicationReviewedEvent(
-        String applicantEmail, String applicantFirstName, ApplicationStatus decision, String rejectionReason) {}
+        UUID applicantId,
+        String applicantEmail,
+        String applicantFirstName,
+        ApplicationStatus decision,
+        String rejectionReason) {}
