@@ -23,7 +23,7 @@ const EDIT_HREF = "/dashboard/profile/edit";
  */
 type ProfileViewProps =
   | { variant: "own"; profile: ProfileResponse }
-  | { variant: "alumn"; profile: AlumniProfileResponse };
+  | { variant: "alumn"; profile: AlumniProfileResponse; actions?: React.ReactNode };
 
 function EmptyHint({ children }: { children: React.ReactNode }) {
   return (
@@ -50,12 +50,14 @@ export function ProfileView(props: ProfileViewProps) {
   const showSkills = isOwn || profile.tags.length > 0;
   const hasStudies = Boolean(profile.fieldOfStudy || profile.graduationYear || alumnSinceYear);
 
+  const extraActions = props.variant === "alumn" ? props.actions : null;
+
   // The owner edits; everyone else gets every direct channel the alumn shares.
   const primaryActions = isOwn ? (
     <Button asChild size="xl">
       <Link href={EDIT_HREF}>Edytuj profil</Link>
     </Button>
-  ) : contacts.discordUrl || contacts.email ? (
+  ) : contacts.discordUrl || contacts.email || extraActions ? (
     <>
       {contacts.discordUrl ? (
         <Button asChild size="xl">
@@ -73,6 +75,7 @@ export function ProfileView(props: ProfileViewProps) {
           </a>
         </Button>
       ) : null}
+      {extraActions}
     </>
   ) : null;
 

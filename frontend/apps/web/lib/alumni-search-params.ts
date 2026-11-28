@@ -8,6 +8,7 @@ import {
 } from "@pkka/domain";
 
 export const ALUMNI_DIRECTORY_HREF = "/dashboard/alumni";
+export const ALUMNI_CONTACTS_HREF = "/dashboard/alumni/contacts";
 export const ADMIN_ALUMNI_DIRECTORY_HREF = "/dashboard/admin/alumni";
 
 export type AlumniDirectoryState = {
