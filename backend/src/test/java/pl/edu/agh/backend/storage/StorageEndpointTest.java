@@ -339,7 +339,8 @@ class StorageEndpointTest {
                         .content(new JsonMapper()
                                 .writeValueAsString(
                                         Map.of("title", "X", "content", "[slajdy](" + signedMaterial + ")"))))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT_LINK"));
         assertThat(postRepository.count()).isEqualTo(postsBefore);
     }
 

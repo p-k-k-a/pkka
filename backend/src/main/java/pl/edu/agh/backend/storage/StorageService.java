@@ -190,7 +190,9 @@ public class StorageService implements AutoCloseable {
 
     private String toStoredContentTarget(String target) {
         if (target.regionMatches(true, 0, "blob:", 0, 5)) {
-            throw new InvalidPostContentException("content points at a picture that was not uploaded (a blob: URL)");
+            throw new InvalidPostContentException(
+                    InvalidPostContentException.Reason.POST_CONTENT_PICTURE,
+                    "content points at a picture that was not uploaded (a blob: URL)");
         }
         // Without storage our own bucket cannot be recognised, so the target stays as it is.
         String key = isHttpUrl(target) ? keyFromOwnUrl(target) : null;
@@ -198,8 +200,10 @@ public class StorageService implements AutoCloseable {
             return target;
         }
         if (!UploadCategory.POST_IMAGE.isValidKey(key)) {
-            throw new InvalidPostContentException("content links to a stored file through a signed URL, which stops "
-                    + "working within the hour; only pictures uploaded for a post can be placed in it");
+            throw new InvalidPostContentException(
+                    InvalidPostContentException.Reason.POST_CONTENT_LINK,
+                    "content links to a stored file that is not a post picture; only pictures uploaded for a post "
+                            + "can be placed in it");
         }
         return key;
     }

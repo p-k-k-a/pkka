@@ -181,7 +181,7 @@ class AdminPostEndpointTest {
                         .content("{\"title\": \"x\", \"content\": \"![](blob:http://localhost:3000/" + UUID.randomUUID()
                                 + ")\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.reason").value("POST_CONTENT"));
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT_PICTURE"));
     }
 
     @Test

@@ -202,7 +202,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidPostContentException.class)
     public ProblemDetail handleInvalidPostContent(InvalidPostContentException ex) {
         ProblemDetail problem = handleInvalidFile(ex);
-        problem.setProperty("reason", "POST_CONTENT");
+        problem.setProperty("reason", ex.reason().name());
         return problem;
     }
 
