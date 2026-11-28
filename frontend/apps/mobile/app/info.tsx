@@ -74,7 +74,7 @@ export default function InfoScreen() {
     <View className="flex-1 bg-background">
       <DetailHeader title="O aplikacji" onBack={() => router.back()} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerClassName="pb-12">
-        <PageHeader eyebrow={APP_GUIDE_INTRO.eyebrow} title={APP_GUIDE_INTRO.title}>
+        <PageHeader title={APP_GUIDE_INTRO.title}>
           {APP_GUIDE_INTRO.paragraphs.map((paragraph) => (
             <Text key={paragraph} className="text-muted-foreground text-base leading-relaxed">
               {paragraph}

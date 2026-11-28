@@ -44,9 +44,6 @@ export function AppGuide({ showAdmin = false }: { showAdmin?: boolean }) {
     <>
       <section className="bg-muted px-4 py-10 md:px-10 md:py-20">
         <div className="mx-auto max-w-[1280px] space-y-6">
-          <p className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-            {APP_GUIDE_INTRO.eyebrow}
-          </p>
           <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
             {APP_GUIDE_INTRO.title}
           </h1>

@@ -25,7 +25,6 @@ export type AppGuideSection = {
 };
 
 export const APP_GUIDE_INTRO = {
-  eyebrow: "Klub Alumnów WI AGH",
   title: "Czym jest PKKA?",
   paragraphs: [
     "Platforma Komunikacji Klubu Alumna to aplikacja społecznościowa absolwentów informatyki AGH. Dołączaj do wydarzeń, śledź aktualności klubu, szukaj mentorów i poznawaj innych absolwentów.",
