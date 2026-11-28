@@ -392,7 +392,59 @@ class MaterialEndpointTest {
         mockMvc.perform(get("/api/admin/materials").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].title").value("Nagranie"))
-                .andExpect(jsonPath("$.content[0].eventId").doesNotExist());
+                .andExpect(jsonPath("$.content[0].eventId").value(eventId.toString()))
+                .andExpect(jsonPath("$.content[0].eventTitle").doesNotExist())
+                .andExpect(jsonPath("$.content[0].eventDeleted").value(true));
+    }
+
+    @Test
+    void editingAMaterialOfADeletedEventKeepsItLinkedAndHidden() throws Exception {
+        UUID alumniEvent = createEvent("ALL_ALUMNI");
+        createMaterial(materialBody("Nagranie", alumniEvent, "PUBLIC"));
+        entityManager.clear();
+        mockMvc.perform(delete("/api/admin/events/{id}", alumniEvent)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf()))
+                .andExpect(status().isNoContent());
+        String id = JsonPath.read(
+                mockMvc.perform(get("/api/admin/materials").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString(),
+                "$.content[0].id");
+
+        // what the admin form sends back after fixing the title: the event it was given
+        mockMvc.perform(put("/api/admin/materials/{id}", id)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(materialBody("Nagranie z poprawką", alumniEvent, "PUBLIC")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventId").value(alumniEvent.toString()))
+                .andExpect(jsonPath("$.eventDeleted").value(true));
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asUser()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+        mockMvc.perform(get("/api/admin/materials").with(JwtTestSupport.asAdmin(ADMIN_SUBJECT)))
+                .andExpect(jsonPath("$.content[0].title").value("Nagranie z poprawką"))
+                .andExpect(jsonPath("$.content[0].eventId").value(alumniEvent.toString()))
+                .andExpect(jsonPath("$.content[0].eventDeleted").value(true));
+
+        // unlinking it on purpose still works, and hands it its own audience
+        mockMvc.perform(put("/api/admin/materials/{id}", id)
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(materialBody("Nagranie z poprawką", null, "PUBLIC")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventDeleted").value(false));
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get("/api/materials").with(JwtTestSupport.asUser()))
+                .andExpect(jsonPath("$.content[0].title").value("Nagranie z poprawką"));
     }
 
     @Test

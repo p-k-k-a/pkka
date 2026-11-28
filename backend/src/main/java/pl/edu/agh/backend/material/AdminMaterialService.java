@@ -62,13 +62,25 @@ public class AdminMaterialService {
         material.setDescription(request.description());
         material.setType(request.type());
         material.setUrl(storageService.toStoredReference(AdminUploadPurpose.MATERIAL, request.url()));
-        material.setEvent(resolveEvent(request.eventId()));
+        if (!keepsDeletedEvent(material, request.eventId())) {
+            material.linkEvent(resolveEvent(request.eventId()));
+        }
         material.setAudience(request.audience());
     }
 
     private AdminMaterialResponse respond(Material material) {
         return AdminMaterialResponse.from(
                 material, storageService.resolveDownloadUrl(material.getUrl(), material.getTitle()));
+    }
+
+    /**
+     * Whether the request names the soft-deleted event the material is still linked to. The link then stays as
+     * it is (and the material hidden, like the event); only choosing another event, or none, changes it.
+     */
+    private static boolean keepsDeletedEvent(Material material, UUID requestedEventId) {
+        return requestedEventId != null
+                && material.getEvent() == null
+                && requestedEventId.equals(material.getEventId());
     }
 
     private Event resolveEvent(UUID eventId) {

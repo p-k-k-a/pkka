@@ -29,8 +29,17 @@ public record AdminMaterialResponse(
                         + "for a link")
         String fileKey,
 
+        @Schema(description = "The linked event; still set after that event was deleted, see `eventDeleted`")
         UUID eventId,
+
+        @Schema(description = "Title of the linked event; null when there is none or it was deleted")
         String eventTitle,
+
+        @Schema(
+                requiredMode = RequiredMode.REQUIRED,
+                description = "The linked event was deleted: the material is hidden from everyone but admins until "
+                        + "it gets another event or none. Sending `eventId` back unchanged keeps it that way")
+        boolean eventDeleted,
 
         @Schema(
                 requiredMode = RequiredMode.REQUIRED,
@@ -49,8 +58,9 @@ public record AdminMaterialResponse(
                 url,
                 MaterialResponse.fileExtension(material.getUrl()),
                 StorageService.uploadedMaterialKey(material.getUrl()),
-                material.getEvent() != null ? material.getEvent().getId() : null,
+                material.getEventId(),
                 material.getEvent() != null ? material.getEvent().getTitle() : null,
+                material.getEventId() != null && material.getEvent() == null,
                 material.getAudience(),
                 material.getCreatedAt(),
                 material.getUpdatedAt());
