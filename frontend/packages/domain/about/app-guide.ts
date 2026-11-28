@@ -50,28 +50,18 @@ export const APP_GUIDE_STEPS: { title: string; description: string }[] = [
 
 export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
-    title: "Bez logowania",
+    title: "Dla zalogowanych",
     features: [
       {
         icon: "news",
         title: "Aktualności",
-        description: "Ogłoszenia i wpisy publikowane przez klub.",
+        description: "Publiczne ogłoszenia i wpisy klubu.",
       },
       {
         icon: "calendar",
-        title: "Wydarzenia",
-        description: "Nadchodzące spotkania, warsztaty i wydarzenia online.",
-      },
-    ],
-  },
-  {
-    title: "Po zalogowaniu",
-    features: [
-      {
-        icon: "calendar",
-        title: "Zapisy na wydarzenia",
+        title: "Wydarzenia publiczne",
         description:
-          "Zapisuj się na wydarzenia, dodawaj je do kalendarza i dołączaj do spotkań online prosto z aplikacji.",
+          "Zapisuj się na otwarte spotkania i warsztaty, dodawaj je do kalendarza i dołączaj do spotkań online prosto z aplikacji.",
       },
       {
         icon: "bell",
@@ -84,6 +74,11 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
   {
     title: "Dla zweryfikowanych absolwentów",
     features: [
+      {
+        icon: "calendar",
+        title: "Wydarzenia dla alumnów",
+        description: "Zamknięte spotkania widoczne tylko dla zweryfikowanych absolwentów.",
+      },
       {
         icon: "users",
         title: "Katalog absolwentów",
