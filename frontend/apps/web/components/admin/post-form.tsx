@@ -129,21 +129,6 @@ export function PostForm({ post }: PostFormProps) {
             </section>
 
             <section className="space-y-5">
-              <FieldLabel htmlFor="post-audience">Odbiorcy</FieldLabel>
-              <Select
-                id="post-audience"
-                value={audience}
-                onChange={(changeEvent) => setAudience(changeEvent.target.value as PostAudience)}
-              >
-                {POST_AUDIENCE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </section>
-
-            <section className="space-y-5">
               <SectionTitle>Treść</SectionTitle>
               <MarkdownEditor initialContent={post?.content ?? ""} onChange={setContent} />
             </section>
@@ -213,6 +198,24 @@ export function PostForm({ post }: PostFormProps) {
                   Opublikowano: {formatPublishedAt(post.publishedAt).dateLabel}
                 </p>
               ) : null}
+            </Card>
+
+            <Card className="gap-5 rounded-lg p-5 shadow-none">
+              <SectionTitle>Ustawienia</SectionTitle>
+              <div className="space-y-2">
+                <FieldLabel htmlFor="post-audience">Odbiorcy</FieldLabel>
+                <Select
+                  id="post-audience"
+                  value={audience}
+                  onChange={(changeEvent) => setAudience(changeEvent.target.value as PostAudience)}
+                >
+                  {POST_AUDIENCE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </Card>
           </div>
         </div>
