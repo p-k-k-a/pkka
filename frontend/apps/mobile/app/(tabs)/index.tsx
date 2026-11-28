@@ -19,10 +19,8 @@ const HERO = {
 
 const CTA = {
   title: "Dołącz do naszej społeczności",
-  subtitle:
-    "Dostęp do zamkniętych wydarzeń i katalogu ekspertów. Weryfikacja tylko dla absolwentów WI AGH.",
-  primaryLabel: "Dołącz",
-  secondaryLabel: "Dowiedz się więcej",
+  subtitle: "Wydarzenia, mentoring i networking dla absolwentów WI AGH.",
+  primaryLabel: "Czym jest PKKA?",
 };
 
 function ListHeader() {
@@ -32,13 +30,7 @@ function ListHeader() {
     <View className="gap-6">
       <PageHeader title={HERO.title} description={HERO.body} />
       <View className="gap-6 px-5">
-        {!user && (
-          <CtaCard
-            {...CTA}
-            onPrimary={() => router.push("/login")}
-            onSecondary={() => router.push("/info")}
-          />
-        )}
+        {!user && <CtaCard {...CTA} onPrimary={() => router.push("/info")} />}
         <SectionHeading title="Publiczne Aktualności" />
       </View>
     </View>
