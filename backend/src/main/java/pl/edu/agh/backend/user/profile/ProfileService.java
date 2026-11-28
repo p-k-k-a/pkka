@@ -16,6 +16,7 @@ import pl.edu.agh.backend.infrastructure.validation.TagNames;
 import pl.edu.agh.backend.storage.AvatarPresignRequest;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
 import pl.edu.agh.backend.storage.StorageService;
+import pl.edu.agh.backend.storage.UploadLimiter;
 import pl.edu.agh.backend.user.AlumniTag;
 import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.AlumniTagResponse;
@@ -32,6 +33,7 @@ public class ProfileService {
     private final AlumniTagRepository alumniTagRepository;
     private final ApplicationRepository applicationRepository;
     private final StorageService storageService;
+    private final UploadLimiter uploadLimiter;
 
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(String keycloakId) {
@@ -61,7 +63,7 @@ public class ProfileService {
             user.setPhoneNumber(blankToNull(request.phoneNumber()));
         }
         if (request.avatarKey() != null) {
-            user.setAvatarKey(storageService.toStoredAvatarKey(user.getId(), request.avatarKey()));
+            user.setAvatarKey(storageService.toStoredAvatarKey(user.getId(), request.avatarKey(), user.getAvatarKey()));
         }
         if (request.willingToMentor() != null) {
             user.setWillingToMentor(request.willingToMentor());
@@ -89,7 +91,11 @@ public class ProfileService {
         User user = userRepository
                 .findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
-        return storageService.presignAvatar(user.getId(), request.contentType(), request.sizeBytes());
+        PresignedUploadResponse upload =
+                storageService.presignAvatar(user.getId(), request.contentType(), request.sizeBytes());
+        // after signing, so a request that is rejected anyway does not count
+        uploadLimiter.count(UploadLimiter.Kind.AVATAR, keycloakId);
+        return upload;
     }
 
     private AlumnEducation education(User user) {

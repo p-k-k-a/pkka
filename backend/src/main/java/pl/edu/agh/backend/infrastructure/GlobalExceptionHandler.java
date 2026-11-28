@@ -3,8 +3,10 @@ package pl.edu.agh.backend.infrastructure;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +28,8 @@ import pl.edu.agh.backend.storage.FileTooLargeException;
 import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.InvalidPostContentException;
 import pl.edu.agh.backend.storage.StorageNotConfiguredException;
+import pl.edu.agh.backend.storage.StorageUnavailableException;
+import pl.edu.agh.backend.storage.TooManyUploadsException;
 import pl.edu.agh.backend.storage.UnsupportedFileTypeException;
 import pl.edu.agh.backend.survey.InvalidSurveyAnswerException;
 import pl.edu.agh.backend.survey.InvalidSurveyException;
@@ -193,6 +197,13 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(StorageUnavailableException.class)
+    public ProblemDetail handleStorageUnavailable(StorageUnavailableException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+        problem.setTitle("File storage not available");
+        return problem;
+    }
+
     @ExceptionHandler(InvalidFileException.class)
     public ProblemDetail handleInvalidFile(InvalidFileException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -212,6 +223,16 @@ public class GlobalExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
         problem.setTitle("Unsupported file type");
         return problem;
+    }
+
+    @ExceptionHandler(TooManyUploadsException.class)
+    public ResponseEntity<ProblemDetail> handleTooManyUploads(TooManyUploadsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problem.setTitle("Too many uploads");
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                // rounded up, so a client that waits exactly this long is let through
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.retryAfter().toSeconds() + 1))
+                .body(problem);
     }
 
     @ExceptionHandler(FileTooLargeException.class)

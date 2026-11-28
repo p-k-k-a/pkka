@@ -42,8 +42,8 @@ public class AdminPostService {
         Post post = new Post();
         post.setTitle(request.title());
         post.setSlug(SlugUtils.uniqueSlug(request.title(), postRepository::existsBySlug));
-        post.setContent(storageService.toStoredContent(request.content()));
-        post.setCoverImageUrl(coverImageReference(request.coverImageUrl()));
+        post.setContent(storageService.toStoredContent(request.content(), null));
+        post.setCoverImageUrl(coverImageReference(request.coverImageUrl(), null));
         post.setAuthor(callerUserService.getOrCreate(caller));
         if (request.status() == PostStatus.PUBLISHED) {
             post.publish();
@@ -58,8 +58,8 @@ public class AdminPostService {
             throw new PostAlreadyPublishedException();
         }
         // Resolved before the post is touched: either can reject the request.
-        String content = storageService.toStoredContent(request.content());
-        String coverImageUrl = coverImageReference(request.coverImageUrl());
+        String content = storageService.toStoredContent(request.content(), post.getContent());
+        String coverImageUrl = coverImageReference(request.coverImageUrl(), post.getCoverImageUrl());
         post.setTitle(request.title());
         post.setContent(content);
         post.setCoverImageUrl(coverImageUrl);
@@ -83,8 +83,8 @@ public class AdminPostService {
     }
 
     /** External URL as is, or the key of an uploaded cover; a signed URL echoed back from a read is reduced to its key. */
-    private String coverImageReference(String coverImageUrl) {
-        String reference = storageService.toStoredReference(AdminUploadPurpose.POST_COVER, coverImageUrl);
+    private String coverImageReference(String coverImageUrl, String current) {
+        String reference = storageService.toStoredReference(AdminUploadPurpose.POST_COVER, coverImageUrl, current);
         if (reference != null && reference.length() > MAX_STORED_COVER_LENGTH) {
             throw new InvalidFileException("coverImageUrl is too long");
         }

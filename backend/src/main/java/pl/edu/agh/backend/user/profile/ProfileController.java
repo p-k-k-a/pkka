@@ -47,7 +47,7 @@ public class ProfileController {
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(
             responseCode = "503",
-            description = "avatarKey was sent but object storage is not configured",
+            description = "a new avatarKey was sent but object storage is not configured or not available",
             content = @Content)
     public ProfileResponse updateMyProfile(Caller caller, @Valid @RequestBody UpdateProfileRequest request) {
         return profileService.updateProfile(caller.requireKeycloakId(), request);
@@ -64,6 +64,7 @@ public class ProfileController {
         @ApiResponse(responseCode = "200", description = "Upload URL issued"),
         @ApiResponse(responseCode = "413", description = "Image larger than the limit", content = @Content),
         @ApiResponse(responseCode = "415", description = "Content type is not jpeg, png or webp", content = @Content),
+        @ApiResponse(responseCode = "429", description = "Too many uploads within 24 hours", content = @Content),
         @ApiResponse(responseCode = "503", description = "Object storage is not configured", content = @Content)
     })
     public PresignedUploadResponse presignAvatar(Caller caller, @Valid @RequestBody AvatarPresignRequest request) {

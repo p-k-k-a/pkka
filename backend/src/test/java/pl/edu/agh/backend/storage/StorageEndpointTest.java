@@ -4,17 +4,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +27,9 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -55,6 +62,9 @@ class StorageEndpointTest {
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
 
+    @MockitoSpyBean
+    private StorageService storage;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -66,6 +76,11 @@ class StorageEndpointTest {
 
     @Autowired
     private PostRepository postRepository;
+
+    @BeforeEach
+    void everyFileIsUploaded() {
+        doNothing().when(storage).requireUploaded(anyString());
+    }
 
     @Test
     void adminGetsAPresignedUrlForAMaterial() throws Exception {
@@ -143,6 +158,33 @@ class StorageEndpointTest {
     }
 
     @Test
+    void oneUserGetsALimitedNumberOfAvatarUploads() throws Exception {
+        User user = savedUser();
+        String valid = "{\"contentType\":\"image/webp\",\"sizeBytes\":4096}";
+
+        // rejected requests do not use the limit up
+        avatarPresign(user, "{\"contentType\":\"text/html\",\"sizeBytes\":4096}")
+                .andExpect(status().isUnsupportedMediaType());
+        for (int i = 0; i < UploadLimiter.Kind.AVATAR.maxPerWindow(); i++) {
+            avatarPresign(user, valid).andExpect(status().isOk());
+        }
+
+        avatarPresign(user, valid)
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().exists("Retry-After"))
+                .andExpect(jsonPath("$.title").value("Too many uploads"));
+        avatarPresign(savedUser(), valid).andExpect(status().isOk());
+    }
+
+    private ResultActions avatarPresign(User user, String body) throws Exception {
+        return mockMvc.perform(post("/api/profiles/me/avatar/presign")
+                .with(JwtTestSupport.asUser(user.getKeycloakId()))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
+    }
+
+    @Test
     void userUploadsAnAvatarAndAttachesIt() throws Exception {
         User user = savedUser();
 
@@ -182,6 +224,45 @@ class StorageEndpointTest {
                         .content("{\"avatarKey\":\"\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.avatarUrl").doesNotExist());
+    }
+
+    @Test
+    void aFileThatCannotBeFoundOrCheckedIsNotAttached() throws Exception {
+        String key = presignAdminUpload("MATERIAL", "application/pdf");
+        String body = "{\"title\":\"Slajdy\",\"type\":\"PRESENTATION\",\"url\":\"" + key + "\"}";
+
+        doThrow(new InvalidFileException("No file was uploaded")).when(storage).requireUploaded(key);
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+
+        doThrow(new StorageUnavailableException(null)).when(storage).requireUploaded(key);
+        mockMvc.perform(post("/api/admin/materials")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    @Test
+    void aPictureInAPostThatWasNeverUploadedIsBlamedOnTheContent() throws Exception {
+        String key = presignAdminUpload("POST_IMAGE", "image/png");
+        doThrow(new InvalidFileException("No file was uploaded under " + key))
+                .when(storage)
+                .requireUploaded(key);
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .with(JwtTestSupport.asAdmin(ADMIN_SUBJECT))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new JsonMapper()
+                                .writeValueAsString(Map.of("title", "X", "content", "![](" + key + ")"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("POST_CONTENT_PICTURE"));
     }
 
     @Test

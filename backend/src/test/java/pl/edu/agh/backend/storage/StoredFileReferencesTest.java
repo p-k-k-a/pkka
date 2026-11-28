@@ -1,6 +1,8 @@
 package pl.edu.agh.backend.storage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -15,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +26,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -80,7 +84,7 @@ class StoredFileReferencesTest {
     @Autowired
     private StoredFileReferences references;
 
-    @Autowired
+    @MockitoSpyBean
     private StorageService storage;
 
     @Autowired
@@ -91,6 +95,11 @@ class StoredFileReferencesTest {
 
     @Autowired
     private JdbcTemplate jdbc;
+
+    @BeforeEach
+    void everyFileIsUploaded() {
+        doNothing().when(storage).requireUploaded(anyString());
+    }
 
     @Test
     void findsTheFilesOfEveryKindOfRecord() throws Exception {

@@ -24,6 +24,7 @@ import pl.edu.agh.backend.storage.InvalidFileException;
 import pl.edu.agh.backend.storage.PresignedUploadResponse;
 import pl.edu.agh.backend.storage.StorageNotConfiguredException;
 import pl.edu.agh.backend.storage.StorageService;
+import pl.edu.agh.backend.storage.UploadLimiter;
 import pl.edu.agh.backend.user.AlumniTag;
 import pl.edu.agh.backend.user.AlumniTagRepository;
 import pl.edu.agh.backend.user.User;
@@ -44,6 +45,9 @@ class ProfileServiceTest {
 
     @Mock
     private StorageService storageService;
+
+    @Mock
+    private UploadLimiter uploadLimiter;
 
     @InjectMocks
     private ProfileService profileService;
@@ -70,7 +74,8 @@ class ProfileServiceTest {
         User user = userWithId("kc-1");
         String key = "avatars/" + user.getId() + "/" + UUID.randomUUID() + ".png";
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.toStoredAvatarKey(user.getId(), "  " + key + " ")).thenReturn(key);
+        when(storageService.toStoredAvatarKey(user.getId(), "  " + key + " ", null))
+                .thenReturn(key);
         when(storageService.resolveUrl(key)).thenReturn("https://r2.example/signed");
 
         var response = profileService.updateProfile("kc-1", avatarRequest("  " + key + " "));
@@ -94,7 +99,7 @@ class ProfileServiceTest {
         User user = userWithId("kc-1");
         user.setAvatarKey("avatars/old.png");
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.toStoredAvatarKey(user.getId(), "avatars/someone-else/a.png"))
+        when(storageService.toStoredAvatarKey(user.getId(), "avatars/someone-else/a.png", "avatars/old.png"))
                 .thenThrow(new InvalidFileException("not yours"));
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/someone-else/a.png")))
@@ -106,7 +111,7 @@ class ProfileServiceTest {
     void updateProfileAnswers503ForAnAvatarWhenStorageIsNotConfigured() {
         User user = userWithId("kc-1");
         when(userRepository.findWithTagsByKeycloakId("kc-1")).thenReturn(java.util.Optional.of(user));
-        when(storageService.toStoredAvatarKey(user.getId(), "avatars/a.png"))
+        when(storageService.toStoredAvatarKey(user.getId(), "avatars/a.png", null))
                 .thenThrow(new StorageNotConfiguredException());
 
         assertThatThrownBy(() -> profileService.updateProfile("kc-1", avatarRequest("avatars/a.png")))
@@ -124,7 +129,7 @@ class ProfileServiceTest {
 
         profileService.updateProfile("kc-1", avatarRequest("  "));
         assertThat(user.getAvatarKey()).isNull();
-        verify(storageService, never()).toStoredAvatarKey(any(), eq("avatars/old.png"));
+        verify(storageService, never()).toStoredAvatarKey(any(), eq("avatars/old.png"), any());
     }
 
     @Test
@@ -136,6 +141,7 @@ class ProfileServiceTest {
         when(storageService.presignAvatar(user.getId(), "image/png", 1024L)).thenReturn(expected);
 
         assertThat(profileService.presignAvatarUpload("kc-1", request)).isSameAs(expected);
+        verify(uploadLimiter).count(UploadLimiter.Kind.AVATAR, "kc-1");
     }
 
     @Test

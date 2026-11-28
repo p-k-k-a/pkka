@@ -76,7 +76,7 @@ public class AdminEventService {
                 .seatLimit(request.seatLimit())
                 .registrationClosesAt(request.registrationClosesAt())
                 .audience(request.audience())
-                .coverImageUrl(coverImageReference(request))
+                .coverImageUrl(coverImageReference(request, null))
                 .reminderLeadTimeMinutes(request.reminderLeadTimeMinutes())
                 .tags(new HashSet<>(findOrCreateTags(request.tags())))
                 .build();
@@ -104,7 +104,7 @@ public class AdminEventService {
         event.setSeatLimit(request.seatLimit());
         event.setRegistrationClosesAt(request.registrationClosesAt());
         event.setAudience(request.audience());
-        event.setCoverImageUrl(coverImageReference(request));
+        event.setCoverImageUrl(coverImageReference(request, event.getCoverImageUrl()));
         event.setReminderLeadTimeMinutes(request.reminderLeadTimeMinutes());
         Set<Tag> tags = event.getTags();
         if (tags == null) {
@@ -149,8 +149,9 @@ public class AdminEventService {
     }
 
     /** External URL as is, or the key of an uploaded cover; a signed URL echoed back from a read is reduced to its key. */
-    private String coverImageReference(EventRequest request) {
-        String reference = storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, request.coverImageUrl());
+    private String coverImageReference(EventRequest request, String current) {
+        String reference =
+                storageService.toStoredReference(AdminUploadPurpose.EVENT_COVER, request.coverImageUrl(), current);
         if (reference != null && reference.length() > MAX_STORED_COVER_LENGTH) {
             throw new InvalidFileException("coverImageUrl is too long");
         }

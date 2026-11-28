@@ -1,6 +1,7 @@
 package pl.edu.agh.backend.storage;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -59,6 +60,13 @@ enum UploadCategory {
     /** Whether {@code key} has exactly the shape this category issues; anything else is not ours. */
     boolean isValidKey(String key) {
         return KeyPatterns.of(this).matcher(key).matches();
+    }
+
+    /** The category that issues keys of this shape, empty when {@code key} is not ours. */
+    static Optional<UploadCategory> ofKey(String key) {
+        return Arrays.stream(values())
+                .filter(category -> category.isValidKey(key))
+                .findFirst();
     }
 
     private Map<String, String> types() {
