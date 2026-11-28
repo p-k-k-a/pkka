@@ -24,7 +24,7 @@ export function AdminTopicGroups() {
   return (
     <SectionShell
       title="Grupy tematyczne"
-      description="Wnioski alumnów o nowe grupy i grupy, które już działają. Po zatwierdzeniu wniosku powstaje grupa, a wnioskodawca zostaje jej koordynatorem."
+      description="Wnioski alumnów o nowe grupy i grupy, które już działają. Po zatwierdzeniu wniosku powstaje grupa z prywatnym kanałem na Discordzie, a wnioskodawca zostaje jej koordynatorem."
       as="section"
     >
       {isLoading || !admin ? (
