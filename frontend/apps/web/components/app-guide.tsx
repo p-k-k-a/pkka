@@ -42,7 +42,7 @@ export function AppGuide({ showAdmin = false }: { showAdmin?: boolean }) {
 
   return (
     <>
-      <section className="bg-muted dark:bg-background px-4 py-10 md:px-10 md:py-20">
+      <section className="bg-muted dark:bg-background px-4 pt-10 pb-6 md:px-10 md:pt-20 md:pb-10">
         <div className="mx-auto max-w-[1280px] space-y-6">
           <h1 className="font-heading text-foreground max-w-3xl text-[33px] leading-tight font-semibold tracking-tight md:text-[40px]">
             {APP_GUIDE_INTRO.title}
@@ -55,7 +55,7 @@ export function AppGuide({ showAdmin = false }: { showAdmin?: boolean }) {
         </div>
       </section>
 
-      <section className="bg-background px-4 py-10 md:px-10 md:py-20">
+      <section className="bg-background px-4 pt-6 pb-10 md:px-10 md:pt-10 md:pb-20">
         <div className="mx-auto max-w-[1280px] space-y-14">
           <div className="space-y-6">
             <h2 className="font-heading text-foreground text-[23px] font-semibold">Jak zacząć</h2>
