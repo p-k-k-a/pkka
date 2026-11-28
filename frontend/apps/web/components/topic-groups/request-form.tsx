@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ApiError, useSubmitTopicGroupRequest } from "@pkka/api";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  ApiError,
+  getListMyTopicGroupRequestsQueryKey,
+  useSubmitTopicGroupRequest,
+} from "@pkka/api";
 import {
   TOPIC_GROUP_DESCRIPTION_MAX_LENGTH,
   TOPIC_GROUP_NAME_MAX_LENGTH,
@@ -14,21 +19,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type RequestFormProps = {
-  onSubmitted: () => void | Promise<void>;
-  onConflict: () => void | Promise<void>;
+  onSubmitted: () => void;
 };
 
-export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
+export function RequestForm({ onSubmitted }: RequestFormProps) {
+  const queryClient = useQueryClient();
+  const refreshMyRequests = () =>
+    queryClient.invalidateQueries({ queryKey: getListMyTopicGroupRequestsQueryKey() });
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const { mutate: submitRequest, isPending } = useSubmitTopicGroupRequest<ApiError>({
     mutation: {
-      onSuccess: onSubmitted,
+      onSuccess: async () => {
+        await refreshMyRequests();
+        onSubmitted();
+      },
       onError: (error) => {
         setFormError(topicGroupRequestSubmitErrorMessage(error.status, error.body));
-        if (error.status === 409) void onConflict();
+        // A 409 may mean a request is already open (e.g. sent from the phone): show it instead.
+        if (error.status === 409) void refreshMyRequests();
       },
     },
   });
@@ -45,17 +56,7 @@ export function RequestForm({ onSubmitted, onConflict }: RequestFormProps) {
         submitRequest({ data: { name: name.trim(), description: description.trim() } });
       }}
     >
-      <Card className="gap-6 rounded-2xl p-6 md:p-8">
-        <div className="space-y-1">
-          <h3 className="font-heading text-foreground text-[23px] leading-tight font-semibold tracking-tight">
-            Zaproponuj grupę
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            Napisz, czym grupa będzie się zajmować i dla kogo jest. Na tej podstawie administracja
-            zdecyduje o jej utworzeniu.
-          </p>
-        </div>
-
+      <Card className="bg-muted gap-6 rounded-2xl p-6 shadow-none ring-0 md:p-8">
         <div className="space-y-2">
           <Label htmlFor="topicGroupName" className="text-xs font-bold tracking-wider uppercase">
             Nazwa grupy<span className="text-destructive">*</span>

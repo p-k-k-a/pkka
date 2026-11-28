@@ -12,9 +12,18 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import {
+  ApplicationStatus,
+  TopicGroupRequestStatus,
+  useListAdminApplications,
+  useListAdminTopicGroupRequests,
+} from "@pkka/api";
 import { cn } from "@/lib/utils";
 import { useVerificationStatus } from "@/lib/use-verification-status";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const APPLICATIONS_HREF = "/dashboard/applications";
+const ADMIN_GROUPS_HREF = "/dashboard/admin/groups";
 
 type SidebarItem = {
   href: string;
@@ -45,7 +54,7 @@ const userItems: SidebarItem[] = [
   },
   {
     href: "/dashboard/groups",
-    label: "Grupy",
+    label: "Grupy tematyczne",
     icon: MessagesSquare,
     match: (pathname) => pathname.startsWith("/dashboard/groups"),
   },
@@ -65,7 +74,7 @@ const userItems: SidebarItem[] = [
 
 const adminItems: SidebarItem[] = [
   {
-    href: "/dashboard/applications",
+    href: APPLICATIONS_HREF,
     label: "Wnioski",
     icon: Inbox,
     match: (pathname) => pathname.startsWith("/dashboard/applications"),
@@ -95,16 +104,33 @@ const adminItems: SidebarItem[] = [
     match: (pathname) => pathname.startsWith("/dashboard/admin/alumni"),
   },
   {
-    href: "/dashboard/admin/groups",
-    label: "Grupy",
+    href: ADMIN_GROUPS_HREF,
+    label: "Grupy tematyczne",
     icon: MessagesSquare,
     match: (pathname) => pathname.startsWith("/dashboard/admin/groups"),
   },
 ];
 
+function usePendingCounts(admin: boolean): Record<string, number> {
+  const adminOnly = { query: { enabled: admin } };
+  const { data: applications } = useListAdminApplications(
+    { status: ApplicationStatus.UNDER_REVIEW, size: 1 },
+    adminOnly,
+  );
+  const { data: groupRequests } = useListAdminTopicGroupRequests(
+    { status: TopicGroupRequestStatus.UNDER_REVIEW, size: 1 },
+    adminOnly,
+  );
+  return {
+    [APPLICATIONS_HREF]: applications?.data.totalElements ?? 0,
+    [ADMIN_GROUPS_HREF]: groupRequests?.data.totalElements ?? 0,
+  };
+}
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
+  const pendingCounts = usePendingCounts(admin);
 
   // Verification is offered until it succeeds, alumni-only pages only after it does.
   const items = admin
@@ -133,6 +159,7 @@ export function DashboardSidebar() {
         ) : (
           items.map(({ href, label, icon: Icon, match }) => {
             const isActive = match(pathname);
+            const pendingCount = pendingCounts[href] ?? 0;
 
             return (
               <Link
@@ -146,7 +173,17 @@ export function DashboardSidebar() {
                     : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >
-                <Icon className="size-4 shrink-0" aria-hidden="true" />
+                <span className="relative shrink-0">
+                  <Icon className="size-4" aria-hidden="true" />
+                  {pendingCount > 0 ? (
+                    <span
+                      aria-label={`Oczekujące na decyzję: ${pendingCount}`}
+                      className="bg-primary text-primary-foreground ring-muted absolute -top-2 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold ring-2"
+                    >
+                      {pendingCount > 99 ? "99+" : pendingCount}
+                    </span>
+                  ) : null}
+                </span>
                 {label}
               </Link>
             );

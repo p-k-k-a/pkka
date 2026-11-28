@@ -1,56 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { TopicGroupRequestStatus, useListMyTopicGroupRequests } from "@pkka/api";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { SectionShell } from "@/components/content/section-shell";
+import { GroupList } from "@/components/topic-groups/group-list";
 import { RequestCard } from "@/components/topic-groups/request-card";
-import { RequestForm } from "@/components/topic-groups/request-form";
 
-export function TopicGroupsContent() {
-  const { data: requestsResponse, isLoading, isError, refetch } = useListMyTopicGroupRequests();
-  const [isProposing, setIsProposing] = useState(false);
+export const NEW_GROUP_HREF = "/dashboard/groups/new";
 
+/** The caller's latest request, unless it was approved: then there is nothing left to follow. */
+export function useOpenRequest() {
+  const { data: requestsResponse, ...query } = useListMyTopicGroupRequests();
   const latestRequest = requestsResponse?.data[0];
   const openRequest =
     latestRequest?.status === TopicGroupRequestStatus.APPROVED ? undefined : latestRequest;
+  return { openRequest, ...query };
+}
+
+export function TopicGroupsContent() {
+  const router = useRouter();
+  const { openRequest } = useOpenRequest();
   const isUnderReview = openRequest?.status === TopicGroupRequestStatus.UNDER_REVIEW;
-  const showForm = !openRequest || (isProposing && !isUnderReview);
 
   return (
     <SectionShell
       title="Grupy tematyczne"
-      description="Miejsce dla alumnów o podobnych zainteresowaniach. Jeśli brakuje grupy dla Ciebie, zaproponuj własną. Administracja rozpatrzy wniosek, a po akceptacji zostaniesz koordynatorem grupy."
+      description="Miejsce dla alumnów o podobnych zainteresowaniach. Dołącz do grupy, a dostaniesz dostęp do jej kanału na Discordzie."
       as="section"
+      action={
+        isUnderReview ? null : (
+          <Button asChild size="xl">
+            <Link href={NEW_GROUP_HREF}>
+              <Plus data-icon="inline-start" />
+              Stwórz nową grupę
+            </Link>
+          </Button>
+        )
+      }
     >
-      <div className="max-w-2xl">
-        {isLoading ? (
-          <Skeleton className="h-72 w-full rounded-2xl" />
-        ) : isError && !requestsResponse ? (
-          <p className="text-destructive font-medium">
-            Nie udało się załadować Twojego wniosku. Odśwież stronę i spróbuj ponownie.
-          </p>
-        ) : (
-          <div className="space-y-6">
-            {openRequest ? (
-              <RequestCard request={openRequest} onPropose={() => setIsProposing(true)} />
-            ) : null}
-            {showForm ? (
-              <RequestForm
-                onSubmitted={async () => {
-                  await refetch();
-                  setIsProposing(false);
-                }}
-                onConflict={async () => {
-                  const { data: refreshedResponse } = await refetch();
-                  if (refreshedResponse?.data[0]?.status === TopicGroupRequestStatus.UNDER_REVIEW) {
-                    setIsProposing(false);
-                  }
-                }}
-              />
-            ) : null}
+      <div className="space-y-12">
+        {openRequest ? (
+          <div className="max-w-2xl">
+            <RequestCard request={openRequest} onPropose={() => router.push(NEW_GROUP_HREF)} />
           </div>
-        )}
+        ) : null}
+        <GroupList />
       </div>
     </SectionShell>
   );
