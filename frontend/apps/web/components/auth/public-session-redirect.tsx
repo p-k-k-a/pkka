@@ -11,7 +11,7 @@ export function PublicSessionRedirect({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
       const { pathname, search, hash } = window.location;
-      const hasTwin = /^\/(events|announcements)(\/|$)/.test(pathname);
+      const hasTwin = /^\/(events|announcements|info)(\/|$)/.test(pathname);
       router.replace(hasTwin ? `/dashboard${pathname}${search}${hash}` : "/dashboard");
     }
   }, [isAuthenticated, isLoading, router]);

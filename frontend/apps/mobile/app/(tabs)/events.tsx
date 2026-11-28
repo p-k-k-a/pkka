@@ -6,32 +6,20 @@ import {
   EventFilterSheet,
   type EventFilters,
 } from "@/components/events/event-filter-sheet";
-import { CtaCard } from "@/components/home/cta-card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Text } from "@/components/ui/text";
-import { useAuth } from "@/lib/auth-context";
 import { END_REACHED_THRESHOLD, nextPageParam, pageItems } from "@/lib/pagination";
 import { useThemeColors } from "@/lib/theme";
 import { Audience, EventTimeframe, useListEventsInfinite } from "@pkka/api";
-import { router } from "expo-router";
 import { SlidersHorizontal } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
-const CTA = {
-  title: "Chcesz brać udział w wydarzeniach zamkniętych?",
-  subtitle:
-    "Zaloguj się jako absolwent lub student Wydziału Informatyki AGH, aby uzyskać dostęp do pełnego kalendarza i mentoringu.",
-  primaryLabel: "Zaloguj się do portalu",
-};
-
-const DESCRIPTION =
-  "Przeglądaj publiczne spotkania i prelekcje organizowane przez społeczność Alumni WI AGH. Dołącz do nas i buduj sieć kontaktów.";
-const ALUMNI_DESCRIPTION =
-  "Przeglądaj spotkania i prelekcje społeczności Alumni WI AGH, także te tylko dla absolwentów.";
+const DESCRIPTION = "Spotkania i warsztaty klubu.";
+const ALUMNI_DESCRIPTION = "Spotkania i warsztaty klubu, także te tylko dla absolwentów.";
 
 function FilterButton({ activeCount, onPress }: { activeCount: number; onPress: () => void }) {
   const theme = useThemeColors();
@@ -58,17 +46,11 @@ function ListHeader({
   activeFilterCount: number;
   onOpenFilters: () => void;
 }) {
-  const { user } = useAuth();
   const isAlumni = useIsAlumni();
 
   return (
     <View className="gap-6">
       <PageHeader title="Wydarzenia" description={isAlumni ? ALUMNI_DESCRIPTION : DESCRIPTION} />
-      {!user && (
-        <View className="px-5">
-          <CtaCard {...CTA} onPrimary={() => router.push("/login")} />
-        </View>
-      )}
       <View className="px-5">
         <FilterButton activeCount={activeFilterCount} onPress={onOpenFilters} />
       </View>

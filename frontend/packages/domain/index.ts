@@ -1,3 +1,4 @@
+export * from "./about/app-guide";
 export * from "./alumni/directory";
 export * from "./application/rules";
 export * from "./events/calendar";

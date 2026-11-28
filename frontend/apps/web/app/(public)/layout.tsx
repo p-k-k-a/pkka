@@ -23,7 +23,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               Aktualności
             </NavLink>
             <NavLink href="/events">Wydarzenia</NavLink>
-            <NavLink href="/info">O klubie</NavLink>
+            <NavLink href="/info">O aplikacji</NavLink>
           </div>
 
           <div className="flex flex-1 items-center justify-end">

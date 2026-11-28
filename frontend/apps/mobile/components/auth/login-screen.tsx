@@ -4,6 +4,7 @@ import { Text } from "@/components/ui/text";
 import { DISCORD_URL, KEYCLOAK_URL } from "@/lib/auth-config";
 import { useAuth } from "@/lib/auth-context";
 import { useThemeColors } from "@/lib/theme";
+import { router } from "expo-router";
 import { View } from "react-native";
 
 export function LoginScreen() {
@@ -57,6 +58,10 @@ export function LoginScreen() {
             </Text>
           </Button>
         </View>
+
+        <Button variant="link" onPress={() => router.push("/info")}>
+          <Text className="font-bold text-accent underline dark:text-primary">Czym jest PKKA?</Text>
+        </Button>
       </View>
     </View>
   );

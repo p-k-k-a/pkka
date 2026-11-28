@@ -10,7 +10,8 @@ import {
   type ThemePreference,
 } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { Moon, Smartphone, Sun, type LucideIcon } from "lucide-react-native";
+import { router } from "expo-router";
+import { ChevronRight, Info, Moon, Smartphone, Sun, type LucideIcon } from "lucide-react-native";
 import { Pressable, View } from "react-native";
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; icon: LucideIcon }[] = [
@@ -54,6 +55,20 @@ function ThemeSwitch() {
   );
 }
 
+function AboutAppRow() {
+  const theme = useThemeColors();
+  return (
+    <Pressable role="link" onPress={() => router.push("/info")} className="active:opacity-70">
+      <SettingRow
+        icon={Info}
+        title="O aplikacji"
+        description="Co możesz robić w aplikacji"
+        action={<ChevronRight size={18} color={theme.mutedForeground} />}
+      />
+    </Pressable>
+  );
+}
+
 export function SettingsSection() {
   return (
     <ProfileSectionCard title="Ustawienia">
@@ -64,6 +79,8 @@ export function SettingsSection() {
         </View>
         <Separator />
         <NotificationToggle />
+        <Separator />
+        <AboutAppRow />
       </View>
     </ProfileSectionCard>
   );
