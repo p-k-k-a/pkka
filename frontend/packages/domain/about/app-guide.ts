@@ -110,7 +110,7 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
       {
         icon: "discord",
         title: "Logowanie przez Discord",
-        description: "Nie musisz zakładać osobnego hasła, wystarczy konto Discord.",
+        description: "Zaloguj się kontem Discord, którego już używasz.",
       },
       {
         icon: "shield",
