@@ -7,6 +7,8 @@ type FeaturedCardProps = {
   href: string;
   imageSrc: string;
   imageAlt: string;
+  /** Load the image straight from its URL instead of through the image optimizer; see CoverImage. */
+  unoptimized?: boolean;
   label: string;
   title: string;
   meta: React.ReactNode;
@@ -18,6 +20,7 @@ export function FeaturedCard({
   href,
   imageSrc,
   imageAlt,
+  unoptimized = false,
   label,
   title,
   meta,
@@ -38,6 +41,7 @@ export function FeaturedCard({
             sizes="(max-width: 768px) 100vw, 640px"
             className="object-cover"
             priority
+            unoptimized={unoptimized}
           />
         </div>
 

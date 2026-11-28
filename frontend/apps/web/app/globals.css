@@ -85,6 +85,9 @@
     hr {
       @apply border-border;
     }
+    img {
+      @apply h-auto max-w-full rounded-lg;
+    }
   }
 }
 

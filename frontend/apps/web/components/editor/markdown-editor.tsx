@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { UploadMessage, UploadProgress, useFilePicker } from "@/components/upload/upload-control";
 import { cn } from "@/lib/utils";
+import type { FileUpload } from "@pkka/api";
+import type { LabelledUploadRule } from "@pkka/domain";
+import { Image } from "@tiptap/extension-image";
 import { Markdown } from "@tiptap/markdown";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
@@ -17,6 +21,7 @@ import {
   Heading4,
   Heading5,
   Heading6,
+  ImagePlus,
   Italic,
   List,
   ListOrdered,
@@ -24,6 +29,7 @@ import {
   TextQuote,
   Undo2,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 function ToolbarTip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
@@ -39,6 +45,11 @@ type MarkdownEditorProps = {
   onChange: (markdown: string) => void;
   className?: string;
   ariaLabel?: string;
+  /**
+   * Turns on the "insert picture" button. The upload is owned by the form, so it can hold off
+   * saving while a picture is in flight.
+   */
+  imageUpload?: { upload: FileUpload; rule: LabelledUploadRule };
 };
 
 export function MarkdownEditor({
@@ -46,17 +57,37 @@ export function MarkdownEditor({
   onChange,
   className,
   ariaLabel = "Treść wpisu",
+  imageUpload,
 }: MarkdownEditorProps) {
+  // A picture uploaded in this session is shown from a local preview URL, because only the API
+  // can sign a URL for the stored file. What leaves the editor names it by its object key.
+  const uploadedImages = useRef(new Map<string, string>());
+
+  useEffect(() => {
+    const previews = uploadedImages.current;
+    return () => previews.forEach((_objectKey, previewUrl) => URL.revokeObjectURL(previewUrl));
+  }, []);
+
+  const toStoredMarkdown = (markdown: string) => {
+    let stored = markdown;
+    uploadedImages.current.forEach((objectKey, previewUrl) => {
+      stored = stored.replaceAll(previewUrl, objectKey);
+    });
+    return stored;
+  };
+
   const editor = useEditor({
     extensions: [
       // those 2 are not supported by portable markdown, let's not use them
       StarterKit.configure({ underline: false, strike: false }),
+      // Always on, so pictures already in the content survive an edit even without the button.
+      Image,
       Markdown,
     ],
     content: initialContent,
     contentType: "markdown",
     immediatelyRender: false,
-    onUpdate: ({ editor }) => onChange(editor.getMarkdown()),
+    onUpdate: ({ editor }) => onChange(toStoredMarkdown(editor.getMarkdown())),
     editorProps: {
       attributes: {
         class: "focus:outline-none min-h-64 px-4 py-3",
@@ -83,6 +114,18 @@ export function MarkdownEditor({
       canUndo: editor?.can().undo() ?? false,
       canRedo: editor?.can().redo() ?? false,
     }),
+  });
+
+  // The same picking and messages as every other upload button; only the button differs.
+  const imagePicker = useFilePicker({
+    upload: imageUpload?.upload,
+    rule: imageUpload?.rule,
+    onUploaded: (objectKey, file) => {
+      if (!editor) return;
+      const previewUrl = URL.createObjectURL(file);
+      uploadedImages.current.set(previewUrl, objectKey);
+      editor.chain().focus().setImage({ src: previewUrl, alt: "" }).run();
+    },
   });
 
   if (!editor) {
@@ -185,6 +228,27 @@ export function MarkdownEditor({
             </Toggle>
           </ToolbarTip>
         ))}
+        {imageUpload ? (
+          <>
+            <Separator orientation="vertical" className="mx-1" />
+            {imagePicker.fileInput}
+            <ToolbarTip label="Wstaw zdjęcie">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Wstaw zdjęcie"
+                disabled={imageUpload.upload.isUploading}
+                onClick={imagePicker.open}
+              >
+                <ImagePlus />
+              </Button>
+            </ToolbarTip>
+            {imageUpload.upload.isUploading ? (
+              <UploadProgress upload={imageUpload.upload} className="h-8 min-w-48" />
+            ) : null}
+          </>
+        ) : null}
         <Separator orientation="vertical" className="mx-1" />
         <ToolbarTip label="Cofnij">
           <Button
@@ -211,6 +275,9 @@ export function MarkdownEditor({
           </Button>
         </ToolbarTip>
       </div>
+      {imagePicker.message ? (
+        <UploadMessage message={imagePicker.message} className="border-border border-b px-4 py-2" />
+      ) : null}
       <EditorContent editor={editor} className="rich-text space-y-5 leading-8" />
     </div>
   );

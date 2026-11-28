@@ -7,6 +7,7 @@ import { CoverImage } from "@/components/content/cover-image";
 import { DetailBackLink } from "@/components/content/detail-back-link";
 import { ProseContent } from "@/components/content/prose-content";
 import { Skeleton } from "@/components/ui/skeleton";
+import { remoteCoverImageSrc } from "@/lib/content-images";
 
 type AnnouncementDetailProps = {
   slug: string;
@@ -54,6 +55,7 @@ export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailP
   }
 
   const { dateLabel, timeLabel } = formatPublishedAt(post.publishedAt);
+  const coverSrc = remoteCoverImageSrc(post.coverImageUrl);
 
   return (
     <article className="bg-background px-4 py-10 md:px-10 md:py-20">
@@ -66,7 +68,7 @@ export function AnnouncementDetail({ slug, backHref = "/" }: AnnouncementDetailP
               {post.title}
             </h1>
 
-            <CoverImage alt="" className="mt-10" />
+            <CoverImage src={coverSrc} alt="" unoptimized={coverSrc !== null} className="mt-10" />
 
             {post.content ? (
               <ProseContent content={post.content} className="text-muted-foreground max-w-2xl" />

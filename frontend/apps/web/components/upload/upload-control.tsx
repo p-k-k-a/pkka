@@ -27,6 +27,84 @@ type UploadControlProps = {
   className?: string;
 };
 
+type FilePickerOptions = {
+  /** Absent while uploading is turned off; picking then does nothing. */
+  upload?: FileUpload;
+  rule?: LabelledUploadRule;
+  /** `objectKey` of the stored file, plus the picked file for a name or a local preview. */
+  onUploaded: (objectKey: string, file: File) => void;
+};
+
+/**
+ * What every upload button does once a file is picked: upload it straight away and turn a
+ * failure into a message. Render `fileInput` anywhere and call `open` from the button.
+ */
+export function useFilePicker({ upload, rule, onUploaded }: FilePickerOptions) {
+  const input = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleChange(changeEvent: React.ChangeEvent<HTMLInputElement>) {
+    const file = changeEvent.target.files?.[0];
+    // Cleared so that picking the same file again (after an error or a removal) still fires.
+    changeEvent.target.value = "";
+    if (!file || !upload || !rule) return;
+
+    setMessage(null);
+    try {
+      const contentType = fileContentType(file);
+      onUploaded(await upload.upload({ blob: file, contentType }), file);
+    } catch (error) {
+      setMessage(uploadErrorMessage(error, rule));
+    }
+  }
+
+  const fileInput = rule ? (
+    <input
+      ref={input}
+      type="file"
+      accept={rule.contentTypes.join(",")}
+      className="sr-only"
+      tabIndex={-1}
+      aria-hidden="true"
+      onChange={handleChange}
+    />
+  ) : null;
+
+  return { fileInput, open: () => input.current?.click(), message };
+}
+
+/** The progress of a running upload, with a way to cancel it. */
+export function UploadProgress({ upload, className }: { upload: FileUpload; className?: string }) {
+  const progress = uploadProgressLabel(upload.progress);
+  return (
+    <div className={cn("flex h-[34px] items-center gap-3", className)}>
+      <div
+        role="progressbar"
+        aria-label="Postęp przesyłania pliku"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(upload.progress * 100)}
+        className="bg-muted h-2 min-w-24 flex-1 overflow-hidden rounded-full"
+      >
+        <div className="bg-primary h-full transition-[width]" style={{ width: progress }} />
+      </div>
+      <span className="text-muted-foreground w-10 text-right text-sm tabular-nums">{progress}</span>
+      <Button type="button" variant="ghost" size="sm" onClick={upload.cancel}>
+        Anuluj
+      </Button>
+    </div>
+  );
+}
+
+/** What went wrong with the last picked file, shown where the upload button is. */
+export function UploadMessage({ message, className }: { message: string; className?: string }) {
+  return (
+    <p role="alert" className={cn("text-destructive text-xs font-medium", className)}>
+      {message}
+    </p>
+  );
+}
+
 /** A "pick a file" button that uploads the choice straight away, with progress, cancel and errors. */
 export function UploadControl({
   upload,
@@ -38,74 +116,25 @@ export function UploadControl({
   disabled,
   className,
 }: UploadControlProps) {
-  const input = useRef<HTMLInputElement>(null);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function handleChange(changeEvent: React.ChangeEvent<HTMLInputElement>) {
-    const file = changeEvent.target.files?.[0];
-    // Cleared so that picking the same file again (after an error or a removal) still fires.
-    changeEvent.target.value = "";
-    if (!file) return;
-
-    setMessage(null);
-    try {
-      const contentType = fileContentType(file);
-      onUploaded(await upload.upload({ blob: file, contentType }), file);
-    } catch (error) {
-      setMessage(uploadErrorMessage(error, rule));
-    }
-  }
-
-  const progress = uploadProgressLabel(upload.progress);
+  const { fileInput, open, message } = useFilePicker({ upload, rule, onUploaded });
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <input
-        ref={input}
-        type="file"
-        accept={rule.contentTypes.join(",")}
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden="true"
-        onChange={handleChange}
-      />
+      {fileInput}
       {upload.isUploading ? (
-        <div className="flex h-[34px] items-center gap-3">
-          <div
-            role="progressbar"
-            aria-label="Postęp przesyłania pliku"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(upload.progress * 100)}
-            className="bg-muted h-2 min-w-24 flex-1 overflow-hidden rounded-full"
-          >
-            <div className="bg-primary h-full transition-[width]" style={{ width: progress }} />
-          </div>
-          <span className="text-muted-foreground w-10 text-right text-sm tabular-nums">
-            {progress}
-          </span>
-          <Button type="button" variant="ghost" size="sm" onClick={upload.cancel}>
-            Anuluj
-          </Button>
-        </div>
+        <UploadProgress upload={upload} />
       ) : (
         <Button
           type="button"
           variant={variant}
           disabled={disabled}
           className="self-start"
-          onClick={() => input.current?.click()}
+          onClick={open}
         >
           {children}
         </Button>
       )}
-      {message ? (
-        <p role="alert" className="text-destructive text-xs font-medium">
-          {message}
-        </p>
-      ) : (
-        hint
-      )}
+      {message ? <UploadMessage message={message} /> : hint}
     </div>
   );
 }
