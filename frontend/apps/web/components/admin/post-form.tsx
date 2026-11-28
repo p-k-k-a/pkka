@@ -4,7 +4,7 @@ import { CoverUploadField, type CoverValue } from "@/components/admin/cover-uplo
 import { FieldLabel } from "@/components/admin/field-label";
 import { SectionTitle } from "@/components/content/section-title";
 import { MarkdownEditor } from "@/components/editor/markdown-editor";
-import { isPostContentRejected, isStorageUnavailable } from "@/lib/save-errors";
+import { isStorageUnavailable, postContentRejectionMessage } from "@/lib/save-errors";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -155,9 +155,8 @@ export function PostForm({ post }: PostFormProps) {
           <p className="text-destructive mb-6 font-medium">
             {isStorageUnavailable(saveError)
               ? "Przechowywanie plików jest chwilowo niedostępne, więc nie da się zapisać wpisu z wgraną okładką. Spróbuj później albo usuń okładkę i zapisz bez niej."
-              : isPostContentRejected(saveError)
-                ? "Tego wpisu nie da się zapisać. W treści jest wklejony link do pliku z materiałów albo do okładki. Usuń go: takie linki przestają działać po godzinie."
-                : "Nie udało się zapisać wpisu. Spróbuj ponownie."}
+              : (postContentRejectionMessage(saveError) ??
+                "Nie udało się zapisać wpisu. Spróbuj ponownie.")}
           </p>
         ) : null}
 

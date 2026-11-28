@@ -8,12 +8,33 @@ export function isStorageUnavailable(error: unknown) {
   return error instanceof ApiError && error.status === 503;
 }
 
+const POST_CONTENT_REASONS = {
+  POST_CONTENT_LINK: "link",
+  POST_CONTENT_PICTURE: "picture",
+} as const;
+
 /**
- * Whether the API refused a post because of a picture in its content, e.g. a link to a stored
- * file that would stop working within the hour. The backend marks exactly these refusals with
- * `reason: "POST_CONTENT"`.
+ * Why the API refused a post because of its content, or null for any other error:
+ * - `link`: a link to a stored file that is not a post picture (a material, a cover). Only
+ *   pictures inserted with „Wstaw zdjęcie” can be placed in a post.
+ * - `picture`: a picture that never reached the storage.
  */
-export function isPostContentRejected(error: unknown) {
-  if (!(error instanceof ApiError) || error.status !== 400) return false;
-  return (error.body as { reason?: unknown } | null)?.reason === "POST_CONTENT";
+export function postContentRejection(error: unknown) {
+  if (!(error instanceof ApiError) || error.status !== 400) return null;
+  const reason = (error.body as { reason?: unknown } | null)?.reason;
+  return typeof reason === "string" && reason in POST_CONTENT_REASONS
+    ? POST_CONTENT_REASONS[reason as keyof typeof POST_CONTENT_REASONS]
+    : null;
+}
+
+/** The message for a post refused because of its content; null for any other error. */
+export function postContentRejectionMessage(error: unknown) {
+  switch (postContentRejection(error)) {
+    case "link":
+      return "W treści jest link do pliku z materiałów albo okładki. We wpisie mogą być tylko zdjęcia wstawione przyciskiem „Wstaw zdjęcie”. Usuń ten link.";
+    case "picture":
+      return "Jedno ze zdjęć w treści nie zostało przesłane. Usuń je i wstaw ponownie przyciskiem „Wstaw zdjęcie”.";
+    default:
+      return null;
+  }
 }
