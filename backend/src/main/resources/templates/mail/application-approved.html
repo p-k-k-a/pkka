@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout.html :: layout(~{::main})}">
+<body>
+<main>
+    <h1 style="margin:0 0 16px;font-size:20px;color:#16212F;">
+        <span th:if="${!#strings.isEmpty(firstName)}" th:text="|Cześć ${firstName}!|">Cześć Ala!</span>
+        <span th:if="${#strings.isEmpty(firstName)}">Cześć!</span>
+    </h1>
+    <p style="margin:0 0 16px;">
+        Twój wniosek o status alumna został zaakceptowany. Witamy w Klubie! Masz już dostęp do katalogu alumnów,
+        materiałów z wydarzeń i grup tematycznych.
+    </p>
+    <p style="margin:0 0 24px;">Uzupełnij profil, żeby inni absolwenci mogli Cię znaleźć.</p>
+    <a th:href="${webBaseUrl + '/dashboard/profile/edit'}"
+       style="display:inline-block;padding:12px 20px;background-color:#F5A200;color:#1A1A1A;border-radius:8px;text-decoration:none;font-weight:bold;">
+        Uzupełnij profil
+    </a>
+</main>
+</body>
+</html>

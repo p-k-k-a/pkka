@@ -1,0 +1,10 @@
+[# th:if="${!#strings.isEmpty(firstName)}"]Cześć [(${firstName})]![/][# th:if="${#strings.isEmpty(firstName)}"]Cześć![/]
+
+Twój wniosek o status alumna został odrzucony.
+[# th:if="${!#strings.isEmpty(reason)}"]
+Powód:
+[(${reason})]
+[/]
+Możesz poprawić dane i złożyć wniosek ponownie: [(${webBaseUrl})]/dashboard/verification
+
+[# th:insert="~{footer.txt}" /]

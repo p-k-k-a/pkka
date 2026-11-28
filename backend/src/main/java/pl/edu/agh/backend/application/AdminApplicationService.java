@@ -43,6 +43,7 @@ public class AdminApplicationService {
         application.approve(reviewer);
         eventPublisher.publishEvent(
                 new ApplicationApprovedEvent(application.getApplicant().getKeycloakId()));
+        publishReviewed(application);
 
         return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
     }
@@ -54,6 +55,17 @@ public class AdminApplicationService {
                 applicationRepository.findById(applicationId).orElseThrow(ApplicationNotFoundException::new);
 
         application.reject(reviewer, reason);
+        publishReviewed(application);
         return ApplicationResponse.from(applicationRepository.saveAndFlush(application));
+    }
+
+    private void publishReviewed(Application application) {
+        User applicant = application.getApplicant();
+        eventPublisher.publishEvent(new ApplicationReviewedEvent(
+                applicant.getId(),
+                applicant.getEmail(),
+                applicant.getFirstName(),
+                application.getStatus(),
+                application.getRejectionReason()));
     }
 }

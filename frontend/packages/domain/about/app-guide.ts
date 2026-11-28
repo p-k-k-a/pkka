@@ -66,7 +66,8 @@ export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
       {
         icon: "bell",
         title: "Powiadomienia",
-        description: "Na telefon i e-mail: o wydarzeniach, na które się zapisujesz.",
+        description:
+          "Na telefon i e-mail: o wydarzeniach, na które się zapisujesz, i o decyzji w sprawie Twojego wniosku.",
       },
     ],
   },

@@ -118,4 +118,34 @@ class MailTemplatesTest {
 
         assertThat(text).startsWith("Cześć!");
     }
+
+    @Test
+    void applicationApproved_pointsToTheProfileEditor() {
+        String html = mail.render(
+                "application-approved.html", "Twój wniosek został zaakceptowany", Map.of("firstName", "Ala"));
+        String text = mail.render(
+                "application-approved.txt", "Twój wniosek został zaakceptowany", Map.of("firstName", "Ala"));
+
+        assertThat(html).contains("Cześć Ala!", "href=\"https://pkka.me/dashboard/profile/edit\"");
+        assertThat(text).startsWith("Cześć Ala!").contains("https://pkka.me/dashboard/profile/edit");
+    }
+
+    @Test
+    void applicationRejected_showsTheEscapedReasonAndHowToApplyAgain() {
+        Map<String, Object> variables = Map.of(
+                "firstName", "",
+                "reason", "Brak dyplomu.\n<b>skan</b>",
+                "reasonLines", List.of("Brak dyplomu.", "<b>skan</b>"));
+
+        String html = mail.render("application-rejected.html", "Twój wniosek został odrzucony", variables);
+        String text = mail.render("application-rejected.txt", "Twój wniosek został odrzucony", variables);
+
+        assertThat(html)
+                .contains("Cześć!", "Brak dyplomu.<br/>&lt;b&gt;skan&lt;/b&gt;")
+                .contains("href=\"https://pkka.me/dashboard/verification\"")
+                .doesNotContain("<b>skan</b>");
+        assertThat(text)
+                .startsWith("Cześć!")
+                .contains("Brak dyplomu.\n<b>skan</b>", "https://pkka.me/dashboard/verification");
+    }
 }

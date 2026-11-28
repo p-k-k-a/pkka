@@ -28,6 +28,8 @@ public class NotificationService {
     private static final DateTimeFormatter STARTS_AT = DateTimeFormatter.ofPattern("dd.MM 'o' HH:mm");
     /** The app opens nothing for an empty target; a cancelled event's page no longer exists. */
     private static final String NO_TARGET = "";
+    /** Application decisions open the app's profile tab, where the status and any rejection reason are shown. */
+    private static final String PROFILE_TARGET = "profile";
 
     private final DeviceTokenRepository deviceTokenRepository;
     private final ExpoPushClient expoPushClient;
@@ -121,6 +123,24 @@ public class NotificationService {
                 title == null ? event.getTitle() : title,
                 text,
                 event.getSlug());
+    }
+
+    public void pushApplicationApproved(UUID userId) {
+        push(
+                deviceTokenRepository.findByUserIdIn(List.of(userId)),
+                NotificationType.APPLICATION_APPROVED,
+                "Wniosek zaakceptowany",
+                "Witamy w Klubie! Uzupełnij profil, żeby inni absolwenci mogli Cię znaleźć.",
+                PROFILE_TARGET);
+    }
+
+    public void pushApplicationRejected(UUID userId) {
+        push(
+                deviceTokenRepository.findByUserIdIn(List.of(userId)),
+                NotificationType.APPLICATION_REJECTED,
+                "Wniosek odrzucony",
+                "Sprawdź powód w profilu i złóż wniosek ponownie.",
+                PROFILE_TARGET);
     }
 
     private void pushToSignedUp(
