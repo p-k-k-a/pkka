@@ -25,9 +25,12 @@ export type AppGuideSection = {
 };
 
 export const APP_GUIDE_INTRO = {
-  title: "Czym jest aplikacja PKKA?",
-  description:
-    "PKKA to platforma Klubu Alumnów Wydziału Informatyki AGH, dostępna w przeglądarce i jako aplikacja mobilna. W jednym miejscu zbiera aktualności i wydarzenia klubu, katalog absolwentów, materiały i grupy tematyczne.",
+  eyebrow: "Klub Alumnów WI AGH",
+  title: "Czym jest PKKA?",
+  paragraphs: [
+    "PKKA, czyli Platforma Komunikacji Klubu Alumna, to społecznościowa aplikacja Klubu Alumnów Wydziału Informatyki AGH. Dzięki niej dołączysz do wydarzeń, sprawdzisz aktualności klubu, znajdziesz mentora i nawiążesz kontakty z innymi absolwentami.",
+    "Działa w przeglądarce i jako aplikacja mobilna. Dołączyć mogą absolwentki i absolwenci kierunków informatycznych AGH, także studiów podyplomowych.",
+  ],
 };
 
 export const APP_GUIDE_STEPS: { title: string; description: string }[] = [
