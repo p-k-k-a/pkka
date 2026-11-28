@@ -46,6 +46,10 @@ public class Post {
     @Column(nullable = false, length = 20)
     private PostStatus status = PostStatus.DRAFT;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PostAudience audience = PostAudience.PUBLIC;
+
     /** Set automatically on the first status change to PUBLISHED. */
     @Column(name = "published_at")
     private Instant publishedAt;

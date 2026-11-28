@@ -3,6 +3,7 @@ package pl.edu.agh.backend.post;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import pl.edu.agh.backend.security.Caller;
 import pl.edu.agh.backend.user.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,10 +34,11 @@ class PostServiceTest {
         post.setContent("Body");
         post.setAuthor(new User());
         post.publish();
-        when(postRepository.findAllByStatusOrderByPublishedAtDesc(PostStatus.PUBLISHED, PageRequest.of(0, 10)))
+        when(postRepository.findAllByStatusAndAudienceInOrderByPublishedAtDesc(
+                        PostStatus.PUBLISHED, EnumSet.of(PostAudience.PUBLIC), PageRequest.of(0, 10)))
                 .thenReturn(new PageImpl<>(List.of(post)));
 
-        var page = postService.findAllPublished(PageRequest.of(0, 10));
+        var page = postService.findAllPublished(Caller.anonymous(), PageRequest.of(0, 10));
 
         org.assertj.core.api.Assertions.assertThat(page.getContent()).hasSize(1);
         org.assertj.core.api.Assertions.assertThat(page.getContent().getFirst().title())
@@ -44,10 +47,11 @@ class PostServiceTest {
 
     @Test
     void findPublishedBySlugThrowsWhenMissing() {
-        when(postRepository.findBySlugAndStatus("missing", PostStatus.PUBLISHED))
+        when(postRepository.findBySlugAndStatusAndAudienceIn(
+                        "missing", PostStatus.PUBLISHED, EnumSet.of(PostAudience.PUBLIC)))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> postService.findPublishedBySlug("missing"))
+        assertThatThrownBy(() -> postService.findPublishedBySlug("missing", Caller.anonymous()))
                 .isInstanceOf(ResponseStatusException.class)
                 .satisfies(ex -> {
                     ResponseStatusException rse = (ResponseStatusException) ex;

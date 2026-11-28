@@ -132,6 +132,45 @@ class AdminPostEndpointTest {
     }
 
     @Test
+    void postsArePublicUnlessMarkedForAlumni() throws Exception {
+        String publicPost = createPost("{\"title\": \"Dla wszystkich\", \"content\": \"a\"}");
+        String alumniPost =
+                createPost("{\"title\": \"Tylko dla alumnów\", \"content\": \"b\", \"audience\": \"ALUMNI\"}");
+
+        assertEquals("PUBLIC", JsonPath.read(publicPost, "$.audience"));
+        assertEquals("ALUMNI", JsonPath.read(alumniPost, "$.audience"));
+
+        mockMvc.perform(get("/api/admin/posts").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].audience").value("ALUMNI"))
+                .andExpect(jsonPath("$.content[1].audience").value("PUBLIC"));
+    }
+
+    @Test
+    void updateChangesTheAudience() throws Exception {
+        String body = createPost("{\"title\": \"Zmiana odbiorców\", \"content\": \"a\"}");
+        String id = JsonPath.read(body, "$.id");
+
+        mockMvc.perform(
+                        put("/api/admin/posts/{id}", id)
+                                .with(admin())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"title\": \"Zmiana odbiorców\", \"content\": \"a\", \"status\": \"PUBLISHED\", \"audience\": \"ALUMNI\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.audience").value("ALUMNI"));
+
+        mockMvc.perform(
+                        put("/api/admin/posts/{id}", id)
+                                .with(admin())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        "{\"title\": \"Zmiana odbiorców\", \"content\": \"a\", \"status\": \"PUBLISHED\", \"audience\": \"PUBLIC\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.audience").value("PUBLIC"));
+    }
+
+    @Test
     void createsPublishedPostWithPublishedAt() throws Exception {
         String body = createPost("{\"title\": \"Od razu na żywo\", \"content\": \"c\", \"status\": \"PUBLISHED\"}");
 

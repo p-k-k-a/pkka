@@ -12,4 +12,6 @@ public record CreatePostRequest(
         @Schema(requiredMode = RequiredMode.REQUIRED, description = "Markdown") @NotBlank
         String content,
 
-        PostStatus status) {}
+        PostStatus status,
+
+        PostAudience audience) {}
