@@ -1,12 +1,9 @@
 import { PageHeader } from "@/components/ui/page-header";
-import { CtaCard } from "@/components/home/cta-card";
 import { PostCard } from "@/components/home/post-card";
 import { SectionHeading } from "@/components/home/section-heading";
 import { Text } from "@/components/ui/text";
-import { useAuth } from "@/lib/auth-context";
 import { END_REACHED_THRESHOLD, nextPageParam, pageItems } from "@/lib/pagination";
 import { useListPostsInfinite } from "@pkka/api";
-import { router } from "expo-router";
 import * as React from "react";
 import { ActivityIndicator, FlatList, View } from "react-native";
 
@@ -17,20 +14,11 @@ const HERO = {
   body: "Platforma łącząca inżynierów i specjalistów IT Wydziału Informatyki AGH. Współpracuj, rozwijaj się i buduj przyszłość technologii.",
 };
 
-const CTA = {
-  title: "Dołącz do naszej społeczności",
-  subtitle: "Wydarzenia, mentoring i networking dla absolwentów WI AGH.",
-  primaryLabel: "Czym jest PKKA?",
-};
-
 function ListHeader() {
-  const { user } = useAuth();
-
   return (
     <View className="gap-6">
       <PageHeader title={HERO.title} description={HERO.body} />
       <View className="gap-6 px-5">
-        {!user && <CtaCard {...CTA} onPrimary={() => router.push("/info")} />}
         <SectionHeading title="Publiczne Aktualności" />
       </View>
     </View>
