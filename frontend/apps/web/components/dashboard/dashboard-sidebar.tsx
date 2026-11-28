@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarDays,
   Inbox,
+  Info,
   Library,
   Megaphone,
   Newspaper,
@@ -89,20 +90,30 @@ const adminItems: SidebarItem[] = [
   },
 ];
 
+const infoItem: SidebarItem = {
+  href: "/dashboard/info",
+  label: "O aplikacji",
+  icon: Info,
+  match: (pathname) => pathname.startsWith("/dashboard/info"),
+};
+
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { admin, isAuthLoading, isVerified } = useVerificationStatus();
 
   // Verification is offered until it succeeds, alumni-only pages only after it does.
-  const items = admin
-    ? adminItems
-    : userItems.filter((item) => {
-        if (item.href === "/dashboard/verification") return !isVerified;
-        if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
-          return isVerified;
-        }
-        return true;
-      });
+  const items = [
+    ...(admin
+      ? adminItems
+      : userItems.filter((item) => {
+          if (item.href === "/dashboard/verification") return !isVerified;
+          if (item.href === "/dashboard/alumni" || item.href === "/dashboard/materials") {
+            return isVerified;
+          }
+          return true;
+        })),
+    infoItem,
+  ];
 
   return (
     <aside className="bg-muted border-background flex shrink-0 overflow-x-auto border-b md:sticky md:top-0 md:h-full md:w-56 md:flex-col md:self-stretch md:overflow-y-auto md:border-r md:border-b-0">

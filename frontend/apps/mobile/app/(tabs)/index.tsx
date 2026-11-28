@@ -32,7 +32,13 @@ function ListHeader() {
     <View className="gap-6">
       <PageHeader title={HERO.title} description={HERO.body} />
       <View className="gap-6 px-5">
-        {!user && <CtaCard {...CTA} onPrimary={() => router.push("/login")} />}
+        {!user && (
+          <CtaCard
+            {...CTA}
+            onPrimary={() => router.push("/login")}
+            onSecondary={() => router.push("/info")}
+          />
+        )}
         <SectionHeading title="Publiczne Aktualności" />
       </View>
     </View>

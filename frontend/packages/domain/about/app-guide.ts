@@ -1,0 +1,170 @@
+export type AppGuideIcon =
+  | "news"
+  | "calendar"
+  | "users"
+  | "user"
+  | "folder"
+  | "groups"
+  | "bell"
+  | "shield"
+  | "megaphone"
+  | "discord"
+  | "badge"
+  | "hash";
+
+export type AppGuideFeature = {
+  icon: AppGuideIcon;
+  title: string;
+  description: string;
+};
+
+export type AppGuideSection = {
+  title: string;
+  description?: string;
+  features: AppGuideFeature[];
+};
+
+export const APP_GUIDE_INTRO = {
+  title: "Czym jest aplikacja PKKA?",
+  description:
+    "PKKA to platforma Klubu Alumnów Wydziału Informatyki AGH, dostępna w przeglądarce i jako aplikacja mobilna. W jednym miejscu zbiera aktualności i wydarzenia klubu, katalog absolwentów, materiały i grupy tematyczne.",
+};
+
+export const APP_GUIDE_STEPS: { title: string; description: string }[] = [
+  {
+    title: "Załóż konto",
+    description: "Zarejestruj się adresem e-mail albo zaloguj kontem Discord.",
+  },
+  {
+    title: "Potwierdź, że jesteś absolwentem",
+    description:
+      "Wypełnij krótki wniosek o weryfikację. Jeśli masz już rolę absolwenta na serwerze Discord klubu, wystarczy przycisk „Zweryfikuj przez Discord”.",
+  },
+  {
+    title: "Korzystaj z pełnego dostępu",
+    description:
+      "Wniosek sprawdza administrator klubu. Po akceptacji odblokujesz wszystko, co opisujemy poniżej.",
+  },
+];
+
+export const APP_GUIDE_SECTIONS: AppGuideSection[] = [
+  {
+    title: "Bez logowania",
+    features: [
+      {
+        icon: "news",
+        title: "Aktualności",
+        description: "Ogłoszenia i wpisy publikowane przez klub.",
+      },
+      {
+        icon: "calendar",
+        title: "Wydarzenia",
+        description: "Nadchodzące spotkania, warsztaty i wydarzenia online.",
+      },
+    ],
+  },
+  {
+    title: "Dla zweryfikowanych absolwentów",
+    features: [
+      {
+        icon: "calendar",
+        title: "Zapisy na wydarzenia",
+        description:
+          "Zapisuj się na wydarzenia, dodawaj je do kalendarza i dołączaj do spotkań online prosto z aplikacji.",
+      },
+      {
+        icon: "users",
+        title: "Katalog absolwentów",
+        description:
+          "Szukaj ludzi po nazwisku, firmie i umiejętnościach. Sprawdź, kto chętnie zostanie mentorem.",
+      },
+      {
+        icon: "user",
+        title: "Twój profil",
+        description:
+          "Zdjęcie, doświadczenie, umiejętności i kontakty. Sam decydujesz, co widzą inni.",
+      },
+      {
+        icon: "folder",
+        title: "Materiały",
+        description: "Nagrania i prezentacje z wydarzeń klubu.",
+      },
+      {
+        icon: "groups",
+        title: "Grupy tematyczne",
+        description: "Dołącz do grupy o temacie, który Cię interesuje, albo zaproponuj nową.",
+      },
+      {
+        icon: "bell",
+        title: "Przypomnienia",
+        description:
+          "Powiadomienia w aplikacji mobilnej i e-maile przed wydarzeniami, na które się zapisujesz.",
+      },
+    ],
+  },
+  {
+    title: "Klub na Discordzie",
+    description: "Platforma działa razem z serwerem Discord klubu.",
+    features: [
+      {
+        icon: "discord",
+        title: "Logowanie przez Discord",
+        description: "Nie musisz zakładać osobnego hasła, wystarczy konto Discord.",
+      },
+      {
+        icon: "shield",
+        title: "Szybka weryfikacja",
+        description:
+          "Masz już rolę absolwenta na serwerze klubu? Zweryfikujesz się bez wypełniania wniosku.",
+      },
+      {
+        icon: "badge",
+        title: "Rola członka klubu",
+        description:
+          "Gdy Twoje konto jest połączone z Discordem, po weryfikacji dostajesz na serwerze rolę absolwenta.",
+      },
+      {
+        icon: "hash",
+        title: "Kanały grup tematycznych",
+        description:
+          "Każda grupa tematyczna ma prywatny kanał na serwerze. Dostęp dostajesz, gdy dołączasz do grupy.",
+      },
+    ],
+  },
+  {
+    title: "Dla administratorów",
+    description: "Panel administratora jest dostępny w wersji webowej.",
+    features: [
+      {
+        icon: "shield",
+        title: "Wnioski o weryfikację",
+        description: "Przeglądaj wnioski, akceptuj je albo odrzucaj z podaniem powodu.",
+      },
+      {
+        icon: "megaphone",
+        title: "Aktualności",
+        description: "Pisz i publikuj ogłoszenia ze zdjęciem okładki.",
+      },
+      {
+        icon: "calendar",
+        title: "Wydarzenia",
+        description: "Twórz wydarzenia, sprawdzaj listę zapisanych i wysyłaj im wiadomości.",
+      },
+      {
+        icon: "folder",
+        title: "Materiały",
+        description: "Dodawaj nagrania i prezentacje z wydarzeń.",
+      },
+      {
+        icon: "users",
+        title: "Absolwenci",
+        description: "Przeglądaj profile członków klubu.",
+      },
+      {
+        icon: "groups",
+        title: "Grupy tematyczne",
+        description: "Rozpatruj propozycje nowych grup.",
+      },
+    ],
+  },
+];
