@@ -90,6 +90,8 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+    # Daily "new members" digest for topic group coordinators, Europe/Warsaw time.
+    group-digest-cron: ${NOTIFICATIONS_GROUP_DIGEST_CRON:0 0 18 * * *}
   # Outgoing mail (MailConfig). Locally Mailpit from docker-compose: SMTP on 1025, inbox on http://localhost:8025.
   mail:
     host: ${MAIL_HOST:localhost}
@@ -223,6 +225,8 @@ app:
     access-token: ${EXPO_PUSH_ACCESS_TOKEN:}
     reminder-cron: ${NOTIFICATIONS_REMINDER_CRON:0 * * * * *}
     receipt-cron: ${NOTIFICATIONS_RECEIPT_CRON:0 */15 * * * *}
+    # Daily "new members" digest for topic group coordinators, Europe/Warsaw time.
+    group-digest-cron: ${NOTIFICATIONS_GROUP_DIGEST_CRON:0 0 18 * * *}
   # Outgoing mail (MailConfig) through Brevo SMTP. MAIL_HOST unset = mails skipped.
   mail:
     host: ${MAIL_HOST:}

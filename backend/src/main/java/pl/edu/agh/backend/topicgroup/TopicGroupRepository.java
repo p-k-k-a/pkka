@@ -1,5 +1,6 @@
 package pl.edu.agh.backend.topicgroup;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +39,11 @@ public interface TopicGroupRepository extends JpaRepository<TopicGroup, UUID> {
     @Modifying
     @Query("update TopicGroup g set g.discordRoleId = :roleId where g.id = :id")
     void setDiscordRoleId(@Param("id") UUID id, @Param("roleId") String roleId);
+
+    @Transactional
+    @Modifying
+    @Query("update TopicGroup g set g.lastJoinDigestAt = :until where g.id = :id")
+    void setLastJoinDigestAt(@Param("id") UUID id, @Param("until") Instant until);
 
     @Transactional
     @Modifying

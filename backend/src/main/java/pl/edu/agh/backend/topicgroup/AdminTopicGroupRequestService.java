@@ -64,6 +64,8 @@ public class AdminTopicGroupRequestService {
                 topicGroupRequestRepository.findById(requestId).orElseThrow(TopicGroupRequestNotFoundException::new);
 
         request.reject(reviewer, reason);
+        eventPublisher.publishEvent(new TopicGroupRequestRejectedEvent(
+                request.getId(), request.getRequester().getId(), request.getProposedName(), reason));
         return TopicGroupRequestResponse.from(topicGroupRequestRepository.saveAndFlush(request));
     }
 }

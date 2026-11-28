@@ -3,7 +3,8 @@ import { RequireAlumni } from "@/components/auth/require-alumni";
 import { TopicGroups } from "@/components/topic-groups/topic-groups";
 import { UnderlineTabs } from "@/components/ui/underline-tabs";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 
 const SECTIONS = [
@@ -15,6 +16,11 @@ type Section = (typeof SECTIONS)[number]["value"];
 
 export default function AlumniScreen() {
   const [section, setSection] = useState<Section>("directory");
+  // A tapped topic group notification opens the Grupy section
+  const { section: requestedSection } = useLocalSearchParams<{ section?: Section }>();
+  useEffect(() => {
+    if (requestedSection) setSection(requestedSection);
+  }, [requestedSection]);
 
   return (
     <RequireAlumni>

@@ -123,6 +123,10 @@ public class NotificationService {
                 event.getSlug());
     }
 
+    public void pushToUser(UUID userId, NotificationType type, String title, String body, String target) {
+        push(deviceTokenRepository.findByUserIdIn(List.of(userId)), type, title, body, target);
+    }
+
     private void pushToSignedUp(
             Collection<UUID> userIds, NotificationType type, String title, String body, String eventSlug) {
         if (!userIds.isEmpty()) {

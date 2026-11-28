@@ -60,6 +60,10 @@ public class TopicGroup {
     @Column(name = "discord_channel_id", length = 32)
     private String discordChannelId;
 
+    /** Joins up to this moment were already reported to the coordinator in the daily digest. */
+    @Column(name = "last_join_digest_at")
+    private Instant lastJoinDigestAt;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
